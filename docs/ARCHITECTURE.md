@@ -28,7 +28,7 @@ External facts, including salaries and labour-market statistics, must come from 
 
 ## Journeys and decision semantics
 
-- **Professional** assesses how AI may affect a person's current work: task exposure, durable value, and adaptability. Its indicators describe the current role and the person's ability to respond.
+- **Professional** assesses how AI may affect a person's current work: AI Exposure, Human Advantage, AI Complementarity, and Role Adaptability. Its indicators describe characteristics of the current role.
 - **University** assesses how a course supports future readiness and how its possible career paths may be exposed to AI. A high or low value here cannot be interpreted as the same kind of risk as a professional assessment.
 - **A-level** assesses whether a subject combination preserves useful future options, given the student's interests and strengths. Its central idea is optionality, not present-day job exposure.
 
@@ -36,7 +36,7 @@ The journeys therefore share the `AssessmentDecision` result shape, but not a un
 
 ## Intended modules
 
-- `assessment`: journey inputs and assessment lifecycle.
+- `assessment`: journey inputs, assessment application services, and assessment lifecycle.
 - `judgment`: atomic judgment contracts and later Jev adapters.
 - `decision`: deterministic, journey-specific Java policies.
 - `narrative`: explanation generation from authoritative decisions and evidence.
@@ -53,18 +53,36 @@ Packages should be introduced only when they contain real code. Module boundarie
 ## Professional decision pipeline
 
 ```text
-ProfessionalAssessmentState
-    ↓
-Jev professional-v1
-    ↓
-AssessmentJudgmentSet
-    ↓
-ProfessionalDecisionPolicyV1
-    ↓
-AI Exposure | Human Advantage | AI Complementarity | Role Adaptability
-    ↓
-AssessmentDecision
+Controller (future)
+    |
+    v
+ProfessionalAssessmentService
+    |
+    v
+ProfessionalJudgmentProvider
+    |
+    +-------------------------------+
+    |                               |
+    v                               v
+ProfessionalJevJudgmentService    LocalFixtureProfessionalJudgmentProvider
+    |                               |
+    +---------------+---------------+
+                    |
+                    v
+          AssessmentJudgmentSet
+                    |
+                    v
+       ProfessionalDecisionPolicyV1
+                    |
+                    v
+      ProfessionalAssessmentResult
 ```
+
+`ProfessionalJudgmentProvider` is the professional application port: it states the judgment capability the use case needs without TypeSafe, Jev, Spring AI, or HTTP types. `ProfessionalJevJudgmentService` is the normal adapter that supplies this capability through one Jev System One request for all nine `professional-v1` judgments. `ProfessionalAssessmentService` coordinates one provider call and the decision policy, then returns the decision with source and version metadata. The application service does not score work itself.
+
+`LocalFixtureProfessionalJudgmentProvider` is an adapter for explicit local development only. Activate it with the `local-fixture` Spring profile and select a fixture by using one of its exact IDs as `ProfessionalAssessmentState.profession`: `routine_software_developer`, `senior_software_architect`, `electrician`, or `registered_nurse`. An unsupported ID fails. Fixture data is illustrative development data, not product intelligence. The profile disables external AI models and selects only the fixture provider; normal mode selects only the Jev provider. Fixtures never activate automatically, and a Jev failure never falls back to fixtures. `ProfessionalAssessmentResult.source` carries `JEV` or `LOCAL_FIXTURE` explicitly for future callers, along with the judgment schema and decision policy versions.
+
+For local startup, run `./mvnw spring-boot:run -Dspring-boot.run.profiles=local-fixture`. This does not require Jev or OpenAI keys; the existing PostgreSQL development configuration still applies. No controller or form exists yet, so fixture IDs are currently supplied only by programmatic callers of the service.
 
 `ProfessionalDecisionPolicyV1` is deterministic Java policy. It validates the atomic judgments, normalises their 0–4 values, applies explicit weights, assigns indicator bands, derives confidence and status, and selects structured explanation factors. It does not call Jev or OpenAI.
 
@@ -72,4 +90,4 @@ The weights and thresholds in `professional-decision-v1` are transparent V1 prod
 
 AI Exposure describes how readily the current work may be performed, automated, or materially changed by AI. It is not a probability of job loss. Human Advantage is separately calculated because a role can combine meaningful AI exposure with strong reasons for continued human involvement. AI Complementarity describes potential augmentation rather than automation exposure.
 
-Role Adaptability describes characteristics of the role that support evolution toward higher-value, AI-assisted work. The current schema does not assess personal motivation, willingness to retrain, learning ability, or financial flexibility, so this measure is not a complete assessment of personal career adaptability.
+Role Adaptability describes characteristics of the role that provide scope for continued human value and AI-enabled evolution. It does not measure the individual's personal motivation, willingness to retrain, learning ability, financial flexibility, geographic mobility, or personal circumstances.

@@ -2,6 +2,8 @@ package com.chikere.futureai.judgment.typesafe.professional;
 
 import com.chikere.futureai.assessment.domain.JourneyType;
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
+import com.chikere.futureai.assessment.professional.application.AssessmentSource;
+import com.chikere.futureai.assessment.professional.application.ProfessionalJudgmentProvider;
 import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
 import com.chikere.futureai.judgment.domain.DimensionJudgment;
 import org.springaicommunity.typesafe.TypeSafeClient;
@@ -16,7 +18,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalDouble;
 
-public final class ProfessionalJevJudgmentService {
+public final class ProfessionalJevJudgmentService implements ProfessionalJudgmentProvider {
 
     private static final Map<String, String> DIMENSION_NAMES = Map.of(
             ProfessionalJudgmentSchema.INFORMATION_SUFFICIENT, "Information sufficiency",
@@ -42,6 +44,7 @@ public final class ProfessionalJevJudgmentService {
         this.stateMapper = Objects.requireNonNull(stateMapper, "stateMapper must not be null");
     }
 
+    @Override
     public AssessmentJudgmentSet judge(ProfessionalAssessmentState assessmentState) {
         Map<String, Object> state = stateMapper.map(assessmentState);
         SystemOneResponse response = typeSafeClient.systemOne(state, schema.questions());
@@ -50,6 +53,11 @@ public final class ProfessionalJevJudgmentService {
                 .map(questionId -> toDomainJudgment(questionId, response))
                 .toList();
         return new AssessmentJudgmentSet(JourneyType.PROFESSIONAL, schema.version(), judgments);
+    }
+
+    @Override
+    public AssessmentSource source() {
+        return AssessmentSource.JEV;
     }
 
     private DimensionJudgment toDomainJudgment(String questionId, SystemOneResponse response) {
