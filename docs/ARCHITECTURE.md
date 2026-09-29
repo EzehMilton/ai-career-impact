@@ -49,3 +49,27 @@ The journeys therefore share the `AssessmentDecision` result shape, but not a un
 - `configuration`: application wiring and external-client configuration.
 
 Packages should be introduced only when they contain real code. Module boundaries should remain explicit without creating empty packages or separate deployable services prematurely.
+
+## Professional decision pipeline
+
+```text
+ProfessionalAssessmentState
+    ↓
+Jev professional-v1
+    ↓
+AssessmentJudgmentSet
+    ↓
+ProfessionalDecisionPolicyV1
+    ↓
+AI Exposure | Human Advantage | AI Complementarity | Role Adaptability
+    ↓
+AssessmentDecision
+```
+
+`ProfessionalDecisionPolicyV1` is deterministic Java policy. It validates the atomic judgments, normalises their 0–4 values, applies explicit weights, assigns indicator bands, derives confidence and status, and selects structured explanation factors. It does not call Jev or OpenAI.
+
+The weights and thresholds in `professional-decision-v1` are transparent V1 product policy. They are not claimed to be scientifically validated universal truths. Changing them requires a new policy version so an existing version never silently changes meaning.
+
+AI Exposure describes how readily the current work may be performed, automated, or materially changed by AI. It is not a probability of job loss. Human Advantage is separately calculated because a role can combine meaningful AI exposure with strong reasons for continued human involvement. AI Complementarity describes potential augmentation rather than automation exposure.
+
+Role Adaptability describes characteristics of the role that support evolution toward higher-value, AI-assisted work. The current schema does not assess personal motivation, willingness to retrain, learning ability, or financial flexibility, so this measure is not a complete assessment of personal career adaptability.
