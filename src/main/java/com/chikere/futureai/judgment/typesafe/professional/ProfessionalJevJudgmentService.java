@@ -1,0 +1,98 @@
+package com.chikere.futureai.judgment.typesafe.professional;
+
+import com.chikere.futureai.assessment.domain.JourneyType;
+import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
+import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
+import com.chikere.futureai.judgment.domain.DimensionJudgment;
+import org.springaicommunity.typesafe.TypeSafeClient;
+import org.springaicommunity.typesafe.response.NoulAnswer;
+import org.springaicommunity.typesafe.response.ScoreAnswer;
+import org.springaicommunity.typesafe.response.SystemOneResponse;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalDouble;
+
+public final class ProfessionalJevJudgmentService {
+
+    private static final Map<String, String> DIMENSION_NAMES = Map.of(
+            ProfessionalJudgmentSchema.INFORMATION_SUFFICIENT, "Information sufficiency",
+            ProfessionalJudgmentSchema.TASK_REPEATABILITY, "Task repeatability",
+            ProfessionalJudgmentSchema.DIGITAL_EXECUTABILITY, "Digital executability",
+            ProfessionalJudgmentSchema.HUMAN_TRUST_DEPENDENCY, "Human trust dependency",
+            ProfessionalJudgmentSchema.PHYSICAL_WORLD_DEPENDENCY, "Physical-world dependency",
+            ProfessionalJudgmentSchema.CONTEXTUAL_COMPLEXITY, "Contextual complexity",
+            ProfessionalJudgmentSchema.ORIGINAL_JUDGMENT, "Original judgment",
+            ProfessionalJudgmentSchema.ACCOUNTABILITY_RESPONSIBILITY, "Accountability and responsibility",
+            ProfessionalJudgmentSchema.AI_COMPLEMENTARITY, "AI complementarity");
+
+    private final TypeSafeClient typeSafeClient;
+    private final ProfessionalJudgmentSchema schema;
+    private final ProfessionalJevStateMapper stateMapper;
+
+    public ProfessionalJevJudgmentService(
+            TypeSafeClient typeSafeClient,
+            ProfessionalJudgmentSchema schema,
+            ProfessionalJevStateMapper stateMapper) {
+        this.typeSafeClient = Objects.requireNonNull(typeSafeClient, "typeSafeClient must not be null");
+        this.schema = Objects.requireNonNull(schema, "schema must not be null");
+        this.stateMapper = Objects.requireNonNull(stateMapper, "stateMapper must not be null");
+    }
+
+    public AssessmentJudgmentSet judge(ProfessionalAssessmentState assessmentState) {
+        Map<String, Object> state = stateMapper.map(assessmentState);
+        SystemOneResponse response = typeSafeClient.systemOne(state, schema.questions());
+
+        List<DimensionJudgment> judgments = schema.questions().keySet().stream()
+                .map(questionId -> toDomainJudgment(questionId, response))
+                .toList();
+        return new AssessmentJudgmentSet(JourneyType.PROFESSIONAL, schema.version(), judgments);
+    }
+
+    private DimensionJudgment toDomainJudgment(String questionId, SystemOneResponse response) {
+        if (ProfessionalJudgmentSchema.INFORMATION_SUFFICIENT.equals(questionId)) {
+            return toNoulJudgment(questionId, response.noul(questionId));
+        }
+        return toScoreJudgment(questionId, response.score(questionId));
+    }
+
+    private DimensionJudgment toNoulJudgment(String questionId, NoulAnswer answer) {
+        return new DimensionJudgment(
+                questionId,
+                dimensionName(questionId),
+                OptionalDouble.of(answer.value()),
+                Optional.empty(),
+                Optional.empty(),
+                OptionalDouble.empty(),
+                Map.of());
+    }
+
+    private DimensionJudgment toScoreJudgment(String questionId, ScoreAnswer answer) {
+        Optional<String> nearestLabel = answer.nearestLabel().isBlank()
+                ? Optional.empty()
+                : Optional.of(answer.nearestLabel());
+        LinkedHashMap<String, Double> probabilities = new LinkedHashMap<>();
+        answer.probabilities().forEach((level, probability) ->
+                probabilities.put(Integer.toString(level), probability));
+
+        return new DimensionJudgment(
+                questionId,
+                dimensionName(questionId),
+                OptionalDouble.of(answer.value()),
+                nearestLabel,
+                Optional.empty(),
+                OptionalDouble.of(answer.confidence()),
+                probabilities);
+    }
+
+    private String dimensionName(String questionId) {
+        String name = DIMENSION_NAMES.get(questionId);
+        if (name == null) {
+            throw new IllegalArgumentException("Unknown professional-v1 question: " + questionId);
+        }
+        return name;
+    }
+}
