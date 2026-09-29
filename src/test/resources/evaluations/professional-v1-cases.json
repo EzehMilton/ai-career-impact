@@ -1,0 +1,220 @@
+[
+  {
+    "id": "data_entry_clerk",
+    "profession": "Data Entry Clerk",
+    "workDescription": "Processes high volumes of standardised business records in internal systems.",
+    "responsibilities": [
+      "Enter standardised records from forms into software",
+      "Copy data between business systems",
+      "Validate fixed fields against defined rules",
+      "Follow documented correction and escalation procedures"
+    ],
+    "skills": ["Accurate typing", "Data validation", "Following procedures"],
+    "yearsExperience": 3,
+    "rationale": "Probes high repeatability and high digital executability."
+  },
+  {
+    "id": "scripted_customer_service_agent",
+    "profession": "Customer Service Agent",
+    "workDescription": "Handles high-volume standard enquiries using scripts and a customer relationship management system.",
+    "responsibilities": [
+      "Answer standard account and product questions",
+      "Follow scripted troubleshooting flows",
+      "Record interactions in the CRM",
+      "Escalate unusual or sensitive issues"
+    ],
+    "skills": ["Customer communication", "CRM operation", "Scripted troubleshooting"],
+    "yearsExperience": 2,
+    "rationale": "Probes repetitive digital work that still contains some human interaction."
+  },
+  {
+    "id": "electrician",
+    "profession": "Electrician",
+    "workDescription": "Installs, inspects and repairs electrical systems across varied physical sites.",
+    "responsibilities": [
+      "Diagnose electrical faults on site",
+      "Install wiring and electrical equipment",
+      "Adapt plans to unexpected physical conditions",
+      "Verify work against safety requirements"
+    ],
+    "skills": ["Electrical diagnosis", "Skilled installation", "Safety compliance"],
+    "yearsExperience": 8,
+    "rationale": "Probes high physical-world dependency, changing site conditions and safety responsibility."
+  },
+  {
+    "id": "registered_nurse",
+    "profession": "Registered Nurse",
+    "workDescription": "Provides direct patient care on a hospital ward where patient needs and conditions change throughout a shift.",
+    "responsibilities": [
+      "Monitor patients and recognise changes in condition",
+      "Administer medication and treatments",
+      "Communicate sensitively with patients and families",
+      "Escalate clinical concerns and coordinate care"
+    ],
+    "skills": ["Clinical observation", "Patient care", "Communication", "Medication safety"],
+    "yearsExperience": 6,
+    "rationale": "Probes human trust, physical presence, contextual change and clinical accountability."
+  },
+  {
+    "id": "psychotherapist",
+    "profession": "Psychotherapist",
+    "workDescription": "Conducts confidential therapy sessions and adapts therapeutic approaches to individual emotional needs.",
+    "responsibilities": [
+      "Hold therapeutic conversations",
+      "Interpret emotional and behavioural signals",
+      "Build and maintain a trusted therapeutic relationship",
+      "Exercise sensitive judgement about interventions and risk"
+    ],
+    "skills": ["Empathy", "Active listening", "Therapeutic judgement", "Relationship building"],
+    "yearsExperience": 9,
+    "rationale": "Probes very high human-trust dependency with relatively little physical manipulation."
+  },
+  {
+    "id": "routine_software_developer",
+    "profession": "Software Developer",
+    "workDescription": "Implements well-defined application changes within an established codebase and architecture.",
+    "responsibilities": [
+      "Implement standard CRUD API tickets",
+      "Write routine automated tests",
+      "Fix straightforward reproducible bugs",
+      "Follow existing patterns with limited architecture or stakeholder responsibility"
+    ],
+    "skills": ["Java", "REST APIs", "Unit testing", "Debugging"],
+    "yearsExperience": 3,
+    "rationale": "Probes implementation-heavy routine digital software work."
+  },
+  {
+    "id": "senior_software_architect",
+    "profession": "Senior Software Architect",
+    "workDescription": "Shapes architecture for complex systems while resolving ambiguous technical and organisational constraints.",
+    "responsibilities": [
+      "Make major architecture and design decisions",
+      "Resolve ambiguous cross-system technical problems",
+      "Negotiate trade-offs with business and engineering stakeholders",
+      "Mentor engineers and take responsibility for production resilience"
+    ],
+    "skills": ["Systems architecture", "Technical leadership", "Stakeholder negotiation", "Risk management"],
+    "yearsExperience": 14,
+    "rationale": "Compares with routine software development to test whether responsibilities outweigh title similarity."
+  },
+  {
+    "id": "transactional_accountant",
+    "profession": "Accountant",
+    "workDescription": "Runs recurring finance operations using established controls, schedules and reporting formats.",
+    "responsibilities": [
+      "Reconcile ledger and bank records",
+      "Process invoices and standard journals",
+      "Complete defined month-end procedures",
+      "Produce routine financial reports"
+    ],
+    "skills": ["Reconciliation", "Invoice processing", "Accounting software", "Financial controls"],
+    "yearsExperience": 4,
+    "rationale": "Probes structured, recurring and digitally mediated accounting work."
+  },
+  {
+    "id": "advisory_management_accountant",
+    "profession": "Management Accountant",
+    "workDescription": "Interprets business performance and advises leaders on uncertain financial and operational choices.",
+    "responsibilities": [
+      "Interpret financial and operational performance",
+      "Build scenarios for uncertain business decisions",
+      "Discuss trade-offs with management stakeholders",
+      "Develop strategic recommendations and challenge assumptions"
+    ],
+    "skills": ["Financial analysis", "Scenario planning", "Advisory communication", "Commercial judgement"],
+    "yearsExperience": 9,
+    "rationale": "Compares with transactional accounting to probe contextual interpretation and advisory responsibility."
+  },
+  {
+    "id": "graphic_production_designer",
+    "profession": "Graphic Designer",
+    "workDescription": "Produces recurring digital campaign assets from approved templates and established brand rules.",
+    "responsibilities": [
+      "Resize and adapt approved assets",
+      "Create standard social-media variants",
+      "Apply established brand templates",
+      "Complete routine image production and export checks"
+    ],
+    "skills": ["Image editing", "Template production", "Brand consistency", "Asset preparation"],
+    "yearsExperience": 3,
+    "rationale": "Probes a creative occupation whose day-to-day execution is highly standardised."
+  },
+  {
+    "id": "creative_director",
+    "profession": "Creative Director",
+    "workDescription": "Defines creative direction and leads teams in translating ambiguous client needs into campaign concepts.",
+    "responsibilities": [
+      "Interpret open-ended client briefs",
+      "Define original creative direction",
+      "Lead and coach multidisciplinary creative teams",
+      "Negotiate with stakeholders and approve major campaigns"
+    ],
+    "skills": ["Creative strategy", "Leadership", "Client negotiation", "Editorial judgement"],
+    "yearsExperience": 12,
+    "rationale": "Compares with production design to probe original judgement, relationships and responsibility."
+  },
+  {
+    "id": "secondary_school_teacher",
+    "profession": "Secondary School Teacher",
+    "workDescription": "Teaches mixed-ability classes and supports student learning, behaviour and wellbeing in a school environment.",
+    "responsibilities": [
+      "Teach and adapt lessons for different student needs",
+      "Assess work and provide individual feedback",
+      "Respond to classroom behaviour and safeguarding concerns",
+      "Communicate with parents and school colleagues"
+    ],
+    "skills": ["Teaching", "Adaptation", "Safeguarding", "Communication"],
+    "yearsExperience": 7,
+    "rationale": "Probes human interaction, contextual judgement, physical presence and safeguarding accountability."
+  },
+  {
+    "id": "corporate_lawyer",
+    "profession": "Corporate Lawyer",
+    "workDescription": "Advises organisations on commercial transactions, contracts and ambiguous legal risks.",
+    "responsibilities": [
+      "Analyse and draft complex contracts",
+      "Interpret ambiguous legal and commercial issues",
+      "Negotiate transaction terms",
+      "Advise clients while carrying professional responsibility for recommendations"
+    ],
+    "skills": ["Legal analysis", "Drafting", "Negotiation", "Client advice"],
+    "yearsExperience": 10,
+    "rationale": "Probes substantial digital information processing alongside judgement, negotiation and accountability."
+  },
+  {
+    "id": "warehouse_picker",
+    "profession": "Warehouse Picker",
+    "workDescription": "Selects and moves goods in a warehouse by following digital pick lists and scanning procedures.",
+    "responsibilities": [
+      "Follow ordered pick lists",
+      "Locate and physically retrieve items",
+      "Scan goods and confirm quantities",
+      "Move safely through an active warehouse environment"
+    ],
+    "skills": ["Item handling", "Barcode scanning", "Accuracy", "Warehouse safety"],
+    "yearsExperience": 2,
+    "rationale": "Probes work that is highly repeatable but also strongly dependent on physical-world activity."
+  },
+  {
+    "id": "engineering_manager",
+    "profession": "Engineering Manager",
+    "workDescription": "Leads a software engineering team and balances people, technical and delivery responsibilities.",
+    "responsibilities": [
+      "Coach engineers and manage team performance",
+      "Prioritise technical and delivery work",
+      "Align plans with product and business stakeholders",
+      "Own delivery outcomes and contribute to consequential technical decisions"
+    ],
+    "skills": ["People management", "Technical prioritisation", "Stakeholder management", "Coaching"],
+    "yearsExperience": 11,
+    "rationale": "Probes human responsibility and accountability within a predominantly digital work environment."
+  },
+  {
+    "id": "insufficient_information",
+    "profession": "Software Engineer",
+    "workDescription": "Software engineering work.",
+    "responsibilities": [],
+    "skills": [],
+    "rationale": "Deliberately provides almost only a title to probe information_sufficient behaviour."
+  }
+]
