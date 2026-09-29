@@ -7,7 +7,6 @@ import com.chikere.futureai.assessment.domain.JourneyType;
 import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
 import com.chikere.futureai.judgment.domain.DimensionJudgment;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -16,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.OptionalDouble;
+import java.util.Locale;
 import java.util.function.DoubleUnaryOperator;
 
 /**
@@ -109,8 +109,17 @@ public final class ProfessionalDecisionPolicyV1 {
         AssessmentStatus status = assessmentStatus(informationSufficiency, assessmentConfidence);
         EnumMap<ProfessionalMeasure, ProfessionalMeasureResult> measures = calculateMeasures(judgments);
         ProfessionalMeasureResult exposure = measures.get(ProfessionalMeasure.AI_EXPOSURE);
-        List<ProfessionalDecisionFactor> drivers = exposureFactors(judgments, false);
-        List<ProfessionalDecisionFactor> protectiveFactors = exposureFactors(judgments, true);
+        List<ProfessionalDecisionFactor> factors = exposureFactors(judgments);
+        List<ProfessionalDecisionFactor> drivers = factors.stream()
+                .filter(factor -> factor.signedEffect() > 0.0)
+                .sorted(Comparator.comparingDouble(ProfessionalDecisionFactor::signedEffect).reversed())
+                .limit(3)
+                .toList();
+        List<ProfessionalDecisionFactor> protectiveFactors = factors.stream()
+                .filter(factor -> factor.signedEffect() < 0.0)
+                .sorted(Comparator.comparingDouble(ProfessionalDecisionFactor::signedEffect))
+                .limit(3)
+                .toList();
 
         AssessmentDecision headline = new AssessmentDecision(
                 JourneyType.PROFESSIONAL,
@@ -251,29 +260,27 @@ public final class ProfessionalDecisionPolicyV1 {
         return AssessmentStatus.READY;
     }
 
-    private List<ProfessionalDecisionFactor> exposureFactors(
-            ValidatedJudgments judgments,
-            boolean protective) {
-        List<ProfessionalDecisionFactor> factors = new ArrayList<>();
-        EXPOSURE_WEIGHTS.values().forEach(weighted -> {
+    private List<ProfessionalDecisionFactor> exposureFactors(ValidatedJudgments judgments) {
+        return EXPOSURE_WEIGHTS.values().stream().map(weighted -> {
             ScoreValue score = judgments.score(weighted.dimensionId());
-            double exposureEffect = weighted.value(score);
-            double effect = protective ? 1.0 - exposureEffect : exposureEffect;
-            factors.add(new ProfessionalDecisionFactor(
+            double exposureComponent = weighted.value(score);
+            double signedEffect = weighted.weight() * (exposureComponent - 0.5);
+            if (signedEffect == 0.0) {
+                return null;
+            }
+            return new ProfessionalDecisionFactor(
                     weighted.dimensionId(),
-                    protective
-                            ? DecisionFactorEffect.REDUCES_AI_EXPOSURE
-                            : DecisionFactorEffect.INCREASES_AI_EXPOSURE,
+                    signedEffect > 0.0
+                            ? DecisionFactorEffect.INCREASES_AI_EXPOSURE
+                            : DecisionFactorEffect.REDUCES_AI_EXPOSURE,
+                    ProfessionalFactorDirection.valueOf((score.score() > 2.0 ? "HIGH_" : "LOW_")
+                            + weighted.dimensionId().toUpperCase(Locale.ROOT)),
                     score.score(),
-                    effect,
+                    exposureComponent,
                     weighted.weight(),
-                    weighted.weight() * effect));
-        });
-        return factors.stream()
-                .filter(factor -> factor.weightedContribution() > 0.0)
-                .sorted(Comparator.comparingDouble(ProfessionalDecisionFactor::weightedContribution)
-                        .reversed())
-                .limit(3)
+                    signedEffect);
+        })
+                .filter(Objects::nonNull)
                 .toList();
     }
 

@@ -8,6 +8,7 @@ import com.chikere.futureai.judgment.typesafe.professional.ProfessionalJevStateM
 import com.chikere.futureai.judgment.typesafe.professional.ProfessionalJudgmentSchema;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springaicommunity.typesafe.TypeSafeClient;
 
 import java.nio.file.Path;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @EnabledIfEnvironmentVariable(named = "TYPESAFE_API_KEY", matches = ".+")
+@EnabledIfSystemProperty(named = "jev.live.evaluation.enabled", matches = "true")
 class ProfessionalJevLiveEvaluationIT {
 
     private static final Path REPORT_PATH =

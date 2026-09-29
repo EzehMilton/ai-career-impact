@@ -5,10 +5,11 @@ import java.util.Objects;
 public record ProfessionalDecisionFactor(
         String dimensionId,
         DecisionFactorEffect effect,
+        ProfessionalFactorDirection direction,
         double score,
-        double normalisedEffect,
+        double exposureComponent,
         double weight,
-        double weightedContribution) {
+        double signedEffect) {
 
     public ProfessionalDecisionFactor {
         Objects.requireNonNull(dimensionId, "dimensionId must not be null");
@@ -17,10 +18,15 @@ public record ProfessionalDecisionFactor(
         }
         dimensionId = dimensionId.strip();
         Objects.requireNonNull(effect, "effect must not be null");
+        Objects.requireNonNull(direction, "direction must not be null");
         requireRange(score, 0.0, 4.0, "score");
-        requireRange(normalisedEffect, 0.0, 1.0, "normalisedEffect");
+        requireRange(exposureComponent, 0.0, 1.0, "exposureComponent");
         requireRange(weight, 0.0, 1.0, "weight");
-        requireRange(weightedContribution, 0.0, 1.0, "weightedContribution");
+        requireRange(signedEffect, -0.5, 0.5, "signedEffect");
+        if (effect == DecisionFactorEffect.INCREASES_AI_EXPOSURE && signedEffect <= 0.0
+                || effect == DecisionFactorEffect.REDUCES_AI_EXPOSURE && signedEffect >= 0.0) {
+            throw new IllegalArgumentException("effect must match signedEffect");
+        }
     }
 
     private static void requireRange(double value, double minimum, double maximum, String fieldName) {

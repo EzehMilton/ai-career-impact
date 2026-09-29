@@ -338,8 +338,8 @@ final class ProfessionalEvaluationReportWriter {
             return "None";
         }
         return factors.stream()
-                .map(factor -> "`" + factor.dimensionId() + "` (weighted contribution "
-                        + format(factor.weightedContribution()) + ")")
+                .map(factor -> "`" + factor.direction() + "` (signed effect "
+                        + formatSigned(factor.signedEffect()) + ")")
                 .collect(java.util.stream.Collectors.joining(", "));
     }
 

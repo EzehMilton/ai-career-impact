@@ -305,6 +305,81 @@ class ProfessionalDecisionPolicyV1Test {
         assertThat(protectedRole.topProtectiveFactors())
                 .extracting(ProfessionalDecisionFactor::dimensionId)
                 .containsExactly(TASK_REPEATABILITY, DIGITAL_EXECUTABILITY, HUMAN_TRUST_DEPENDENCY);
+        assertThat(exposed.topProtectiveFactors()).isEmpty();
+        assertThat(protectedRole.topExposureDrivers()).isEmpty();
+    }
+
+    @Test
+    void liveSoftwareJudgmentsKeepExposureNumbersAndGiveExclusiveDirectionalFactors() {
+        ProfessionalDecisionResult routine = policy.decide(validJudgments()
+                .informationSufficiency(0.840)
+                .score(TASK_REPEATABILITY, 3.580)
+                .score(DIGITAL_EXECUTABILITY, 4.000)
+                .score(HUMAN_TRUST_DEPENDENCY, 0.500)
+                .score(PHYSICAL_WORLD_DEPENDENCY, 0.000)
+                .score(CONTEXTUAL_COMPLEXITY, 0.090)
+                .score(ORIGINAL_JUDGMENT, 0.110)
+                .score(ACCOUNTABILITY_RESPONSIBILITY, 0.500)
+                .score(AI_COMPLEMENTARITY, 3.020)
+                .build());
+        ProfessionalDecisionResult architect = policy.decide(validJudgments()
+                .informationSufficiency(0.800)
+                .score(TASK_REPEATABILITY, 0.570)
+                .score(DIGITAL_EXECUTABILITY, 3.710)
+                .score(HUMAN_TRUST_DEPENDENCY, 2.850)
+                .score(PHYSICAL_WORLD_DEPENDENCY, 0.020)
+                .score(CONTEXTUAL_COMPLEXITY, 3.630)
+                .score(ORIGINAL_JUDGMENT, 3.550)
+                .score(ACCOUNTABILITY_RESPONSIBILITY, 3.460)
+                .score(AI_COMPLEMENTARITY, 3.210)
+                .build());
+
+        assertThat(measure(routine, ProfessionalMeasure.AI_EXPOSURE).indicator())
+                .isCloseTo(9.471, within(0.001));
+        assertThat(measure(architect, ProfessionalMeasure.AI_EXPOSURE).indicator())
+                .isCloseTo(4.810, within(0.001));
+        assertThat(routine.topProtectiveFactors()).isEmpty();
+        assertThat(architect.topExposureDrivers())
+                .extracting(ProfessionalDecisionFactor::direction)
+                .containsExactly(ProfessionalFactorDirection.HIGH_DIGITAL_EXECUTABILITY,
+                        ProfessionalFactorDirection.LOW_PHYSICAL_WORLD_DEPENDENCY);
+        assertThat(architect.topProtectiveFactors())
+                .extracting(ProfessionalDecisionFactor::direction)
+                .containsExactly(ProfessionalFactorDirection.LOW_TASK_REPEATABILITY,
+                        ProfessionalFactorDirection.HIGH_CONTEXTUAL_COMPLEXITY,
+                        ProfessionalFactorDirection.HIGH_HUMAN_TRUST_DEPENDENCY);
+        for (ProfessionalDecisionResult result : List.of(routine, architect)) {
+            assertThat(result.topExposureDrivers())
+                    .allSatisfy(driver -> assertThat(result.topProtectiveFactors())
+                            .extracting(ProfessionalDecisionFactor::dimensionId)
+                            .doesNotContain(driver.dimensionId()));
+        }
+    }
+
+    @Test
+    void midpointSignedEffectsPreserveDirectionAndExcludeNeutralScores() {
+        for (double score : List.of(0.0, 4.0)) {
+            ProfessionalDecisionResult result = policy.decide(validJudgments()
+                    .score(TASK_REPEATABILITY, score)
+                    .score(CONTEXTUAL_COMPLEXITY, score)
+                    .build());
+            List<ProfessionalDecisionFactor> drivers = result.topExposureDrivers();
+            List<ProfessionalDecisionFactor> protectors = result.topProtectiveFactors();
+            ProfessionalFactorDirection expectedDriver = score == 4.0
+                    ? ProfessionalFactorDirection.HIGH_TASK_REPEATABILITY
+                    : ProfessionalFactorDirection.LOW_CONTEXTUAL_COMPLEXITY;
+            ProfessionalFactorDirection expectedProtector = score == 4.0
+                    ? ProfessionalFactorDirection.HIGH_CONTEXTUAL_COMPLEXITY
+                    : ProfessionalFactorDirection.LOW_TASK_REPEATABILITY;
+            assertThat(drivers).extracting(ProfessionalDecisionFactor::direction).containsExactly(expectedDriver);
+            assertThat(protectors).extracting(ProfessionalDecisionFactor::direction)
+                    .containsExactly(expectedProtector);
+            assertThat(drivers.getFirst().signedEffect()).isPositive();
+            assertThat(protectors.getFirst().signedEffect()).isNegative();
+        }
+        ProfessionalDecisionResult neutral = policy.decide(validJudgments().build());
+        assertThat(neutral.topExposureDrivers()).isEmpty();
+        assertThat(neutral.topProtectiveFactors()).isEmpty();
     }
 
     @Test

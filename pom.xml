@@ -194,6 +194,9 @@
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-failsafe-plugin</artifactId>
 						<configuration>
+							<systemPropertyVariables>
+								<jev.live.evaluation.enabled>true</jev.live.evaluation.enabled>
+							</systemPropertyVariables>
 							<includes>
 								<include>**/ProfessionalJevLiveEvaluationIT.java</include>
 							</includes>
