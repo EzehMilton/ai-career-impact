@@ -15,6 +15,7 @@ public record DimensionJudgment(
         OptionalDouble numericValue,
         Optional<String> categoricalValue,
         Optional<AssessmentConfidence> confidence,
+        OptionalDouble confidenceValue,
         Map<String, Double> probabilityDistribution) {
 
     private static final double PROBABILITY_TOLERANCE = 1.0e-9;
@@ -29,11 +30,35 @@ public record DimensionJudgment(
         Objects.requireNonNull(categoricalValue, "categoricalValue must not be null");
         categoricalValue = categoricalValue.map(value -> requiredText(value, "categoricalValue"));
         Objects.requireNonNull(confidence, "confidence must not be null");
+        Objects.requireNonNull(confidenceValue, "confidenceValue must not be null");
+        if (confidenceValue.isPresent()
+                && (!Double.isFinite(confidenceValue.getAsDouble())
+                || confidenceValue.getAsDouble() < 0.0
+                || confidenceValue.getAsDouble() > 1.0)) {
+            throw new IllegalArgumentException("confidenceValue must be finite and between 0 and 1");
+        }
         probabilityDistribution = immutableProbabilityDistribution(probabilityDistribution);
 
         if (numericValue.isEmpty() && categoricalValue.isEmpty() && probabilityDistribution.isEmpty()) {
             throw new IllegalArgumentException("a judgment must contain a value or probability distribution");
         }
+    }
+
+    public DimensionJudgment(
+            String dimensionId,
+            String name,
+            OptionalDouble numericValue,
+            Optional<String> categoricalValue,
+            Optional<AssessmentConfidence> confidence,
+            Map<String, Double> probabilityDistribution) {
+        this(
+                dimensionId,
+                name,
+                numericValue,
+                categoricalValue,
+                confidence,
+                OptionalDouble.empty(),
+                probabilityDistribution);
     }
 
     private static Map<String, Double> immutableProbabilityDistribution(Map<String, Double> probabilities) {
