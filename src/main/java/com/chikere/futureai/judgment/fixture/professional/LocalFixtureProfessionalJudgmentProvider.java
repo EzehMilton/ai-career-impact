@@ -29,15 +29,20 @@ public final class LocalFixtureProfessionalJudgmentProvider implements Professio
             "registered_nurse", new Fixture(0.900, 1.700, 0.800, 3.800, 3.500,
                     3.700, 3.000, 3.900, 2.600));
 
+    private final Fixture fixture;
+
+    public LocalFixtureProfessionalJudgmentProvider(String fixtureId) {
+        String selectedId = Objects.requireNonNull(fixtureId, "fixtureId must not be null").strip();
+        this.fixture = FIXTURES.get(selectedId);
+        if (fixture == null) {
+            throw new IllegalArgumentException("Unsupported app.professional.fixture-id '" + selectedId
+                    + "'. Supported fixture IDs: " + supportedFixtureIds());
+        }
+    }
+
     @Override
     public AssessmentJudgmentSet judge(ProfessionalAssessmentState state) {
         Objects.requireNonNull(state, "state must not be null");
-        String fixtureId = state.profession();
-        Fixture fixture = FIXTURES.get(fixtureId);
-        if (fixture == null) {
-            throw new IllegalArgumentException("Unsupported professional fixture '" + fixtureId
-                    + "'. Supported fixture IDs: " + FIXTURES.keySet().stream().sorted().toList());
-        }
         return new AssessmentJudgmentSet(JourneyType.PROFESSIONAL, ProfessionalJudgmentSchema.VERSION, List.of(
                 informationJudgment(fixture.informationSufficiency()),
                 scoreJudgment(ProfessionalJudgmentSchema.TASK_REPEATABILITY, "Task repeatability",

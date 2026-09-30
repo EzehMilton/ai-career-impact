@@ -23,9 +23,10 @@ class ProfessionalAssessmentServiceTest {
 
     @Test
     void callsProviderOnceAndUsesTheExistingPolicyWithVersionedProvenance() {
-        ProfessionalAssessmentState state = state("routine_software_developer");
+        ProfessionalAssessmentState state = state("Software Developer");
         ProfessionalJudgmentProvider provider = mock(ProfessionalJudgmentProvider.class);
-        when(provider.judge(state)).thenReturn(new LocalFixtureProfessionalJudgmentProvider().judge(state));
+        when(provider.judge(state)).thenReturn(
+                new LocalFixtureProfessionalJudgmentProvider("routine_software_developer").judge(state));
         when(provider.source()).thenReturn(AssessmentSource.JEV);
 
         ProfessionalAssessmentResult result = new ProfessionalAssessmentService(
@@ -44,7 +45,7 @@ class ProfessionalAssessmentServiceTest {
 
     @Test
     void providerFailurePropagatesWithoutFixtureFallback() {
-        ProfessionalAssessmentState state = state("routine_software_developer");
+        ProfessionalAssessmentState state = state("Software Developer");
         ProfessionalJudgmentProvider provider = mock(ProfessionalJudgmentProvider.class);
         IllegalStateException failure = new IllegalStateException("Jev unavailable");
         when(provider.judge(state)).thenThrow(failure);
@@ -62,8 +63,8 @@ class ProfessionalAssessmentServiceTest {
     @Test
     void fixtureAssessmentCarriesFixtureProvenanceToTheApplicationResult() {
         ProfessionalAssessmentResult result = new ProfessionalAssessmentService(
-                new LocalFixtureProfessionalJudgmentProvider(),
-                new ProfessionalDecisionPolicyV1()).assess(state("electrician"));
+                new LocalFixtureProfessionalJudgmentProvider("electrician"),
+                new ProfessionalDecisionPolicyV1()).assess(state("Electrician"));
 
         assertThat(result.source()).isEqualTo(AssessmentSource.LOCAL_FIXTURE);
         assertThat(result.judgmentSchemaVersion()).isEqualTo("professional-v1");
