@@ -53,7 +53,19 @@ Packages should be introduced only when they contain real code. Module boundarie
 ## Professional decision pipeline
 
 ```text
-Controller (future)
+Browser
+    |
+    v
+ProfessionalAssessmentForm
+    |
+    v
+ProfessionalAssessmentController
+    |
+    v
+ProfessionalAssessmentFormMapper
+    |
+    v
+ProfessionalAssessmentState
     |
     v
 ProfessionalAssessmentService
@@ -76,13 +88,26 @@ ProfessionalJevJudgmentService    LocalFixtureProfessionalJudgmentProvider
                     |
                     v
       ProfessionalAssessmentResult
+                    |
+                    v
+              Results view
 ```
+
+`ProfessionalAssessmentForm` is a web DTO shaped for HTML fields and Bean Validation. It collects multiline responsibilities and skills as text. `ProfessionalAssessmentFormMapper` trims those fields, drops blank lines, and creates `ProfessionalAssessmentState`, the domain value describing actual work. Keeping them separate prevents HTML input concerns from entering the assessment domain. The MVC controller handles validation, calls the application service once for valid input, and renders Thymeleaf views. Validation problems return to the form with field errors. Processing failures return a generic error page without a fixture fallback or vendor details.
 
 `ProfessionalJudgmentProvider` is the professional application port: it states the judgment capability the use case needs without TypeSafe, Jev, Spring AI, or HTTP types. `ProfessionalJevJudgmentService` is the normal adapter that supplies this capability through one Jev System One request for all nine `professional-v1` judgments. `ProfessionalAssessmentService` coordinates one provider call and the decision policy, then returns the decision with source and version metadata. The application service does not score work itself.
 
-`LocalFixtureProfessionalJudgmentProvider` is an adapter for explicit local development only. Activate it with the `local-fixture` Spring profile and select a fixture by using one of its exact IDs as `ProfessionalAssessmentState.profession`: `routine_software_developer`, `senior_software_architect`, `electrician`, or `registered_nurse`. An unsupported ID fails. Fixture data is illustrative development data, not product intelligence. The profile disables external AI models and selects only the fixture provider; normal mode selects only the Jev provider. Fixtures never activate automatically, and a Jev failure never falls back to fixtures. `ProfessionalAssessmentResult.source` carries `JEV` or `LOCAL_FIXTURE` explicitly for future callers, along with the judgment schema and decision policy versions.
+`LocalFixtureProfessionalJudgmentProvider` is an adapter for explicit local development only. Activate it with the `local-fixture` Spring profile and select an exact fixture ID through `app.professional.fixture-id`: `routine_software_developer`, `senior_software_architect`, `electrician`, or `registered_nurse`. The fixture ID is technical configuration; `ProfessionalAssessmentState.profession` remains the user's real job title. Missing or unsupported IDs fail at startup. Fixture data is illustrative development data, not product intelligence. The profile disables external AI models and selects only the fixture provider; normal mode selects only the Jev provider. Fixtures never activate automatically, and a Jev failure never falls back to fixtures. `ProfessionalAssessmentResult.source` carries `JEV` or `LOCAL_FIXTURE` explicitly for future callers, along with the judgment schema and decision policy versions. The results view prominently marks local fixture output as development data.
 
-For local startup, run `./mvnw spring-boot:run -Dspring-boot.run.profiles=local-fixture`. This does not require Jev or OpenAI keys; the existing PostgreSQL development configuration still applies. No controller or form exists yet, so fixture IDs are currently supplied only by programmatic callers of the service.
+For local startup, run:
+
+```shell
+./mvnw spring-boot:run \
+  -Dspring-boot.run.profiles=local-fixture \
+  -Dspring-boot.run.arguments="--app.professional.fixture-id=senior_software_architect"
+```
+
+This does not require Jev or OpenAI keys; the existing PostgreSQL development configuration still applies. Visit `/professional-assessment` and enter a real job title and work details. Spring Security permits this public form and its stylesheet while keeping CSRF protection for the POST and requiring authentication for unrelated routes.
 
 `ProfessionalDecisionPolicyV1` is deterministic Java policy. It validates the atomic judgments, normalises their 0–4 values, applies explicit weights, assigns indicator bands, derives confidence and status, and selects structured explanation factors. It does not call Jev or OpenAI.
 

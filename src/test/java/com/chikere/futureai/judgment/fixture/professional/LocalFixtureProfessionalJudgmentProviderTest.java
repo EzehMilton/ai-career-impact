@@ -16,18 +16,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LocalFixtureProfessionalJudgmentProviderTest {
 
-    private final LocalFixtureProfessionalJudgmentProvider provider =
-            new LocalFixtureProfessionalJudgmentProvider();
-
     @Test
     void allExplicitFixturesAreDeterministicAndValidForTheRealPolicy() {
         assertThat(LocalFixtureProfessionalJudgmentProvider.supportedFixtureIds()).containsExactly(
                 "electrician", "registered_nurse", "routine_software_developer", "senior_software_architect");
-        assertThat(provider.source()).isEqualTo(AssessmentSource.LOCAL_FIXTURE);
         for (String id : LocalFixtureProfessionalJudgmentProvider.supportedFixtureIds()) {
-            AssessmentJudgmentSet first = provider.judge(state(id));
-            AssessmentJudgmentSet second = provider.judge(state(id));
+            LocalFixtureProfessionalJudgmentProvider provider =
+                    new LocalFixtureProfessionalJudgmentProvider(id);
+            AssessmentJudgmentSet first = provider.judge(state("A real job title"));
+            AssessmentJudgmentSet second = provider.judge(state("Another real job title"));
             assertThat(first).isEqualTo(second);
+            assertThat(provider.source()).isEqualTo(AssessmentSource.LOCAL_FIXTURE);
             assertThat(first.journey()).isEqualTo(JourneyType.PROFESSIONAL);
             assertThat(first.schemaVersion()).isEqualTo(ProfessionalJudgmentSchema.VERSION);
             assertThat(first.judgments()).hasSize(9);
@@ -37,10 +36,24 @@ class LocalFixtureProfessionalJudgmentProviderTest {
 
     @Test
     void unsupportedFixtureFailsRatherThanChoosingADefault() {
-        assertThatThrownBy(() -> provider.judge(state("Software Developer")))
+        assertThatThrownBy(() -> new LocalFixtureProfessionalJudgmentProvider("unknown"))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Unsupported professional fixture 'Software Developer'")
+                .hasMessageContaining("Unsupported app.professional.fixture-id 'unknown'")
                 .hasMessageContaining("routine_software_developer");
+        assertThatThrownBy(() -> new LocalFixtureProfessionalJudgmentProvider(""))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("app.professional.fixture-id");
+    }
+
+    @Test
+    void configuredFixtureNotProfessionDeterminesJudgments() {
+        ProfessionalAssessmentState state = state("Software Developer");
+        AssessmentJudgmentSet routine = new LocalFixtureProfessionalJudgmentProvider(
+                "routine_software_developer").judge(state);
+        AssessmentJudgmentSet architect = new LocalFixtureProfessionalJudgmentProvider(
+                "senior_software_architect").judge(state);
+
+        assertThat(routine).isNotEqualTo(architect);
     }
 
     private ProfessionalAssessmentState state(String profession) {

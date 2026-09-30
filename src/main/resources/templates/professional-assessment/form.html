@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Assess your work | AI Career Impact</title>
+  <link rel="stylesheet" th:href="@{/css/professional-assessment.css}" href="/css/professional-assessment.css">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="page-header">
+      <p class="eyebrow">Professional assessment</p>
+      <h1>How will AI affect the work you do?</h1>
+      <p class="intro">AI affects tasks differently even when people share the same job title. Describe what you actually do so the assessment can look at the nature of your work.</p>
+    </header>
+
+    <section class="panel" aria-labelledby="form-heading">
+      <h2 id="form-heading">Tell us about your work</h2>
+      <p class="helper">Focus on your day-to-day activities, decisions and responsibilities. A job title alone is not enough.</p>
+
+      <form th:action="@{/professional-assessment}" th:object="${form}" method="post" novalidate>
+        <div class="field">
+          <label for="profession">Job title <span class="required">Required</span></label>
+          <input id="profession" type="text" th:field="*{profession}" maxlength="120" autocomplete="organization-title"
+                 aria-describedby="profession-error" th:attr="aria-invalid=${#fields.hasErrors('profession')}">
+          <p id="profession-error" class="field-error" th:if="${#fields.hasErrors('profession')}" th:errors="*{profession}"></p>
+        </div>
+
+        <div class="field">
+          <label for="workDescription">What do you actually do? <span class="required">Required</span></label>
+          <p id="workDescription-help" class="helper">For example, describe the work you handle, how routine it is, the decisions you make and who relies on you.</p>
+          <textarea id="workDescription" th:field="*{workDescription}" rows="6" minlength="40" maxlength="4000"
+                    aria-describedby="workDescription-help workDescription-error" th:attr="aria-invalid=${#fields.hasErrors('workDescription')}"></textarea>
+          <p id="workDescription-error" class="field-error" th:if="${#fields.hasErrors('workDescription')}" th:errors="*{workDescription}"></p>
+        </div>
+
+        <div class="field">
+          <label for="responsibilities">Main responsibilities <span class="required">Required</span></label>
+          <p id="responsibilities-help" class="helper">Put one responsibility on each line.</p>
+          <textarea id="responsibilities" th:field="*{responsibilities}" rows="5" maxlength="4000"
+                    aria-describedby="responsibilities-help responsibilities-error" th:attr="aria-invalid=${#fields.hasErrors('responsibilities')}"></textarea>
+          <p id="responsibilities-error" class="field-error" th:if="${#fields.hasErrors('responsibilities')}" th:errors="*{responsibilities}"></p>
+        </div>
+
+        <div class="field">
+          <label for="skills">Skills you use <span class="required">Required</span></label>
+          <p id="skills-help" class="helper">Put one skill on each line.</p>
+          <textarea id="skills" th:field="*{skills}" rows="4" maxlength="2000"
+                    aria-describedby="skills-help skills-error" th:attr="aria-invalid=${#fields.hasErrors('skills')}"></textarea>
+          <p id="skills-error" class="field-error" th:if="${#fields.hasErrors('skills')}" th:errors="*{skills}"></p>
+        </div>
+
+        <div class="field field-short">
+          <label for="yearsOfExperience">Years of experience <span class="optional">Optional</span></label>
+          <input id="yearsOfExperience" type="number" th:field="*{yearsOfExperience}" min="0" max="70" inputmode="numeric"
+                 aria-describedby="yearsOfExperience-error" th:attr="aria-invalid=${#fields.hasErrors('yearsOfExperience')}">
+          <p id="yearsOfExperience-error" class="field-error" th:if="${#fields.hasErrors('yearsOfExperience')}" th:errors="*{yearsOfExperience}"></p>
+        </div>
+
+        <button type="submit">Assess my work</button>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

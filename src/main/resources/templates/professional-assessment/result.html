@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your professional assessment | AI Career Impact</title>
+  <link rel="stylesheet" th:href="@{/css/professional-assessment.css}" href="/css/professional-assessment.css">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="page-header">
+      <p class="eyebrow">Professional assessment</p>
+      <h1>Your work assessment</h1>
+      <p class="intro">For <strong th:text="${assessment.profession}">your role</strong></p>
+    </header>
+
+    <aside class="fixture-warning" th:if="${assessment.localFixture}" role="alert">
+      <strong>DEVELOPMENT MODE</strong>
+      <p>This assessment uses local fixture data and is not a live AI assessment.</p>
+    </aside>
+
+    <section class="panel" aria-labelledby="summary-heading">
+      <h2 id="summary-heading">Assessment summary</h2>
+      <dl class="summary-list">
+        <div><dt>Status</dt><dd th:text="${assessment.status}">Ready</dd></div>
+        <div><dt>Assessment confidence</dt><dd th:text="${assessment.confidence}">High</dd></div>
+      </dl>
+      <p th:if="${assessment.moreInformationRequired}" class="notice">More information is needed before numeric measures can be provided. Add more detail about your actual work and try again.</p>
+    </section>
+
+    <section class="results-section" th:unless="${assessment.moreInformationRequired}" aria-labelledby="measures-heading">
+      <h2 id="measures-heading">The four measures</h2>
+      <p class="helper">Indicators run from 0 to 10. They describe characteristics of the work, not a forecast of a person's employment.</p>
+      <div class="measure-grid">
+        <article class="panel measure-card" th:each="measure : ${assessment.measures}">
+          <h3 th:text="${measure.name}">Measure</h3>
+          <p class="measure-value"><strong th:text="${measure.indicator}">0.00</strong><span> / 10</span></p>
+          <dl class="measure-details">
+            <div><dt>Band</dt><dd th:text="${measure.band}">Low</dd></div>
+            <div><dt>Confidence</dt><dd th:text="${measure.confidence}">0%</dd></div>
+          </dl>
+          <p th:text="${measure.explanation}">Measure explanation.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="factor-grid" th:unless="${assessment.moreInformationRequired}" aria-label="Factors behind AI exposure">
+      <div class="panel">
+        <h2>What increases your AI exposure</h2>
+        <ul th:if="${!assessment.exposureDrivers.isEmpty()}">
+          <li th:each="factor : ${assessment.exposureDrivers}" th:text="${factor}">Exposure factor</li>
+        </ul>
+        <p th:if="${assessment.exposureDrivers.isEmpty()}">No strong exposure drivers were identified in the available judgments.</p>
+      </div>
+      <div class="panel">
+        <h2>What protects human value in this work</h2>
+        <ul th:if="${!assessment.protectiveFactors.isEmpty()}">
+          <li th:each="factor : ${assessment.protectiveFactors}" th:text="${factor}">Protective factor</li>
+        </ul>
+        <p th:if="${assessment.protectiveFactors.isEmpty()}">No strong protective factors were identified in the available judgments.</p>
+      </div>
+    </section>
+
+    <p class="page-action"><a href="/professional-assessment" th:href="@{/professional-assessment}">Assess another role</a></p>
+  </main>
+</body>
+</html>
