@@ -3,22 +3,29 @@ package com.chikere.futureai.assessment.professional.web;
 import com.chikere.futureai.assessment.domain.AssessmentConfidence;
 import com.chikere.futureai.assessment.domain.AssessmentStatus;
 import com.chikere.futureai.assessment.professional.application.AssessmentSource;
-import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentResult;
+import com.chikere.futureai.assessment.professional.application.StoredProfessionalAssessment;
 import com.chikere.futureai.decision.professional.ProfessionalDecisionFactor;
 import com.chikere.futureai.decision.professional.ProfessionalMeasure;
 import com.chikere.futureai.decision.professional.ProfessionalMeasureResult;
 import org.springframework.stereotype.Component;
+import com.chikere.futureai.narrative.professional.application.NarrativeStatus;
+import com.chikere.futureai.narrative.professional.application.StoredProfessionalNarrative;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 
 @Component
 public final class ProfessionalAssessmentViewMapper {
 
-    public ProfessionalAssessmentViewModel toView(String profession, ProfessionalAssessmentResult result) {
-        Objects.requireNonNull(result, "result must not be null");
+    public ProfessionalAssessmentViewModel toView(
+            StoredProfessionalAssessment snapshot,
+            Optional<StoredProfessionalNarrative> storedNarrative) {
+        Objects.requireNonNull(snapshot, "snapshot must not be null");
+        Objects.requireNonNull(storedNarrative, "storedNarrative must not be null");
+        var result = snapshot.result();
         var decision = result.decision();
         boolean needsInformation = decision.assessmentDecision().status()
                 == AssessmentStatus.MORE_INFORMATION_REQUIRED;
@@ -27,15 +34,26 @@ public final class ProfessionalAssessmentViewMapper {
                 : Arrays.stream(ProfessionalMeasure.values())
                         .map(measure -> measureView(decision.measure(measure).orElseThrow()))
                         .toList();
+        ProfessionalAssessmentViewModel.NarrativeView narrative = storedNarrative
+                .filter(stored -> stored.status() == NarrativeStatus.AVAILABLE)
+                .flatMap(StoredProfessionalNarrative::narrative)
+                .map(value -> new ProfessionalAssessmentViewModel.NarrativeView(
+                        value.headline(), value.summary(), value.whatThisMeans(),
+                        value.exposureExplanation(), value.humanAdvantageExplanation(),
+                        value.complementarityExplanation(), value.adaptabilityExplanation(),
+                        value.practicalActions(), value.cautionOrLimitations()))
+                .orElse(null);
         return new ProfessionalAssessmentViewModel(
-                profession,
+                snapshot.state().profession(),
                 statusLabel(decision.assessmentDecision().status()),
                 confidenceLabel(decision.assessmentDecision().confidence()),
                 needsInformation,
                 result.source() == AssessmentSource.LOCAL_FIXTURE,
                 measures,
                 decision.topExposureDrivers().stream().map(this::factorLabel).toList(),
-                decision.topProtectiveFactors().stream().map(this::factorLabel).toList());
+                decision.topProtectiveFactors().stream().map(this::factorLabel).toList(),
+                narrative == null,
+                narrative);
     }
 
     private ProfessionalAssessmentViewModel.MeasureView measureView(ProfessionalMeasureResult result) {

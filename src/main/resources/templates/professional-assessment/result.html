@@ -62,6 +62,39 @@
       </div>
     </section>
 
+    <section class="narrative-section" aria-labelledby="narrative-heading">
+      <h2 id="narrative-heading">Your personalised explanation</h2>
+      <div class="panel narrative-unavailable" th:if="${assessment.narrativeUnavailable}">
+        <p>Your assessment is complete, but the personalised explanation is temporarily unavailable.</p>
+      </div>
+      <article class="panel narrative-panel" th:if="${assessment.narrative != null}">
+        <h3 th:text="${assessment.narrative.headline}">Your assessment in context</h3>
+        <p class="narrative-summary" th:text="${assessment.narrative.summary}">Summary</p>
+
+        <h3>What this means</h3>
+        <p th:text="${assessment.narrative.whatThisMeans}">Meaning</p>
+
+        <h3>Why AI may affect your work</h3>
+        <p th:text="${assessment.narrative.exposureExplanation}">Exposure explanation</p>
+
+        <h3>Where your human advantage remains</h3>
+        <p th:text="${assessment.narrative.humanAdvantageExplanation}">Human advantage explanation</p>
+
+        <h3>How AI could complement your role</h3>
+        <p th:text="${assessment.narrative.complementarityExplanation}">Complementarity explanation</p>
+
+        <h3>How the role may adapt</h3>
+        <p th:text="${assessment.narrative.adaptabilityExplanation}">Adaptability explanation</p>
+
+        <h3>What to focus on next</h3>
+        <ul>
+          <li th:each="action : ${assessment.narrative.practicalActions}" th:text="${action}">Practical action</li>
+        </ul>
+
+        <p class="narrative-caution" th:text="${assessment.narrative.cautionOrLimitations}">Limitations</p>
+      </article>
+    </section>
+
     <p class="page-action"><a href="/professional-assessment" th:href="@{/professional-assessment}">Assess another role</a></p>
   </main>
 </body>

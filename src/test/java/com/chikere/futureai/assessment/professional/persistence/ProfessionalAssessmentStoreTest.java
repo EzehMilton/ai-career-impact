@@ -12,6 +12,12 @@ import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV1;
 import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
 import com.chikere.futureai.judgment.domain.DimensionJudgment;
 import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfessionalJudgmentProvider;
+import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeGenerator;
+import com.chikere.futureai.narrative.professional.application.NarrativeSource;
+import com.chikere.futureai.narrative.professional.application.NarrativeStatus;
+import com.chikere.futureai.narrative.professional.application.ProfessionalNarrative;
+import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeStore;
+import com.chikere.futureai.narrative.professional.application.StoredProfessionalNarrative;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,12 +41,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ProfessionalAssessmentStoreTest {
 
     @MockitoBean ProfessionalJudgmentProvider unusedLiveProvider;
+    @MockitoBean ProfessionalNarrativeGenerator unusedNarrativeGenerator;
     @Autowired ProfessionalAssessmentStore store;
+    @Autowired ProfessionalNarrativeStore narrativeStore;
     @Autowired Flyway flyway;
 
     @Test
     void migratedPostgresqlRoundTripPreservesCompleteSnapshot() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("1");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("2");
         var state = new ProfessionalAssessmentState("Software Architect",
                 "I design software and make consequential architecture decisions.",
                 List.of("Design platforms", "Resolve trade-offs"),
@@ -69,5 +77,33 @@ class ProfessionalAssessmentStoreTest {
         assertThat(loaded.result().decision().measures()).hasSize(4);
         assertThat(loaded.result().decision().topExposureDrivers()).isNotEmpty();
         assertThat(store.findById(UUID.randomUUID())).isEmpty();
+    }
+
+    @Test
+    void migratedPostgresqlRoundTripPreservesNarrativeLifecycleContentAndProvenance() {
+        var state = new ProfessionalAssessmentState("Electrician", "Installs and tests electrical systems.",
+                List.of("Install wiring"), List.of("Diagnostics"), OptionalInt.of(8));
+        var judgments = new LocalFixtureProfessionalJudgmentProvider("electrician").judge(state);
+        var decision = new ProfessionalDecisionPolicyV1().decide(judgments);
+        var result = new ProfessionalAssessmentResult(decision, AssessmentSource.LOCAL_FIXTURE,
+                judgments.schemaVersion(), decision.policyVersion());
+        UUID id = UUID.randomUUID();
+        store.save(new StoredProfessionalAssessment(id, Instant.parse("2026-09-30T12:00:00Z"), state,
+                judgments, result, Optional.empty()));
+        var narrative = new ProfessionalNarrative("Measured change", "Saved summary", "Saved meaning",
+                "Saved exposure", "Saved human advantage", "Saved complementarity", "Saved adaptability",
+                List.of("Review repeatable work", "Strengthen human context", "Document accountability"),
+                "Saved caution");
+        Instant attempted = Instant.parse("2026-09-30T12:01:00Z");
+        Instant generated = Instant.parse("2026-09-30T12:01:05Z");
+        var stored = new StoredProfessionalNarrative(id, NarrativeStatus.AVAILABLE, Optional.of(narrative),
+                NarrativeSource.LOCAL_FIXTURE, "local-fixture", Optional.of("configured-alias"),
+                "professional-narrative-v1", attempted, Optional.of(generated));
+
+        narrativeStore.save(stored);
+
+        assertThat(narrativeStore.findByAssessmentId(id)).contains(stored);
+        assertThat(narrativeStore.findByAssessmentId(id).orElseThrow().narrative().orElseThrow()
+                .practicalActions()).containsExactlyElementsOf(narrative.practicalActions());
     }
 }

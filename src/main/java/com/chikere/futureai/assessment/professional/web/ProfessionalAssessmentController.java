@@ -2,6 +2,8 @@ package com.chikere.futureai.assessment.professional.web;
 
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentService;
+import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentWorkflow;
+import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeService;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -23,14 +25,20 @@ public final class ProfessionalAssessmentController {
     private static final String FORM_VIEW = "professional-assessment/form";
 
     private final ProfessionalAssessmentService assessmentService;
+    private final ProfessionalAssessmentWorkflow workflow;
+    private final ProfessionalNarrativeService narrativeService;
     private final ProfessionalAssessmentFormMapper formMapper;
     private final ProfessionalAssessmentViewMapper viewMapper;
 
     public ProfessionalAssessmentController(
             ProfessionalAssessmentService assessmentService,
+            ProfessionalAssessmentWorkflow workflow,
+            ProfessionalNarrativeService narrativeService,
             ProfessionalAssessmentFormMapper formMapper,
             ProfessionalAssessmentViewMapper viewMapper) {
         this.assessmentService = assessmentService;
+        this.workflow = workflow;
+        this.narrativeService = narrativeService;
         this.formMapper = formMapper;
         this.viewMapper = viewMapper;
     }
@@ -52,7 +60,7 @@ public final class ProfessionalAssessmentController {
         }
         try {
             ProfessionalAssessmentState state = formMapper.toState(form);
-            UUID id = assessmentService.submitProfessionalAssessment(state);
+            UUID id = workflow.submit(state);
             return "redirect:/professional-assessment/" + id;
         }
         catch (RuntimeException exception) {
@@ -81,7 +89,7 @@ public final class ProfessionalAssessmentController {
             }
             var snapshot = saved.orElseThrow();
             model.addAttribute("assessment", viewMapper.toView(
-                    snapshot.state().profession(), snapshot.result()));
+                    snapshot, narrativeService.findFor(id)));
             return "professional-assessment/result";
         }
         catch (RuntimeException exception) {

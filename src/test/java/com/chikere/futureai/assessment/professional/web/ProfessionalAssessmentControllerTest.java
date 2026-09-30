@@ -5,12 +5,18 @@ import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.assessment.professional.application.AssessmentSource;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentResult;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentService;
+import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentWorkflow;
 import com.chikere.futureai.assessment.professional.application.StoredProfessionalAssessment;
 import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV1;
 import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
 import com.chikere.futureai.judgment.domain.DimensionJudgment;
 import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfessionalJudgmentProvider;
 import com.chikere.futureai.security.WebSecurityConfiguration;
+import com.chikere.futureai.narrative.professional.application.NarrativeSource;
+import com.chikere.futureai.narrative.professional.application.NarrativeStatus;
+import com.chikere.futureai.narrative.professional.application.ProfessionalNarrative;
+import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeService;
+import com.chikere.futureai.narrative.professional.application.StoredProfessionalNarrative;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,11 +26,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
-import java.util.Optional;
 import java.util.UUID;
 import java.time.Instant;
 
@@ -57,6 +63,12 @@ class ProfessionalAssessmentControllerTest {
     @MockitoBean
     ProfessionalAssessmentService assessmentService;
 
+    @MockitoBean
+    ProfessionalAssessmentWorkflow workflow;
+
+    @MockitoBean
+    ProfessionalNarrativeService narrativeService;
+
     @Test
     void publicGetRendersAccessibleFormAndCssIsPublic() throws Exception {
         mvc.perform(get("/professional-assessment"))
@@ -70,7 +82,7 @@ class ProfessionalAssessmentControllerTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(".page-shell")));
         mvc.perform(get("/unrelated-private-page"))
                 .andExpect(status().is3xxRedirection());
-        verifyNoInteractions(assessmentService);
+        verifyNoInteractions(assessmentService, workflow, narrativeService);
     }
 
     @Test
@@ -87,18 +99,19 @@ class ProfessionalAssessmentControllerTest {
                 .andExpect(model().attributeHasFieldErrors("form", "profession", "workDescription",
                         "responsibilities", "skills", "yearsOfExperience"))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Enter your job title.")));
-        verifyNoInteractions(assessmentService);
+        verifyNoInteractions(assessmentService, workflow, narrativeService);
     }
 
     @Test
     void validPostCallsServiceOnceAndRedirectsToSavedResult() throws Exception {
-        when(assessmentService.submitProfessionalAssessment(any())).thenReturn(SAVED_ID);
+        when(workflow.submit(any())).thenReturn(SAVED_ID);
 
         mvc.perform(validPost().with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/professional-assessment/" + SAVED_ID));
         when(assessmentService.getProfessionalAssessment(SAVED_ID))
                 .thenReturn(Optional.of(snapshot(AssessmentSource.JEV, false)));
+        when(narrativeService.findFor(SAVED_ID)).thenReturn(Optional.empty());
         mvc.perform(get("/professional-assessment/" + SAVED_ID))
                 .andExpect(status().isOk())
                 .andExpect(view().name("professional-assessment/result"))
@@ -109,6 +122,7 @@ class ProfessionalAssessmentControllerTest {
                         org.hamcrest.Matchers.containsString("AI Complementarity"),
                         org.hamcrest.Matchers.containsString("Role Adaptability"),
                         org.hamcrest.Matchers.containsString("not a probability that your job will disappear"),
+                        org.hamcrest.Matchers.containsString("personalised explanation is temporarily unavailable"),
                         org.hamcrest.Matchers.containsString("does not measure your motivation"),
                         org.hamcrest.Matchers.containsString("Much of the work can be performed digitally"),
                         org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("DEVELOPMENT MODE")),
@@ -118,7 +132,7 @@ class ProfessionalAssessmentControllerTest {
         mvc.perform(get("/professional-assessment/" + SAVED_ID)).andExpect(status().isOk());
         ArgumentCaptor<ProfessionalAssessmentState> state =
                 ArgumentCaptor.forClass(ProfessionalAssessmentState.class);
-        verify(assessmentService, times(1)).submitProfessionalAssessment(state.capture());
+        verify(workflow, times(1)).submit(state.capture());
         verify(assessmentService, times(2)).getProfessionalAssessment(SAVED_ID);
         assertThat(state.getValue().profession()).isEqualTo("Software Architect");
         assertThat(state.getValue().responsibilities()).containsExactly("Design systems", "Resolve trade-offs");
@@ -140,8 +154,54 @@ class ProfessionalAssessmentControllerTest {
     }
 
     @Test
+    void availableNarrativeRendersStructuredEscapedContentWithoutProviderDetails() throws Exception {
+        when(assessmentService.getProfessionalAssessment(SAVED_ID))
+                .thenReturn(Optional.of(snapshot(AssessmentSource.JEV, false)));
+        var narrative = new ProfessionalNarrative("<script>alert('x')</script>", "Saved summary",
+                "Saved meaning", "Saved exposure", "Saved human value", "Saved complementarity",
+                "Saved adaptability", List.of("Review repeatable work", "Keep human review", "Document decisions"),
+                "Saved caution");
+        Instant generated = Instant.parse("2026-01-02T00:00:00Z");
+        when(narrativeService.findFor(SAVED_ID)).thenReturn(Optional.of(
+                new StoredProfessionalNarrative(SAVED_ID, NarrativeStatus.AVAILABLE, Optional.of(narrative),
+                        NarrativeSource.OPENAI, "secret-provider-detail", Optional.of("secret-model"),
+                        "professional-narrative-v1", generated, Optional.of(generated))));
+
+        String html = mvc.perform(get("/professional-assessment/" + SAVED_ID))
+                .andExpect(status().isOk())
+                .andExpect(view().name("professional-assessment/result"))
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("Your personalised explanation", "What this means",
+                "Why AI may affect your work", "Where your human advantage remains",
+                "How AI could complement your role", "What to focus on next",
+                "&lt;script&gt;alert(&#39;x&#39;)&lt;/script&gt;", "Review repeatable work");
+        assertThat(html).doesNotContain("<script>alert", "secret-provider-detail", "secret-model",
+                "professional-narrative-v1");
+    }
+
+    @Test
+    void failedNarrativeKeepsDeterministicMeasuresAndRendersSafeMessage() throws Exception {
+        when(assessmentService.getProfessionalAssessment(SAVED_ID))
+                .thenReturn(Optional.of(snapshot(AssessmentSource.JEV, false)));
+        Instant attempted = Instant.parse("2026-01-02T00:00:00Z");
+        when(narrativeService.findFor(SAVED_ID)).thenReturn(Optional.of(
+                new StoredProfessionalNarrative(SAVED_ID, NarrativeStatus.FAILED, Optional.empty(),
+                        NarrativeSource.OPENAI, "openai", Optional.of("hidden-model"),
+                        "professional-narrative-v1", attempted, Optional.empty())));
+
+        String html = mvc.perform(get("/professional-assessment/" + SAVED_ID))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("AI Exposure", "Human Advantage",
+                "personalised explanation is temporarily unavailable");
+        assertThat(html).doesNotContain("hidden-model", "provider exception");
+    }
+
+    @Test
     void providerFailureRendersSafeErrorWithoutLeakingExceptionDetails() throws Exception {
-        when(assessmentService.submitProfessionalAssessment(any())).thenThrow(
+        when(workflow.submit(any())).thenThrow(
                 new IllegalStateException("Vendor failure with secret API key"));
 
         String html = mvc.perform(validPost().with(csrf()))
@@ -155,7 +215,7 @@ class ProfessionalAssessmentControllerTest {
 
     @Test
     void persistenceFailureIsSafeAndUnknownOrMalformedIdsReturn404() throws Exception {
-        when(assessmentService.submitProfessionalAssessment(any())).thenThrow(
+        when(workflow.submit(any())).thenThrow(
                 new IllegalStateException("PostgreSQL secret detail"));
         mvc.perform(validPost().with(csrf()))
                 .andExpect(status().isServiceUnavailable())
