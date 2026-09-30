@@ -4,6 +4,7 @@ import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentService;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentWorkflow;
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeService;
+import com.chikere.futureai.evidence.professional.application.ProfessionalEvidenceService;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -27,6 +28,7 @@ public final class ProfessionalAssessmentController {
     private final ProfessionalAssessmentService assessmentService;
     private final ProfessionalAssessmentWorkflow workflow;
     private final ProfessionalNarrativeService narrativeService;
+    private final ProfessionalEvidenceService evidenceService;
     private final ProfessionalAssessmentFormMapper formMapper;
     private final ProfessionalAssessmentViewMapper viewMapper;
 
@@ -34,11 +36,13 @@ public final class ProfessionalAssessmentController {
             ProfessionalAssessmentService assessmentService,
             ProfessionalAssessmentWorkflow workflow,
             ProfessionalNarrativeService narrativeService,
+            ProfessionalEvidenceService evidenceService,
             ProfessionalAssessmentFormMapper formMapper,
             ProfessionalAssessmentViewMapper viewMapper) {
         this.assessmentService = assessmentService;
         this.workflow = workflow;
         this.narrativeService = narrativeService;
+        this.evidenceService = evidenceService;
         this.formMapper = formMapper;
         this.viewMapper = viewMapper;
     }
@@ -89,7 +93,7 @@ public final class ProfessionalAssessmentController {
             }
             var snapshot = saved.orElseThrow();
             model.addAttribute("assessment", viewMapper.toView(
-                    snapshot, narrativeService.findFor(id)));
+                    snapshot, narrativeService.findFor(id), evidenceService.findFor(id)));
             return "professional-assessment/result";
         }
         catch (RuntimeException exception) {

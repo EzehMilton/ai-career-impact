@@ -17,6 +17,8 @@ import com.chikere.futureai.narrative.professional.application.NarrativeStatus;
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrative;
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeService;
 import com.chikere.futureai.narrative.professional.application.StoredProfessionalNarrative;
+import com.chikere.futureai.evidence.professional.application.ProfessionalEvidenceService;
+import com.chikere.futureai.evidence.professional.application.*;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,8 @@ import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.UUID;
 import java.time.Instant;
+import java.net.URI;
+import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -68,6 +72,9 @@ class ProfessionalAssessmentControllerTest {
 
     @MockitoBean
     ProfessionalNarrativeService narrativeService;
+
+    @MockitoBean
+    ProfessionalEvidenceService evidenceService;
 
     @Test
     void publicGetRendersAccessibleFormAndCssIsPublic() throws Exception {
@@ -134,6 +141,8 @@ class ProfessionalAssessmentControllerTest {
                 ArgumentCaptor.forClass(ProfessionalAssessmentState.class);
         verify(workflow, times(1)).submit(state.capture());
         verify(assessmentService, times(2)).getProfessionalAssessment(SAVED_ID);
+        verify(evidenceService, times(2)).findFor(SAVED_ID);
+        verify(evidenceService, never()).gatherFor(any());
         assertThat(state.getValue().profession()).isEqualTo("Software Architect");
         assertThat(state.getValue().responsibilities()).containsExactly("Design systems", "Resolve trade-offs");
     }
@@ -197,6 +206,76 @@ class ProfessionalAssessmentControllerTest {
         assertThat(html).contains("AI Exposure", "Human Advantage",
                 "personalised explanation is temporarily unavailable");
         assertThat(html).doesNotContain("hidden-model", "provider exception");
+    }
+
+    @Test
+    void availableEvidenceRendersAsSeparateEscapedContextWithoutProviderDetails() throws Exception {
+        when(assessmentService.getProfessionalAssessment(SAVED_ID))
+                .thenReturn(Optional.of(snapshot(AssessmentSource.JEV, false)));
+        Instant retrieved = Instant.parse("2026-09-30T12:00:00Z");
+        var item = new ProfessionalEvidenceItem(ProfessionalEvidenceCategory.OCCUPATION_OUTLOOK,
+                "<script>alert('evidence')</script>", "Saved factual context", "Nomis APS218",
+                Optional.of("hidden-ref"), Optional.of(URI.create("https://www.nomisweb.co.uk/datasets/aps218")),
+                Optional.of("Office for National Statistics"), Optional.of("United Kingdom"), Optional.empty(),
+                retrieved, Optional.of("Estimated employment"), Optional.of(new BigDecimal("123400")),
+                Optional.of("people"), EvidenceSourceQuality.OFFICIAL, "Context only; not score validation.");
+        when(evidenceService.findFor(SAVED_ID)).thenReturn(Optional.of(new ProfessionalEvidenceBundle(SAVED_ID,
+                "professional-evidence-v1", EvidenceSource.LIVE, "secret-adapter-class",
+                EvidenceStatus.AVAILABLE, retrieved, List.of(item))));
+
+        String html = mvc.perform(get("/professional-assessment/" + SAVED_ID))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("External career context", "factual context from separate sources",
+                "&lt;script&gt;alert(&#39;evidence&#39;)&lt;/script&gt;", "Estimated employment: 123400 people",
+                "Office for National Statistics", "https://www.nomisweb.co.uk/datasets/aps218",
+                "rel=\"noopener noreferrer\"");
+        assertThat(html).doesNotContain("<script>alert", "secret-adapter-class", "professional-evidence-v1",
+                "hidden-ref");
+        verify(evidenceService, never()).gatherFor(any());
+    }
+
+    @Test
+    void partialAndFailedEvidenceKeepAssessmentReadableAndShowSafeNotices() throws Exception {
+        when(assessmentService.getProfessionalAssessment(SAVED_ID))
+                .thenReturn(Optional.of(snapshot(AssessmentSource.JEV, false)));
+        Instant retrieved = Instant.parse("2026-09-30T12:00:00Z");
+        var item = new ProfessionalEvidenceItem(ProfessionalEvidenceCategory.SKILL_DEMAND,
+                "Available item", "One source succeeded.", "Source", Optional.empty(), Optional.empty(),
+                Optional.empty(), Optional.of("United Kingdom"), Optional.empty(), retrieved,
+                Optional.empty(), Optional.empty(), Optional.empty(), EvidenceSourceQuality.PRIMARY, "Related context.");
+        when(evidenceService.findFor(SAVED_ID)).thenReturn(Optional.of(new ProfessionalEvidenceBundle(SAVED_ID,
+                "professional-evidence-v1", EvidenceSource.LIVE, "real", EvidenceStatus.PARTIAL,
+                retrieved, List.of(item))));
+        String partial = mvc.perform(get("/professional-assessment/" + SAVED_ID))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(partial).contains("AI Exposure", "Some external career context is currently unavailable",
+                "Available item");
+
+        when(evidenceService.findFor(SAVED_ID)).thenReturn(Optional.of(new ProfessionalEvidenceBundle(SAVED_ID,
+                "professional-evidence-v1", EvidenceSource.LIVE, "real", EvidenceStatus.FAILED,
+                retrieved, List.of())));
+        String failed = mvc.perform(get("/professional-assessment/" + SAVED_ID))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(failed).contains("AI Exposure", "External career context is currently unavailable");
+        assertThat(failed).doesNotContain("provider exception", "secret");
+    }
+
+    @Test
+    void fixtureEvidenceIsUnmistakablyDevelopmentData() throws Exception {
+        when(assessmentService.getProfessionalAssessment(SAVED_ID))
+                .thenReturn(Optional.of(snapshot(AssessmentSource.LOCAL_FIXTURE, false)));
+        var provider = new com.chikere.futureai.evidence.professional.fixture.LocalFixtureProfessionalEvidenceProvider(
+                "senior_software_architect");
+        when(evidenceService.findFor(SAVED_ID)).thenReturn(Optional.of(provider.gather(
+                new ProfessionalEvidenceRequest(SAVED_ID, "Software Architect", List.of("Design"),
+                        List.of("Architecture"), "United Kingdom", JourneyType.PROFESSIONAL, Optional.empty()))));
+
+        String html = mvc.perform(get("/professional-assessment/" + SAVED_ID))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(html).contains("DEVELOPMENT MODE", "Local development evidence — not live official data",
+                "Local fixture evidence");
+        assertThat(html).doesNotContain("gov.uk");
     }
 
     @Test

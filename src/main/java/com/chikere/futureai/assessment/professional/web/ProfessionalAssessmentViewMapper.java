@@ -10,6 +10,10 @@ import com.chikere.futureai.decision.professional.ProfessionalMeasureResult;
 import org.springframework.stereotype.Component;
 import com.chikere.futureai.narrative.professional.application.NarrativeStatus;
 import com.chikere.futureai.narrative.professional.application.StoredProfessionalNarrative;
+import com.chikere.futureai.evidence.professional.application.EvidenceSource;
+import com.chikere.futureai.evidence.professional.application.EvidenceStatus;
+import com.chikere.futureai.evidence.professional.application.ProfessionalEvidenceBundle;
+import com.chikere.futureai.evidence.professional.application.ProfessionalEvidenceItem;
 
 import java.util.Arrays;
 import java.util.List;
@@ -22,9 +26,11 @@ public final class ProfessionalAssessmentViewMapper {
 
     public ProfessionalAssessmentViewModel toView(
             StoredProfessionalAssessment snapshot,
-            Optional<StoredProfessionalNarrative> storedNarrative) {
+            Optional<StoredProfessionalNarrative> storedNarrative,
+            Optional<ProfessionalEvidenceBundle> storedEvidence) {
         Objects.requireNonNull(snapshot, "snapshot must not be null");
         Objects.requireNonNull(storedNarrative, "storedNarrative must not be null");
+        Objects.requireNonNull(storedEvidence, "storedEvidence must not be null");
         var result = snapshot.result();
         var decision = result.decision();
         boolean needsInformation = decision.assessmentDecision().status()
@@ -43,17 +49,53 @@ public final class ProfessionalAssessmentViewMapper {
                         value.complementarityExplanation(), value.adaptabilityExplanation(),
                         value.practicalActions(), value.cautionOrLimitations()))
                 .orElse(null);
+        List<ProfessionalAssessmentViewModel.EvidenceView> evidenceItems = storedEvidence
+                .filter(bundle -> bundle.status() == EvidenceStatus.AVAILABLE
+                        || bundle.status() == EvidenceStatus.PARTIAL)
+                .stream().flatMap(bundle -> bundle.items().stream()).map(this::evidenceView).toList();
+        boolean evidencePartial = storedEvidence.map(bundle -> bundle.status() == EvidenceStatus.PARTIAL).orElse(false);
+        boolean evidenceUnavailable = storedEvidence.isEmpty() || storedEvidence
+                .map(bundle -> bundle.status() == EvidenceStatus.PENDING || bundle.status() == EvidenceStatus.FAILED)
+                .orElse(true);
+        boolean fixtureEvidence = storedEvidence
+                .map(bundle -> bundle.source() == EvidenceSource.LOCAL_FIXTURE).orElse(false);
         return new ProfessionalAssessmentViewModel(
                 snapshot.state().profession(),
                 statusLabel(decision.assessmentDecision().status()),
                 confidenceLabel(decision.assessmentDecision().confidence()),
                 needsInformation,
-                result.source() == AssessmentSource.LOCAL_FIXTURE,
+                result.source() == AssessmentSource.LOCAL_FIXTURE || fixtureEvidence,
                 measures,
                 decision.topExposureDrivers().stream().map(this::factorLabel).toList(),
                 decision.topProtectiveFactors().stream().map(this::factorLabel).toList(),
                 narrative == null,
-                narrative);
+                narrative,
+                evidenceUnavailable,
+                evidencePartial,
+                fixtureEvidence,
+                evidenceItems);
+    }
+
+    private ProfessionalAssessmentViewModel.EvidenceView evidenceView(ProfessionalEvidenceItem item) {
+        String source = item.publisher().map(publisher -> item.sourceName() + " · " + publisher)
+                .orElse(item.sourceName());
+        String date = item.publicationDate().map(Object::toString)
+                .orElse("Retrieved " + item.retrievedAt().toString().substring(0, 10));
+        String metric = item.metricValue().map(value -> item.metricName().orElseThrow() + ": "
+                + value.stripTrailingZeros().toPlainString() + " " + item.metricUnit().orElseThrow()).orElse(null);
+        return new ProfessionalAssessmentViewModel.EvidenceView(categoryLabel(item), item.title(), item.summary(),
+                source, item.geography().orElse(null), date, metric,
+                item.sourceUrl().map(Object::toString).orElse(null), item.relevanceNote());
+    }
+
+    private String categoryLabel(ProfessionalEvidenceItem item) {
+        return switch (item.category()) {
+            case OCCUPATION_OUTLOOK -> "Occupation outlook";
+            case EMPLOYMENT_TREND -> "Employment trend";
+            case SKILL_DEMAND -> "Skill demand";
+            case SALARY_CONTEXT -> "Salary context";
+            case AI_AUTOMATION_CONTEXT -> "AI and automation context";
+        };
     }
 
     private ProfessionalAssessmentViewModel.MeasureView measureView(ProfessionalMeasureResult result) {

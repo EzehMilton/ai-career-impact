@@ -14,8 +14,16 @@ import com.chikere.futureai.narrative.professional.fixture.LocalFixtureProfessio
 import com.chikere.futureai.narrative.professional.openai.OpenAiProfessionalNarrativeConfiguration;
 import com.chikere.futureai.narrative.professional.openai.OpenAiProfessionalNarrativeGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.chikere.futureai.evidence.professional.application.EvidenceSource;
+import com.chikere.futureai.evidence.professional.application.ProfessionalEvidenceProvider;
+import com.chikere.futureai.evidence.professional.application.ProfessionalEvidenceStore;
+import com.chikere.futureai.evidence.professional.fixture.LocalFixtureProfessionalEvidenceConfiguration;
+import com.chikere.futureai.evidence.professional.fixture.LocalFixtureProfessionalEvidenceProvider;
+import com.chikere.futureai.evidence.professional.nomis.NomisProfessionalEvidenceConfiguration;
+import com.chikere.futureai.evidence.professional.nomis.NomisProfessionalEvidenceProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.web.client.RestClient;
 import org.springaicommunity.typesafe.TypeSafeClient;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
@@ -35,11 +43,15 @@ class ProfessionalProviderWiringTest {
                     ProfessionalAssessmentConfiguration.class,
                     LocalFixtureProfessionalConfiguration.class,
                     LocalFixtureProfessionalNarrativeConfiguration.class,
+                    LocalFixtureProfessionalEvidenceConfiguration.class,
+                    NomisProfessionalEvidenceConfiguration.class,
                     OpenAiProfessionalNarrativeConfiguration.class)
             .withBean(TypeSafeClient.class, () -> mock(TypeSafeClient.class))
             .withBean(ProfessionalAssessmentStore.class, () -> mock(ProfessionalAssessmentStore.class))
             .withBean(ProfessionalNarrativeStore.class, () -> mock(ProfessionalNarrativeStore.class))
+            .withBean(ProfessionalEvidenceStore.class, () -> mock(ProfessionalEvidenceStore.class))
             .withBean(ObjectMapper.class, ObjectMapper::new)
+            .withBean(RestClient.Builder.class, RestClient::builder)
             .withBean(ChatClient.Builder.class, () -> {
                 ChatClient.Builder builder = mock(ChatClient.Builder.class);
                 org.mockito.Mockito.when(builder.build()).thenReturn(mock(ChatClient.class));
@@ -64,6 +76,7 @@ class ProfessionalProviderWiringTest {
                     .isEqualTo(NarrativeSource.OPENAI);
             assertThat(context.getBean(ProfessionalNarrativeGenerator.class).modelIdentifier())
                     .contains("gpt-test");
+            assertThat(context).doesNotHaveBean(ProfessionalEvidenceProvider.class);
         });
     }
 
@@ -91,6 +104,11 @@ class ProfessionalProviderWiringTest {
                     assertThat(context.getBean(ProfessionalNarrativeGenerator.class).source())
                             .isEqualTo(NarrativeSource.LOCAL_FIXTURE);
                     assertThat(context).doesNotHaveBean(OpenAiProfessionalNarrativeGenerator.class);
+                    assertThat(context).hasSingleBean(ProfessionalEvidenceProvider.class);
+                    assertThat(context.getBean(ProfessionalEvidenceProvider.class))
+                            .isInstanceOf(LocalFixtureProfessionalEvidenceProvider.class);
+                    assertThat(context.getBean(ProfessionalEvidenceProvider.class).source())
+                            .isEqualTo(EvidenceSource.LOCAL_FIXTURE);
                 });
     }
 
@@ -105,5 +123,22 @@ class ProfessionalProviderWiringTest {
                 .run(context -> assertThat(context.getStartupFailure())
                         .hasRootCauseInstanceOf(IllegalArgumentException.class)
                         .hasStackTraceContaining("Unsupported app.professional.fixture-id"));
+    }
+
+    @Test
+    void liveEvidenceProfileSelectsNomisWithoutCallingIt() {
+        contextRunner.withPropertyValues(
+                        "app.professional.evidence.classified-profession=Software Architect",
+                        "app.professional.evidence.soc2020-code=2133")
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("live-evidence"))
+                .run(context -> {
+                    assertThat(context).hasNotFailed();
+                    assertThat(context).hasSingleBean(ProfessionalEvidenceProvider.class);
+                    assertThat(context.getBean(ProfessionalEvidenceProvider.class))
+                            .isInstanceOf(NomisProfessionalEvidenceProvider.class);
+                    assertThat(context.getBean(ProfessionalEvidenceProvider.class).source())
+                            .isEqualTo(EvidenceSource.LIVE);
+                    assertThat(context).doesNotHaveBean(LocalFixtureProfessionalEvidenceProvider.class);
+                });
     }
 }
