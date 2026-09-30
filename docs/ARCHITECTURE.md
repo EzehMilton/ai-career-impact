@@ -15,14 +15,20 @@ Java journey-specific decision policy
     ↓
 AssessmentDecision
     ↓
-OpenAI explanation
+Persisted assessment snapshot
     ↓
-Jev verification for premium reports
+OpenAI or local-fixture explanation
     ↓
-User-facing result/report
+Persisted narrative
+    ↓
+Nomis/ONS or local-fixture evidence
+    ↓
+Persisted evidence
+    ↓
+Deterministic free/paid report composition
 ```
 
-Jev supplies small, explicit judgments rather than an overall business decision. Deterministic Java policies combine those judgments using journey-specific weights, thresholds, and rules. OpenAI turns the resulting decision into accessible narrative, but does not determine the authoritative score. External evidence is currently gathered and displayed separately; it is not sent to OpenAI in this phase. Premium reports may later add a final Jev verification step before presentation.
+Jev supplies small, explicit judgments rather than an overall business decision. Deterministic Java policies combine those judgments using journey-specific weights, thresholds, and rules. OpenAI turns the resulting decision into accessible narrative, but does not determine the authoritative score. External evidence is gathered and displayed separately; it is not sent to OpenAI. Free and paid reports compose the same saved package and do not make another assessment call.
 
 External facts, including salaries and labour-market statistics, must come from an evidence layer with traceable sources rather than from model memory.
 
@@ -42,7 +48,7 @@ The journeys therefore share the `AssessmentDecision` result shape, but not a un
 - `narrative`: explanation generation from authoritative decisions and evidence.
 - `evidence`: sourced external facts and provenance.
 - `career`: career and occupation concepts shared where their meaning is genuinely common.
-- `report`: report assembly, premium verification, and presentation models.
+- `report`: deterministic tiered report assembly and presentation models.
 - `payment`: payment and entitlement workflows.
 - `analytics`: product and assessment analytics.
 - `security`: identity, access, and data-protection concerns.
@@ -107,7 +113,7 @@ ProfessionalJevJudgmentService    LocalFixtureProfessionalJudgmentProvider
 
 Write flow: browser POST → form validation → form mapper → application service → Jev or explicit local fixture → `AssessmentJudgmentSet` → `ProfessionalDecisionPolicyV1` → `ProfessionalAssessmentResult` → `ProfessionalAssessmentStore` → JPA adapter → PostgreSQL → redirect to `/professional-assessment/{UUID}`.
 
-Read flow: GET `/professional-assessment/{UUID}` → application service → store → PostgreSQL → saved `StoredProfessionalAssessment` → existing view mapper → Thymeleaf. The GET does not invoke the judgment provider or policy. Post/Redirect/Get means a browser refresh repeats only the GET, avoiding a second paid Jev request.
+Read flow: GET `/professional-assessment/{UUID}` → `ProfessionalReportService` → saved package stores → `ProfessionalReportAssembler` → free view mapper → Thymeleaf. The GET does not invoke the judgment provider or policy. Post/Redirect/Get means a browser refresh repeats only the GET, avoiding a second paid Jev request.
 
 `ProfessionalAssessmentStore` is a vendor-neutral application port. Its JPA adapter maps the immutable application snapshot to dedicated persistence entities. Domain and decision records remain free of JPA annotations. Flyway V1 creates an assessment row with input and provenance, judgment rows for all nine dimensions, measure rows, and ordered factor rows. JSONB holds only the ordered responsibility/skill and decision ID lists, plus each judgment's probability distribution. Nullable columns preserve absent Noul confidence rather than inventing a value. The saved decision includes its original scores, bands, confidence, status, and structured factors; reading an old assessment never recalculates it under today's policy. Schema and policy versions identify the methodology that produced it.
 
@@ -219,7 +225,7 @@ OpenAI does not produce or rewrite this evidence. Salary figures, employment est
 
 ### Live and fixture adapters
 
-The first live adapter uses the official ONS Annual Population Survey regional occupation dataset exposed by the Nomis API (`APS218`). It performs one bounded request for the latest UK occupational employment estimate, using an explicitly supplied SOC 2020 classification. It does not scrape web pages and does not infer or fuzzily match an occupation code from the submitted title. Until classification is captured by the product, the `live-evidence` profile requires `PROFESSIONAL_EVIDENCE_PROFESSION` and `PROFESSIONAL_EVIDENCE_SOC2020_CODE` together; the title must match exactly. This is intentionally limited: V1 proves the replaceable adapter boundary but does not yet supply trend series, salary, skills or automation research for every role.
+The first live adapter uses the official ONS Annual Population Survey regional occupation dataset exposed by the Nomis API (`APS218`). It performs one bounded request for the latest UK occupational employment estimate, using a saved SOC 2020 classification. It does not scrape web pages and does not infer or fuzzily match an occupation code from the submitted title. For now the `live-evidence` profile uses an exact operator-configured mapping requiring `PROFESSIONAL_EVIDENCE_PROFESSION`, `PROFESSIONAL_EVIDENCE_CANONICAL_OCCUPATION` and `PROFESSIONAL_EVIDENCE_SOC2020_CODE`; the submitted title must match exactly. This is intentionally limited: V1 proves the replaceable classifier and evidence-adapter boundaries but does not yet provide broad official occupation lookup, trend series, salary, skills or automation research for every role.
 
 Live evidence is opt-in through the `live-evidence` Spring profile. With no evidence profile there is no provider and evidence remains `NOT_REQUESTED` (represented by no row). Ordinary tests and normal development therefore make no live evidence request. No API key is required for the bounded anonymous Nomis request; if a future adapter needs credentials, they must come from environment configuration and must never be persisted or logged.
 
@@ -235,4 +241,46 @@ Flyway V3 adds `professional_assessment_evidence_bundle`, keyed one-to-one by as
 
 Evidence is a historical snapshot. `gatherFor` returns any existing row—including `FAILED`, `PARTIAL` or an older version—without another provider call. GET `/professional-assessment/{UUID}` uses only `findFor`; it does not call the evidence provider, Jev, the decision policy or narrative generator. Refresh and regeneration require a future explicit operation. Persisting one compact provider response per new assessment, avoiding requests per UI section, and never refreshing on page load controls marginal cost for a low-priced report. Larger official downloadable datasets can later be ingested or cached behind another adapter instead of downloaded per customer.
 
-The current geography is the explicit `app.professional.evidence.geography` configuration, defaulting to `United Kingdom`, because the professional form does not capture location. The application does not infer geography from IP address. Adding user-supplied geography and a robust occupation-classification step are the main architectural gaps before broad live coverage.
+The current geography is the explicit `app.professional.evidence.geography` configuration, defaulting to `United Kingdom`, because the professional form does not capture location. The application does not infer geography from IP address. Adding user-supplied geography and a broad official occupation lookup are the main architectural gaps before broad live coverage.
+
+## Professional free and paid report composition
+
+```text
+Persisted Assessment Package
+     |
+     +-- Assessment decision
+     +-- Narrative
+     +-- Evidence
+     +-- Occupation classification
+     |
+     v
+ProfessionalReportAssembler
+     |
+     +-------------------+
+     |                   |
+     v                   v
+FREE report          PAID report
+     |                   |
+     v                   v
+Free web view        Paid development preview
+```
+
+`ProfessionalReportAssembler` is a pure, deterministic application component. It accepts a `ProfessionalReportSource` containing only saved historical records and creates the immutable, delivery-neutral `ProfessionalReport`. It cannot call Jev, the Java decision policy, OpenAI, an evidence provider or any external API. `ProfessionalReportService` only reads the four persistence ports, while the web layer maps the already tiered report to presentation data. Templates contain no entitlement rules. The same stored input, tier and `professional-report-v1` composition logic therefore produce the same report.
+
+Payment never affects assessment. Both tiers use exactly the same saved status, confidence, four scores, bands, factors, narrative and evidence. `FREE` includes the profession, all authoritative measures and concise definitions, top exposure and protective factors, a short saved interpretation, the explicit job-loss disclaimer and a concise methodology caveat. It intentionally remains useful. `PAID` includes all of that plus the complete saved narrative, actions, per-measure explanations, deterministic skill-development priorities, conservative work-focus guidance, saved external evidence with attribution, saved occupation classification and fuller methodology/version information. The product boundary is expressed by report composition rather than scattered `if (paid)` checks in Thymeleaf.
+
+Skill priorities are modest labels (`HIGH_PRIORITY` or `USEFUL`), not scores. They follow only from saved role-level factor directions and the saved AI Complementarity band. Work-focus guidance likewise does not classify individual tasks: general assistance, oversight and human-value areas follow from saved role factors, while every submitted responsibility is placed in `USER_REVIEW_REQUIRED` with an explicit statement that no task-level judgement occurred. This avoids inventing a second assessment engine.
+
+### Occupation classification
+
+`ProfessionalOccupationClassifier` is a vendor-neutral port receiving only profession, responsibilities, skills and explicit geography. Its output records canonical occupation, classification system/code, provenance, mapping quality and `professional-occupation-classifier-v1`. It cannot alter assessment scores. The `local-fixture` implementation maps only the four exact configured fixture IDs to deterministic SOC 2020 occupations and never fuzzily matches a title. The opt-in `live-evidence` implementation is currently an exact operator-configured mapping; a broader official lookup can replace it behind the same port later without changing assessment or evidence orchestration.
+
+Classification runs after the assessment and narrative have been persisted and before evidence is gathered. Flyway V4 adds one immutable `professional_occupation_classification` row per assessment, keyed by the assessment UUID. The evidence request factory reads that saved classification rather than environment values. An existing row is never overwritten or automatically upgraded, GET requests never classify again, and absent classification degrades cleanly. V4 is necessary because the code and timestamp used for historical evidence selection are audit data; V1–V3 remain unchanged.
+
+### Report history, access and price
+
+Assembled reports are not separately persisted in this phase. They would duplicate the assessment, narrative and evidence snapshots, and there is not yet a purchase or entitlement record whose historical content must be frozen. `professional-report-v1` is defined once and exposed in report methodology. When payment is introduced, the entitlement/purchase design must persist the selected report version or a purchased report snapshot before a future V2 is allowed to change purchased content silently.
+
+The paid route, `GET /professional-assessment/{UUID}/report`, is registered only under `local-fixture` and is prominently marked “DEVELOPMENT MODE — PAID REPORT PREVIEW”. URL knowledge is not an entitlement mechanism and this route is not a production access-control design. Real entitlement and checkout belong to the payment phase. No price is hard-coded: the expected low-cost consumer range is £2.99–£9.99, but the eventual displayed price must come from product/payment configuration.
+
+Missing or failed optional data does not prevent a report. A failed narrative leaves the deterministic assessment and report available; a failed evidence bundle gives a safe unavailable message; and missing classification simply omits that section. Reports expose no exceptions, credentials, prompt text, chain-of-thought, JPA entities or provider implementation details. Normal development remains offline, and there is no live-to-fixture fallback.

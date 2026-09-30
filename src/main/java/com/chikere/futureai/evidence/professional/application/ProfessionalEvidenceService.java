@@ -1,6 +1,7 @@
 package com.chikere.futureai.evidence.professional.application;
 
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentStore;
+import com.chikere.futureai.occupation.professional.application.ProfessionalOccupationClassificationStore;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -13,15 +14,18 @@ public final class ProfessionalEvidenceService {
     private final ProfessionalAssessmentStore assessmentStore;
     private final ProfessionalEvidenceStore evidenceStore;
     private final Optional<ProfessionalEvidenceProvider> provider;
+    private final ProfessionalOccupationClassificationStore classificationStore;
     private final ProfessionalEvidenceRequestFactory requestFactory;
     private final Clock clock;
 
     public ProfessionalEvidenceService(ProfessionalAssessmentStore assessmentStore,
             ProfessionalEvidenceStore evidenceStore, Optional<ProfessionalEvidenceProvider> provider,
+            ProfessionalOccupationClassificationStore classificationStore,
             ProfessionalEvidenceRequestFactory requestFactory, Clock clock) {
         this.assessmentStore = Objects.requireNonNull(assessmentStore);
         this.evidenceStore = Objects.requireNonNull(evidenceStore);
         this.provider = Objects.requireNonNull(provider);
+        this.classificationStore = Objects.requireNonNull(classificationStore);
         this.requestFactory = Objects.requireNonNull(requestFactory);
         this.clock = Objects.requireNonNull(clock);
     }
@@ -39,7 +43,8 @@ public final class ProfessionalEvidenceService {
                 ProfessionalEvidenceVersions.EVIDENCE_SCHEMA, configuredProvider.source(),
                 configuredProvider.providerIdentifier(), EvidenceStatus.PENDING, attemptedAt, List.of()));
         try {
-            ProfessionalEvidenceBundle gathered = configuredProvider.gather(requestFactory.create(assessment));
+            ProfessionalEvidenceBundle gathered = configuredProvider.gather(requestFactory.create(assessment,
+                    classificationStore.findByAssessmentId(assessmentId)));
             validateProviderResult(assessmentId, configuredProvider, gathered);
             evidenceStore.save(gathered);
             return Optional.of(gathered);

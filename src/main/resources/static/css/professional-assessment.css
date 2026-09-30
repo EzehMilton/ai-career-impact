@@ -38,6 +38,7 @@ input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visib
 [aria-invalid="true"] { border-color: #ad3f3f; }
 .field-error { color: #9e3030; font-weight: 650; margin: .4rem 0 0; }
 button, .page-action a { display: inline-block; border: 0; border-radius: .45rem; padding: .8rem 1.2rem; background: #165b60; color: white; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
+.button-link { display: inline-block; border-radius: .45rem; padding: .8rem 1.2rem; background: #165b60; color: white; font-weight: 700; text-decoration: none; }
 button:hover, .page-action a:hover { background: #10464a; }
 .page-action { margin-top: 2rem; }
 .fixture-warning { border: 2px solid #aa6a10; border-radius: .75rem; background: #fff1d4; color: #593b0c; padding: 1rem 1.3rem; margin: 0 0 1.5rem; }
@@ -67,6 +68,8 @@ dd { margin: 0; font-weight: 700; text-align: right; }
 .narrative-caution, .narrative-unavailable { color: #526873; }
 .narrative-caution { border-top: 1px solid #e7eeee; margin: 1.6rem 0 0; padding-top: 1rem; }
 .error-panel { max-width: 40rem; }
+.report-caveat, .unlock-panel { margin-top: 2rem; }
+.paid-report section + section { margin-top: 2rem; }
 
 @media (max-width: 42rem) {
   .page-shell { padding-top: 1.6rem; }

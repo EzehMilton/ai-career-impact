@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Your full professional report | AI Career Impact</title>
+  <link rel="stylesheet" th:href="@{/css/professional-assessment.css}" href="/css/professional-assessment.css">
+</head>
+<body>
+<main class="page-shell paid-report">
+  <aside class="fixture-warning" role="alert">
+    <strong>DEVELOPMENT MODE — PAID REPORT PREVIEW</strong>
+    <p>No payment or entitlement has been granted. This local-only route uses fixture data.</p>
+  </aside>
+  <header class="page-header">
+    <p class="eyebrow">Full professional report</p>
+    <h1 th:text="${report.headline}">Your detailed professional report</h1>
+    <p class="intro">For <strong th:text="${report.profession}">your role</strong></p>
+  </header>
+  <section class="panel">
+    <h2>Overall interpretation</h2><p class="narrative-summary" th:text="${report.interpretation}">Interpretation</p>
+    <dl class="summary-list"><div><dt>Status</dt><dd th:text="${report.status}">Ready</dd></div><div><dt>Assessment confidence</dt><dd th:text="${report.confidence}">High</dd></div></dl>
+  </section>
+  <section class="results-section" th:if="${!report.measures.isEmpty()}">
+    <h2>The four measures in detail</h2>
+    <div class="measure-grid">
+      <article class="panel measure-card" th:each="measure : ${report.measures}">
+        <h3 th:text="${measure.name}">Measure</h3><p class="measure-value"><strong th:text="${measure.indicator}">0.00</strong><span> / 10</span></p>
+        <dl class="measure-details"><div><dt>Band</dt><dd th:text="${measure.band}">Moderate</dd></div><div><dt>Confidence</dt><dd th:text="${measure.confidence}">80%</dd></div></dl>
+        <p th:text="${measure.conciseExplanation}">Explanation</p><p th:if="${measure.detailedExplanation != null}" th:text="${measure.detailedExplanation}">Detail</p>
+      </article>
+    </div>
+  </section>
+  <section class="factor-grid"><div class="panel"><h2>Exposure drivers</h2><ul><li th:each="factor : ${report.exposureDrivers}" th:text="${factor}">Factor</li></ul></div><div class="panel"><h2>Protective factors</h2><ul><li th:each="factor : ${report.protectiveFactors}" th:text="${factor}">Factor</li></ul></div></section>
+  <section class="narrative-section">
+    <h2>Personalised explanation</h2>
+    <article class="panel narrative-panel" th:if="${report.narrative.available}">
+      <h3>What this means</h3><p th:text="${report.narrative.whatThisMeans}">Meaning</p>
+      <h3>Why AI may affect your work</h3><p th:text="${report.narrative.exposureExplanation}">Exposure</p>
+      <h3>Where human advantage remains</h3><p th:text="${report.narrative.humanAdvantageExplanation}">Human advantage</p>
+      <h3>How AI could complement the role</h3><p th:text="${report.narrative.complementarityExplanation}">Complementarity</p>
+      <h3>How the role may adapt</h3><p th:text="${report.narrative.adaptabilityExplanation}">Adaptability</p>
+      <p class="narrative-caution" th:text="${report.narrative.caution}">Caution</p>
+    </article>
+    <div class="panel narrative-unavailable" th:unless="${report.narrative.available}"><p>The assessment is available, but its personalised narrative is currently unavailable.</p></div>
+  </section>
+  <section class="results-section"><h2>What to focus on next</h2><div class="panel"><ul th:if="${!report.practicalActions.isEmpty()}"><li th:each="action : ${report.practicalActions}" th:text="${action}">Action</li></ul><p th:if="${report.practicalActions.isEmpty()}">Personalised actions are unavailable with the narrative.</p></div></section>
+  <section class="results-section"><h2>Skill-development priorities</h2><div class="evidence-grid"><article class="panel" th:each="skill : ${report.skillPriorities}"><p class="evidence-category" th:text="${skill.priority}">Priority</p><h3 th:text="${skill.title}">Skill</h3><p th:text="${skill.rationale}">Rationale</p></article></div></section>
+  <section class="results-section">
+    <h2>Work-focus guidance</h2><div class="evidence-grid"><article class="panel" th:each="focus : ${report.workFocus}"><p class="evidence-category" th:text="${focus.category}">Category</p><h3 th:text="${focus.title}">Focus</h3><p th:text="${focus.guidance}">Guidance</p><ul th:if="${!focus.relatedResponsibilities.isEmpty()}"><li th:each="responsibility : ${focus.relatedResponsibilities}" th:text="${responsibility}">Responsibility</li></ul></article></div><p class="helper" th:text="${report.workFocusLimitation}">Limitation</p>
+  </section>
+  <section class="evidence-section">
+    <h2>External career context</h2><p class="helper">This is saved factual context, separate from the assessment scores.</p>
+    <div class="fixture-evidence-label" th:if="${report.developmentFixture}">Local development evidence — not live official data</div>
+    <p class="panel" th:if="${report.evidence.items.isEmpty()}" th:text="${report.evidence.message}">Unavailable</p><p class="notice" th:if="${report.evidence.status == 'Partial'}" th:text="${report.evidence.message}">Partial</p>
+    <div class="evidence-grid"><article class="panel evidence-card" th:each="item : ${report.evidence.items}"><p class="evidence-category" th:text="${item.category}">Category</p><h3 th:text="${item.title}">Evidence</h3><p th:text="${item.summary}">Summary</p><p class="evidence-metric" th:if="${item.metric != null}" th:text="${item.metric}">Metric</p><dl class="evidence-meta"><div><dt>Source</dt><dd><a th:if="${item.sourceUrl != null}" th:href="${item.sourceUrl}" th:text="${item.source}" target="_blank" rel="noopener noreferrer">Source</a><span th:if="${item.sourceUrl == null}" th:text="${item.source}">Source</span></dd></div><div th:if="${item.geography != null}"><dt>Geography</dt><dd th:text="${item.geography}">UK</dd></div><div><dt>Date</dt><dd th:text="${item.date}">Date</dd></div></dl><p class="evidence-relevance" th:text="${item.relevance}">Relevance</p></article></div>
+  </section>
+  <section class="panel" th:if="${report.classification != null}"><h2>Occupation classification</h2><dl class="summary-list"><div><dt>Canonical occupation</dt><dd th:text="${report.classification.canonicalOccupation}">Occupation</dd></div><div><dt>System and code</dt><dd><span th:text="${report.classification.system}">SOC 2020</span> <span th:text="${report.classification.code}">0000</span></dd></div><div><dt>Mapping quality</dt><dd th:text="${report.classification.quality}">Fixture</dd></div></dl></section>
+  <section class="panel report-caveat"><h2>Methodology and limitations</h2><ul><li th:each="limitation : ${report.methodology.limitations}" th:text="${limitation}">Limitation</li></ul><dl class="evidence-meta"><div><dt>Decision policy</dt><dd th:text="${report.methodology.decisionPolicyVersion}">Version</dd></div><div><dt>Judgement schema</dt><dd th:text="${report.methodology.judgmentSchemaVersion}">Version</dd></div><div><dt>Report composition</dt><dd th:text="${report.methodology.reportVersion}">Version</dd></div></dl></section>
+</main>
+</body>
+</html>

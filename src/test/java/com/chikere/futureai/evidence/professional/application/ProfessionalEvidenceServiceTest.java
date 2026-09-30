@@ -7,6 +7,7 @@ import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV1;
 import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfessionalJudgmentProvider;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import com.chikere.futureai.occupation.professional.application.*;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -98,8 +99,14 @@ class ProfessionalEvidenceServiceTest {
 
     private ProfessionalEvidenceService service(ProfessionalAssessmentStore assessmentStore,
             ProfessionalEvidenceStore store, Optional<ProfessionalEvidenceProvider> provider) {
+        var classifications = mock(ProfessionalOccupationClassificationStore.class);
+        var classification = new ProfessionalOccupationClassification("IT business analysts, architects and systems designers",
+                OccupationClassificationSystem.SOC_2020, "2133", OccupationClassificationSource.CONFIGURED_MAPPING,
+                OccupationClassificationQuality.EXACT_CONFIGURED_MAPPING, "test", ProfessionalOccupationClassifierVersions.V1);
+        when(classifications.findByAssessmentId(any())).thenReturn(Optional.of(
+                new StoredProfessionalOccupationClassification(UUID.randomUUID(), classification, NOW)));
         return new ProfessionalEvidenceService(assessmentStore, store, provider,
-                new ProfessionalEvidenceRequestFactory("United Kingdom", "Software Architect", "2133"),
+                classifications, new ProfessionalEvidenceRequestFactory("United Kingdom"),
                 Clock.fixed(NOW, ZoneOffset.UTC));
     }
 

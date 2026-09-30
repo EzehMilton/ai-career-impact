@@ -10,6 +10,9 @@ import com.chikere.futureai.narrative.professional.application.ProfessionalNarra
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeService;
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeStore;
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeValidator;
+import com.chikere.futureai.occupation.professional.application.*;
+import com.chikere.futureai.report.professional.application.ProfessionalReportAssembler;
+import com.chikere.futureai.report.professional.application.ProfessionalReportService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -47,8 +50,20 @@ public class ProfessionalAssessmentConfiguration {
     ProfessionalAssessmentWorkflow professionalAssessmentWorkflow(
             ProfessionalAssessmentService assessmentService,
             ProfessionalNarrativeService narrativeService,
+            ProfessionalOccupationClassificationService classificationService,
             ProfessionalEvidenceService evidenceService) {
-        return new ProfessionalAssessmentWorkflow(assessmentService, narrativeService, evidenceService);
+        return new ProfessionalAssessmentWorkflow(assessmentService, narrativeService,
+                classificationService, evidenceService);
+    }
+
+    @Bean
+    ProfessionalOccupationClassificationService professionalOccupationClassificationService(
+            ProfessionalAssessmentStore assessmentStore,
+            ProfessionalOccupationClassificationStore classificationStore,
+            Optional<ProfessionalOccupationClassifier> classifier,
+            @Value("${app.professional.evidence.geography:United Kingdom}") String geography) {
+        return new ProfessionalOccupationClassificationService(assessmentStore, classificationStore,
+                classifier, geography, Clock.systemUTC());
     }
 
     @Bean
@@ -56,11 +71,18 @@ public class ProfessionalAssessmentConfiguration {
             ProfessionalAssessmentStore assessmentStore,
             ProfessionalEvidenceStore evidenceStore,
             Optional<ProfessionalEvidenceProvider> evidenceProvider,
-            @Value("${app.professional.evidence.geography:United Kingdom}") String geography,
-            @Value("${app.professional.evidence.classified-profession:}") String classifiedProfession,
-            @Value("${app.professional.evidence.soc2020-code:}") String soc2020Code) {
+            ProfessionalOccupationClassificationStore classificationStore,
+            @Value("${app.professional.evidence.geography:United Kingdom}") String geography) {
         return new ProfessionalEvidenceService(assessmentStore, evidenceStore, evidenceProvider,
-                new ProfessionalEvidenceRequestFactory(geography, classifiedProfession, soc2020Code),
+                classificationStore, new ProfessionalEvidenceRequestFactory(geography),
                 Clock.systemUTC());
+    }
+
+    @Bean
+    ProfessionalReportService professionalReportService(ProfessionalAssessmentStore assessmentStore,
+            ProfessionalNarrativeStore narrativeStore, ProfessionalEvidenceStore evidenceStore,
+            ProfessionalOccupationClassificationStore classificationStore) {
+        return new ProfessionalReportService(assessmentStore, narrativeStore, evidenceStore,
+                classificationStore, new ProfessionalReportAssembler());
     }
 }
