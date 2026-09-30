@@ -13,7 +13,7 @@ public class WebSecurityConfiguration {
     @Bean
     SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(authorize -> authorize
-                .requestMatchers(HttpMethod.GET, "/professional-assessment", "/css/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/professional-assessment", "/professional-assessment/*", "/css/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/professional-assessment").permitAll()
                 .anyRequest().authenticated())
                 .formLogin(Customizer.withDefaults());

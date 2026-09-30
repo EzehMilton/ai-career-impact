@@ -24,7 +24,8 @@ class ProfessionalProviderWiringTest {
             .withUserConfiguration(
                     ProfessionalAssessmentConfiguration.class,
                     LocalFixtureProfessionalConfiguration.class)
-            .withBean(TypeSafeClient.class, () -> mock(TypeSafeClient.class));
+            .withBean(TypeSafeClient.class, () -> mock(TypeSafeClient.class))
+            .withBean(ProfessionalAssessmentStore.class, () -> mock(ProfessionalAssessmentStore.class));
 
     @Test
     void normalModeSelectsOnlyTheJevAdapter() {

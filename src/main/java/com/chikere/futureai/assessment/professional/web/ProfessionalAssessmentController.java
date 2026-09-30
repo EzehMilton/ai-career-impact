@@ -1,7 +1,6 @@
 package com.chikere.futureai.assessment.professional.web;
 
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
-import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentResult;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentService;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,6 +12,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
+import java.util.UUID;
 
 @Controller
 public final class ProfessionalAssessmentController {
@@ -50,12 +52,40 @@ public final class ProfessionalAssessmentController {
         }
         try {
             ProfessionalAssessmentState state = formMapper.toState(form);
-            ProfessionalAssessmentResult result = assessmentService.assess(state);
-            model.addAttribute("assessment", viewMapper.toView(state.profession(), result));
-            return "professional-assessment/result";
+            UUID id = assessmentService.submitProfessionalAssessment(state);
+            return "redirect:/professional-assessment/" + id;
         }
         catch (RuntimeException exception) {
             LOGGER.error("Professional assessment could not be completed", exception);
+            response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+            return "professional-assessment/error";
+        }
+    }
+
+    @GetMapping("/professional-assessment/{assessmentId}")
+    public String showResult(@PathVariable String assessmentId, Model model, HttpServletResponse response) {
+        response.setHeader("Cache-Control", "private, no-store");
+        UUID id;
+        try {
+            id = UUID.fromString(assessmentId);
+        }
+        catch (IllegalArgumentException exception) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return "professional-assessment/not-found";
+        }
+        try {
+            var saved = assessmentService.getProfessionalAssessment(id);
+            if (saved.isEmpty()) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return "professional-assessment/not-found";
+            }
+            var snapshot = saved.orElseThrow();
+            model.addAttribute("assessment", viewMapper.toView(
+                    snapshot.state().profession(), snapshot.result()));
+            return "professional-assessment/result";
+        }
+        catch (RuntimeException exception) {
+            LOGGER.error("Saved professional assessment could not be loaded for id {}", id, exception);
             response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
             return "professional-assessment/error";
         }

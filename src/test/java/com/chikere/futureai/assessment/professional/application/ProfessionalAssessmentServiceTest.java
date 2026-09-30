@@ -8,6 +8,12 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.OptionalInt;
+import java.util.Optional;
+import java.util.UUID;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import org.mockito.ArgumentCaptor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
@@ -18,6 +24,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.never;
+import static org.mockito.ArgumentMatchers.any;
 
 class ProfessionalAssessmentServiceTest {
 
@@ -69,6 +78,61 @@ class ProfessionalAssessmentServiceTest {
         assertThat(result.source()).isEqualTo(AssessmentSource.LOCAL_FIXTURE);
         assertThat(result.judgmentSchemaVersion()).isEqualTo("professional-v1");
         assertThat(result.decisionPolicyVersion()).isEqualTo(ProfessionalDecisionPolicyV1.POLICY_VERSION);
+    }
+
+    @Test
+    void submissionCapturesCompleteSnapshotWithOneProviderAndPolicyCallAndReadDoesNotReassess() {
+        var state = state("Software Architect");
+        var judgments = new LocalFixtureProfessionalJudgmentProvider("senior_software_architect").judge(state);
+        var provider = mock(ProfessionalJudgmentProvider.class);
+        var policy = spy(new ProfessionalDecisionPolicyV1());
+        var store = mock(ProfessionalAssessmentStore.class);
+        org.mockito.Mockito.doReturn(judgments).when(provider).judge(state);
+        when(provider.source()).thenReturn(AssessmentSource.JEV);
+        when(provider.modelIdentifier()).thenReturn(Optional.of("jev-latest"));
+        var service = new ProfessionalAssessmentService(provider, policy, store,
+                Clock.fixed(Instant.parse("2026-09-30T12:00:00Z"), ZoneOffset.UTC));
+
+        UUID id = service.submitProfessionalAssessment(state);
+        ArgumentCaptor<StoredProfessionalAssessment> capture =
+                ArgumentCaptor.forClass(StoredProfessionalAssessment.class);
+        verify(store).save(capture.capture());
+        var saved = capture.getValue();
+        assertThat(saved.id()).isEqualTo(id);
+        assertThat(saved.createdAt()).isEqualTo(Instant.parse("2026-09-30T12:00:00Z"));
+        assertThat(saved.state()).isEqualTo(state);
+        assertThat(saved.judgments()).isEqualTo(judgments);
+        assertThat(saved.result().source()).isEqualTo(AssessmentSource.JEV);
+        assertThat(saved.modelIdentifier()).contains("jev-latest");
+        verify(provider, times(1)).judge(state);
+        verify(policy, times(1)).decide(judgments);
+
+        when(store.findById(id)).thenReturn(Optional.of(saved));
+        assertThat(service.getProfessionalAssessment(id)).contains(saved);
+        verify(provider, times(1)).judge(state);
+        verify(policy, times(1)).decide(judgments);
+    }
+
+    @Test
+    void providerOrPersistenceFailureNeverProducesSuccessfulSubmission() {
+        var state = state("Electrician");
+        var provider = mock(ProfessionalJudgmentProvider.class);
+        var store = mock(ProfessionalAssessmentStore.class);
+        var service = new ProfessionalAssessmentService(provider, new ProfessionalDecisionPolicyV1(),
+                store, Clock.systemUTC());
+        when(provider.judge(state)).thenThrow(new IllegalStateException("Jev unavailable"));
+        assertThatThrownBy(() -> service.submitProfessionalAssessment(state))
+                .hasMessage("Jev unavailable");
+        verify(store, never()).save(any());
+
+        var judgments = new LocalFixtureProfessionalJudgmentProvider("electrician").judge(state);
+        org.mockito.Mockito.doReturn(judgments).when(provider).judge(state);
+        when(provider.source()).thenReturn(AssessmentSource.LOCAL_FIXTURE);
+        org.mockito.Mockito.doThrow(new IllegalStateException("DB unavailable"))
+                .when(store).save(any());
+        assertThatThrownBy(() -> service.submitProfessionalAssessment(state))
+                .hasMessage("DB unavailable");
+        verify(provider, times(2)).judge(state);
     }
 
     private ProfessionalAssessmentState state(String profession) {
