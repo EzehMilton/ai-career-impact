@@ -131,6 +131,53 @@ The Maven `spring-boot:run` development path has the optional Spring Boot Docker
 
 `ProfessionalDecisionPolicyV1` is deterministic Java policy. It validates the atomic judgments, normalises their 0–4 values, applies explicit weights, assigns indicator bands, derives confidence and status, and selects structured explanation factors. It does not call Jev or OpenAI.
 
+## Professional personalised narrative
+
+```text
+Stored Professional Assessment
+        |
+        v
+ProfessionalNarrativeService
+        |
+        v
+ProfessionalNarrativeGenerator
+        |
+        +---------------------+
+        |                     |
+        v                     v
+OpenAI adapter        Local fixture adapter
+        |                     |
+        +----------+----------+
+                   v
+       ProfessionalNarrative
+                   |
+                   v
+             Persistence
+                   |
+                   v
+              Result page
+```
+
+Narrative generation is downstream of the saved deterministic assessment. `ProfessionalAssessmentWorkflow` first asks `ProfessionalAssessmentService` to complete and persist the Jev judgments and Java decision. Only after that transaction has committed does `ProfessionalNarrativeService` reload the snapshot and build `ProfessionalNarrativeContext`. The context contains the submitted work description, responsibilities, skills and optional experience; the saved status and confidence; all saved measure values, bands and confidences; the structured exposure drivers and protective factors; and the assessment source, judgment schema version and decision policy version. It contains no JPA entity, database access, credentials or provider SDK type.
+
+`ProfessionalNarrativeGenerator` is a vendor-neutral application port. Its only operation explains an already-decided context and returns the immutable, HTML-free `ProfessionalNarrative` record. This boundary prevents controllers, persistence entities and view mappers from calling a model. It also makes the same structured result suitable for the web page and a possible future report without coupling the model to either presentation.
+
+`OpenAiProfessionalNarrativeGenerator` is the normal adapter. It uses the existing Spring AI 2.x `ChatClient` and one typed `entity(ProfessionalNarrative.class, ...)` request with provider-native structured output. It does not request free-form prose and scrape headings. The response record requires every prose section and between three and five non-blank practical actions. `ProfessionalNarrativeValidator` additionally rejects score-like or percentage claims; the prompt instructs the model not to repeat numeric assessment values at all. Invalid or absent output fails the narrative attempt and can never change assessment state.
+
+The `professional-narrative-v1` prompt and output contract state that saved scores, bands, confidence, status, drivers and protective factors are authoritative. The model must not recalculate or invent scores, introduce decision factors, contradict the decision, predict job loss, claim certainty or disappearance, fabricate labour-market or salary facts, cite invented studies or statistics, recommend abandoning a career, or recommend courses and providers. It must distinguish exposure from complementarity, treat Human Advantage as independent rather than the inverse of exposure, and explain Role Adaptability as a property of role structure rather than the person's motivation, learning ability, willingness, finances, geography or circumstances. Actions are limited to modest steps grounded in the assessment. User-supplied text is explicitly data rather than instructions.
+
+`LocalFixtureProfessionalNarrativeGenerator` is selected only by the explicit `local-fixture` Spring profile. It uses fixed templates plus saved bands and structured factors; it has no alternate scoring method and no OpenAI dependency. Its persisted source and provider are `LOCAL_FIXTURE` and `local-fixture`, and the existing DEVELOPMENT MODE warning remains visible. Normal OpenAI failures never select this bean or call it: profile wiring permits exactly one generator, and `ProfessionalNarrativeService` stores `FAILED` instead of looking up another implementation.
+
+### Narrative lifecycle and history
+
+Flyway V2 adds `professional_assessment_narrative`, a separate one-to-one table keyed by the immutable assessment ID. No row means `NOT_REQUESTED`; an attempt writes `PENDING` before calling the generator and then updates that row to `AVAILABLE` with all structured content or `FAILED` without content. The table records source, provider identifier, configured model identifier when known, prompt/schema version, attempt timestamp and successful generation timestamp. It never stores API keys, prompts, exceptions, hidden reasoning or chain-of-thought. A database check constraint ensures only an available row can contain narrative content and a generation timestamp.
+
+Keeping narrative lifecycle in a separate table lets the assessment snapshot remain immutable. A generator or narrative-persistence failure occurs after the assessment commit, so it cannot delete or invalidate the deterministic result. The submission still redirects to the saved result. The result GET always renders the measures and factors; when narrative is missing, pending or failed it shows a safe temporary-unavailability message without provider details.
+
+Result GETs are read-only. They load a saved narrative when one exists and never invoke `ProfessionalNarrativeGenerator`, Jev or `ProfessionalDecisionPolicyV1`. `generateFor` also returns any existing lifecycle row without replacing it, including older prompt versions and failed attempts. Consequently an `AVAILABLE` historical narrative remains exactly the narrative originally saved: there is no implicit regeneration or upgrade from one prompt/schema version to another. A future regeneration feature would need to be an explicit operation with its own audit semantics.
+
+The configured OpenAI model identifier (`spring.ai.openai.chat.model`, configurable through `OPENAI_MODEL`) is persisted. It may be a provider alias rather than an immutable underlying model revision, so it is audit metadata with that limitation rather than a claim that the exact provider-side build is known. The prompt/schema version remains the authoritative identifier for this application's narrative contract.
+
 The weights and thresholds in `professional-decision-v1` are transparent V1 product policy. They are not claimed to be scientifically validated universal truths. Changing them requires a new policy version so an existing version never silently changes meaning.
 
 AI Exposure describes how readily the current work may be performed, automated, or materially changed by AI. It is not a probability of job loss. Human Advantage is separately calculated because a role can combine meaningful AI exposure with strong reasons for continued human involvement. AI Complementarity describes potential augmentation rather than automation exposure.

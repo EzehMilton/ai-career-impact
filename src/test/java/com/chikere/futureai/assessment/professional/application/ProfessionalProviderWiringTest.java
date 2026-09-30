@@ -6,7 +6,16 @@ import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfession
 import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfessionalJudgmentProvider;
 import com.chikere.futureai.judgment.typesafe.professional.ProfessionalJevAutoConfiguration;
 import com.chikere.futureai.judgment.typesafe.professional.ProfessionalJevJudgmentService;
+import com.chikere.futureai.narrative.professional.application.NarrativeSource;
+import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeGenerator;
+import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeStore;
+import com.chikere.futureai.narrative.professional.fixture.LocalFixtureProfessionalNarrativeConfiguration;
+import com.chikere.futureai.narrative.professional.fixture.LocalFixtureProfessionalNarrativeGenerator;
+import com.chikere.futureai.narrative.professional.openai.OpenAiProfessionalNarrativeConfiguration;
+import com.chikere.futureai.narrative.professional.openai.OpenAiProfessionalNarrativeGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springaicommunity.typesafe.TypeSafeClient;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
@@ -20,12 +29,22 @@ import static org.mockito.Mockito.mock;
 class ProfessionalProviderWiringTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
+            .withPropertyValues("spring.ai.openai.chat.model=gpt-test")
             .withConfiguration(AutoConfigurations.of(ProfessionalJevAutoConfiguration.class))
             .withUserConfiguration(
                     ProfessionalAssessmentConfiguration.class,
-                    LocalFixtureProfessionalConfiguration.class)
+                    LocalFixtureProfessionalConfiguration.class,
+                    LocalFixtureProfessionalNarrativeConfiguration.class,
+                    OpenAiProfessionalNarrativeConfiguration.class)
             .withBean(TypeSafeClient.class, () -> mock(TypeSafeClient.class))
-            .withBean(ProfessionalAssessmentStore.class, () -> mock(ProfessionalAssessmentStore.class));
+            .withBean(ProfessionalAssessmentStore.class, () -> mock(ProfessionalAssessmentStore.class))
+            .withBean(ProfessionalNarrativeStore.class, () -> mock(ProfessionalNarrativeStore.class))
+            .withBean(ObjectMapper.class, ObjectMapper::new)
+            .withBean(ChatClient.Builder.class, () -> {
+                ChatClient.Builder builder = mock(ChatClient.Builder.class);
+                org.mockito.Mockito.when(builder.build()).thenReturn(mock(ChatClient.class));
+                return builder;
+            });
 
     @Test
     void normalModeSelectsOnlyTheJevAdapter() {
@@ -38,6 +57,13 @@ class ProfessionalProviderWiringTest {
                     .isEqualTo(AssessmentSource.JEV);
             assertThat(context).hasSingleBean(ProfessionalAssessmentService.class);
             assertThat(context).doesNotHaveBean(LocalFixtureProfessionalJudgmentProvider.class);
+            assertThat(context).hasSingleBean(ProfessionalNarrativeGenerator.class);
+            assertThat(context.getBean(ProfessionalNarrativeGenerator.class))
+                    .isInstanceOf(OpenAiProfessionalNarrativeGenerator.class);
+            assertThat(context.getBean(ProfessionalNarrativeGenerator.class).source())
+                    .isEqualTo(NarrativeSource.OPENAI);
+            assertThat(context.getBean(ProfessionalNarrativeGenerator.class).modelIdentifier())
+                    .contains("gpt-test");
         });
     }
 
@@ -59,6 +85,12 @@ class ProfessionalProviderWiringTest {
                             .isBetween(4.80, 4.82);
                     assertThat(context).hasSingleBean(ProfessionalAssessmentService.class);
                     assertThat(context).doesNotHaveBean(ProfessionalJevJudgmentService.class);
+                    assertThat(context).hasSingleBean(ProfessionalNarrativeGenerator.class);
+                    assertThat(context.getBean(ProfessionalNarrativeGenerator.class))
+                            .isInstanceOf(LocalFixtureProfessionalNarrativeGenerator.class);
+                    assertThat(context.getBean(ProfessionalNarrativeGenerator.class).source())
+                            .isEqualTo(NarrativeSource.LOCAL_FIXTURE);
+                    assertThat(context).doesNotHaveBean(OpenAiProfessionalNarrativeGenerator.class);
                 });
     }
 

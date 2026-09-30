@@ -10,7 +10,9 @@ public record ProfessionalAssessmentViewModel(
         boolean localFixture,
         List<MeasureView> measures,
         List<String> exposureDrivers,
-        List<String> protectiveFactors) {
+        List<String> protectiveFactors,
+        boolean narrativeUnavailable,
+        NarrativeView narrative) {
 
     public record MeasureView(
             String name,
@@ -18,5 +20,17 @@ public record ProfessionalAssessmentViewModel(
             String band,
             String confidence,
             String explanation) {
+    }
+
+    public record NarrativeView(
+            String headline,
+            String summary,
+            String whatThisMeans,
+            String exposureExplanation,
+            String humanAdvantageExplanation,
+            String complementarityExplanation,
+            String adaptabilityExplanation,
+            List<String> practicalActions,
+            String cautionOrLimitations) {
     }
 }

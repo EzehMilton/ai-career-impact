@@ -49,6 +49,14 @@ dd { margin: 0; font-weight: 700; text-align: right; }
 .factor-grid { margin-top: 2rem; }
 .factor-grid ul { padding-left: 1.25rem; margin-bottom: 0; }
 .factor-grid li + li { margin-top: .55rem; }
+.narrative-section { margin-top: 2.4rem; }
+.narrative-panel { max-width: 54rem; }
+.narrative-panel h3:not(:first-child) { margin-top: 1.6rem; }
+.narrative-panel ul { padding-left: 1.25rem; }
+.narrative-panel li + li { margin-top: .55rem; }
+.narrative-summary { color: #315664; font-size: 1.08rem; }
+.narrative-caution, .narrative-unavailable { color: #526873; }
+.narrative-caution { border-top: 1px solid #e7eeee; margin: 1.6rem 0 0; padding-top: 1rem; }
 .error-panel { max-width: 40rem; }
 
 @media (max-width: 42rem) {
