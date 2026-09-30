@@ -22,7 +22,7 @@ Jev verification for premium reports
 User-facing result/report
 ```
 
-Jev supplies small, explicit judgments rather than an overall business decision. Deterministic Java policies combine those judgments using journey-specific weights, thresholds, and rules. OpenAI turns the resulting decision and supporting evidence into accessible narrative, but does not determine the authoritative score. Premium reports add a final Jev verification step before presentation.
+Jev supplies small, explicit judgments rather than an overall business decision. Deterministic Java policies combine those judgments using journey-specific weights, thresholds, and rules. OpenAI turns the resulting decision into accessible narrative, but does not determine the authoritative score. External evidence is currently gathered and displayed separately; it is not sent to OpenAI in this phase. Premium reports may later add a final Jev verification step before presentation.
 
 External facts, including salaries and labour-market statistics, must come from an evidence layer with traceable sources rather than from model memory.
 
@@ -183,3 +183,56 @@ The weights and thresholds in `professional-decision-v1` are transparent V1 prod
 AI Exposure describes how readily the current work may be performed, automated, or materially changed by AI. It is not a probability of job loss. Human Advantage is separately calculated because a role can combine meaningful AI exposure with strong reasons for continued human involvement. AI Complementarity describes potential augmentation rather than automation exposure.
 
 Role Adaptability describes characteristics of the role that provide scope for continued human value and AI-enabled evolution. It does not measure the individual's personal motivation, willingness to retrain, learning ability, financial flexibility, geographic mobility, or personal circumstances.
+
+## Professional evidence layer
+
+```text
+Persisted Professional Assessment
+        |
+        v
+ProfessionalEvidenceService
+        |
+        v
+ProfessionalEvidenceProvider
+        |
+        +----------------------+----------------------+
+        |                                             |
+        v                                             v
+Nomis/ONS live adapter                 Local fixture adapter
+        |                                             |
+        +----------------------+----------------------+
+                               v
+                 ProfessionalEvidenceBundle
+                               |
+                               v
+                         Persistence
+                               |
+                               v
+                         Results page
+```
+
+External evidence is factual career and labour-market context, not an input to `ProfessionalDecisionPolicyV1`. It cannot change AI Exposure, Human Advantage, AI Complementarity, Role Adaptability, status or confidence. Evidence is deliberately downstream of the persisted assessment: assessment and narrative remain valid if an evidence provider or its persistence fails. The result page labels evidence as “External career context” and explicitly says that it does not determine or prove the scores.
+
+`ProfessionalEvidenceProvider` is the vendor-neutral application port. It receives a narrow `ProfessionalEvidenceRequest` containing the assessment UUID, profession, responsibilities, skills, journey, explicit geography and an optional occupation classification. It never receives JPA entities, credentials, Jev types or OpenAI types. Providers return the same immutable `ProfessionalEvidenceBundle` and `ProfessionalEvidenceItem` model, whether the source is live or a fixture. Items preserve category, factual summary, source and publisher, reference or safe HTTP(S) link, geography, publication and retrieval dates, optional complete metric triplets, source-quality classification and a relevance note. `ProfessionalEvidenceVersions.EVIDENCE_SCHEMA` defines `professional-evidence-v1` once.
+
+OpenAI does not produce or rewrite this evidence. Salary figures, employment estimates, skill demand and research claims must come from traceable sources rather than model memory. The narrative generator is unchanged and receives no evidence in this phase.
+
+### Live and fixture adapters
+
+The first live adapter uses the official ONS Annual Population Survey regional occupation dataset exposed by the Nomis API (`APS218`). It performs one bounded request for the latest UK occupational employment estimate, using an explicitly supplied SOC 2020 classification. It does not scrape web pages and does not infer or fuzzily match an occupation code from the submitted title. Until classification is captured by the product, the `live-evidence` profile requires `PROFESSIONAL_EVIDENCE_PROFESSION` and `PROFESSIONAL_EVIDENCE_SOC2020_CODE` together; the title must match exactly. This is intentionally limited: V1 proves the replaceable adapter boundary but does not yet supply trend series, salary, skills or automation research for every role.
+
+Live evidence is opt-in through the `live-evidence` Spring profile. With no evidence profile there is no provider and evidence remains `NOT_REQUESTED` (represented by no row). Ordinary tests and normal development therefore make no live evidence request. No API key is required for the bounded anonymous Nomis request; if a future adapter needs credentials, they must come from environment configuration and must never be persisted or logged.
+
+The `local-fixture` profile selects `LocalFixtureProfessionalEvidenceProvider` alongside the existing judgment and narrative fixtures. It supports only the exact configured IDs `routine_software_developer`, `senior_software_architect`, `electrician` and `registered_nurse`. The representative item is deterministic, carries `LOCAL_FIXTURE` / `DEVELOPMENT_FIXTURE` provenance, has no fake government URL, and is shown under both the main development warning and an evidence-specific “not live official data” label. Unsupported or approximate fixture IDs fail clearly.
+
+Profiles, rather than exception handling, select adapters. `ProfessionalEvidenceService` has exactly one optional configured provider and never knows about the fixture implementation. A live exception is recorded as `FAILED`; it cannot cause fixture lookup or fallback. This also keeps the boundary cache-friendly: a future shared cache can sit behind a provider without changing assessment orchestration, but V1 adds neither Redis nor a cache framework.
+
+### Lifecycle, persistence and historical behaviour
+
+`ProfessionalAssessmentWorkflow` persists the authoritative assessment, runs the independent narrative lifecycle, then requests evidence when a provider is configured. Evidence generation stores `PENDING` before the provider call, followed by `AVAILABLE`, `PARTIAL` or `FAILED`. `PARTIAL` must contain the items that succeeded; `FAILED` contains none. A provider result is accepted only if its assessment ID, source, provider ID and `professional-evidence-v1` version match the configured provider. Exceptions are not stored or displayed.
+
+Flyway V3 adds `professional_assessment_evidence_bundle`, keyed one-to-one by assessment UUID, and ordered `professional_assessment_evidence_item` rows. The bundle stores status, version, source/provider provenance and retrieval timestamp. Items store all displayable factual content and metadata. Foreign keys associate and clean up only with the parent assessment; providers do not mutate assessment rows. V1 and V2 remain unchanged.
+
+Evidence is a historical snapshot. `gatherFor` returns any existing row—including `FAILED`, `PARTIAL` or an older version—without another provider call. GET `/professional-assessment/{UUID}` uses only `findFor`; it does not call the evidence provider, Jev, the decision policy or narrative generator. Refresh and regeneration require a future explicit operation. Persisting one compact provider response per new assessment, avoiding requests per UI section, and never refreshing on page load controls marginal cost for a low-priced report. Larger official downloadable datasets can later be ingested or cached behind another adapter instead of downloaded per customer.
+
+The current geography is the explicit `app.professional.evidence.geography` configuration, defaulting to `United Kingdom`, because the professional form does not capture location. The application does not infer geography from IP address. Adding user-supplied geography and a robust occupation-classification step are the main architectural gaps before broad live coverage.

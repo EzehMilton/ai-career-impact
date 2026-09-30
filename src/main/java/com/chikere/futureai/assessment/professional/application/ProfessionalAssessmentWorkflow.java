@@ -2,24 +2,28 @@ package com.chikere.futureai.assessment.professional.application;
 
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeService;
+import com.chikere.futureai.evidence.professional.application.ProfessionalEvidenceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.UUID;
 
-/** Coordinates persistence-first assessment submission and best-effort narrative generation. */
+/** Coordinates persistence-first assessment submission and independent enrichment lifecycles. */
 public final class ProfessionalAssessmentWorkflow {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProfessionalAssessmentWorkflow.class);
     private final ProfessionalAssessmentService assessmentService;
     private final ProfessionalNarrativeService narrativeService;
+    private final ProfessionalEvidenceService evidenceService;
 
     public ProfessionalAssessmentWorkflow(
             ProfessionalAssessmentService assessmentService,
-            ProfessionalNarrativeService narrativeService) {
+            ProfessionalNarrativeService narrativeService,
+            ProfessionalEvidenceService evidenceService) {
         this.assessmentService = Objects.requireNonNull(assessmentService);
         this.narrativeService = Objects.requireNonNull(narrativeService);
+        this.evidenceService = Objects.requireNonNull(evidenceService);
     }
 
     public UUID submit(ProfessionalAssessmentState state) {
@@ -31,6 +35,12 @@ public final class ProfessionalAssessmentWorkflow {
             // The authoritative assessment has already committed. Do not turn an optional
             // presentation-layer failure into a failed assessment submission.
             LOGGER.error("Narrative lifecycle could not be persisted for assessment {}", id, persistenceFailure);
+        }
+        try {
+            evidenceService.gatherFor(id);
+        }
+        catch (RuntimeException persistenceFailure) {
+            LOGGER.error("Evidence lifecycle could not be persisted for assessment {}", id, persistenceFailure);
         }
         return id;
     }

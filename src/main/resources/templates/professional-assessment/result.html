@@ -95,6 +95,38 @@
       </article>
     </section>
 
+    <section class="evidence-section" aria-labelledby="evidence-heading">
+      <h2 id="evidence-heading">External career context</h2>
+      <p class="helper">Related labour-market evidence is factual context from separate sources. It does not determine or prove the assessment scores above.</p>
+      <div class="panel evidence-unavailable" th:if="${assessment.evidenceUnavailable}">
+        <p>External career context is currently unavailable.</p>
+      </div>
+      <div class="panel evidence-partial" th:if="${assessment.evidencePartial}">
+        <p>Some external career context is currently unavailable. The saved items below are still shown.</p>
+      </div>
+      <div class="fixture-evidence-label" th:if="${assessment.fixtureEvidence}">
+        Local development evidence — not live official data
+      </div>
+      <div class="evidence-grid" th:if="${!assessment.evidenceItems.isEmpty()}">
+        <article class="panel evidence-card" th:each="item : ${assessment.evidenceItems}">
+          <p class="evidence-category" th:text="${item.category}">Occupation outlook</p>
+          <h3 th:text="${item.title}">Evidence title</h3>
+          <p th:text="${item.summary}">Evidence summary</p>
+          <p class="evidence-metric" th:if="${item.metric != null}" th:text="${item.metric}">Metric</p>
+          <dl class="evidence-meta">
+            <div><dt>Source</dt><dd>
+              <a th:if="${item.sourceUrl != null}" th:href="${item.sourceUrl}" th:text="${item.source}"
+                 target="_blank" rel="noopener noreferrer">Source</a>
+              <span th:if="${item.sourceUrl == null}" th:text="${item.source}">Source</span>
+            </dd></div>
+            <div th:if="${item.geography != null}"><dt>Geography</dt><dd th:text="${item.geography}">United Kingdom</dd></div>
+            <div><dt>Date</dt><dd th:text="${item.date}">Retrieved date</dd></div>
+          </dl>
+          <p class="evidence-relevance" th:text="${item.relevanceNote}">Why this is relevant.</p>
+        </article>
+      </div>
+    </section>
+
     <p class="page-action"><a href="/professional-assessment" th:href="@{/professional-assessment}">Assess another role</a></p>
   </main>
 </body>

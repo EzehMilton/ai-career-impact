@@ -12,7 +12,11 @@ public record ProfessionalAssessmentViewModel(
         List<String> exposureDrivers,
         List<String> protectiveFactors,
         boolean narrativeUnavailable,
-        NarrativeView narrative) {
+        NarrativeView narrative,
+        boolean evidenceUnavailable,
+        boolean evidencePartial,
+        boolean fixtureEvidence,
+        List<EvidenceView> evidenceItems) {
 
     public record MeasureView(
             String name,
@@ -32,5 +36,17 @@ public record ProfessionalAssessmentViewModel(
             String adaptabilityExplanation,
             List<String> practicalActions,
             String cautionOrLimitations) {
+    }
+
+    public record EvidenceView(
+            String category,
+            String title,
+            String summary,
+            String source,
+            String geography,
+            String date,
+            String metric,
+            String sourceUrl,
+            String relevanceNote) {
     }
 }
