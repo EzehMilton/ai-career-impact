@@ -1,10 +1,10 @@
 package com.chikere.futureai.assessment.professional.web;
 
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
-import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentService;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentWorkflow;
-import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeService;
-import com.chikere.futureai.evidence.professional.application.ProfessionalEvidenceService;
+import com.chikere.futureai.report.professional.application.ProfessionalReportService;
+import com.chikere.futureai.report.professional.application.ProfessionalReportTier;
+import com.chikere.futureai.report.professional.web.ProfessionalReportViewMapper;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -25,26 +25,20 @@ public final class ProfessionalAssessmentController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProfessionalAssessmentController.class);
     private static final String FORM_VIEW = "professional-assessment/form";
 
-    private final ProfessionalAssessmentService assessmentService;
     private final ProfessionalAssessmentWorkflow workflow;
-    private final ProfessionalNarrativeService narrativeService;
-    private final ProfessionalEvidenceService evidenceService;
+    private final ProfessionalReportService reportService;
     private final ProfessionalAssessmentFormMapper formMapper;
-    private final ProfessionalAssessmentViewMapper viewMapper;
+    private final ProfessionalReportViewMapper reportViewMapper;
 
     public ProfessionalAssessmentController(
-            ProfessionalAssessmentService assessmentService,
             ProfessionalAssessmentWorkflow workflow,
-            ProfessionalNarrativeService narrativeService,
-            ProfessionalEvidenceService evidenceService,
+            ProfessionalReportService reportService,
             ProfessionalAssessmentFormMapper formMapper,
-            ProfessionalAssessmentViewMapper viewMapper) {
-        this.assessmentService = assessmentService;
+            ProfessionalReportViewMapper reportViewMapper) {
         this.workflow = workflow;
-        this.narrativeService = narrativeService;
-        this.evidenceService = evidenceService;
+        this.reportService = reportService;
         this.formMapper = formMapper;
-        this.viewMapper = viewMapper;
+        this.reportViewMapper = reportViewMapper;
     }
 
     @GetMapping("/professional-assessment")
@@ -86,14 +80,13 @@ public final class ProfessionalAssessmentController {
             return "professional-assessment/not-found";
         }
         try {
-            var saved = assessmentService.getProfessionalAssessment(id);
-            if (saved.isEmpty()) {
+            var report = reportService.assemble(id, ProfessionalReportTier.FREE);
+            if (report.isEmpty()) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 return "professional-assessment/not-found";
             }
-            var snapshot = saved.orElseThrow();
-            model.addAttribute("assessment", viewMapper.toView(
-                    snapshot, narrativeService.findFor(id), evidenceService.findFor(id)));
+            model.addAttribute("assessmentId", id);
+            model.addAttribute("report", reportViewMapper.toView(report.orElseThrow()));
             return "professional-assessment/result";
         }
         catch (RuntimeException exception) {

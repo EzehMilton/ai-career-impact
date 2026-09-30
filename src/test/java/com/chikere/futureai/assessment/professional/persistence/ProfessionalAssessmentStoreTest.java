@@ -37,6 +37,7 @@ import java.util.UUID;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.time.LocalDate;
+import com.chikere.futureai.occupation.professional.application.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -49,11 +50,12 @@ class ProfessionalAssessmentStoreTest {
     @Autowired ProfessionalAssessmentStore store;
     @Autowired ProfessionalNarrativeStore narrativeStore;
     @Autowired ProfessionalEvidenceStore evidenceStore;
+    @Autowired ProfessionalOccupationClassificationStore classificationStore;
     @Autowired Flyway flyway;
 
     @Test
     void migratedPostgresqlRoundTripPreservesCompleteSnapshot() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("3");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("4");
         var state = new ProfessionalAssessmentState("Software Architect",
                 "I design software and make consequential architecture decisions.",
                 List.of("Design platforms", "Resolve trade-offs"),
@@ -139,5 +141,31 @@ class ProfessionalAssessmentStoreTest {
         assertThat(evidenceStore.findByAssessmentId(id)).contains(bundle);
         assertThat(evidenceStore.findByAssessmentId(id).orElseThrow().items().getFirst().sourceUrl())
                 .contains(URI.create("https://example.gov.uk/data?a=1&b=2"));
+    }
+
+    @Test
+    void migratedPostgresqlRoundTripPreservesImmutableOccupationClassification() {
+        var state = new ProfessionalAssessmentState("Software Architect", "Designs systems.",
+                List.of("Design platforms"), List.of("Architecture"), OptionalInt.of(12));
+        var judgments = new LocalFixtureProfessionalJudgmentProvider("senior_software_architect").judge(state);
+        var decision = new ProfessionalDecisionPolicyV1().decide(judgments);
+        UUID id = UUID.randomUUID();
+        store.save(new StoredProfessionalAssessment(id, Instant.parse("2026-09-30T12:00:00Z"), state,
+                judgments, new ProfessionalAssessmentResult(decision, AssessmentSource.LOCAL_FIXTURE,
+                judgments.schemaVersion(), decision.policyVersion()), Optional.empty()));
+        var stored = new StoredProfessionalOccupationClassification(id,
+                new ProfessionalOccupationClassification("IT business analysts, architects and systems designers",
+                        OccupationClassificationSystem.SOC_2020, "2133",
+                        OccupationClassificationSource.LOCAL_FIXTURE,
+                        OccupationClassificationQuality.DEVELOPMENT_FIXTURE,
+                        "local-fixture:senior_software_architect", "professional-occupation-classifier-v1"),
+                Instant.parse("2026-09-30T12:01:00Z"));
+
+        classificationStore.save(stored);
+
+        assertThat(classificationStore.findByAssessmentId(id)).contains(stored);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> classificationStore.save(stored))
+                .hasRootCauseInstanceOf(IllegalStateException.class)
+                .hasRootCauseMessage("occupation classification is an immutable historical snapshot");
     }
 }
