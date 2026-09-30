@@ -34,14 +34,24 @@ public final class ProfessionalJevJudgmentService implements ProfessionalJudgmen
     private final TypeSafeClient typeSafeClient;
     private final ProfessionalJudgmentSchema schema;
     private final ProfessionalJevStateMapper stateMapper;
+    private final String configuredModelIdentifier;
 
     public ProfessionalJevJudgmentService(
             TypeSafeClient typeSafeClient,
             ProfessionalJudgmentSchema schema,
             ProfessionalJevStateMapper stateMapper) {
+        this(typeSafeClient, schema, stateMapper, null);
+    }
+
+    public ProfessionalJevJudgmentService(
+            TypeSafeClient typeSafeClient,
+            ProfessionalJudgmentSchema schema,
+            ProfessionalJevStateMapper stateMapper,
+            String configuredModelIdentifier) {
         this.typeSafeClient = Objects.requireNonNull(typeSafeClient, "typeSafeClient must not be null");
         this.schema = Objects.requireNonNull(schema, "schema must not be null");
         this.stateMapper = Objects.requireNonNull(stateMapper, "stateMapper must not be null");
+        this.configuredModelIdentifier = configuredModelIdentifier;
     }
 
     @Override
@@ -58,6 +68,11 @@ public final class ProfessionalJevJudgmentService implements ProfessionalJudgmen
     @Override
     public AssessmentSource source() {
         return AssessmentSource.JEV;
+    }
+
+    @Override
+    public Optional<String> modelIdentifier() {
+        return Optional.ofNullable(configuredModelIdentifier).filter(value -> !value.isBlank());
     }
 
     private DimensionJudgment toDomainJudgment(String questionId, SystemOneResponse response) {

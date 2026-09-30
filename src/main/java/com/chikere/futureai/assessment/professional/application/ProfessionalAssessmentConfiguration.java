@@ -3,6 +3,7 @@ package com.chikere.futureai.assessment.professional.application;
 import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV1;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import java.time.Clock;
 
 @Configuration(proxyBeanMethods = false)
 public class ProfessionalAssessmentConfiguration {
@@ -15,7 +16,8 @@ public class ProfessionalAssessmentConfiguration {
     @Bean
     ProfessionalAssessmentService professionalAssessmentService(
             ProfessionalJudgmentProvider judgmentProvider,
-            ProfessionalDecisionPolicyV1 decisionPolicy) {
-        return new ProfessionalAssessmentService(judgmentProvider, decisionPolicy);
+            ProfessionalDecisionPolicyV1 decisionPolicy,
+            ProfessionalAssessmentStore store) {
+        return new ProfessionalAssessmentService(judgmentProvider, decisionPolicy, store, Clock.systemUTC());
     }
 }

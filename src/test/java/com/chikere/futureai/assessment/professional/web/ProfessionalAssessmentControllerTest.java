@@ -5,6 +5,7 @@ import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.assessment.professional.application.AssessmentSource;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentResult;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentService;
+import com.chikere.futureai.assessment.professional.application.StoredProfessionalAssessment;
 import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV1;
 import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
 import com.chikere.futureai.judgment.domain.DimensionJudgment;
@@ -23,6 +24,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
+import java.util.Optional;
+import java.util.UUID;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -37,11 +41,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.mockito.Mockito.never;
 
 @WebMvcTest(ProfessionalAssessmentController.class)
 @Import({ WebSecurityConfiguration.class, ProfessionalAssessmentFormMapper.class,
         ProfessionalAssessmentViewMapper.class })
 class ProfessionalAssessmentControllerTest {
+
+    private static final UUID SAVED_ID = UUID.fromString("30eff44e-eaa0-4d2e-a853-90983b1c150a");
 
     @Autowired
     MockMvc mvc;
@@ -83,13 +91,17 @@ class ProfessionalAssessmentControllerTest {
     }
 
     @Test
-    void validPostCallsServiceOnceAndRendersAllFourMeasuresWithoutJobLossClaim() throws Exception {
-        when(assessmentService.assess(any())).thenReturn(result(AssessmentSource.JEV, false));
+    void validPostCallsServiceOnceAndRedirectsToSavedResult() throws Exception {
+        when(assessmentService.submitProfessionalAssessment(any())).thenReturn(SAVED_ID);
 
         mvc.perform(validPost().with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/professional-assessment/" + SAVED_ID));
+        when(assessmentService.getProfessionalAssessment(SAVED_ID))
+                .thenReturn(Optional.of(snapshot(AssessmentSource.JEV, false)));
+        mvc.perform(get("/professional-assessment/" + SAVED_ID))
                 .andExpect(status().isOk())
                 .andExpect(view().name("professional-assessment/result"))
-                .andExpect(model().attributeExists("assessment"))
                 .andExpect(content().string(org.hamcrest.Matchers.allOf(
                         org.hamcrest.Matchers.containsString("Software Architect"),
                         org.hamcrest.Matchers.containsString("AI Exposure"),
@@ -100,19 +112,24 @@ class ProfessionalAssessmentControllerTest {
                         org.hamcrest.Matchers.containsString("does not measure your motivation"),
                         org.hamcrest.Matchers.containsString("Much of the work can be performed digitally"),
                         org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("DEVELOPMENT MODE")),
-                        org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("contextual_complexity")))));
+                        org.hamcrest.Matchers.containsString("noindex,nofollow"),
+                        org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("contextual_complexity")),
+                        org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("probability_distribution")))));
+        mvc.perform(get("/professional-assessment/" + SAVED_ID)).andExpect(status().isOk());
         ArgumentCaptor<ProfessionalAssessmentState> state =
                 ArgumentCaptor.forClass(ProfessionalAssessmentState.class);
-        verify(assessmentService, times(1)).assess(state.capture());
+        verify(assessmentService, times(1)).submitProfessionalAssessment(state.capture());
+        verify(assessmentService, times(2)).getProfessionalAssessment(SAVED_ID);
         assertThat(state.getValue().profession()).isEqualTo("Software Architect");
         assertThat(state.getValue().responsibilities()).containsExactly("Design systems", "Resolve trade-offs");
     }
 
     @Test
     void localFixtureShowsWarningAndInsufficientInformationShowsNoNumericMeasures() throws Exception {
-        when(assessmentService.assess(any())).thenReturn(result(AssessmentSource.LOCAL_FIXTURE, true));
+        when(assessmentService.getProfessionalAssessment(SAVED_ID))
+                .thenReturn(Optional.of(snapshot(AssessmentSource.LOCAL_FIXTURE, true)));
 
-        String html = mvc.perform(validPost().with(csrf()))
+        String html = mvc.perform(get("/professional-assessment/" + SAVED_ID))
                 .andExpect(status().isOk())
                 .andExpect(view().name("professional-assessment/result"))
                 .andReturn().getResponse().getContentAsString();
@@ -124,7 +141,7 @@ class ProfessionalAssessmentControllerTest {
 
     @Test
     void providerFailureRendersSafeErrorWithoutLeakingExceptionDetails() throws Exception {
-        when(assessmentService.assess(any())).thenThrow(
+        when(assessmentService.submitProfessionalAssessment(any())).thenThrow(
                 new IllegalStateException("Vendor failure with secret API key"));
 
         String html = mvc.perform(validPost().with(csrf()))
@@ -134,6 +151,22 @@ class ProfessionalAssessmentControllerTest {
 
         assertThat(html).contains("couldn't complete your assessment right now");
         assertThat(html).doesNotContain("Vendor failure", "secret API key", "IllegalStateException");
+    }
+
+    @Test
+    void persistenceFailureIsSafeAndUnknownOrMalformedIdsReturn404() throws Exception {
+        when(assessmentService.submitProfessionalAssessment(any())).thenThrow(
+                new IllegalStateException("PostgreSQL secret detail"));
+        mvc.perform(validPost().with(csrf()))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("PostgreSQL secret detail"))));
+        mvc.perform(get("/professional-assessment/" + SAVED_ID))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Assessment not found")));
+        mvc.perform(get("/professional-assessment/not-a-uuid"))
+                .andExpect(status().isNotFound());
+        verify(assessmentService, times(1)).getProfessionalAssessment(SAVED_ID);
     }
 
     private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder validPost() {
@@ -160,5 +193,14 @@ class ProfessionalAssessmentControllerTest {
         }
         var decision = new ProfessionalDecisionPolicyV1().decide(judgments);
         return new ProfessionalAssessmentResult(decision, source, judgments.schemaVersion(), decision.policyVersion());
+    }
+
+    private StoredProfessionalAssessment snapshot(AssessmentSource source, boolean insufficient) {
+        var state = new ProfessionalAssessmentState("Software Architect",
+                "I design complex software systems and guide engineers.",
+                java.util.List.of("Design systems"), java.util.List.of("Architecture"), OptionalInt.of(14));
+        var judgments = new LocalFixtureProfessionalJudgmentProvider("senior_software_architect").judge(state);
+        return new StoredProfessionalAssessment(SAVED_ID, Instant.parse("2026-01-01T00:00:00Z"),
+                state, judgments, result(source, insufficient), Optional.empty());
     }
 }
