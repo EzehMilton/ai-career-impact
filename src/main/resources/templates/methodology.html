@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('How this works')}"></head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('')}"></header>
+
+<main class="page-shell" id="main">
+  <div class="page-header">
+    <p class="eyebrow">How this works</p>
+    <h1>How we produce a result</h1>
+    <p class="intro">
+      No magic, and no black box you have to take on trust. This page explains what the assessment
+      actually does, and just as importantly what it does not do.
+    </p>
+  </div>
+
+  <div class="panel prose">
+    <h2>The steps</h2>
+    <p>Each assessment follows the same four steps.</p>
+    <ol>
+      <li>
+        <strong>Structured AI judgments.</strong> An AI model answers a fixed set of small, specific
+        questions about what you described &mdash; for example how repeatable a task is, or how much
+        quantitative reasoning a subject combination builds. Each question has a defined scale with
+        every level written out in advance. The model never produces an overall verdict.
+      </li>
+      <li>
+        <strong>Deterministic policy in code.</strong> Ordinary Java then combines those judgments
+        using fixed, published weights and thresholds. This is where your measures, bands and
+        explanation come from. It is the same arithmetic every time, so the same judgments always
+        give the same result.
+      </li>
+      <li>
+        <strong>A written explanation.</strong> A second AI step turns the already-decided result into
+        readable prose. It is told that the saved numbers are final and may not be recalculated,
+        contradicted or restated numerically. If it strays, the explanation is discarded &mdash; your
+        assessment is unaffected.
+      </li>
+      <li>
+        <strong>External context, kept separate.</strong> Where we have a traceable external source we
+        show it in its own section with its publisher and date. Evidence never changes a measure.
+      </li>
+    </ol>
+
+    <h2>Why the three assessments are not comparable</h2>
+    <p>
+      The professional, university and A-level assessments measure genuinely different things, so
+      their numbers mean different things:
+    </p>
+    <ul>
+      <li><strong>Professional &mdash; AI Exposure</strong> describes how readily the work you already do
+        might be performed, automated or changed by AI. It is <em>not</em> a probability of job loss.</li>
+      <li><strong>University &mdash; Future Readiness</strong> describes how well a course appears to
+        develop capabilities that stay valuable as AI tools improve.
+        It is <em>not</em> a guarantee of employability.</li>
+      <li><strong>A-level &mdash; Future Optionality</strong> describes how wide a range of plausible next
+        steps a subject combination keeps open. It is <em>not</em> a guarantee of university admission
+        or career success.</li>
+    </ul>
+    <p>
+      Each uses its own questions, its own weights and its own wording for bands. A 7.2 in one
+      assessment has nothing to do with a 7.2 in another, and there is deliberately no single overall
+      AI score anywhere in this application.
+    </p>
+
+    <h2>About the weights</h2>
+    <p>
+      The weights and thresholds are <strong>provisional product policy</strong>. They are a
+      considered, transparent starting point &mdash; not validated educational or economic science, and
+      not the view of any employer, university or admissions body. Each set carries a version, so a
+      saved result always keeps the methodology that produced it. If we change the weights, we publish
+      a new version rather than quietly altering what an old result meant.
+    </p>
+
+    <h2>Your result does not change later</h2>
+    <p>
+      An assessment is stored as a snapshot. Re-opening it shows exactly what was produced at the
+      time, with the methodology version that produced it. Nothing is silently re-scored, and
+      re-opening a page never re-runs the assessment.
+    </p>
+
+    <h2>What the free assessment and the full report contain</h2>
+    <p>
+      Both use the same assessment. The free result gives you the measures, the main factors behind
+      them and a short interpretation. The full report adds a deeper explanation of each measure,
+      practical next steps, skill guidance, external context where we have it, and a PDF. Paying
+      unlocks depth and explanation &mdash; it does not buy a more accurate or more favourable score.
+    </p>
+
+    <h2>What we deliberately do not do</h2>
+    <ul>
+      <li>We do not predict whether you will lose a job, get an offer or succeed in a career.</li>
+      <li>We do not rank subjects, courses, universities or employers.</li>
+      <li>We do not invent statistics. Salary and labour-market figures only ever appear with a source.</li>
+      <li>We do not invent university entry requirements. Subject requirements are facts to check on
+        the course's own page, and we say so rather than guessing.</li>
+      <li>We do not tell you to change your subjects, abandon a course or leave a career.</li>
+    </ul>
+  </div>
+
+  <p class="page-action">
+    <a th:href="@{/}" href="/">Back to home</a>
+    <a class="button-link button-secondary" th:href="@{/privacy}" href="/privacy">Your information</a>
+  </p>
+</main>
+
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
+</body>
+</html>

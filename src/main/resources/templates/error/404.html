@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Page not found')}"></head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('')}"></header>
+
+<main class="page-shell" id="main">
+  <section class="panel error-panel" aria-labelledby="error-heading">
+    <p class="eyebrow">Page not found</p>
+    <h1 id="error-heading">We couldn't find that page.</h1>
+    <p>The link may be mistyped, or the page may have moved.</p>
+    <p class="page-action">
+      <a th:href="@{/}" href="/">Back to home</a>
+    </p>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
+</body>
+</html>

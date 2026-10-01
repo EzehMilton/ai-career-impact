@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Think clearly about AI and your future')}"></head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('home')}"></header>
+
+<main class="page-shell" id="main">
+  <div class="home-hero page-header">
+    <p class="eyebrow">AI Career Impact</p>
+    <h1>Think clearly about AI and your future</h1>
+    <p class="home-lede">
+      AI is changing how people work and what they study. This is a calm, structured way to look at
+      how your work, your course or your subject choices might fit a labour market that AI is
+      reshaping.
+    </p>
+    <p class="home-lede">
+      It will not tell you what will happen to you. Nobody can. What it will do is describe the
+      characteristics of what you have told us about, and explain what those characteristics tend to
+      mean.
+    </p>
+  </div>
+
+  <section class="results-section" aria-labelledby="choose-heading">
+    <h2 id="choose-heading">What are you thinking about?</h2>
+    <p class="helper">Pick the one closest to your situation. Each takes a few minutes.</p>
+
+    <div class="journey-grid">
+      <article class="panel journey-card journey-professional">
+        <p class="journey-for">My current job</p>
+        <h3>Professional</h3>
+        <p class="journey-question">&ldquo;How might AI affect the work I do?&rdquo;</p>
+        <p>For people already working, or with a role they can describe. You can type your details in
+          or upload a CV to fill the form in for you.</p>
+        <p class="journey-cta">
+          <a class="button-link" th:href="@{/professional-assessment}" href="/professional-assessment">Assess my role</a>
+        </p>
+      </article>
+
+      <article class="panel journey-card journey-university">
+        <p class="journey-for">A university course</p>
+        <h3>University</h3>
+        <p class="journey-question">&ldquo;How well does this course prepare me for an AI-shaped labour market?&rdquo;</p>
+        <p>For anyone choosing a degree, holding an offer, or already studying. It looks at the course,
+          not at you.</p>
+        <p class="journey-cta">
+          <a class="button-link" th:href="@{/university-assessment}" href="/university-assessment">Assess a course</a>
+        </p>
+      </article>
+
+      <article class="panel journey-card journey-a-level">
+        <p class="journey-for">My A-level subjects</p>
+        <h3>A-level</h3>
+        <p class="journey-question">&ldquo;How many future options do these subjects preserve?&rdquo;</p>
+        <p>For sixth-form students choosing or reviewing subjects. There are no good or bad subjects
+          here, and it is fine to be undecided about what comes next.</p>
+        <p class="journey-cta">
+          <a class="button-link" th:href="@{/a-level-assessment}" href="/a-level-assessment">Assess A-level choices</a>
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <section class="results-section" aria-labelledby="tiers-heading">
+    <h2 id="tiers-heading">What you get</h2>
+    <div class="tier-grid">
+      <div class="tier tier-included">
+        <h3>Free assessment</h3>
+        <p class="helper">Available immediately, no payment.</p>
+        <ul>
+          <li>Your core assessment and its main measures</li>
+          <li>What each measure means, in plain English</li>
+          <li>The main strengths behind your result</li>
+          <li>The main areas you might want to look at</li>
+          <li>A short interpretation of the whole picture</li>
+        </ul>
+      </div>
+      <div class="tier">
+        <h3>Full report</h3>
+        <p class="helper">Optional, one-off payment.</p>
+        <ul>
+          <li>A deeper personalised explanation of each measure</li>
+          <li>Practical next steps</li>
+          <li>Skill-development guidance</li>
+          <li>External context and evidence where available</li>
+          <li>A downloadable PDF of your report</li>
+        </ul>
+      </div>
+    </div>
+    <p class="helper">
+      Both tiers use exactly the same assessment. Paying adds depth and explanation; it does not
+      change, improve or re-run your result.
+    </p>
+  </section>
+
+  <section class="panel report-caveat" aria-labelledby="honest-heading">
+    <h2 id="honest-heading">Being straight with you</h2>
+    <p>
+      Every number here is an <strong>indicator</strong>, not a probability and not a prediction. A
+      result is never a guarantee of employment, university admission or career success, and a low
+      number is not a verdict on you or your choices.
+    </p>
+    <p>
+      The three assessments deliberately measure different things, so their numbers are not
+      comparable with each other. Where we can point at external facts — official statistics, course
+      information — we show them separately, with their source, so you can tell the difference
+      between a fact and our assessment.
+    </p>
+    <p><a th:href="@{/methodology}" href="/methodology">Read how this works</a></p>
+  </section>
+
+  <!--/* Development-only shortcuts. Rendered only under the local-fixture profile. */-->
+  <section class="panel dev-section results-section" th:if="${developmentMode}"
+           aria-labelledby="dev-heading">
+    <h2 id="dev-heading">Development shortcuts</h2>
+    <p>
+      This section appears only under the <code>local-fixture</code> profile. Assessments use
+      configured fixture data and payments are simulated locally.
+    </p>
+    <p th:if="${developmentFixtures != null}">
+      Active fixtures &mdash; <span th:text="${developmentFixtures}">fixtures</span>
+    </p>
+    <nav class="site-footer-nav" aria-label="Development shortcuts">
+      <a th:href="@{/professional-assessment}" href="/professional-assessment">Professional form</a>
+      <a th:href="@{/university-assessment}" href="/university-assessment">University form</a>
+      <a th:href="@{/a-level-assessment}" href="/a-level-assessment">A-level form</a>
+      <a th:href="@{/methodology}" href="/methodology">Methodology</a>
+      <a th:href="@{/privacy}" href="/privacy">Your information</a>
+    </nav>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
+</body>
+</html>

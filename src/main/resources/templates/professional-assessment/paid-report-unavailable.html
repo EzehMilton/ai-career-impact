@@ -1,8 +1,26 @@
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Full report access | AI Career Impact</title><link rel="stylesheet" th:href="@{/css/professional-assessment.css}" href="/css/professional-assessment.css"></head>
-<body><main class="page-shell"><section class="panel"><h1>Full report access</h1>
-  <p th:if="${purchase.pending}">Payment confirmation is pending. This page will become available after payment is verified.</p>
-  <p th:unless="${purchase.pending}">An active paid entitlement is required to view this report.</p>
-  <p><a th:href="@{/professional-assessment/{id}(id=${assessmentId})}">Return to your free assessment</a></p>
-</section></main></body></html>
+<head th:replace="~{fragments/layout :: head('Full report access')}"></head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('professional')}"></header>
+
+<main class="page-shell" id="main">
+  <section class="panel error-panel" aria-labelledby="pr-heading">
+    <p class="eyebrow">Full report</p>
+    <h1 id="pr-heading">That report isn't available yet.</h1>
+    <p th:if="${purchase.pending}">Payment confirmation is pending. This page becomes available once
+      payment has been verified, which is usually quick.</p>
+    <p th:unless="${purchase.pending}">The full report needs to be unlocked before it can be opened.</p>
+    <p>Your free assessment is unaffected and is still available from its own link.</p>
+    <p class="page-action">
+      <a th:href="@{/professional-assessment/{id}(id=${assessmentId})}">Back to your free result</a>
+      <a class="button-link button-secondary" th:href="@{/}" href="/">Back to home</a>
+    </p>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
+</body>
+</html>
