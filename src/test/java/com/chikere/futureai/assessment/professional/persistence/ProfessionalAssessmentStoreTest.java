@@ -38,6 +38,8 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.time.LocalDate;
 import com.chikere.futureai.occupation.professional.application.*;
+import com.chikere.futureai.payment.professional.application.*;
+import com.chikere.futureai.report.professional.application.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -51,11 +53,12 @@ class ProfessionalAssessmentStoreTest {
     @Autowired ProfessionalNarrativeStore narrativeStore;
     @Autowired ProfessionalEvidenceStore evidenceStore;
     @Autowired ProfessionalOccupationClassificationStore classificationStore;
+    @Autowired ProfessionalPurchaseStore purchaseStore;
     @Autowired Flyway flyway;
 
     @Test
     void migratedPostgresqlRoundTripPreservesCompleteSnapshot() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("4");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("5");
         var state = new ProfessionalAssessmentState("Software Architect",
                 "I design software and make consequential architecture decisions.",
                 List.of("Design platforms", "Resolve trade-offs"),
@@ -167,5 +170,47 @@ class ProfessionalAssessmentStoreTest {
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> classificationStore.save(stored))
                 .hasRootCauseInstanceOf(IllegalStateException.class)
                 .hasRootCauseMessage("occupation classification is an immutable historical snapshot");
+    }
+
+    @Test
+    void migratedPostgresqlRoundTripPreservesEntitlementFrozenReportAndProcessedEvent() {
+        var state = new ProfessionalAssessmentState("Software Architect", "Designs systems.",
+                List.of("Design platforms"), List.of("Architecture"), OptionalInt.of(12));
+        var judgments = new LocalFixtureProfessionalJudgmentProvider("senior_software_architect").judge(state);
+        var decision = new ProfessionalDecisionPolicyV1().decide(judgments);
+        UUID assessmentId = UUID.randomUUID(); UUID entitlementId = UUID.randomUUID();
+        var assessment = new StoredProfessionalAssessment(assessmentId, Instant.parse("2026-09-30T12:00:00Z"),
+                state, judgments, new ProfessionalAssessmentResult(decision, AssessmentSource.LOCAL_FIXTURE,
+                judgments.schemaVersion(), decision.policyVersion()), Optional.empty());
+        store.save(assessment);
+        var report = new ProfessionalReportAssembler().assemble(new ProfessionalReportSource(assessment,
+                Optional.empty(), Optional.empty(), Optional.empty()), ProfessionalReportTier.PAID);
+        var pending = new ProfessionalReportEntitlement(entitlementId, assessmentId, ProfessionalReportTier.PAID,
+                ProfessionalEntitlementStatus.PENDING, ProfessionalPaymentProvider.STRIPE, "cs_test_roundtrip",
+                URI.create("https://checkout.stripe.test/roundtrip"), "price_configured", Optional.empty(),
+                Optional.empty(), Instant.parse("2026-09-30T12:01:00Z"), Optional.empty());
+        purchaseStore.savePending(pending);
+        var event = new ProfessionalPaymentEvent("evt_roundtrip", ProfessionalPaymentProvider.STRIPE,
+                "cs_test_roundtrip", entitlementId, assessmentId, Optional.of("pi_roundtrip"),
+                Instant.parse("2026-09-30T12:02:00Z"));
+        var snapshot = new PurchasedProfessionalReportSnapshot(entitlementId, assessmentId,
+                report.reportVersion(), Instant.parse("2026-09-30T12:02:01Z"), report);
+
+        assertThat(purchaseStore.findSnapshotByAssessmentId(assessmentId)).isEmpty();
+        assertThat(purchaseStore.confirmAndFreeze(event, snapshot))
+                .isEqualTo(ProfessionalPurchaseStore.PurchaseConfirmationResult.ACTIVATED);
+
+        assertThat(purchaseStore.findSnapshotByAssessmentId(assessmentId)).contains(snapshot);
+        assertThat(purchaseStore.findEntitlementByAssessmentId(assessmentId)).get().satisfies(active -> {
+            assertThat(active.status()).isEqualTo(ProfessionalEntitlementStatus.ACTIVE);
+            assertThat(active.providerCheckoutSessionId()).isEqualTo("cs_test_roundtrip");
+            assertThat(active.providerPaymentReference()).contains("pi_roundtrip");
+            assertThat(active.purchasedReportVersion()).contains("professional-report-v1");
+            assertThat(active.confirmedAt()).contains(Instant.parse("2026-09-30T12:02:01Z"));
+        });
+        assertThat(purchaseStore.isEventProcessed(ProfessionalPaymentProvider.STRIPE, "evt_roundtrip")).isTrue();
+        assertThat(purchaseStore.confirmAndFreeze(event, snapshot))
+                .isEqualTo(ProfessionalPurchaseStore.PurchaseConfirmationResult.ALREADY_PROCESSED);
+        assertThat(purchaseStore.findSnapshotByAssessmentId(assessmentId)).contains(snapshot);
     }
 }

@@ -5,6 +5,8 @@ import com.chikere.futureai.assessment.professional.application.ProfessionalAsse
 import com.chikere.futureai.report.professional.application.ProfessionalReportService;
 import com.chikere.futureai.report.professional.application.ProfessionalReportTier;
 import com.chikere.futureai.report.professional.web.ProfessionalReportViewMapper;
+import com.chikere.futureai.payment.professional.application.ProfessionalReportPurchaseService;
+import com.chikere.futureai.payment.professional.web.ProfessionalPurchaseViewModel;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -29,16 +31,19 @@ public final class ProfessionalAssessmentController {
     private final ProfessionalReportService reportService;
     private final ProfessionalAssessmentFormMapper formMapper;
     private final ProfessionalReportViewMapper reportViewMapper;
+    private final ProfessionalReportPurchaseService purchaseService;
 
     public ProfessionalAssessmentController(
             ProfessionalAssessmentWorkflow workflow,
             ProfessionalReportService reportService,
             ProfessionalAssessmentFormMapper formMapper,
-            ProfessionalReportViewMapper reportViewMapper) {
+            ProfessionalReportViewMapper reportViewMapper,
+            ProfessionalReportPurchaseService purchaseService) {
         this.workflow = workflow;
         this.reportService = reportService;
         this.formMapper = formMapper;
         this.reportViewMapper = reportViewMapper;
+        this.purchaseService = purchaseService;
     }
 
     @GetMapping("/professional-assessment")
@@ -87,6 +92,7 @@ public final class ProfessionalAssessmentController {
             }
             model.addAttribute("assessmentId", id);
             model.addAttribute("report", reportViewMapper.toView(report.orElseThrow()));
+            model.addAttribute("purchase", ProfessionalPurchaseViewModel.from(purchaseService.accessFor(id)));
             return "professional-assessment/result";
         }
         catch (RuntimeException exception) {

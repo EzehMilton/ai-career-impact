@@ -9,9 +9,9 @@
 </head>
 <body>
 <main class="page-shell paid-report">
-  <aside class="fixture-warning" role="alert">
-    <strong>DEVELOPMENT MODE — PAID REPORT PREVIEW</strong>
-    <p>No payment or entitlement has been granted. This local-only route uses fixture data.</p>
+  <aside class="fixture-warning" th:if="${report.developmentFixture}" role="alert">
+    <strong>DEVELOPMENT MODE — LOCALLY PURCHASED REPORT</strong>
+    <p>This report was unlocked using a local payment simulation, not a real Stripe transaction.</p>
   </aside>
   <header class="page-header">
     <p class="eyebrow">Full professional report</p>

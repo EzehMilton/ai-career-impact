@@ -69,8 +69,14 @@
   <section class="panel unlock-panel" aria-labelledby="unlock-heading">
     <h2 id="unlock-heading">Unlock the full personalised report</h2>
     <p>The full report adds deeper personalised explanations, practical next steps, skill priorities, detailed work guidance and saved external career context.</p>
-    <a class="button-link" th:if="${report.developmentFixture}" th:href="@{/professional-assessment/{id}/report(id=${assessmentId})}">Preview full report — development only</a>
-    <p class="helper" th:unless="${report.developmentFixture}">Full-report access and pricing will be connected in the payment phase.</p>
+    <p th:if="${purchase.displayPrice != null}">Price: <strong th:text="${purchase.displayPrice}">Configured price</strong></p>
+    <a class="button-link" th:if="${purchase.active}" th:href="@{/professional-assessment/{id}/report(id=${assessmentId})}">Open your purchased report</a>
+    <p class="notice" th:if="${purchase.pending}">Payment confirmation pending. Your full report will be available after payment is verified.</p>
+    <p class="notice" th:if="${purchase.denied}">Paid report access is not currently active.</p>
+    <form th:if="${purchase.checkoutAvailable}" method="post" th:action="@{/professional-assessment/{id}/checkout(id=${assessmentId})}">
+      <button type="submit">Unlock your full personalised report</button>
+    </form>
+    <p class="helper" th:if="${purchase.noEntitlement and !purchase.checkoutAvailable}">Paid report checkout is not currently available.</p>
   </section>
   <p class="page-action"><a th:href="@{/professional-assessment}" href="/professional-assessment">Assess another role</a></p>
 </main>
