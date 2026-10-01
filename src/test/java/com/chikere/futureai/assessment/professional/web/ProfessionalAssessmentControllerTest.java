@@ -7,8 +7,10 @@ import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfession
 import com.chikere.futureai.narrative.professional.application.*;
 import com.chikere.futureai.report.professional.application.*;
 import com.chikere.futureai.report.professional.web.ProfessionalReportViewMapper;
+import com.chikere.futureai.payment.professional.application.*;
 import com.chikere.futureai.security.WebSecurityConfiguration;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -33,6 +35,13 @@ class ProfessionalAssessmentControllerTest {
     @Autowired MockMvc mvc;
     @MockitoBean ProfessionalAssessmentWorkflow workflow;
     @MockitoBean ProfessionalReportService reportService;
+    @MockitoBean ProfessionalReportPurchaseService purchaseService;
+
+    @BeforeEach
+    void purchaseState() {
+        when(purchaseService.accessFor(any())).thenReturn(new ProfessionalPurchaseAccess(
+                Optional.empty(), false, Optional.empty()));
+    }
 
     @Test
     void formIsPublicAndValidationOrCsrfFailureNeverCallsWorkflow() throws Exception {
@@ -64,7 +73,7 @@ class ProfessionalAssessmentControllerTest {
         assertThat(html).contains("Free professional assessment", "Software Architect", "AI Exposure",
                 "Human Advantage", "AI Complementarity", "Role Adaptability", "What increases AI exposure",
                 "What preserves human value", "Short interpretation", "not a probability that you will lose your job",
-                "Unlock the full personalised report", "Preview full report — development only",
+                "Unlock the full personalised report", "Paid report checkout is not currently available",
                 "&lt;script&gt;meaning&lt;/script&gt;");
         assertThat(html).doesNotContain("Why AI may affect your work", "What to focus on next",
                 "Skill-development priorities", "Illustrative evidence title", "Premium action one",
@@ -79,7 +88,7 @@ class ProfessionalAssessmentControllerTest {
         String html = mvc.perform(get("/professional-assessment/" + ID)).andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         assertThat(html).contains("AI Exposure", "deterministic assessment is complete",
-                "Full-report access and pricing will be connected");
+                "Paid report checkout is not currently available");
     }
 
     @Test

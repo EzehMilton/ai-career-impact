@@ -279,8 +279,50 @@ Classification runs after the assessment and narrative have been persisted and b
 
 ### Report history, access and price
 
-Assembled reports are not separately persisted in this phase. They would duplicate the assessment, narrative and evidence snapshots, and there is not yet a purchase or entitlement record whose historical content must be frozen. `professional-report-v1` is defined once and exposed in report methodology. When payment is introduced, the entitlement/purchase design must persist the selected report version or a purchased report snapshot before a future V2 is allowed to change purchased content silently.
+Ordinary assembled reports are not separately persisted because they would duplicate the assessment, narrative and evidence snapshots. `professional-report-v1` is defined once and exposed in report methodology. A confirmed purchase is the exception: its exact paid report is frozen as an immutable purchased snapshot, as described below.
 
-The paid route, `GET /professional-assessment/{UUID}/report`, is registered only under `local-fixture` and is prominently marked “DEVELOPMENT MODE — PAID REPORT PREVIEW”. URL knowledge is not an entitlement mechanism and this route is not a production access-control design. Real entitlement and checkout belong to the payment phase. No price is hard-coded: the expected low-cost consumer range is £2.99–£9.99, but the eventual displayed price must come from product/payment configuration.
+The paid route, `GET /professional-assessment/{UUID}/report`, requires an `ACTIVE` entitlement and renders only its frozen purchased snapshot. URL knowledge, a redirect query parameter and a pending Checkout Session do not grant access. No price is hard-coded: the expected low-cost consumer range is £2.99–£9.99, while Stripe Price configuration is authoritative for charging and optional display text comes from configuration.
 
 Missing or failed optional data does not prevent a report. A failed narrative leaves the deterministic assessment and report available; a failed evidence bundle gives a safe unavailable message; and missing classification simply omits that section. Reports expose no exceptions, credentials, prompt text, chain-of-thought, JPA entities or provider implementation details. Normal development remains offline, and there is no live-to-fixture fallback.
+
+## Professional report purchase and entitlement
+
+```text
+FREE report
+   |
+checkout request
+   |
+ProfessionalReportPurchaseService
+   |
+ProfessionalPaymentGateway
+   |
+Stripe / local fixture
+   |
+verified payment event
+   |
+ACTIVE entitlement
+   |
+freeze ProfessionalReport
+   |
+PurchasedProfessionalReportSnapshot
+   |
+PAID report access
+```
+
+Payment grants access to presentation only. It never participates in Jev judgments, the Java decision policy, narrative generation, evidence retrieval, occupation classification or report composition. The vendor-neutral `ProfessionalPaymentGateway` exchanges `ProfessionalCheckoutRequest`, `ProfessionalCheckoutSession` and signed-notification models with the application layer; Stripe SDK objects remain inside the Stripe adapter. Browser card entry is entirely on Stripe-hosted Checkout. The Checkout request contains one configured Stripe Price and only the assessment and entitlement UUIDs as metadata—never work descriptions or other submitted content.
+
+`ProfessionalReportPurchaseService.startCheckout` first verifies that a complete saved PAID report can be composed, then calls the gateway without a database transaction. A short transaction persists the returned session as a `PENDING` entitlement. This avoids holding a database connection or lock during a network call. The trade-off is that a successful Stripe session can become orphaned if the subsequent database write fails; it grants no access and can expire harmlessly. A failed entitlement may be retried using the same entitlement identity and a new session. There is no Stripe-to-fixture exception fallback.
+
+The Stripe adapter is selected only by the explicit `live-payment` profile and fails startup if `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` or `PROFESSIONAL_REPORT_STRIPE_PRICE_ID` is missing. It uses the official Stripe Java SDK and hosted Checkout Sessions in one-time payment mode. Optional `PROFESSIONAL_REPORT_DISPLAY_PRICE` controls CTA display only; Stripe's configured Price remains authoritative for the charge and currency. Normal mode has no payment gateway. The `local-fixture` profile instead selects a deterministic, zero-network gateway and an explicit local confirmation screen with prominent development warnings. It never represents its session or entitlement as Stripe provenance.
+
+### Confirmation, idempotency and freezing
+
+The success redirect is navigation, not proof of payment. It only returns the browser to the free result, which reads the persisted entitlement state. Production confirmation comes through `POST /payments/stripe/webhook`. That exact path alone is exempt from browser CSRF because it is authenticated by Stripe's signature; checkout and local-confirmation POSTs retain CSRF protection. The adapter verifies the signature with the configured webhook secret, accepts only `checkout.session.completed`, requires the session's payment status to be `paid`, and validates its minimal metadata against the saved provider, session, assessment and entitlement identifiers.
+
+Stripe can redeliver events. Flyway V5 records each provider event ID under a composite provider/event primary key. Processing locks the entitlement row, rechecks state and identity, and atomically writes the purchased snapshot, changes `PENDING` to `ACTIVE`, and records the event. A duplicate event returns an idempotent already-processed result and neither rebuilds nor duplicates the report. If report assembly, JSON conversion or persistence fails, the transaction rolls back: no `ACTIVE` entitlement can exist without its purchased snapshot, and Stripe may retry the event.
+
+The purchased snapshot is JSONB because `ProfessionalReport` is an immutable presentation document with nested, versioned sections; normalising it would duplicate the report model into many purchase-only tables. Entitlement status, provider/session/payment references, timestamps and `purchased_report_version` remain relational for constraints and queries. The JSON contains only user-facing paid report content—scores, explanations, factors, narrative, actions, skill and work-focus guidance, displayed evidence and classification, methodology and limitations. It excludes secrets, prompts, exceptions, SDK data and hidden reasoning.
+
+The frozen snapshot, not today's assembler, is authoritative after purchase. A `professional-report-v1` bought in 2026 therefore remains V1 after a future V2 deploy. `GET /professional-assessment/{UUID}/report` denies absent, `PENDING`, `FAILED`, `REFUNDED` and `REVOKED` states and renders the snapshot only for `ACTIVE`. The free assessment remains available throughout checkout and all payment failures.
+
+There are no accounts yet. Entitlement is associated with the assessment UUID, so anyone who obtains that opaque URL may potentially reach both the assessment and an entitled report. There is no public listing route, but this is explicitly temporary pre-authentication access rather than final production-grade authorisation. Account-bound ownership belongs in a later phase.

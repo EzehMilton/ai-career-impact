@@ -14,9 +14,14 @@ public class WebSecurityConfiguration {
     SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(HttpMethod.GET, "/professional-assessment", "/professional-assessment/*",
-                        "/professional-assessment/*/report", "/css/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/professional-assessment").permitAll()
+                        "/professional-assessment/*/report", "/professional-assessment/*/checkout/local",
+                        "/css/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/professional-assessment",
+                        "/professional-assessment/*/checkout",
+                        "/professional-assessment/*/checkout/local/confirm",
+                        "/payments/stripe/webhook").permitAll()
                 .anyRequest().authenticated())
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/payments/stripe/webhook"))
                 .formLogin(Customizer.withDefaults());
         return http.build();
     }

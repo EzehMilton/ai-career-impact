@@ -27,6 +27,9 @@ import com.chikere.futureai.occupation.professional.configured.ConfiguredProfess
 import com.chikere.futureai.occupation.professional.configured.ConfiguredProfessionalOccupationClassifier;
 import com.chikere.futureai.occupation.professional.fixture.LocalFixtureProfessionalOccupationConfiguration;
 import com.chikere.futureai.occupation.professional.fixture.LocalFixtureProfessionalOccupationClassifier;
+import com.chikere.futureai.payment.professional.application.*;
+import com.chikere.futureai.payment.professional.fixture.*;
+import com.chikere.futureai.payment.professional.stripe.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.web.client.RestClient;
@@ -53,6 +56,9 @@ class ProfessionalProviderWiringTest {
                     NomisProfessionalEvidenceConfiguration.class,
                     LocalFixtureProfessionalOccupationConfiguration.class,
                     ConfiguredProfessionalOccupationConfiguration.class,
+                    ProfessionalPaymentConfiguration.class,
+                    LocalFixtureProfessionalPaymentConfiguration.class,
+                    StripeProfessionalPaymentConfiguration.class,
                     OpenAiProfessionalNarrativeConfiguration.class)
             .withBean(TypeSafeClient.class, () -> mock(TypeSafeClient.class))
             .withBean(ProfessionalAssessmentStore.class, () -> mock(ProfessionalAssessmentStore.class))
@@ -60,6 +66,7 @@ class ProfessionalProviderWiringTest {
             .withBean(ProfessionalEvidenceStore.class, () -> mock(ProfessionalEvidenceStore.class))
             .withBean(ProfessionalOccupationClassificationStore.class,
                     () -> mock(ProfessionalOccupationClassificationStore.class))
+            .withBean(ProfessionalPurchaseStore.class, () -> mock(ProfessionalPurchaseStore.class))
             .withBean(ObjectMapper.class, ObjectMapper::new)
             .withBean(RestClient.Builder.class, RestClient::builder)
             .withBean(ChatClient.Builder.class, () -> {
@@ -88,6 +95,7 @@ class ProfessionalProviderWiringTest {
                     .contains("gpt-test");
             assertThat(context).doesNotHaveBean(ProfessionalEvidenceProvider.class);
             assertThat(context).doesNotHaveBean(ProfessionalOccupationClassifier.class);
+            assertThat(context).doesNotHaveBean(ProfessionalPaymentGateway.class);
         });
     }
 
@@ -123,6 +131,10 @@ class ProfessionalProviderWiringTest {
                     assertThat(context).hasSingleBean(ProfessionalOccupationClassifier.class);
                     assertThat(context.getBean(ProfessionalOccupationClassifier.class))
                             .isInstanceOf(LocalFixtureProfessionalOccupationClassifier.class);
+                    assertThat(context).hasSingleBean(ProfessionalPaymentGateway.class);
+                    assertThat(context.getBean(ProfessionalPaymentGateway.class))
+                            .isInstanceOf(LocalFixtureProfessionalPaymentGateway.class);
+                    assertThat(context).hasSingleBean(LocalProfessionalPaymentSimulator.class);
                 });
     }
 
@@ -157,6 +169,25 @@ class ProfessionalProviderWiringTest {
                     assertThat(context).hasSingleBean(ProfessionalOccupationClassifier.class);
                     assertThat(context.getBean(ProfessionalOccupationClassifier.class))
                             .isInstanceOf(ConfiguredProfessionalOccupationClassifier.class);
+                });
+    }
+
+    @Test
+    void livePaymentProfileSelectsOnlyStripeAndFailsClearlyWithoutConfiguration() {
+        contextRunner.withInitializer(context -> context.getEnvironment().setActiveProfiles("live-payment"))
+                .run(context -> assertThat(context.getStartupFailure())
+                        .hasRootCauseInstanceOf(IllegalArgumentException.class)
+                        .hasStackTraceContaining("Stripe secret key"));
+        contextRunner.withPropertyValues("app.stripe.secret-key=sk_test_not_called",
+                        "app.stripe.webhook-secret=whsec_not_called",
+                        "app.professional.report.stripe-price-id=price_not_called")
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("live-payment"))
+                .run(context -> {
+                    assertThat(context).hasNotFailed();
+                    assertThat(context).hasSingleBean(ProfessionalPaymentGateway.class);
+                    assertThat(context.getBean(ProfessionalPaymentGateway.class))
+                            .isInstanceOf(StripeProfessionalPaymentGateway.class);
+                    assertThat(context).doesNotHaveBean(LocalFixtureProfessionalPaymentGateway.class);
                 });
     }
 }
