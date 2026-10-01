@@ -27,6 +27,10 @@ h2 { font-size: 1.45rem; margin: 0 0 .75rem; }
 h3 { font-size: 1.12rem; margin: 0 0 .75rem; }
 .intro { color: #425c68; font-size: 1.1rem; }
 .panel { background: #fff; border: 1px solid #d9e4e5; border-radius: .9rem; padding: clamp(1.3rem, 3vw, 2rem); box-shadow: 0 .45rem 1.5rem rgba(21, 53, 62, .045); }
+.work-form { margin-top: 1.25rem; }
+.input-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+.input-options > div, .cv-upload { border: 1px solid #d9e4e5; border-radius: .65rem; padding: 1rem; }
+.cv-upload input[type="file"] { margin-bottom: .8rem; }
 .helper { color: #516772; font-size: .95rem; margin: .25rem 0 .7rem; }
 .field { margin: 1.65rem 0; }
 .field-short { max-width: 17rem; }
@@ -73,6 +77,6 @@ dd { margin: 0; font-weight: 700; text-align: right; }
 
 @media (max-width: 42rem) {
   .page-shell { padding-top: 1.6rem; }
-  .measure-grid, .factor-grid { grid-template-columns: 1fr; }
+  .measure-grid, .factor-grid, .input-options { grid-template-columns: 1fr; }
   .panel { border-radius: .65rem; }
 }

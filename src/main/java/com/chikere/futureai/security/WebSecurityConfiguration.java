@@ -18,6 +18,7 @@ public class WebSecurityConfiguration {
                         "/professional-assessment/*/report.pdf",
                         "/css/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/professional-assessment",
+                        "/professional-assessment/cv",
                         "/professional-assessment/*/checkout",
                         "/professional-assessment/*/checkout/local/confirm",
                         "/payments/stripe/webhook").permitAll()

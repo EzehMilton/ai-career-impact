@@ -3,6 +3,7 @@ package com.chikere.futureai.assessment.professional.persistence;
 import com.chikere.futureai.assessment.domain.AssessmentDecision;
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentResult;
+import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentInputMetadata;
 import com.chikere.futureai.assessment.professional.application.StoredProfessionalAssessment;
 import com.chikere.futureai.decision.professional.ProfessionalDecisionFactor;
 import com.chikere.futureai.decision.professional.ProfessionalDecisionResult;
@@ -36,6 +37,12 @@ final class ProfessionalAssessmentPersistenceMapper {
         entity.skills = state.skills();
         entity.yearsOfExperience = state.yearsOfExperience().isPresent()
                 ? state.yearsOfExperience().getAsInt() : null;
+        var input = snapshot.inputMetadata();
+        entity.inputSource = input.source();
+        entity.cvOriginalFilename = input.originalFilename().orElse(null);
+        entity.cvMediaType = input.mediaType().orElse(null);
+        entity.cvParserVersion = input.parserVersion().orElse(null);
+        entity.cvParsedAt = input.parsedAt().orElse(null);
         entity.source = result.source();
         entity.modelIdentifier = snapshot.modelIdentifier().orElse(null);
         entity.judgmentSchemaVersion = result.judgmentSchemaVersion();
@@ -76,8 +83,11 @@ final class ProfessionalAssessmentPersistenceMapper {
                 factors(entity, "DRIVER"), factors(entity, "PROTECTIVE"));
         var result = new ProfessionalAssessmentResult(decision, entity.source,
                 entity.judgmentSchemaVersion, entity.decisionPolicyVersion);
+        var input = new ProfessionalAssessmentInputMetadata(entity.inputSource,
+                Optional.ofNullable(entity.cvOriginalFilename), Optional.ofNullable(entity.cvMediaType),
+                Optional.ofNullable(entity.cvParserVersion), Optional.ofNullable(entity.cvParsedAt));
         return new StoredProfessionalAssessment(entity.id, entity.createdAt, state, judgments,
-                result, Optional.ofNullable(entity.modelIdentifier));
+                result, Optional.ofNullable(entity.modelIdentifier), input);
     }
 
     private ProfessionalAssessmentEntity.JudgmentRow judgmentRow(DimensionJudgment judgment) {

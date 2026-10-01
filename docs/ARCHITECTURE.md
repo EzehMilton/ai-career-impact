@@ -363,3 +363,41 @@ Flyway V6 adds `purchased_professional_report_pdf`, with one row per entitlement
 The insert uses PostgreSQL `ON CONFLICT DO NOTHING`, followed by reading the single stored winner. If simultaneous first requests both render, the entitlement primary key ensures one immutable artifact wins and both callers return that same persisted artifact. No distributed lock or queue is needed. Existing rows are never updated or regenerated; subsequent downloads and application restarts return identical bytes and SHA-256.
 
 Only an `ACTIVE` entitlement reaches generation or download. Missing, pending, failed, refunded and revoked states receive HTTP 403. Successful responses use `application/pdf`, an attachment disposition with a sanitised filename, an exact content length, `nosniff`, and private/no-store caching. Rendering or persistence failure leaves the entitlement, purchased snapshot and paid HTML report unchanged and returns a generic temporary PDF-unavailability message without provider or renderer details.
+## Professional CV input
+
+CV upload is an alternative input path, not an assessment engine:
+
+```text
+Manual input ------------------------\
+                                      -> ProfessionalAssessmentForm
+CV upload -> ProfessionalCvParser ---/             |
+                    |                              v
+                    v                  ProfessionalAssessmentState
+        ProfessionalCvParseResult                   |
+                    |                              v
+             prefill and review          existing assessment pipeline
+```
+
+`ProfessionalCvParser` accepts a Spring-independent `ProfessionalCvDocument` and returns
+candidate work details. PDFBox extracts text from PDF and Apache POI extracts text from DOCX.
+`DeterministicProfessionalCvStructurer` then uses conservative document headings and explicit
+content; it does not calculate impact measures or infer typical skills from a job title. The
+browser always shows the existing editable form before the existing assessment POST can run.
+
+The parser is versioned as `professional-cv-parser-v1`. No AI structurer is used in V1, so local
+fixture development and ordinary operation use the same deterministic, network-free extraction.
+Instruction-like CV lines are discarded as untrusted data. Obvious email, phone and postcode
+lines are removed before structuring; this is deliberately modest data minimisation rather than
+a claim of comprehensive PII detection.
+
+Only PDF and DOCX are accepted. Filename, declared media type, file signature, configured size,
+and actual parseability are checked. Scanned/image-only PDFs receive an insufficient-text warning;
+there is no OCR or network fallback. For multi-role CVs the first, most recent role is selected and
+the user is warned. Years of experience is populated only from an explicit statement, otherwise it
+is left blank.
+
+Raw CV bytes and extracted raw text are never persisted. A short-lived server session carries
+trusted parse provenance across the review form. V7 stores only `MANUAL`/`CV_UPLOAD`, the sanitised
+filename, canonical media type, parser version and parse timestamp alongside the resulting
+assessment snapshot. These fields are audit metadata and never affect scoring. Existing rows are
+backfilled as `MANUAL`; purchased reports and PDFs are unchanged.
