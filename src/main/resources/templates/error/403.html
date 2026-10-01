@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Not available')}"></head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('')}"></header>
+
+<main class="page-shell" id="main">
+  <section class="panel error-panel" aria-labelledby="error-heading">
+    <p class="eyebrow">Not available</p>
+    <h1 id="error-heading">That page isn't available.</h1>
+    <p>
+      You may be trying to open a full report that has not been unlocked. Your free assessment is
+      always available from its own link.
+    </p>
+    <p class="page-action">
+      <a th:href="@{/}" href="/">Back to home</a>
+    </p>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
+</body>
+</html>

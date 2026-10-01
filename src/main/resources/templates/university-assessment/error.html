@@ -1,19 +1,24 @@
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Assessment unavailable | AI Career Impact</title>
-  <link rel="stylesheet" th:href="@{/css/professional-assessment.css}" href="/css/professional-assessment.css">
-</head>
+<head th:replace="~{fragments/layout :: head('Assessment unavailable')}"></head>
 <body>
-  <main class="page-shell">
-    <section class="panel error-panel" role="alert">
-      <p class="eyebrow">University course assessment</p>
-      <h1>We couldn't complete your assessment right now.</h1>
-      <p>Please try again. If the problem continues, come back later.</p>
-      <p class="page-action"><a href="/university-assessment" th:href="@{/university-assessment}">Return to the form</a></p>
-    </section>
-  </main>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('university')}"></header>
+
+<main class="page-shell" id="main">
+  <section class="panel error-panel" role="alert" aria-labelledby="err-heading">
+    <p class="eyebrow">University course assessment</p>
+    <h1 id="err-heading">We couldn't complete your assessment right now.</h1>
+    <p>Please try again. If the problem continues, come back a little later.</p>
+    <p>Nothing you have already completed is affected.</p>
+    <p class="page-action">
+      <a th:href="@{/university-assessment}" href="/university-assessment">Return to the form</a>
+      <a class="button-link button-secondary" th:href="@{/}" href="/">Back to home</a>
+    </p>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
 </body>
 </html>

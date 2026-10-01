@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Your information')}"></head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('')}"></header>
+
+<main class="page-shell" id="main">
+  <div class="page-header">
+    <p class="eyebrow">Your information</p>
+    <h1>What happens to what you tell us</h1>
+    <p class="intro">
+      A plain description of how this application currently handles your information.
+    </p>
+  </div>
+
+  <div class="alert alert-info">
+    <strong>This is a product information notice, not a legal privacy policy.</strong>
+    <p>
+      It describes what the software does today. It is not legal advice and it is not a formal policy
+      document. A deployment that handles real users' data would need its own policy.
+    </p>
+  </div>
+
+  <div class="panel prose">
+    <h2>What is stored</h2>
+    <ul>
+      <li>
+        <strong>Your assessment.</strong> What you typed, the judgments it produced and the resulting
+        measures are saved, so that your result page keeps working and so that a saved result never
+        silently changes.
+      </li>
+      <li>
+        <strong>Your explanation and any external context</strong> gathered for that assessment.
+      </li>
+      <li>
+        <strong>Purchases.</strong> If you buy a full report, we store the purchase, the exact report
+        you bought, and the PDF generated from it.
+      </li>
+    </ul>
+
+    <h2>CV uploads</h2>
+    <p>
+      In the professional assessment you may upload a CV to fill in the form. The file is read in
+      memory to extract text, and <strong>the file itself and the extracted text are not kept</strong>.
+      What is saved is the form you reviewed and submitted, plus a note that the input came from an
+      upload, the file name, its type and when it was parsed. Obvious contact lines such as email
+      addresses, phone numbers and postcodes are removed before structuring; that is deliberate data
+      minimisation rather than a claim of comprehensive detection.
+    </p>
+
+    <h2>Payment</h2>
+    <p>
+      Card details are entered on Stripe's own hosted checkout page and are never seen by, or stored
+      in, this application. We keep the payment references Stripe gives us so we can tell that your
+      purchase succeeded. In development mode no payment is taken at all and no card details are ever
+      requested.
+    </p>
+
+    <h2>External providers</h2>
+    <p>
+      When live integrations are switched on, limited information is sent to external services: what
+      you described goes to the AI judgment and explanation providers, and an occupation or subject
+      reference may be used to look up published statistics. Your result page and your saved
+      assessment are not sent anywhere. In development mode no external provider is contacted at all.
+    </p>
+
+    <h2>How your result is reached</h2>
+    <p>
+      There are no accounts yet. Your result lives at a long, unguessable web address, and there is no
+      page anywhere that lists assessments. That address is the only way to reach your result, so
+      treat the link as private &mdash; anyone you send it to can open it. Proper accounts and
+      sign-in are planned, and this link-based access is a deliberate, temporary limitation rather
+      than the finished design.
+    </p>
+
+    <h2>What we do not do</h2>
+    <ul>
+      <li>We do not ask for your name, email address or date of birth.</li>
+      <li>There is no advertising, analytics or third-party tracking in this application.</li>
+      <li>We do not sell or share your assessment with anyone.</li>
+      <li>API keys and provider credentials are never stored with your data or shown in the interface.</li>
+    </ul>
+  </div>
+
+  <p class="page-action">
+    <a th:href="@{/}" href="/">Back to home</a>
+    <a class="button-link button-secondary" th:href="@{/methodology}" href="/methodology">How this works</a>
+  </p>
+</main>
+
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!doctype html>
+<!--/*
+  Shared product chrome for every page.
+
+  These are plain Thymeleaf fragments included with th:replace. No layout dialect or other
+  templating dependency is introduced, and each journey template remains a readable standalone
+  file that simply pulls in the common header, footer and banners.
+*/-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(pageTitle)">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${pageTitle} + ' | AI Career Impact'">AI Career Impact</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+</head>
+<body>
+
+<!--/*
+  Site header. `active` is one of home, professional, university, a-level, or blank.
+  There are no account links because accounts do not exist yet.
+*/-->
+<header class="site-header" th:fragment="siteHeader(active)">
+  <div class="site-header-inner">
+    <a class="site-brand" th:href="@{/}" href="/">AI Career Impact</a>
+    <nav class="site-nav" aria-label="Main">
+      <a th:href="@{/}" href="/"
+         th:classappend="${active == 'home'} ? 'is-current'"
+         th:attr="aria-current=${active == 'home'} ? 'page' : null">Home</a>
+      <a th:href="@{/professional-assessment}" href="/professional-assessment"
+         th:classappend="${active == 'professional'} ? 'is-current'"
+         th:attr="aria-current=${active == 'professional'} ? 'page' : null">Professional</a>
+      <a th:href="@{/university-assessment}" href="/university-assessment"
+         th:classappend="${active == 'university'} ? 'is-current'"
+         th:attr="aria-current=${active == 'university'} ? 'page' : null">University</a>
+      <a th:href="@{/a-level-assessment}" href="/a-level-assessment"
+         th:classappend="${active == 'a-level'} ? 'is-current'"
+         th:attr="aria-current=${active == 'a-level'} ? 'page' : null">A-level</a>
+    </nav>
+  </div>
+</header>
+
+<!--/*
+  Global development-mode banner. `developmentMode` is supplied by DevelopmentModeAdvice and is
+  false in every profile except local-fixture, so this renders nothing in normal operation.
+*/-->
+<div th:fragment="devBanner" th:if="${developmentMode}">
+  <div class="dev-banner" role="status">
+    <div class="dev-banner-inner">
+      <strong>Development mode</strong>
+      <span>Fixture data and simulated payment. No live AI, evidence or payment provider is contacted.</span>
+      <span class="dev-banner-fixtures" th:if="${developmentFixtures != null}"
+            th:text="${developmentFixtures}">Active fixtures</span>
+    </div>
+  </div>
+</div>
+
+<!--/* Per-assessment fixture notice, driven by the saved assessment's own provenance. */-->
+<aside class="alert alert-dev" th:fragment="fixtureNotice" role="status">
+  <strong>Development mode</strong>
+  <p>This result uses local fixture data. It is not a live AI assessment and is not real guidance.</p>
+</aside>
+
+<footer class="site-footer" th:fragment="siteFooter">
+  <div class="site-footer-inner">
+    <p class="site-footer-note">
+      AI Career Impact is a structured way to think about how AI may affect the roles, courses and
+      subjects you are considering. It does not predict anyone's future, and no result here is a
+      guarantee of employment, university admission or career success.
+    </p>
+    <nav class="site-footer-nav" aria-label="Footer">
+      <a th:href="@{/}" href="/">Home</a>
+      <a th:href="@{/methodology}" href="/methodology">How this works</a>
+      <a th:href="@{/privacy}" href="/privacy">Your information</a>
+    </nav>
+    <p class="site-footer-meta">
+      <span th:text="'© ' + ${currentYear} + ' AI Career Impact'">© AI Career Impact</span>
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

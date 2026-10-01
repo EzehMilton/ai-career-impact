@@ -1,14 +1,13 @@
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex,nofollow">
-  <title>Your full A-level report | AI Career Impact</title>
-  <link rel="stylesheet" th:href="@{/css/professional-assessment.css}" href="/css/professional-assessment.css">
-</head>
+<head th:replace="~{fragments/layout :: head('Your full A-level report')}"></head>
 <body>
-<main class="page-shell paid-report">
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('a-level')}"></header>
+
+<main class="page-shell paid-report" id="main">
+  <meta name="robots" content="noindex,nofollow">
   <aside class="fixture-warning" th:if="${report.developmentFixture}" role="alert">
     <strong>DEVELOPMENT MODE — LOCALLY PURCHASED REPORT</strong>
     <p>This report was unlocked using a local payment simulation, not a real Stripe transaction.</p>
@@ -17,7 +16,10 @@
     <p class="eyebrow">Full A-level report</p>
     <h1 th:text="${report.headline}">Your detailed A-level report</h1>
     <p class="intro">For <strong th:text="${#strings.listJoin(report.selectedSubjects, ', ')}">your subjects</strong></p>
-    <p><a class="button-link" th:href="@{/a-level-assessment/{id}/report.pdf(id=${assessmentId})}">Download PDF</a></p>
+    <dl class="report-meta">
+      <div><dt>Report version</dt><dd th:text="${report.methodology.reportVersion}">version</dd></div>
+    </dl>
+    <p class="page-action"><a class="button-link" th:href="@{/a-level-assessment/{id}/report.pdf(id=${assessmentId})}">Download PDF</a></p>
   </header>
 
   <section class="panel">
@@ -81,6 +83,15 @@
   </section>
 
   <section class="panel report-caveat"><h2>Methodology and limitations</h2><ul><li th:each="limitation : ${report.methodology.limitations}" th:text="${limitation}">Limitation</li></ul><dl class="evidence-meta"><div><dt>Decision policy</dt><dd th:text="${report.methodology.decisionPolicyVersion}">Version</dd></div><div><dt>Judgement schema</dt><dd th:text="${report.methodology.judgmentSchemaVersion}">Version</dd></div><div><dt>Report composition</dt><dd th:text="${report.methodology.reportVersion}">Version</dd></div></dl></section>
+  <p><a th:href="@{/methodology}" href="/methodology">Read how this works</a></p>
+
+  <p class="page-action">
+    <a th:href="@{/a-level-assessment/{id}/report.pdf(id=${assessmentId})}">Download PDF</a>
+    <a class="button-link button-secondary" th:href="@{/a-level-assessment/{id}(id=${assessmentId})}">Back to your free result</a>
+    <a class="button-link button-secondary" th:href="@{/}" href="/">Back to home</a>
+  </p>
 </main>
+
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
 </body>
 </html>

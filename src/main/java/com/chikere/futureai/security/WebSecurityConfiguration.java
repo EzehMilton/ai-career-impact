@@ -13,6 +13,9 @@ public class WebSecurityConfiguration {
     @Bean
     SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(authorize -> authorize
+                // Product shell: landing page, informational pages and the error view.
+                .requestMatchers(HttpMethod.GET, "/", "/methodology", "/privacy").permitAll()
+                .requestMatchers("/error").permitAll()
                 .requestMatchers(HttpMethod.GET, "/professional-assessment", "/professional-assessment/*",
                         "/professional-assessment/*/report", "/professional-assessment/*/checkout/local",
                         "/professional-assessment/*/report.pdf",

@@ -1,12 +1,37 @@
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Local checkout simulation | AI Career Impact</title><link rel="stylesheet" th:href="@{/css/professional-assessment.css}" href="/css/professional-assessment.css"></head>
-<body><main class="page-shell">
-  <aside class="fixture-warning" role="alert"><strong>DEVELOPMENT MODE — LOCAL PAYMENT SIMULATION</strong><p>No real Stripe checkout or payment has occurred.</p></aside>
-  <section class="panel"><h1>Simulate payment confirmation</h1><p>The university entitlement is PENDING. Confirm explicitly to simulate the signed payment notification and freeze the purchased report.</p>
+<head th:replace="~{fragments/layout :: head('Local checkout simulation')}"></head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('university')}"></header>
+
+<main class="page-shell" id="main">
+  <aside class="alert alert-dev" role="alert">
+    <strong>DEVELOPMENT MODE — LOCAL PAYMENT SIMULATION</strong>
+    <p>This is a development payment simulation. No real payment is being taken.</p>
+    <p>No real Stripe checkout or payment has occurred, and no card details are requested anywhere on this page.</p>
+  </aside>
+
+  <section class="panel" aria-labelledby="lc-heading">
+    <p class="eyebrow">University course assessment</p>
+    <h1 id="lc-heading">Simulate payment confirmation</h1>
+    <p>
+      The entitlement for this assessment is currently <strong>pending</strong>. Confirming below
+      simulates the signed payment notification that a real provider would send, which activates the
+      entitlement and freezes the purchased report exactly as a real purchase would.
+    </p>
     <form method="post" th:action="@{/university-assessment/{id}/checkout/local/confirm(id=${assessmentId})}">
-      <input type="hidden" name="session" th:value="${sessionId}"><button type="submit">Confirm local simulated payment</button>
+      <input type="hidden" name="session" th:value="${sessionId}">
+      <button type="submit">Confirm local simulated payment</button>
     </form>
-    <p><a th:href="@{/university-assessment/{id}(id=${assessmentId})}">Cancel and return</a></p>
+    <p class="page-action">
+      <a class="button-link button-secondary"
+         th:href="@{/university-assessment/{id}(id=${assessmentId})}">Cancel and return to the free result</a>
+    </p>
   </section>
-</main></body></html>
+</main>
+
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
+</body>
+</html>

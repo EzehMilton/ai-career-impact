@@ -1,19 +1,24 @@
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex,nofollow">
-  <title>Assessment not found | AI Career Impact</title>
-  <link rel="stylesheet" th:href="@{/css/professional-assessment.css}" href="/css/professional-assessment.css">
-</head>
+<head th:replace="~{fragments/layout :: head('Assessment not found')}"></head>
 <body>
-  <main class="page-shell">
-    <div class="panel">
-      <h1>Assessment not found</h1>
-      <p>We couldn't find that assessment. Check the link or start a new assessment.</p>
-      <p><a th:href="@{/professional-assessment}" href="/professional-assessment">Start a new assessment</a></p>
-    </div>
-  </main>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('professional')}"></header>
+
+<main class="page-shell" id="main">
+  <section class="panel error-panel" aria-labelledby="nf-heading">
+    <p class="eyebrow">Professional assessment</p>
+    <h1 id="nf-heading">We couldn't find that assessment.</h1>
+    <p>The link may be mistyped, or it may be from an older session. Results are only reachable from their own link, so there is nothing to search for.</p>
+    <p>You can start again from scratch &mdash; it only takes a few minutes.</p>
+    <p class="page-action">
+      <a th:href="@{/professional-assessment}" href="/professional-assessment">Start a new work assessment</a>
+      <a class="button-link button-secondary" th:href="@{/}" href="/">Back to home</a>
+    </p>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
 </body>
 </html>

@@ -81,6 +81,7 @@ Genuinely shared, journey-neutral types are reused: `JourneyType`, `AssessmentSt
 - `career`: career and occupation concepts shared where their meaning is genuinely common.
 - `report`: deterministic tiered report assembly and presentation models.
 - `payment`: payment and entitlement workflows.
+- `product`: the shell the three journeys are presented inside — landing page, shared chrome, informational pages and development-mode signalling. It owns no assessment logic.
 - `analytics`: product and assessment analytics.
 - `security`: identity, access, and data-protection concerns.
 - `configuration`: application wiring and external-client configuration.
@@ -833,6 +834,73 @@ For local startup, run:
 ### A-level limitations and next sub-phases
 
 - There is no live A-level evidence adapter yet. Only the port, model, persistence and deterministic fixture exist, so no real prerequisite is shown to anyone today.
-- There is **no landing page or journey selector**. The three journeys are reachable only by their own URLs, and nothing links them together. Adding a home page that introduces and routes between the three journeys is deliberately left to a later product-polish phase rather than bundled into this one.
+- A landing page and journey selector now exist; see [Product shell](#product-shell-landing-page-and-shared-ux) below.
 - Predicted grades are recorded as audit context only. They never affect a measure, and the journey makes no attempt to predict an offer.
 - As in the other journeys, there are no user accounts. The opaque assessment UUID remains a temporary pre-authentication access reference.
+
+## Product shell, landing page and shared UX
+
+Three strong vertical slices are not yet a product. This layer is the container they are presented inside. It adds navigation and a consistent voice; it adds no assessment logic, no new measure, no new band and no new access rule.
+
+### What the shell is, and what it deliberately is not
+
+- It **is** a landing page, a shared header and footer, one stylesheet, a consistent free/paid story, friendly error pages, and two informational pages.
+- It is **not** an account system, a dashboard, a cross-journey comparison, or a place where results are aggregated. There is still no login, and the assessment UUID remains the only access reference.
+- No Jev schema, rubric, policy weight, band, narrative prompt or evidence semantic was changed in this phase. The three journeys remain mutually unintelligible by design — see [Why a shared platform does not imply shared score semantics](#why-a-shared-platform-does-not-imply-shared-score-semantics).
+
+### Routes
+
+| Route | Purpose | Access |
+| --- | --- | --- |
+| `GET /` | Landing page and journey selector | public |
+| `GET /methodology` | How an assessment is produced, and what it cannot tell you | public |
+| `GET /privacy` | What is kept, what is not, and why links are the access mechanism | public |
+| `/error` | Shared friendly error view | public |
+
+These four are the only routes this phase made public. Every pre-existing permit rule, the CSRF requirement on browser POSTs, the Stripe webhook exemptions, the profile restrictions on local payment routes and the ACTIVE-entitlement requirement for paid reports and PDFs are untouched.
+
+### The journey selector
+
+The landing page asks "What are you thinking about?" and offers three options in the visitor's own words rather than in the system's vocabulary:
+
+| Framing on the page | Journey | Question it answers | Principal concept |
+| --- | --- | --- | --- |
+| My current job | `/professional-assessment` | How exposed is my role, and what still depends on me? | AI exposure and human advantage |
+| A university course | `/university-assessment` | How well does this course position me for an AI-shaped labour market? | Future readiness |
+| My A-level subjects | `/a-level-assessment` | Do these choices preserve strong future options? | Future optionality |
+
+Each card states its own question and links only to its own journey. Nothing on the page invites the visitor to compare the three numbers, because those numbers do not share a scale, a rubric or a meaning.
+
+### Shared chrome
+
+`templates/fragments/layout.html` provides `head(pageTitle)`, `siteHeader(active)`, `devBanner`, `fixtureNotice` and `siteFooter`, included with plain `th:replace` — there is no layout dialect and no new templating framework. Every one of the 28 page templates includes the same four fragments, exposes a single `<h1>`, and carries a skip link to `#main`.
+
+`ProductShellAdvice` is a `@ControllerAdvice` supplying `developmentMode`, `developmentFixtures` and `currentYear` to every view. It resolves both of its collaborators through `ObjectProvider` and falls back to `DevelopmentModeStatus.inactive()` and `Clock.systemUTC()`. That keeps sliced `@WebMvcTest` classes working without each one declaring the bean, and — more importantly — makes the *safe* state the default: a missing bean renders no development chrome rather than leaking it.
+
+### Development mode is a profile fact, never a request fact
+
+`DevelopmentModeStatus` is derived solely from the `local-fixture` profile, through two mutually exclusive profile-scoped beans in `ProductShellConfiguration`. It can never be influenced by a request parameter, a header or a cookie. Under any other profile the banner, the fixture notice and the local-checkout controls are structurally absent, not merely hidden with CSS.
+
+One subtlety worth recording, because it leaked once and was caught by a test: Thymeleaf passes plain `<!-- ... -->` comments straight through into the response. Every template comment is therefore the parser-level form `<!--/* ... */-->`, and `ProductShellConsistencyTest` fails the build if a plain comment reappears.
+
+### Styling
+
+`static/css/app.css` is a single hand-written stylesheet built on CSS custom properties for colour, spacing, radius and shell width. No UI framework, CDN asset or client-side script was introduced; the pages are server-rendered HTML and remain usable with JavaScript disabled. The previous `professional-assessment.css` was removed once all templates pointed at the shared stylesheet.
+
+Accessibility and responsiveness basics are structural rather than decorative: a skip link on every page, `aria-current="page"` on the active primary destination, a single `<h1>` per page, form errors announced with `role="alert"` and prefixed by a textual `Error:` through `::before` so the error is never conveyed by colour alone, and a single `max-width: 42rem` breakpoint that collapses grids and stacks definition lists. `prefers-reduced-motion` is respected.
+
+### Free and paid, said the same way everywhere
+
+Every result page uses the same ordering — headline, how to read the numbers, the measures, why, a short interpretation, the free-versus-full comparison, then context — and every one carries its own journey-specific caveat about what its indicator is not. The paid tier is framed consistently as **payment unlocks depth, not truth**: the deterministic assessment a visitor sees for free is the same assessment, and paying adds explanation, personalised actions and evidence rather than a different or truer answer.
+
+Prices are only ever read from existing configuration. No monetary amount is hard-coded into domain logic, and no page fetches live Stripe data during an ordinary render.
+
+The PDF call to action exists only inside the three `paid-report.html` templates, which render only for an ACTIVE entitlement. `ProductShellConsistencyTest` pins this as an invariant across every template, so a free result or an unavailable-report page cannot grow a download link by accident.
+
+### Error and not-found experience
+
+`templates/error/404.html`, `403.html` and `5xx.html` (plus a top-level `error.html`) use the same shell and the same plain voice, and expose no stack trace, exception name, provider name, database detail or configuration value. A malformed assessment identifier and an unknown one produce byte-identical responses, so nothing signals to an enumerator that one guess was closer than another.
+
+### Known gap, deferred to security hardening
+
+`anyRequest().authenticated()` is still the catch-all rule, so a URL matching no route at all redirects to the form-login entry point instead of rendering the friendly 404. Every route a visitor can actually reach is explicitly permitted and renders the shell correctly, so this affects mistyped URLs only. Widening the catch-all is an access-control change rather than a navigation one, so it is deliberately left to the production security-hardening phase, which will decide the final authorisation model. `ProductErrorPageTest` pins the current behaviour so that change is made deliberately rather than by accident.
