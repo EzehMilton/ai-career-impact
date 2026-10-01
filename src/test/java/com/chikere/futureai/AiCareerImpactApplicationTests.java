@@ -1,7 +1,9 @@
 package com.chikere.futureai;
 
 import com.chikere.futureai.assessment.professional.application.ProfessionalJudgmentProvider;
+import com.chikere.futureai.assessment.university.application.UniversityJudgmentProvider;
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeGenerator;
+import com.chikere.futureai.narrative.university.application.UniversityNarrativeGenerator;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -16,6 +18,12 @@ class AiCareerImpactApplicationTests {
 
 	@MockitoBean
 	ProfessionalNarrativeGenerator professionalNarrativeGenerator;
+
+	@MockitoBean
+	UniversityJudgmentProvider universityJudgmentProvider;
+
+	@MockitoBean
+	UniversityNarrativeGenerator universityNarrativeGenerator;
 
 	@Test
 	void contextLoads() {

@@ -17,7 +17,10 @@ class AssessmentStateTest {
     void eachStateHasItsOwnJourneyAndRuntimeType() {
         AssessmentState professional = professionalState(List.of("Interview users"));
         AssessmentState university = new UniversityAssessmentState(
-                "Computer Science", List.of("Robotics"), Optional.of("Research engineer"));
+                "Computer Science",
+                "Programming, algorithms, data and systems, with a final-year project.",
+                List.of("Algorithms"), List.of("Programming"), List.of("Software engineering"),
+                Optional.of("A UK university"), Optional.of("United Kingdom"));
         AssessmentState aLevel = new ALevelAssessmentState(
                 List.of("Mathematics", "Physics"), List.of("Technology"), List.of("Analysis"), Optional.empty());
 
@@ -47,7 +50,11 @@ class AssessmentStateTest {
         assertThatIllegalArgumentException().isThrownBy(() -> new ProfessionalAssessmentState(
                 " ", "Plans services", List.of(), List.of(), OptionalInt.empty()));
         assertThatIllegalArgumentException().isThrownBy(() -> new UniversityAssessmentState(
-                "Computer Science", List.of(" "), Optional.empty()));
+                "Computer Science", "Covers programming and algorithms.", List.of(" "), List.of(),
+                List.of(), Optional.empty(), Optional.empty()));
+        assertThatIllegalArgumentException().isThrownBy(() -> new UniversityAssessmentState(
+                "Computer Science", " ", List.of(), List.of(), List.of(),
+                Optional.empty(), Optional.empty()));
         assertThatIllegalArgumentException().isThrownBy(() -> new ALevelAssessmentState(
                 List.of(), List.of(), List.of(), Optional.empty()));
         assertThatIllegalArgumentException().isThrownBy(() -> new ProfessionalAssessmentState(

@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Local checkout simulation | AI Career Impact</title><link rel="stylesheet" th:href="@{/css/professional-assessment.css}" href="/css/professional-assessment.css"></head>
+<body><main class="page-shell">
+  <aside class="fixture-warning" role="alert"><strong>DEVELOPMENT MODE — LOCAL PAYMENT SIMULATION</strong><p>No real Stripe checkout or payment has occurred.</p></aside>
+  <section class="panel"><h1>Simulate payment confirmation</h1><p>The university entitlement is PENDING. Confirm explicitly to simulate the signed payment notification and freeze the purchased report.</p>
+    <form method="post" th:action="@{/university-assessment/{id}/checkout/local/confirm(id=${assessmentId})}">
+      <input type="hidden" name="session" th:value="${sessionId}"><button type="submit">Confirm local simulated payment</button>
+    </form>
+    <p><a th:href="@{/university-assessment/{id}(id=${assessmentId})}">Cancel and return</a></p>
+  </section>
+</main></body></html>

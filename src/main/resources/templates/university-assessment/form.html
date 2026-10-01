@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Assess your course | AI Career Impact</title>
+  <link rel="stylesheet" th:href="@{/css/professional-assessment.css}" href="/css/professional-assessment.css">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="page-header">
+      <p class="eyebrow">University course assessment</p>
+      <h1>How well does this course position you for an AI-shaped job market?</h1>
+      <p class="intro">This looks at the skills a course develops, not at whether AI will take a particular job. There are no right or wrong answers, and nothing here decides anything for you. The more you can say about what the course actually covers, the more useful the result.</p>
+    </header>
+
+    <section class="panel work-form" aria-labelledby="form-heading">
+      <h2 id="form-heading">Tell us about the course</h2>
+      <p class="helper">You do not need any work experience. Course pages and prospectuses are a good place to copy details from.</p>
+
+      <form th:action="@{/university-assessment}" th:object="${form}" method="post" novalidate>
+        <div class="field">
+          <label for="courseTitle">Course or degree title <span class="required">Required</span></label>
+          <input id="courseTitle" type="text" th:field="*{courseTitle}" maxlength="160"
+                 aria-describedby="courseTitle-error" th:attr="aria-invalid=${#fields.hasErrors('courseTitle')}">
+          <p id="courseTitle-error" class="field-error" th:if="${#fields.hasErrors('courseTitle')}" th:errors="*{courseTitle}"></p>
+        </div>
+
+        <div class="field">
+          <label for="courseDescription">What does the course cover? <span class="required">Required</span></label>
+          <p id="courseDescription-help" class="helper">For example: the main subjects, how much is coursework or exams, whether there are labs, studio work, a placement or a final-year project.</p>
+          <textarea id="courseDescription" th:field="*{courseDescription}" rows="6" minlength="40" maxlength="4000"
+                    aria-describedby="courseDescription-help courseDescription-error" th:attr="aria-invalid=${#fields.hasErrors('courseDescription')}"></textarea>
+          <p id="courseDescription-error" class="field-error" th:if="${#fields.hasErrors('courseDescription')}" th:errors="*{courseDescription}"></p>
+        </div>
+
+        <div class="field">
+          <label for="keyModules">Key modules or topics <span class="required">Required</span></label>
+          <p id="keyModules-help" class="helper">Put one module on each line.</p>
+          <textarea id="keyModules" th:field="*{keyModules}" rows="5" maxlength="4000"
+                    aria-describedby="keyModules-help keyModules-error" th:attr="aria-invalid=${#fields.hasErrors('keyModules')}"></textarea>
+          <p id="keyModules-error" class="field-error" th:if="${#fields.hasErrors('keyModules')}" th:errors="*{keyModules}"></p>
+        </div>
+
+        <div class="field">
+          <label for="skillsDeveloped">Skills you expect to develop <span class="required">Required</span></label>
+          <p id="skillsDeveloped-help" class="helper">Put one skill on each line.</p>
+          <textarea id="skillsDeveloped" th:field="*{skillsDeveloped}" rows="4" maxlength="2000"
+                    aria-describedby="skillsDeveloped-help skillsDeveloped-error" th:attr="aria-invalid=${#fields.hasErrors('skillsDeveloped')}"></textarea>
+          <p id="skillsDeveloped-error" class="field-error" th:if="${#fields.hasErrors('skillsDeveloped')}" th:errors="*{skillsDeveloped}"></p>
+        </div>
+
+        <div class="field">
+          <label for="preferredCareerAreas">Career areas you are considering <span class="optional">Optional</span></label>
+          <p id="preferredCareerAreas-help" class="helper">Put one area on each line. This is used only for context; it will not be turned into a recommendation.</p>
+          <textarea id="preferredCareerAreas" th:field="*{preferredCareerAreas}" rows="3" maxlength="2000"
+                    aria-describedby="preferredCareerAreas-help preferredCareerAreas-error" th:attr="aria-invalid=${#fields.hasErrors('preferredCareerAreas')}"></textarea>
+          <p id="preferredCareerAreas-error" class="field-error" th:if="${#fields.hasErrors('preferredCareerAreas')}" th:errors="*{preferredCareerAreas}"></p>
+        </div>
+
+        <div class="field">
+          <label for="institution">University or college <span class="optional">Optional</span></label>
+          <p class="helper">This is recorded with your answers. The assessment does not rank institutions or use league tables.</p>
+          <input id="institution" type="text" th:field="*{institution}" maxlength="160"
+                 aria-describedby="institution-error" th:attr="aria-invalid=${#fields.hasErrors('institution')}">
+          <p id="institution-error" class="field-error" th:if="${#fields.hasErrors('institution')}" th:errors="*{institution}"></p>
+        </div>
+
+        <div class="field field-short">
+          <label for="country">Country <span class="optional">Optional</span></label>
+          <input id="country" type="text" th:field="*{country}" maxlength="80"
+                 aria-describedby="country-error" th:attr="aria-invalid=${#fields.hasErrors('country')}">
+          <p id="country-error" class="field-error" th:if="${#fields.hasErrors('country')}" th:errors="*{country}"></p>
+        </div>
+
+        <button type="submit">Assess this course</button>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

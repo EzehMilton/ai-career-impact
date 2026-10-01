@@ -16,14 +16,24 @@ public class WebSecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/professional-assessment", "/professional-assessment/*",
                         "/professional-assessment/*/report", "/professional-assessment/*/checkout/local",
                         "/professional-assessment/*/report.pdf",
+                        "/university-assessment", "/university-assessment/*",
+                        "/university-assessment/*/report", "/university-assessment/*/checkout/local",
+                        "/university-assessment/*/report.pdf",
                         "/css/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/professional-assessment",
                         "/professional-assessment/cv",
                         "/professional-assessment/*/checkout",
                         "/professional-assessment/*/checkout/local/confirm",
-                        "/payments/stripe/webhook").permitAll()
+                        "/university-assessment",
+                        "/university-assessment/*/checkout",
+                        "/university-assessment/*/checkout/local/confirm",
+                        "/payments/stripe/webhook",
+                        "/payments/stripe/university-webhook").permitAll()
                 .anyRequest().authenticated())
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/payments/stripe/webhook"))
+                // Only the Stripe webhook paths are CSRF-exempt: they are authenticated by Stripe's
+                // signature instead. Every browser POST keeps CSRF protection.
+                .csrf(csrf -> csrf.ignoringRequestMatchers(
+                        "/payments/stripe/webhook", "/payments/stripe/university-webhook"))
                 .formLogin(Customizer.withDefaults());
         return http.build();
     }
