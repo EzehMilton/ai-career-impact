@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Check your A-level choices | AI Career Impact</title>
+  <link rel="stylesheet" th:href="@{/css/professional-assessment.css}" href="/css/professional-assessment.css">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="page-header">
+      <p class="eyebrow">A-level subject check</p>
+      <h1>Do your A-level choices keep strong options open?</h1>
+      <p class="intro">This looks at the mix of skills your subjects build together, and how many different directions they leave available. There are no good or bad subjects here, and nothing you enter decides anything. You do not need to know what you want to do yet.</p>
+    </header>
+
+    <section class="panel work-form" aria-labelledby="form-heading">
+      <h2 id="form-heading">Tell us about your subjects</h2>
+      <p class="helper">Most students take three or four A-levels. Only the subjects are required &mdash; everything else is optional.</p>
+
+      <form th:action="@{/a-level-assessment}" th:object="${form}" method="post" novalidate>
+        <div class="field">
+          <label for="selectedSubjects">Your A-level subjects <span class="required">Required</span></label>
+          <p id="selectedSubjects-help" class="helper">One per line, or separated by commas. Include subjects you are seriously considering if you have not started yet.</p>
+          <textarea id="selectedSubjects" th:field="*{selectedSubjects}" rows="4" maxlength="500"
+                    placeholder="Mathematics&#10;Economics&#10;Geography"
+                    aria-describedby="selectedSubjects-help selectedSubjects-error" th:attr="aria-invalid=${#fields.hasErrors('selectedSubjects')}"></textarea>
+          <p id="selectedSubjects-error" class="field-error" th:if="${#fields.hasErrors('selectedSubjects')}" th:errors="*{selectedSubjects}"></p>
+        </div>
+
+        <div class="field">
+          <label for="predictedGrades">Predicted grades <span class="optional">Optional</span></label>
+          <p id="predictedGrades-help" class="helper">One per line as <code>Subject: Grade</code>. Leave this blank if you do not have predictions yet &mdash; grades do not affect your result.</p>
+          <textarea id="predictedGrades" th:field="*{predictedGrades}" rows="3" maxlength="500"
+                    placeholder="Mathematics: A&#10;Economics: B"
+                    aria-describedby="predictedGrades-help predictedGrades-error" th:attr="aria-invalid=${#fields.hasErrors('predictedGrades')}"></textarea>
+          <p id="predictedGrades-error" class="field-error" th:if="${#fields.hasErrors('predictedGrades')}" th:errors="*{predictedGrades}"></p>
+        </div>
+
+        <div class="field">
+          <label for="strengthsAndInterests">What do you enjoy or feel strongest at? <span class="optional">Optional</span></label>
+          <p id="strengthsAndInterests-help" class="helper">One per line. This can be a subject, a topic or a kind of work you like.</p>
+          <textarea id="strengthsAndInterests" th:field="*{strengthsAndInterests}" rows="3" maxlength="1000"
+                    aria-describedby="strengthsAndInterests-help strengthsAndInterests-error" th:attr="aria-invalid=${#fields.hasErrors('strengthsAndInterests')}"></textarea>
+          <p id="strengthsAndInterests-error" class="field-error" th:if="${#fields.hasErrors('strengthsAndInterests')}" th:errors="*{strengthsAndInterests}"></p>
+        </div>
+
+        <div class="field">
+          <label for="preferredDegreeAreas">Degree areas you are considering <span class="optional">Optional</span></label>
+          <p id="preferredDegreeAreas-help" class="helper">One per line. It is completely fine to be undecided &mdash; leave this blank.</p>
+          <textarea id="preferredDegreeAreas" th:field="*{preferredDegreeAreas}" rows="3" maxlength="1000"
+                    aria-describedby="preferredDegreeAreas-help preferredDegreeAreas-error" th:attr="aria-invalid=${#fields.hasErrors('preferredDegreeAreas')}"></textarea>
+          <p id="preferredDegreeAreas-error" class="field-error" th:if="${#fields.hasErrors('preferredDegreeAreas')}" th:errors="*{preferredDegreeAreas}"></p>
+        </div>
+
+        <div class="field">
+          <label for="preferredCareerAreas">Career areas, if you have any in mind <span class="optional">Optional</span></label>
+          <p id="preferredCareerAreas-help" class="helper">One per line. Most people this age have no idea yet, and that is genuinely fine.</p>
+          <textarea id="preferredCareerAreas" th:field="*{preferredCareerAreas}" rows="3" maxlength="1000"
+                    aria-describedby="preferredCareerAreas-help preferredCareerAreas-error" th:attr="aria-invalid=${#fields.hasErrors('preferredCareerAreas')}"></textarea>
+          <p id="preferredCareerAreas-error" class="field-error" th:if="${#fields.hasErrors('preferredCareerAreas')}" th:errors="*{preferredCareerAreas}"></p>
+        </div>
+
+        <div class="field field-short">
+          <label for="country">Country <span class="optional">Optional</span></label>
+          <input id="country" type="text" th:field="*{country}" maxlength="80"
+                 aria-describedby="country-error" th:attr="aria-invalid=${#fields.hasErrors('country')}">
+          <p id="country-error" class="field-error" th:if="${#fields.hasErrors('country')}" th:errors="*{country}"></p>
+        </div>
+
+        <div class="field">
+          <label for="additionalContext">Anything else worth knowing? <span class="optional">Optional</span></label>
+          <textarea id="additionalContext" th:field="*{additionalContext}" rows="3" maxlength="2000"
+                    aria-describedby="additionalContext-error" th:attr="aria-invalid=${#fields.hasErrors('additionalContext')}"></textarea>
+          <p id="additionalContext-error" class="field-error" th:if="${#fields.hasErrors('additionalContext')}" th:errors="*{additionalContext}"></p>
+        </div>
+
+        <button type="submit">Check my options</button>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

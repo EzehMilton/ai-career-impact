@@ -55,6 +55,10 @@ class ProfessionalAssessmentStoreTest {
             unusedUniversityProvider;
     @MockitoBean com.chikere.futureai.narrative.university.application.UniversityNarrativeGenerator
             unusedUniversityNarrativeGenerator;
+    @MockitoBean com.chikere.futureai.assessment.alevel.application.ALevelJudgmentProvider
+            unusedALevelProvider;
+    @MockitoBean com.chikere.futureai.narrative.alevel.application.ALevelNarrativeGenerator
+            unusedALevelNarrativeGenerator;
     @Autowired ProfessionalAssessmentStore store;
     @Autowired ProfessionalNarrativeStore narrativeStore;
     @Autowired ProfessionalEvidenceStore evidenceStore;
@@ -65,7 +69,7 @@ class ProfessionalAssessmentStoreTest {
 
     @Test
     void migratedPostgresqlRoundTripPreservesCompleteSnapshot() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("12");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("17");
         var state = new ProfessionalAssessmentState("Software Architect",
                 "I design software and make consequential architecture decisions.",
                 List.of("Design platforms", "Resolve trade-offs"),

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Your full A-level report | AI Career Impact</title>
+  <link rel="stylesheet" th:href="@{/css/professional-assessment.css}" href="/css/professional-assessment.css">
+</head>
+<body>
+<main class="page-shell paid-report">
+  <aside class="fixture-warning" th:if="${report.developmentFixture}" role="alert">
+    <strong>DEVELOPMENT MODE — LOCALLY PURCHASED REPORT</strong>
+    <p>This report was unlocked using a local payment simulation, not a real Stripe transaction.</p>
+  </aside>
+  <header class="page-header">
+    <p class="eyebrow">Full A-level report</p>
+    <h1 th:text="${report.headline}">Your detailed A-level report</h1>
+    <p class="intro">For <strong th:text="${#strings.listJoin(report.selectedSubjects, ', ')}">your subjects</strong></p>
+    <p><a class="button-link" th:href="@{/a-level-assessment/{id}/report.pdf(id=${assessmentId})}">Download PDF</a></p>
+  </header>
+
+  <section class="panel">
+    <h2>What this suggests</h2><p class="narrative-summary" th:text="${report.interpretation}">Interpretation</p>
+    <dl class="summary-list"><div><dt>Status</dt><dd th:text="${report.status}">Ready</dd></div><div><dt>Assessment confidence</dt><dd th:text="${report.confidence}">High</dd></div></dl>
+  </section>
+
+  <section class="results-section" th:if="${!report.measures.isEmpty()}">
+    <h2>The six measures in detail</h2>
+    <div class="measure-grid">
+      <article class="panel measure-card" th:each="measure : ${report.measures}">
+        <h3 th:text="${measure.name}">Measure</h3><p class="measure-value"><strong th:text="${measure.indicator}">0.00</strong><span> / 10</span></p>
+        <dl class="measure-details"><div><dt>Band</dt><dd th:text="${measure.band}">Balanced</dd></div><div><dt>Confidence</dt><dd th:text="${measure.confidence}">85%</dd></div></dl>
+        <p th:text="${measure.conciseExplanation}">Explanation</p><p th:if="${measure.detailedExplanation != null}" th:text="${measure.detailedExplanation}">Detail</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="factor-grid">
+    <div class="panel"><h2>Main strengths</h2><ul><li th:each="factor : ${report.mainStrengths}" th:text="${factor}">Strength</li></ul></div>
+    <div class="panel"><h2>Areas you may want to supplement</h2><ul><li th:each="factor : ${report.developmentOpportunities}" th:text="${factor}">Development area</li></ul></div>
+  </section>
+
+  <section class="narrative-section">
+    <h2>Full interpretation</h2>
+    <article class="panel narrative-panel" th:if="${report.narrative.available}">
+      <h3>What this means</h3><p th:text="${report.narrative.whatThisMeans}">Meaning</p>
+      <h3>Future Optionality</h3><p th:text="${report.narrative.futureOptionalityExplanation}">Optionality</p>
+      <h3>What your combination builds well</h3><p th:text="${report.narrative.strengthsExplanation}">Strengths</p>
+      <h3>Degree pathway breadth</h3><p th:text="${report.narrative.degreePathwayExplanation}">Pathways</p>
+      <h3>Analytical foundation</h3><p th:text="${report.narrative.analyticalFoundationExplanation}">Analytical</p>
+      <h3>Human and creative strength</h3><p th:text="${report.narrative.humanAndCreativeExplanation}">Human</p>
+      <h3>Transferable capabilities</h3><p th:text="${report.narrative.transferabilityExplanation}">Transferability</p>
+      <h3>Adaptability</h3><p th:text="${report.narrative.adaptabilityExplanation}">Adaptability</p>
+      <h3>What you may want to strengthen</h3><p th:text="${report.narrative.developmentOpportunitiesExplanation}">Development</p>
+      <p class="narrative-caution" th:text="${report.narrative.caution}">Caution</p>
+    </article>
+    <div class="panel narrative-unavailable" th:unless="${report.narrative.available}"><p>The result is available, but its personalised explanation is currently unavailable.</p></div>
+  </section>
+
+  <section class="results-section"><h2>Practical next steps</h2><div class="panel"><ul th:if="${!report.practicalActions.isEmpty()}"><li th:each="action : ${report.practicalActions}" th:text="${action}">Action</li></ul><p th:if="${report.practicalActions.isEmpty()}">Personalised next steps are unavailable with the explanation.</p></div></section>
+
+  <section class="results-section"><h2>Skills worth developing alongside your subjects</h2><p class="helper">None of these is a suggestion to change your A-levels.</p><div class="evidence-grid"><article class="panel" th:each="item : ${report.guidance}"><p class="evidence-category" th:text="${item.category}">Category</p><h3 th:text="${item.title}">Title</h3><p th:text="${item.suggestion}">Suggestion</p></article></div></section>
+
+  <section class="panel">
+    <h2>Degree and career areas you mentioned</h2>
+    <p th:text="${report.preferredAreas.guidance}">Guidance</p>
+    <h3 th:if="${!report.preferredAreas.degreeAreas.isEmpty()}">Degree areas</h3>
+    <ul th:if="${!report.preferredAreas.degreeAreas.isEmpty()}"><li th:each="area : ${report.preferredAreas.degreeAreas}" th:text="${area}">Area</li></ul>
+    <h3 th:if="${!report.preferredAreas.careerAreas.isEmpty()}">Career areas</h3>
+    <ul th:if="${!report.preferredAreas.careerAreas.isEmpty()}"><li th:each="area : ${report.preferredAreas.careerAreas}" th:text="${area}">Area</li></ul>
+    <p class="helper" th:text="${report.preferredAreas.limitation}">Limitation</p>
+  </section>
+
+  <section class="evidence-section">
+    <h2>Factual context</h2>
+    <p class="helper" th:text="${report.evidence.separationNote}">Separation note</p>
+    <div class="fixture-evidence-label" th:if="${report.developmentFixture}">Local development evidence — not live official data</div>
+    <p class="panel" th:if="${report.evidence.items.isEmpty()}" th:text="${report.evidence.message}">Unavailable</p>
+    <div class="evidence-grid"><article class="panel evidence-card" th:each="item : ${report.evidence.items}"><p class="evidence-category" th:text="${item.category}">Category</p><h3 th:text="${item.title}">Evidence</h3><p th:text="${item.summary}">Summary</p><dl class="evidence-meta"><div><dt>Source</dt><dd><a th:if="${item.sourceUrl != null}" th:href="${item.sourceUrl}" th:text="${item.source}" target="_blank" rel="noopener noreferrer">Source</a><span th:if="${item.sourceUrl == null}" th:text="${item.source}">Source</span></dd></div><div th:if="${item.geography != null}"><dt>Geography</dt><dd th:text="${item.geography}">UK</dd></div><div><dt>Date</dt><dd th:text="${item.date}">Date</dd></div></dl><p class="evidence-relevance" th:text="${item.relevance}">Relevance</p></article></div>
+  </section>
+
+  <section class="panel report-caveat"><h2>Methodology and limitations</h2><ul><li th:each="limitation : ${report.methodology.limitations}" th:text="${limitation}">Limitation</li></ul><dl class="evidence-meta"><div><dt>Decision policy</dt><dd th:text="${report.methodology.decisionPolicyVersion}">Version</dd></div><div><dt>Judgement schema</dt><dd th:text="${report.methodology.judgmentSchemaVersion}">Version</dd></div><div><dt>Report composition</dt><dd th:text="${report.methodology.reportVersion}">Version</dd></div></dl></section>
+</main>
+</body>
+</html>

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 
@@ -22,7 +23,8 @@ class AssessmentStateTest {
                 List.of("Algorithms"), List.of("Programming"), List.of("Software engineering"),
                 Optional.of("A UK university"), Optional.of("United Kingdom"));
         AssessmentState aLevel = new ALevelAssessmentState(
-                List.of("Mathematics", "Physics"), List.of("Technology"), List.of("Analysis"), Optional.empty());
+                List.of("Mathematics", "Physics"), Map.of("Mathematics", "A"), List.of("Technology"),
+                List.of("Engineering"), List.of(), Optional.of("United Kingdom"), Optional.empty());
 
         assertThat(JourneyType.values()).containsExactly(
                 JourneyType.PROFESSIONAL, JourneyType.UNIVERSITY, JourneyType.A_LEVEL);
@@ -56,7 +58,7 @@ class AssessmentStateTest {
                 "Computer Science", " ", List.of(), List.of(), List.of(),
                 Optional.empty(), Optional.empty()));
         assertThatIllegalArgumentException().isThrownBy(() -> new ALevelAssessmentState(
-                List.of(), List.of(), List.of(), Optional.empty()));
+                List.of(), Map.of(), List.of(), List.of(), List.of(), Optional.empty(), Optional.empty()));
         assertThatIllegalArgumentException().isThrownBy(() -> new ProfessionalAssessmentState(
                 "Product manager", "Plans services", List.of(), List.of(), OptionalInt.of(-1)));
     }
