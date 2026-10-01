@@ -14,9 +14,34 @@
       <p class="intro">AI affects tasks differently even when people share the same job title. Describe what you actually do so the assessment can look at the nature of your work.</p>
     </header>
 
-    <section class="panel" aria-labelledby="form-heading">
+    <section class="panel input-choice" aria-labelledby="input-heading">
+      <h2 id="input-heading">Choose how to begin</h2>
+      <div class="input-options">
+        <div>
+          <h3>Enter my work manually</h3>
+          <p class="helper">Use the editable form below. Uploading a CV is optional.</p>
+        </div>
+        <form class="cv-upload" th:action="@{/professional-assessment/cv}" method="post" enctype="multipart/form-data">
+          <h3>Upload my CV</h3>
+          <p class="helper">PDF or DOCX, up to 5 MiB. We do not retain the raw file.</p>
+          <label for="cv">Choose CV</label>
+          <input id="cv" name="cv" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required>
+          <button type="submit">Extract work details</button>
+        </form>
+      </div>
+      <p class="field-error" role="alert" th:if="${cvError}" th:text="${cvError}"></p>
+    </section>
+
+    <section class="panel work-form" aria-labelledby="form-heading">
       <h2 id="form-heading">Tell us about your work</h2>
       <p class="helper">Focus on your day-to-day activities, decisions and responsibilities. A job title alone is not enough.</p>
+      <div class="notice" th:if="${cvPrefill}">
+        <strong>Review your extracted details</strong>
+        <p>We extracted candidate details from <span th:text="${cvFilename}">your CV</span>. Please correct anything before continuing.</p>
+        <ul th:if="${cvWarnings != null and !cvWarnings.isEmpty()}">
+          <li th:each="warning : ${cvWarnings}" th:text="${warning}"></li>
+        </ul>
+      </div>
 
       <form th:action="@{/professional-assessment}" th:object="${form}" method="post" novalidate>
         <div class="field">

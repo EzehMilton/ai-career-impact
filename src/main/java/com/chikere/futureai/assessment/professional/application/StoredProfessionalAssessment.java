@@ -15,7 +15,8 @@ public record StoredProfessionalAssessment(
         ProfessionalAssessmentState state,
         AssessmentJudgmentSet judgments,
         ProfessionalAssessmentResult result,
-        Optional<String> modelIdentifier) {
+        Optional<String> modelIdentifier,
+        ProfessionalAssessmentInputMetadata inputMetadata) {
 
     public StoredProfessionalAssessment {
         Objects.requireNonNull(id, "id must not be null");
@@ -24,8 +25,16 @@ public record StoredProfessionalAssessment(
         Objects.requireNonNull(judgments, "judgments must not be null");
         Objects.requireNonNull(result, "result must not be null");
         Objects.requireNonNull(modelIdentifier, "modelIdentifier must not be null");
+        Objects.requireNonNull(inputMetadata, "inputMetadata must not be null");
         if (!judgments.schemaVersion().equals(result.judgmentSchemaVersion())) {
             throw new IllegalArgumentException("judgment schema versions must match");
         }
+    }
+
+    public StoredProfessionalAssessment(UUID id, Instant createdAt, ProfessionalAssessmentState state,
+            AssessmentJudgmentSet judgments, ProfessionalAssessmentResult result,
+            Optional<String> modelIdentifier) {
+        this(id, createdAt, state, judgments, result, modelIdentifier,
+                ProfessionalAssessmentInputMetadata.manual());
     }
 }

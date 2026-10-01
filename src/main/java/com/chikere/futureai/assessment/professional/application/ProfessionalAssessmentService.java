@@ -40,13 +40,19 @@ public final class ProfessionalAssessmentService {
     }
 
     public UUID submitProfessionalAssessment(ProfessionalAssessmentState state) {
+        return submitProfessionalAssessment(state, ProfessionalAssessmentInputMetadata.manual());
+    }
+
+    public UUID submitProfessionalAssessment(ProfessionalAssessmentState state,
+            ProfessionalAssessmentInputMetadata inputMetadata) {
+        Objects.requireNonNull(inputMetadata, "inputMetadata must not be null");
         if (store == null) {
             throw new IllegalStateException("ProfessionalAssessmentStore is required for submission");
         }
         Execution execution = execute(state);
         UUID id = UUID.randomUUID();
         store.save(new StoredProfessionalAssessment(id, Instant.now(clock), state,
-                execution.judgments(), execution.result(), judgmentProvider.modelIdentifier()));
+                execution.judgments(), execution.result(), judgmentProvider.modelIdentifier(), inputMetadata));
         return id;
     }
 

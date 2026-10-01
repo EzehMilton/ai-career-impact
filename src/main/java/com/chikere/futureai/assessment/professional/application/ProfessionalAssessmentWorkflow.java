@@ -31,7 +31,14 @@ public final class ProfessionalAssessmentWorkflow {
     }
 
     public UUID submit(ProfessionalAssessmentState state) {
-        UUID id = assessmentService.submitProfessionalAssessment(state);
+        return enrich(assessmentService.submitProfessionalAssessment(state));
+    }
+
+    public UUID submit(ProfessionalAssessmentState state, ProfessionalAssessmentInputMetadata inputMetadata) {
+        return enrich(assessmentService.submitProfessionalAssessment(state, inputMetadata));
+    }
+
+    private UUID enrich(UUID id) {
         try {
             narrativeService.generateFor(id);
         }

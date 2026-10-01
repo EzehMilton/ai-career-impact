@@ -8,6 +8,7 @@ import com.chikere.futureai.assessment.professional.application.ProfessionalAsse
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentStore;
 import com.chikere.futureai.assessment.professional.application.ProfessionalJudgmentProvider;
 import com.chikere.futureai.assessment.professional.application.StoredProfessionalAssessment;
+import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentInputMetadata;
 import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV1;
 import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
 import com.chikere.futureai.judgment.domain.DimensionJudgment;
@@ -60,7 +61,7 @@ class ProfessionalAssessmentStoreTest {
 
     @Test
     void migratedPostgresqlRoundTripPreservesCompleteSnapshot() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("6");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("7");
         var state = new ProfessionalAssessmentState("Software Architect",
                 "I design software and make consequential architecture decisions.",
                 List.of("Design platforms", "Resolve trade-offs"),
@@ -76,7 +77,9 @@ class ProfessionalAssessmentStoreTest {
         var result = new ProfessionalAssessmentResult(decision, AssessmentSource.LOCAL_FIXTURE,
                 judgments.schemaVersion(), decision.policyVersion());
         var snapshot = new StoredProfessionalAssessment(UUID.randomUUID(),
-                Instant.parse("2026-09-30T12:00:00Z"), state, judgments, result, Optional.empty());
+                Instant.parse("2026-09-30T12:00:00Z"), state, judgments, result, Optional.empty(),
+                ProfessionalAssessmentInputMetadata.cvUpload("architect-cv.pdf", "application/pdf",
+                        "professional-cv-parser-v1", Instant.parse("2026-09-30T11:59:00Z")));
 
         store.save(snapshot);
         var loaded = store.findById(snapshot.id()).orElseThrow();
@@ -88,6 +91,7 @@ class ProfessionalAssessmentStoreTest {
                 .containsEntry("1", 0.3);
         assertThat(loaded.result().decision().measures()).hasSize(4);
         assertThat(loaded.result().decision().topExposureDrivers()).isNotEmpty();
+        assertThat(loaded.inputMetadata()).isEqualTo(snapshot.inputMetadata());
         assertThat(store.findById(UUID.randomUUID())).isEmpty();
     }
 
