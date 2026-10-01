@@ -52,6 +52,10 @@ class UniversityAssessmentStoreTest {
     @MockitoBean ProfessionalNarrativeGenerator unusedProfessionalNarrativeGenerator;
     @MockitoBean UniversityJudgmentProvider unusedUniversityProvider;
     @MockitoBean UniversityNarrativeGenerator unusedUniversityNarrativeGenerator;
+    @MockitoBean com.chikere.futureai.assessment.alevel.application.ALevelJudgmentProvider
+            unusedALevelProvider;
+    @MockitoBean com.chikere.futureai.narrative.alevel.application.ALevelNarrativeGenerator
+            unusedALevelNarrativeGenerator;
 
     @Autowired UniversityAssessmentStore store;
     @Autowired UniversityNarrativeStore narrativeStore;
@@ -64,10 +68,11 @@ class UniversityAssessmentStoreTest {
     @Autowired Flyway flyway;
 
     @Test
-    void allTwelveMigrationsAreAppliedAndUniversityTablesAreSeparateFromProfessionalOnes() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("12");
+    void allMigrationsAreAppliedAndUniversityTablesAreSeparateFromProfessionalOnes() {
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("17");
         assertThat(flyway.info().applied()).extracting(info -> info.getVersion().getVersion())
-                .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12");
+                .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
+                        "13", "14", "15", "16", "17");
     }
 
     @Test

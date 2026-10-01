@@ -35,39 +35,41 @@ External facts, including salaries and labour-market statistics, must come from 
 ## Journeys and decision semantics
 
 ```text
-                    SHARED PLATFORM
-                          |
-          +---------------+---------------+
-          |                               |
-          v                               v
-   PROFESSIONAL                     UNIVERSITY
-          |                               |
-     AI Exposure                    Future Readiness
-     Human Advantage                Human Differentiation
-     Complementarity                AI Complementarity
-     Role Adaptability              Skill Transferability
-                                    Career Adaptability
+                              SHARED PLATFORM
+                                     |
+          +--------------------------+--------------------------+
+          |                          |                          |
+          v                          v                          v
+   PROFESSIONAL                 UNIVERSITY                   A-LEVEL
+          |                          |                          |
+   AI Exposure               Future Readiness          Future Optionality
+   Human Advantage           Human Differentiation     Degree Pathway Breadth
+   AI Complementarity        AI Complementarity        Analytical Foundation
+   Role Adaptability         Skill Transferability     Human/Creative Strength
+                             Career Adaptability       Skill Transferability
+                                                       AI-Era Adaptability
 ```
 
 - **Professional** assesses how AI may affect a person's current work: AI Exposure, Human Advantage, AI Complementarity, and Role Adaptability. Its indicators describe characteristics of the current role.
 - **University** assesses how well a course positions a student for an AI-shaped labour market: Future Readiness, AI Complementarity, Human Differentiation, Skill Transferability, and Career Adaptability. Its measures describe characteristics of a course of study. It deliberately does not answer "will AI take this job?".
-- **A-level** assesses whether a subject combination preserves useful future options, given the student's interests and strengths. Its central idea is optionality, not present-day job exposure. It is not implemented.
+- **A-level** assesses whether a subject combination preserves useful future options: Future Optionality, Degree Pathway Breadth, Analytical Foundation, Human and Creative Strength, Skill Transferability, and AI-Era Adaptability. Its measures describe a combination of subjects. Its central idea is optionality, not present-day job exposure.
 
 The journeys therefore share the `AssessmentDecision` result shape, but not a universal meaning for its indicator. Each Java decision policy defines its own dimensions, aggregation, labels, and thresholds.
 
 ### Why a shared platform does not imply shared score semantics
 
-Professional AI Exposure and University Future Readiness are **different constructs**. They share a 0–10 presentation scale and a persistence, delivery and payment pattern, and nothing else:
+Professional AI Exposure, University Future Readiness and A-level Future Optionality are **three different constructs**. They share a 0–10 presentation scale and a persistence, delivery and payment pattern, and nothing else:
 
-- They answer different questions. AI Exposure asks how readily work a person already performs may be performed, automated or materially changed by AI. Future Readiness asks how well a course appears to develop capabilities that stay valuable as AI tools become more capable.
-- They are computed from different atomic judgments. `professional-v1` and `university-v1` share only `information_sufficient`, `ai_complementarity` and `contextual_complexity`; the remaining dimensions are journey-specific and are not interchangeable.
-- They use different weights, versioned separately as `professional-decision-v1` and `university-decision-v1`.
-- They use different band vocabularies. Professional indicators band as `LOW` / `MODERATE` / `HIGH`; university measures band as `LIMITED` / `DEVELOPING` / `STRONG`. The band names are deliberately different so a reader cannot carry an interpretation across.
-- Their direction of merit differs. A high AI Exposure is a neutral-to-cautionary observation about work; a high Future Readiness is a positive observation about a course. Future Readiness is **not** the inverse of AI Exposure.
+- They answer different questions. AI Exposure asks how readily work a person already performs may be performed, automated or materially changed by AI. Future Readiness asks how well a course appears to develop capabilities that stay valuable as AI tools become more capable. Future Optionality asks how wide a range of plausible next steps a subject combination keeps open.
+- They describe different subjects of assessment: a person's current work, a course of study, and a combination of school subjects.
+- They are computed from different atomic judgments. `professional-v1` and `university-v1` share only `information_sufficient`, `ai_complementarity` and `contextual_complexity`. `a-level-v1` shares only `information_sufficient` with professional, and `information_sufficient`, `analytical_reasoning`, `original_judgment_creativity` and `skill_transferability` with university — and even those have different rubrics, because they describe a subject combination rather than a course.
+- They use different weights, versioned separately as `professional-decision-v1`, `university-decision-v1` and `a-level-decision-v1`.
+- They use three distinct band vocabularies with no overlapping value: professional indicators band as `LOW` / `MODERATE` / `HIGH`, university measures as `LIMITED` / `DEVELOPING` / `STRONG`, and A-level measures as `FOCUSED` / `BALANCED` / `BROAD`. The names are deliberately disjoint so a reader cannot carry an interpretation across.
+- Their direction of merit differs. A high AI Exposure is a neutral-to-cautionary observation about work; a high Future Readiness and a high Future Optionality are positive observations about a course and a subject combination. Neither is the inverse of AI Exposure.
 
-A professional score of 7.2 and a university score of 7.2 therefore mean unrelated things and must never be compared, averaged, ranked together or combined into one universal risk score. `ProfessionalMeasure` and `UniversityMeasure` are separate enums precisely so no shared score object can exist, and `CrossJourneySeparationTest` pins this separation. The paid university report states the separation explicitly in its methodology section.
+A professional score of 7.2, a university score of 7.2 and an A-level score of 7.2 therefore mean unrelated things and must never be compared, averaged, ranked together or combined into one universal AI career score. `ProfessionalMeasure`, `UniversityMeasure` and `ALevelMeasure` are separate enums precisely so no shared score object can exist; each decision policy refuses another journey's judgment set outright; and `CrossJourneySeparationTest` pins all of this. Each paid report states the separation explicitly in its methodology section.
 
-Genuinely shared, journey-neutral types are reused: `JourneyType`, `AssessmentStatus`, `AssessmentConfidence`, `AssessmentDecision`, `AssessmentJudgmentSet`, `DimensionJudgment`, the security configuration and the persistence/payment/PDF patterns. Narrative, evidence, payment, report and PDF status enums are deliberately duplicated per journey rather than hoisted into a generic framework: the small duplication keeps each journey's semantics legible and avoids coupling one journey's release to another's.
+Genuinely shared, journey-neutral types are reused: `JourneyType`, `AssessmentStatus`, `AssessmentConfidence`, `AssessmentDecision`, `AssessmentJudgmentSet`, `DimensionJudgment`, the security configuration and the persistence/payment/PDF patterns. Narrative, evidence, payment, report and PDF status enums are deliberately duplicated per journey rather than hoisted into a generic framework: the small duplication keeps each journey's semantics legible and avoids coupling one journey's release to another's. There is deliberately no `Journey<T>` abstraction; three clear vertical slices are easier to reason about than one parameterised framework that hides which semantics apply.
 
 ## Intended modules
 
@@ -674,3 +676,163 @@ For local startup, run:
 - There is no CV- or prospectus-upload equivalent for the university journey; input is manual only.
 - There is no occupation-classification equivalent, because the university evidence request is course-shaped rather than occupation-shaped.
 - As in the professional journey, there are no user accounts. The opaque assessment UUID is a temporary pre-authentication access reference, not production-grade authorisation. Anyone holding a saved URL may reach that assessment and an entitled report. There is no public listing route, but account-bound ownership belongs in a later phase.
+
+## A-level journey
+
+The A-level journey answers a third product question: *do these A-level choices preserve strong future options in an AI-shaped economy?* It is aimed at UK sixth-form students, who are often 16 to 18 and reading with a parent, so its wording is deliberately the most careful of the three.
+
+```text
+A-level input
+    ↓
+ALevelAssessmentState
+    ↓
+ALevelJudgmentProvider
+    ↓
+a-level-v1 judgments
+    ↓
+ALevelDecisionPolicyV1
+    ↓
+saved assessment
+    ↓
+narrative + evidence
+    ↓
+ALevelReportAssembler
+    ↓
+FREE / PAID
+    ↓
+A-level entitlement
+    ↓
+frozen purchase
+    ↓
+a-level-report-pdf-v1
+```
+
+### A-level input and subject canonicalisation
+
+`ALevelAssessmentState` is a dedicated immutable domain record with no JPA annotations: selected subjects, optional predicted grades, strengths and interests, preferred degree areas, preferred career areas, and optional country and free-text context. Only the subjects are required, and between two and five distinct subjects are accepted (UK students usually take three or four). A student is never required to know a degree or a career: every other field may be empty.
+
+`ALevelSubjects.canonicalise` maps common abbreviations and spellings onto consistent display names — `maths` and `Maths` become `Mathematics`, `comp sci` and `computing` become `Computer Science` — and is applied inside the record's constructor so the same combination is stored, judged and displayed identically however it was typed. It is idempotent, and an unrecognised subject is accepted and title-cased rather than rejected, so a student is never blocked because their school offers something unusual.
+
+The alias table **maps text to text only**. There is no subject-points table anywhere in the journey: `ALevelDecisionPolicyV1` never learns that Mathematics exists, and the local fixture is keyed by a configured identifier rather than by the subjects submitted. `ALevelSubjectsTest` asserts by reflection that the alias table holds no numeric value, and `ALevelDecisionPolicyV1Test` asserts that two completely different subject lists produce an identical result for the same fixture. Together these pin the rule that the journey scores a judged combination, never a ranked list of subjects.
+
+### A-level judgment schema
+
+`ALevelJudgmentSchema` defines `a-level-v1` as one Noul plus ten 0–4 Score questions, issued in a single Jev System One request. Every rubric level is defined explicitly, not only 0 and 4:
+
+| Dimension | 0 | 4 |
+| --- | --- | --- |
+| `information_sufficient` | Noul: too vague to tell which subjects are taken | Subjects identified clearly enough to assess the capabilities developed |
+| `quantitative_reasoning` | Little mathematical or quantitative capability | Rigorous mathematical, statistical or quantitative reasoning throughout |
+| `analytical_reasoning` | Little structured analysis or problem solving | Disciplined analysis and problem solving define the combination |
+| `written_verbal_communication` | Little extended communication or argumentation | Sustained extended writing, argument and explanation |
+| `original_judgment_creativity` | Mainly fixed procedure or reproduction | Original interpretation, synthesis, creativity or design |
+| `contextual_social_understanding` | Little engagement with human/social/economic context | Interpreting complex human, social, economic or geographical systems |
+| `technical_digital_foundation` | Little technical, computational or digital foundation | A strong technical, computational or digital foundation throughout |
+| `subject_skill_diversity` | The subjects develop very similar kinds of capability | Markedly diverse capability types across the combination |
+| `degree_pathway_breadth` | A very narrow range of plausible degree directions | A very broad range of plausible degree directions |
+| `skill_transferability` | Relatively narrow, tied to a particular context | Transfers broadly across many study and work contexts |
+| `ai_era_complementarity` | A limited foundation for AI-assisted study or work | A particularly strong mix likely to combine productively with AI tools |
+
+The schema never asks whether the subjects are good, whether the student will get a job, whether they should drop a subject, or whether the combination is future-proof. `ALevelJudgmentSchemaTest` asserts those phrasings are absent.
+
+### Why degree prerequisites are evidence, not a judgment
+
+Whether a course requires A-level Chemistry, Mathematics or anything else is a **fact with a publisher and a date**, not a model judgment. It changes by university, by course and by year, a model cannot know it reliably, and getting it wrong could change a teenager's subject choices for the worse.
+
+The separation is enforced in four places:
+
+1. The `degree_pathway_breadth` question explicitly instructs the model to judge only the general capability profile and **not** to apply any specific university's published entry requirements. No other question mentions requirements at all.
+2. `ALevelDecisionPolicyV1` has no concept of a prerequisite; it combines capability judgments only.
+3. `ALevelNarrativeValidator` rejects any narrative that states a requirement, names a required subject, or quotes grade requirements such as `AAA`. The safe phrasing — telling the student to check a course's own published requirements — is explicitly permitted and tested.
+4. The evidence layer has a dedicated `DEGREE_PREREQUISITES` category, and every item carries a source, publisher, geography and date.
+
+The report keeps fact and assessment visually and structurally separate. Evidence carries a standing note: *"These are factual notes with their own sources. They are shown separately because subject requirements are facts to check, not part of your assessment, and they do not change any measure above."* A prerequisite note is therefore presented as something to look up, never translated into "your subject choices are bad".
+
+### A-level decision policy
+
+`ALevelDecisionPolicyV1` (`a-level-decision-v1`) is pure deterministic Java: no Jev SDK, no OpenAI, no persistence, no evidence. Weight maps are validated at class-initialisation time to sum to exactly 1 and to reference only known dimensions.
+
+| Measure | Weights |
+| --- | --- |
+| `FUTURE_OPTIONALITY` | degree pathway breadth 0.250, skill transferability 0.200, analytical reasoning 0.150, quantitative reasoning 0.100, subject skill diversity 0.100, original judgement/creativity 0.050, written/verbal communication 0.050, contextual/social understanding 0.050, technical/digital foundation 0.025, AI-era complementarity 0.025 |
+| `DEGREE_PATHWAY_BREADTH` | degree pathway breadth 0.75, subject skill diversity 0.25 |
+| `ANALYTICAL_FOUNDATION` | analytical reasoning 0.40, quantitative reasoning 0.40, technical/digital foundation 0.20 |
+| `HUMAN_AND_CREATIVE_STRENGTH` | written/verbal communication 0.35, original judgement/creativity 0.35, contextual/social understanding 0.30 |
+| `SKILL_TRANSFERABILITY` | skill transferability 0.45, subject skill diversity 0.25, analytical reasoning 0.15, written/verbal communication 0.15 |
+| `AI_ERA_ADAPTABILITY` | AI-era complementarity 0.35, analytical reasoning 0.20, skill transferability 0.20, technical/digital foundation 0.15, original judgement/creativity 0.10 |
+
+These weights are transparent, **provisional V1 product policy**. They are not educational science, they are not validated against outcome data, and they do not represent any admissions body's view. Changing any of them requires a new policy version.
+
+Breadth and transferability dominate Future Optionality because they are the most direct expressions of optionality; analytical and quantitative reasoning follow as gateway capabilities for a wide span of degrees; diversity contributes because variety itself preserves options. The remaining capability types contribute modestly to the headline but are carried in full by their own supporting measures, so a combination strong in communication or creativity is not under-reported overall — `english_history_politics` scores `BROAD` on Human and Creative Strength while sitting mid-range on the headline.
+
+Bands are `FOCUSED` below 3.50, `BALANCED` below 7.00, and `BROAD` at or above 7.00. `FOCUSED` is deliberately neutral: a combination that concentrates on one direction is a legitimate choice, not a mistake. There is no `NARROW`, `WEAK`, `BAD`, `SAFE` or `FUTURE_PROOF` band.
+
+Sufficiency and confidence reuse the shared enums on the same thresholds as the other journeys: below 0.60 produces `MORE_INFORMATION_REQUIRED` with no measures; 0.60 to below 0.75 produces `READY_WITH_CAUTION`; 0.75 and above produces `READY` only when confidence is `HIGH`, which additionally requires sufficiency at or above 0.80, mean judgment confidence at or above 0.80 and minimum judgment confidence at or above 0.60.
+
+### A-level explainability
+
+Explainability uses signed contribution logic over a separate `EXPLANATION_WEIGHTS` map covering all ten Score dimensions (summing to 1). It is deliberately flatter than the Future Optionality weights so a capability carried mainly by a supporting measure can still be named as a strength, and it never contributes to an authoritative measure. For each dimension the signed effect is `weight × (normalised − 0.5)`; positive effects become `STRENGTH` factors and negative effects `DEVELOPMENT_OPPORTUNITY` factors, so a dimension can never appear on both sides.
+
+Factor wording explains capability contribution rather than judging a subject: "Your combination gives you a strong quantitative foundation", or "Your combination develops less technical and digital depth than some alternatives". Nothing says "Maths is good" or "Geography is weak", and no factor names a subject at all.
+
+### A-level persistence and migrations
+
+Flyway **V13** adds `a_level_assessment` with input, provenance and headline decision, plus ordered judgment, measure and factor tables; a check constraint pins both journey columns to `A_LEVEL`. **V14** adds `a_level_assessment_narrative`, **V15** the evidence bundle and items, **V16** the entitlement, purchased snapshot and processed payment event, and **V17** the purchased PDF. A-level tables are entirely separate from professional and university tables. V1–V12 are unchanged. The repository is now at Flyway v17.
+
+Selected subjects, strengths, degree areas and career areas are JSONB arrays (order preserved); predicted grades are a JSONB object keyed by canonical subject (PostgreSQL does not preserve jsonb object key order, so grade display order follows the subject array). `ALevelAssessmentStore` inserts only, and `GET /a-level-assessment/{UUID}` loads saved records without invoking any provider or policy.
+
+### A-level narrative
+
+`ALevelNarrativeService` runs after the assessment transaction commits, building `ALevelNarrativeContext` from the persisted snapshot. `OpenAiALevelNarrativeGenerator` is the normal adapter with one typed structured-output request; `LocalFixtureALevelNarrativeGenerator` is selected only by `local-fixture`. Profile wiring permits exactly one generator, and a failure stores `FAILED` rather than looking up another implementation. Historical narratives are never regenerated or upgraded.
+
+The `a-level-narrative-v1` prompt states that saved measures, bands, confidence, status, strengths and development opportunities are authoritative and must never be recalculated or repeated numerically. It forbids stating university entry requirements or subject prerequisites, quoting grade requirements, guaranteeing or predicting admission, inventing salary figures or employment rates, citing studies, calling a combination future-proof/safe/risky/wrong/bad, ranking subjects, telling the student to drop or change a subject, telling them which career to pursue, and saying their choices will limit their future. It requires explaining `FOCUSED` as a legitimate choice rather than a limitation, and restricts practical actions to things a student can do *alongside* existing subjects.
+
+`ALevelNarrativeValidator` is the deterministic backstop: it rejects numeric and percentage claims, currency figures, invented prerequisites and grade requirements, and admission promises, subject verdicts or drop instructions. Rejection fails the narrative attempt and can never change the saved assessment.
+
+### A-level evidence
+
+`ALevelEvidenceProvider` is the vendor-neutral port receiving a narrow request (assessment UUID, subjects, preferred degree and career areas, explicit geography, journey). Categories are `DEGREE_PREREQUISITES`, `COURSE_ENTRY_CONTEXT`, `SUBJECT_PATHWAY_CONTEXT`, `LABOUR_MARKET_CONTEXT` and `SKILL_DEMAND_CONTEXT`; the version is `a-level-evidence-v1`. Evidence cannot change any measure, status or confidence, and a provider failure is recorded as `FAILED` with no fallback. Geography comes from the submitted country when supplied, otherwise the configured default.
+
+**This phase ships the architecture and a deterministic fixture adapter only.** No live A-level evidence adapter exists: UCAS, Discover Uni and individual university admissions pages have no bounded public API suitable for this project's no-scraping constraint, and scraping brittle course pages purely to claim a live adapter would be worse than having none — it would put unreliable prerequisite claims in front of teenagers. Official course entry requirements, UCAS, Discover Uni, the National Careers Service and ONS labour data remain candidates for a later sub-phase behind the same port. Fixture items are framed as neutral factual context, carry no fake university or government URL, and state explicitly that they do not change the assessment.
+
+### A-level report, payment, freezing and PDF
+
+`ALevelReportAssembler` is pure deterministic composition of saved records (`a-level-report-v1`). FREE and PAID use the same saved status, confidence, six measures, bands and factors. FREE includes the subjects, all measures with concise definitions, main strengths, development opportunities, a short interpretation and the admissions disclaimer. PAID adds the full narrative, per-measure explanations, practical actions, deterministic guidance, degree and career-area context, saved evidence and fuller methodology.
+
+Practical guidance uses `KEEP_DEVELOPING`, `WORTH_STRENGTHENING` and `CONSIDER_SUPPLEMENTING`. Every item is something a student can do alongside their existing subjects — building coding or data literacy, strengthening written argument, researching course requirements early — and `ALevelReportAssemblerTest` asserts across all six fixtures that no guidance ever suggests dropping, swapping or retaking a subject. Every combination is told to check real published course requirements rather than trust a guess.
+
+A-level entitlement is entirely separate from professional and university entitlement: separate tables with foreign keys to `a_level_assessment`, a separate `A_LEVEL_REPORT_STRIPE_PRICE_ID`, a separate webhook at `POST /payments/stripe/a-level-webhook`, a separate configurable webhook secret, and `product=a_level_report` Stripe metadata so events for other products are ignored rather than errored. No price is hard-coded. Confirmation is idempotent under a row lock, and the frozen snapshot is authoritative after purchase so a future `a-level-report-v2` cannot change an earlier `v1` purchase.
+
+`ALevelReportPdfService` renders only from the frozen purchased snapshot, never calling the assembler, Jev, the policy, OpenAI, evidence or Stripe. `OpenHtmlALevelReportPdfRenderer` uses built-in fonts and inline CSS with no network inputs; persisted evidence URLs are emitted as hyperlinks and never fetched. `a-level-report-pdf-v1` versions the layout separately from the purchased content, and `ON CONFLICT DO NOTHING` makes the stored artifact immutable, so repeat downloads and restarts return identical bytes.
+
+### A-level web routes, UX and local development
+
+| Route | Purpose |
+| --- | --- |
+| `GET /a-level-assessment` | Public form |
+| `POST /a-level-assessment` | Validate, submit once, Post/Redirect/Get |
+| `GET /a-level-assessment/{UUID}` | Read-only free result |
+| `POST /a-level-assessment/{UUID}/checkout` | Start checkout (CSRF-protected) |
+| `GET /a-level-assessment/{UUID}/report` | Frozen paid report, `ACTIVE` only |
+| `GET /a-level-assessment/{UUID}/report.pdf` | Immutable purchased PDF, `ACTIVE` only |
+| `GET`/`POST /a-level-assessment/{UUID}/checkout/local[/confirm]` | `local-fixture` only |
+| `POST /payments/stripe/a-level-webhook` | `live-payment` only, signature-authenticated |
+
+The form opens by saying there are no good or bad subjects and that the student does not need to know what they want to do yet. Degree and career areas are explicitly optional and labelled "It is completely fine to be undecided". A combination with too few subjects is a friendly field error, not a server error. The result page explains what Future Optionality means before showing any number, states that a focused combination is a reasonable choice, and tells the student to check a specific course's own published requirements. Result responses use `private, no-store` and request `noindex,nofollow`; CSRF is preserved for every browser POST.
+
+For local startup, run:
+
+```shell
+./mvnw spring-boot:run \
+  -Dspring-boot.run.profiles=local-fixture \
+  -Dspring-boot.run.arguments="--app.professional.fixture-id=senior_software_architect --app.university.fixture-id=computer_science --app.a-level.fixture-id=maths_economics_geography"
+```
+
+`app.a-level.fixture-id` supports only `maths_economics_geography`, `mathematics_physics_computer_science`, `biology_chemistry_mathematics`, `english_history_politics`, `art_design_media` and `mixed_balanced`. There is no fuzzy matching: a missing or unsupported ID fails at startup. All three journeys' fixture IDs are required under `local-fixture` because each wires its own provider independently. Fixture data is illustrative development data chosen to exercise contrasting presentation paths — it is not an empirical claim about any subject or combination.
+
+### A-level limitations and next sub-phases
+
+- There is no live A-level evidence adapter yet. Only the port, model, persistence and deterministic fixture exist, so no real prerequisite is shown to anyone today.
+- There is **no landing page or journey selector**. The three journeys are reachable only by their own URLs, and nothing links them together. Adding a home page that introduces and routes between the three journeys is deliberately left to a later product-polish phase rather than bundled into this one.
+- Predicted grades are recorded as audit context only. They never affect a measure, and the journey makes no attempt to predict an offer.
+- As in the other journeys, there are no user accounts. The opaque assessment UUID remains a temporary pre-authentication access reference.

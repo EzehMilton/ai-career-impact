@@ -19,6 +19,9 @@ public class WebSecurityConfiguration {
                         "/university-assessment", "/university-assessment/*",
                         "/university-assessment/*/report", "/university-assessment/*/checkout/local",
                         "/university-assessment/*/report.pdf",
+                        "/a-level-assessment", "/a-level-assessment/*",
+                        "/a-level-assessment/*/report", "/a-level-assessment/*/checkout/local",
+                        "/a-level-assessment/*/report.pdf",
                         "/css/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/professional-assessment",
                         "/professional-assessment/cv",
@@ -27,13 +30,19 @@ public class WebSecurityConfiguration {
                         "/university-assessment",
                         "/university-assessment/*/checkout",
                         "/university-assessment/*/checkout/local/confirm",
+                        "/a-level-assessment",
+                        "/a-level-assessment/*/checkout",
+                        "/a-level-assessment/*/checkout/local/confirm",
                         "/payments/stripe/webhook",
-                        "/payments/stripe/university-webhook").permitAll()
+                        "/payments/stripe/university-webhook",
+                        "/payments/stripe/a-level-webhook").permitAll()
                 .anyRequest().authenticated())
                 // Only the Stripe webhook paths are CSRF-exempt: they are authenticated by Stripe's
                 // signature instead. Every browser POST keeps CSRF protection.
                 .csrf(csrf -> csrf.ignoringRequestMatchers(
-                        "/payments/stripe/webhook", "/payments/stripe/university-webhook"))
+                        "/payments/stripe/webhook",
+                        "/payments/stripe/university-webhook",
+                        "/payments/stripe/a-level-webhook"))
                 .formLogin(Customizer.withDefaults());
         return http.build();
     }
