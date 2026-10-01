@@ -34,11 +34,40 @@ External facts, including salaries and labour-market statistics, must come from 
 
 ## Journeys and decision semantics
 
-- **Professional** assesses how AI may affect a person's current work: AI Exposure, Human Advantage, AI Complementarity, and Role Adaptability. Its indicators describe characteristics of the current role.
-- **University** assesses how a course supports future readiness and how its possible career paths may be exposed to AI. A high or low value here cannot be interpreted as the same kind of risk as a professional assessment.
-- **A-level** assesses whether a subject combination preserves useful future options, given the student's interests and strengths. Its central idea is optionality, not present-day job exposure.
+```text
+                    SHARED PLATFORM
+                          |
+          +---------------+---------------+
+          |                               |
+          v                               v
+   PROFESSIONAL                     UNIVERSITY
+          |                               |
+     AI Exposure                    Future Readiness
+     Human Advantage                Human Differentiation
+     Complementarity                AI Complementarity
+     Role Adaptability              Skill Transferability
+                                    Career Adaptability
+```
 
-The journeys therefore share the `AssessmentDecision` result shape, but not a universal meaning for its indicator. Each Java decision policy will define its own dimensions, aggregation, labels, and thresholds.
+- **Professional** assesses how AI may affect a person's current work: AI Exposure, Human Advantage, AI Complementarity, and Role Adaptability. Its indicators describe characteristics of the current role.
+- **University** assesses how well a course positions a student for an AI-shaped labour market: Future Readiness, AI Complementarity, Human Differentiation, Skill Transferability, and Career Adaptability. Its measures describe characteristics of a course of study. It deliberately does not answer "will AI take this job?".
+- **A-level** assesses whether a subject combination preserves useful future options, given the student's interests and strengths. Its central idea is optionality, not present-day job exposure. It is not implemented.
+
+The journeys therefore share the `AssessmentDecision` result shape, but not a universal meaning for its indicator. Each Java decision policy defines its own dimensions, aggregation, labels, and thresholds.
+
+### Why a shared platform does not imply shared score semantics
+
+Professional AI Exposure and University Future Readiness are **different constructs**. They share a 0–10 presentation scale and a persistence, delivery and payment pattern, and nothing else:
+
+- They answer different questions. AI Exposure asks how readily work a person already performs may be performed, automated or materially changed by AI. Future Readiness asks how well a course appears to develop capabilities that stay valuable as AI tools become more capable.
+- They are computed from different atomic judgments. `professional-v1` and `university-v1` share only `information_sufficient`, `ai_complementarity` and `contextual_complexity`; the remaining dimensions are journey-specific and are not interchangeable.
+- They use different weights, versioned separately as `professional-decision-v1` and `university-decision-v1`.
+- They use different band vocabularies. Professional indicators band as `LOW` / `MODERATE` / `HIGH`; university measures band as `LIMITED` / `DEVELOPING` / `STRONG`. The band names are deliberately different so a reader cannot carry an interpretation across.
+- Their direction of merit differs. A high AI Exposure is a neutral-to-cautionary observation about work; a high Future Readiness is a positive observation about a course. Future Readiness is **not** the inverse of AI Exposure.
+
+A professional score of 7.2 and a university score of 7.2 therefore mean unrelated things and must never be compared, averaged, ranked together or combined into one universal risk score. `ProfessionalMeasure` and `UniversityMeasure` are separate enums precisely so no shared score object can exist, and `CrossJourneySeparationTest` pins this separation. The paid university report states the separation explicitly in its methodology section.
+
+Genuinely shared, journey-neutral types are reused: `JourneyType`, `AssessmentStatus`, `AssessmentConfidence`, `AssessmentDecision`, `AssessmentJudgmentSet`, `DimensionJudgment`, the security configuration and the persistence/payment/PDF patterns. Narrative, evidence, payment, report and PDF status enums are deliberately duplicated per journey rather than hoisted into a generic framework: the small duplication keeps each journey's semantics legible and avoids coupling one journey's release to another's.
 
 ## Intended modules
 
@@ -401,3 +430,247 @@ trusted parse provenance across the review form. V7 stores only `MANUAL`/`CV_UPL
 filename, canonical media type, parser version and parse timestamp alongside the resulting
 assessment snapshot. These fields are audit metadata and never affect scoring. Existing rows are
 backfilled as `MANUAL`; purchased reports and PDFs are unchanged.
+
+## University journey
+
+The university journey answers a different product question from the professional journey: *how well does this course position me for an AI-shaped labour market?* It is a distinct vertical slice that reuses the proven delivery pattern without reusing professional scoring semantics.
+
+```text
+University input
+    ↓
+UniversityAssessmentState
+    ↓
+UniversityJudgmentProvider
+    ↓
+university-v1 judgments
+    ↓
+UniversityDecisionPolicyV1
+    ↓
+saved assessment
+    ↓
+narrative + evidence
+    ↓
+UniversityReportAssembler
+    ↓
+FREE / PAID
+    ↓
+university entitlement
+    ↓
+frozen purchase
+    ↓
+university-report-pdf-v1
+```
+
+```text
+Browser
+    |
+    v
+UniversityAssessmentForm
+    |
+    v
+UniversityAssessmentController
+    |
+    v
+UniversityAssessmentFormMapper
+    |
+    v
+UniversityAssessmentState
+    |
+    v
+UniversityAssessmentService
+    |
+    v
+UniversityJudgmentProvider
+    |
+    +-----------------------------+
+    |                             |
+    v                             v
+UniversityJevJudgmentService    LocalFixtureUniversityJudgmentProvider
+    |                             |
+    +--------------+--------------+
+                   |
+                   v
+         AssessmentJudgmentSet
+                   |
+                   v
+        UniversityDecisionPolicyV1
+                   |
+                   v
+        UniversityAssessmentResult
+                   |
+                   v
+        UniversityAssessmentStore
+                   |
+                   v
+        JPA adapter / PostgreSQL
+                   |
+                   v
+      Redirect to saved result GET
+```
+
+### University input
+
+`UniversityAssessmentState` is a dedicated immutable domain record with no JPA annotations: course title, course description, key modules, skills developed, preferred career areas, and optional institution and country. It is deliberately not `ProfessionalAssessmentState` and never requires employment experience.
+
+`UniversityAssessmentForm` is the web DTO with Bean Validation; `UniversityAssessmentFormMapper` trims fields, drops blank lines and creates the domain value. The form uses language aimed at sixth-form and university applicants, and states that career areas are context rather than a recommendation. Institution and country are recorded but the assessment does not rank institutions or use league tables.
+
+### University judgment schema
+
+`UniversityJudgmentSchema` defines `university-v1` as one Noul plus nine 0–4 Score questions, issued in a single Jev System One request:
+
+| Dimension | 0 | 4 |
+| --- | --- | --- |
+| `information_sufficient` | Noul: only a course title or an insufficient description | Enough about content, modules, skills or how the course is studied |
+| `technical_digital_depth` | Little technical/digital development | Core, sustained technical or digital capability development |
+| `analytical_reasoning` | Little structured analysis or problem solving | Rigorous analysis, quantitative reasoning or systematic problem solving defines the course |
+| `original_judgment_creativity` | Mostly fixed procedure or content reproduction | Original synthesis, judgment, design or creative work |
+| `human_relationship_dependency` | Little interpersonal capability | Deep interpersonal, communication or relationship capability is central |
+| `contextual_complexity` | Highly structured, routine contexts | Ambiguity, competing factors and changing conditions define the course |
+| `practical_real_world_application` | Mainly theoretical | Extensive real-world practice, placement, clinical, studio or project work |
+| `ai_complementarity` | Little useful AI augmentation | Strong productive AI augmentation while human contribution remains valuable |
+| `skill_transferability` | Narrowly tied to one context | Broadly useful across many roles and sectors |
+| `career_breadth` | Very narrow plausible pathway | Very broad range of plausible pathways |
+
+Each Score defines all five rubric levels explicitly, in ascending order. The schema never asks whether a degree is good, whether someone should study it, whether graduates will get jobs, or whether it is future-proof: those are product conclusions for deterministic Java, not atomic judgments.
+
+`UniversityJudgmentProvider` is the vendor-neutral application port. `UniversityJevJudgmentService` is the normal adapter; TypeSafe/Jev SDK types never leave `judgment.typesafe.university`. It returns the shared `AssessmentJudgmentSet` / `DimensionJudgment` types. `UniversityJevAutoConfiguration` is registered in `AutoConfiguration.imports`, is active only outside `local-fixture`, and requires a `TypeSafeClient` bean.
+
+### University decision policy
+
+`UniversityDecisionPolicyV1` (`university-decision-v1`) is pure deterministic Java: no Jev SDK, no OpenAI, no persistence, no evidence. It validates the judgment set, normalises 0–4 scores to 0–1, applies explicit weights, assigns bands, derives confidence and status, and selects structured explanation factors. Every weight map is validated at class-initialisation time to sum to exactly 1 and to reference only known dimensions.
+
+| Measure | Weights |
+| --- | --- |
+| `FUTURE_READINESS` | analytical reasoning 0.20, technical/digital depth 0.15, original judgment/creativity 0.15, AI complementarity 0.15, skill transferability 0.15, contextual complexity 0.10, career breadth 0.10 |
+| `HUMAN_DIFFERENTIATION` | original judgment/creativity 0.30, human relationship capability 0.30, contextual complexity 0.20, practical real-world application 0.20 |
+| `AI_COMPLEMENTARITY` | ai_complementarity 0.70, technical/digital depth 0.15, analytical reasoning 0.15 |
+| `SKILL_TRANSFERABILITY` | skill_transferability 0.60, analytical reasoning 0.20, career breadth 0.20 |
+| `CAREER_ADAPTABILITY` | skill transferability 0.25, career breadth 0.25, analytical reasoning 0.20, contextual complexity 0.15, AI complementarity 0.15 |
+
+These weights are transparent, provisional V1 **product policy**. They are not claimed to be validated educational research. Changing any of them requires a new policy version so an existing version never silently changes meaning. They are not the professional weights, and no dimension is inverted: every university dimension contributes positively, which is itself a semantic difference from `professional-decision-v1`.
+
+Bands are `LIMITED` below 3.50, `DEVELOPING` below 7.00, and `STRONG` at or above 7.00, using student-facing language rather than "safe", "risky" or "future-proof".
+
+Sufficiency and confidence reuse the shared `AssessmentStatus` and `AssessmentConfidence`:
+
+- `information_sufficient` below 0.60 produces `MORE_INFORMATION_REQUIRED`, `LOW` confidence, no indicator and no measures.
+- 0.60 to below 0.75 produces `READY_WITH_CAUTION`.
+- 0.75 and above produces `READY` only when confidence is `HIGH`, which additionally requires sufficiency at or above 0.80, mean judgment confidence at or above 0.80 and minimum judgment confidence at or above 0.60. Confidence is derived from the provider's own per-dimension confidence and is never fabricated.
+
+### University explainability
+
+Explainability uses signed contribution logic, following the established professional pattern. A separate `EXPLANATION_WEIGHTS` map covers **all nine** Score dimensions and sums to 1; it is used only to select and order factors and never contributes to an authoritative measure. This lets human and practical dimensions be explained even though they do not enter Future Readiness.
+
+For each dimension the signed effect is `weight × (normalised − 0.5)`. Positive effects become `STRENGTH` factors ("key strengths", "readiness drivers"); negative effects become `DEVELOPMENT_OPPORTUNITY` factors ("areas you may want to strengthen"). Because a dimension has exactly one signed effect, the same dimension can never appear on both sides. The top three of each side are kept. `UniversityFactorDirection` records which side of the neutral midpoint was observed, and the report maps each direction to course-specific language rather than professional "exposure driver" wording.
+
+### University persistence
+
+Flyway V8 adds `university_assessment` with input, provenance and headline decision, plus ordered `university_assessment_judgment`, `university_assessment_measure` and `university_assessment_factor` rows. JSONB holds only the ordered module/skill/career lists, the factor ID lists and each judgment's probability distribution. Nullable columns preserve absent Noul confidence rather than inventing a value. A check constraint pins both journey columns to `UNIVERSITY`.
+
+V9 adds `university_assessment_narrative`, V10 adds `university_assessment_evidence_bundle` and `university_assessment_evidence_item`, V11 adds `university_report_entitlement`, `purchased_university_report_snapshot` and `processed_university_payment_event`, and V12 adds `purchased_university_report_pdf`. University tables are entirely separate from professional tables; no university record is ever forced into a professional table. V1–V7 are unchanged.
+
+`UniversityAssessmentStore` is a vendor-neutral application port whose JPA adapter inserts only — a completed assessment is never merged over an old snapshot. The saved decision keeps its original scores, bands, confidence, status and structured factors, so reading an old assessment never recalculates it under today's policy. `GET /university-assessment/{UUID}` loads saved records only: it never invokes the judgment provider, the decision policy, the narrative generator or an evidence provider.
+
+### University narrative
+
+`UniversityNarrativeService` runs after the assessment transaction has committed. `UniversityNarrativeContextFactory` builds `UniversityNarrativeContext` from the persisted snapshot: course details, saved status and confidence, all five saved measures with values, bands and confidences, the structured strengths and development opportunities, and the source and version metadata. It contains no JPA entity, database access, credential or provider SDK type.
+
+`UniversityNarrativeGenerator` is the vendor-neutral port returning the immutable, HTML-free `UniversityNarrative`. `OpenAiUniversityNarrativeGenerator` is the normal adapter, using one typed `entity(UniversityNarrative.class, ...)` request with provider-native structured output. `LocalFixtureUniversityNarrativeGenerator` is selected only by the `local-fixture` profile and uses fixed templates plus saved bands and factors. Profile wiring permits exactly one generator; an OpenAI failure stores `FAILED` rather than looking up another implementation.
+
+The `university-narrative-v1` prompt states that saved measures, bands, confidence, status, strengths and development opportunities are authoritative. The model must not recalculate or invent them, repeat numeric values, add new assessment factors, or contradict the decision. It must not invent module content, teaching arrangements or institutions; state salary figures, graduate employment rates, league table positions, entry requirements or study costs; cite studies or sources; guarantee employment; call a course future-proof, safe, risky, a bad degree or a waste; or tell the student to abandon the degree. It must explain Future Readiness as a property of the course rather than a probability that a job will be automated, treat AI Complementarity as independent, and treat Skill Transferability and Career Adaptability as properties of the capabilities and pathways rather than the student's motivation, ability, finances or circumstances. Career areas are context only, phrased as "a relevant area to explore"; "you should become X" is forbidden. User-supplied text is explicitly data rather than instructions.
+
+`UniversityNarrativeValidator` is a deterministic backstop applied after typed mapping. It rejects repeated scores and percentages, currency and salary figures, and unsupported employment or quality claims (`future-proof`, employment rates, job guarantees, "bad degree", "you will struggle to find work"). Anything it rejects fails the narrative attempt and can never change assessment state.
+
+Narrative lifecycle is a separate one-to-one table keyed by the immutable assessment ID: no row means `NOT_REQUESTED`; an attempt writes `PENDING`, then `AVAILABLE` with content or `FAILED` without. `generateFor` returns any existing row without replacing it, including older prompt versions and failed attempts, so a historical narrative remains exactly what was originally saved. Regeneration would need to be an explicit future operation with its own audit semantics.
+
+### University evidence
+
+`UniversityEvidenceProvider` is the vendor-neutral port. It receives a narrow `UniversityEvidenceRequest` containing the assessment UUID, course title, modules, skills, preferred career areas, optional institution, explicit geography and journey — never a JPA entity, credential or SDK type. Providers return the immutable `UniversityEvidenceBundle` and `UniversityEvidenceItem` model. Categories are `COURSE_CONTENT`, `GRADUATE_OUTCOMES`, `OCCUPATIONAL_DESTINATIONS`, `SKILL_DEMAND` and `LABOUR_MARKET_CONTEXT`. The version is `university-evidence-v1`.
+
+Evidence is external factual context, not an input to `UniversityDecisionPolicyV1`. It cannot change any measure, status or confidence. It is deliberately downstream of the persisted assessment: assessment and narrative remain valid if an evidence provider or its persistence fails. Geography comes from the submitted country when supplied, otherwise from the explicit `app.university.evidence.geography` configuration, defaulting to `United Kingdom`. The application does not infer geography from IP address.
+
+**This phase ships the architecture and a deterministic fixture adapter only.** `LocalFixtureUniversityEvidenceProvider` supports the six exact configured IDs, carries `LOCAL_FIXTURE` / `DEVELOPMENT_FIXTURE` provenance, emits no fake government URL, and is labelled as development data in the UI. No live university evidence adapter exists yet, because no suitable official source is already compatible with the project's bounded-request, no-scraping constraints. HESA / Graduate Outcomes, Discover Uni, ONS labour sources and the National Careers Service are candidates for a later sub-phase; brittle scraping of university course pages is explicitly out of scope. With no evidence profile there is no provider and evidence remains `NOT_REQUESTED`. A provider exception is recorded as `FAILED` and never causes fixture lookup. Historical evidence is never refreshed by a GET.
+
+### University report composition
+
+`UniversityReportAssembler` is a pure, deterministic application component. It accepts a `UniversityReportSource` containing only saved historical records and produces the immutable, delivery-neutral `UniversityReport` (`university-report-v1`). It cannot call Jev, the decision policy, OpenAI, an evidence provider or any external API. `UniversityReportService` only reads the three persistence ports; the web layer maps the already tiered report to presentation data, so templates contain no entitlement rules.
+
+Payment never affects assessment. Both tiers use exactly the same saved status, confidence, five measures, bands and factors. `FREE` includes the course, all authoritative measures with concise definitions, key strengths, development areas, a short saved interpretation, an explicit statement that the result is not an employment guarantee, and a concise methodology caveat. It intentionally remains useful. `PAID` adds the full narrative, per-measure explanations, practical actions, deterministic skill-development priorities, career-area context, saved external evidence with attribution, and fuller methodology and limitations.
+
+Skill priorities are modest labels (`WORTH_STRENGTHENING` or `USEFUL`), not scores, and follow only from saved factor directions and the saved AI Complementarity band. Career-area guidance uses the student's own supplied areas as context: "a relevant area to explore", "skills that may help", "additional preparation worth considering". V1 is not a job recommendation engine and never says "you should become X".
+
+### University payment, entitlement and purchase freezing
+
+```text
+FREE report
+   |
+checkout request
+   |
+UniversityReportPurchaseService
+   |
+UniversityPaymentGateway
+   |
+Stripe / local fixture
+   |
+verified payment event
+   |
+ACTIVE entitlement
+   |
+freeze UniversityReport
+   |
+PurchasedUniversityReportSnapshot
+   |
+PAID report access
+```
+
+University entitlement is **entirely separate** from professional entitlement. The two live in different tables with foreign keys to their own assessment tables, so a professional purchase grants no university access and a university entitlement cannot even be created for a professional assessment ID. There is a separate Stripe Price (`UNIVERSITY_REPORT_STRIPE_PRICE_ID`), a separate webhook endpoint (`POST /payments/stripe/university-webhook`), a separate configurable webhook secret, and separate local-fixture provenance. No price is hard-coded.
+
+`UniversityReportPurchaseService.startCheckout` first verifies that a complete saved PAID report can be composed, then calls the gateway without a database transaction, then persists the returned session as a `PENDING` entitlement in a short transaction. A Stripe failure never persists an entitlement and never falls back to the fixture gateway.
+
+The Stripe adapter is selected only by the explicit `live-payment` profile and fails startup if its secret key, webhook secret or Price ID is missing. Its Checkout Session carries `product=university_report` metadata alongside the assessment and entitlement UUIDs — never course descriptions or other submitted content. The webhook verifier requires that product tag, so an event for another product is ignored rather than treated as an error. The success redirect is navigation, not proof of payment.
+
+Confirmation is idempotent: each provider event ID is recorded under a composite provider/event primary key, processing locks the entitlement row, rechecks state and identity, and atomically writes the purchased snapshot, flips `PENDING` to `ACTIVE` and records the event. A duplicate event returns an already-processed result and neither rebuilds nor duplicates the report. If anything fails the transaction rolls back, so no `ACTIVE` entitlement can exist without its purchased snapshot.
+
+The frozen snapshot, not today's assembler, is authoritative after purchase. A `university-report-v1` bought today remains V1 after a future V2 deploy; `PurchasedUniversityReportSnapshotCodec` switches explicitly on the stored version and gives future versions a reader seam rather than reinterpreting V1. Only `ACTIVE` reaches `GET /university-assessment/{UUID}/report`; absent, `PENDING`, `FAILED`, `REFUNDED` and `REVOKED` are denied. The free assessment remains available throughout checkout and all payment failures.
+
+### Purchased university report PDF
+
+`UniversityReportPdfService` reads an `ACTIVE` entitlement and its frozen purchased snapshot directly through persistence ports. It never calls `UniversityReportAssembler`, Jev, the decision policy, OpenAI, narrative generation, evidence retrieval or Stripe, so payment-confirmed `university-report-v1` content — not current application state — is the sole source of PDF text.
+
+Content and presentation versions are separate: `university-report-v1` identifies what the customer bought; `university-report-pdf-v1` identifies how those purchased fields are laid out. `OpenHtmlUniversityReportPdfRenderer` is a local pure-Java implementation using OpenHTMLToPDF/PDFBox with built-in fonts, inline CSS and no images, remote stylesheets, CDN resources or other network inputs. Persisted safe HTTP(S) evidence URLs are emitted only as hyperlinks and are never fetched.
+
+On the first authorised `GET /university-assessment/{UUID}/report.pdf` the service returns an existing artifact's exact bytes without loading the snapshot or invoking the renderer; otherwise it renders once, requires a `%PDF-` signature, rejects empty or over-limit output, calculates SHA-256, sanitises a course-based filename and calls `saveIfAbsent`. The insert uses PostgreSQL `ON CONFLICT DO NOTHING`, so simultaneous first requests converge on one immutable artifact without a distributed lock. Existing rows are never updated; subsequent downloads and application restarts return identical bytes and SHA-256. Rendering or persistence failure leaves the entitlement, purchased snapshot and paid HTML report unchanged and returns a generic message without provider detail.
+
+The university PDF is a deliberately parallel implementation rather than a generic abstraction over the professional PDF. Forcing shared generic rendering would have required changing working professional code for no current benefit; the two renderers can be unified later behind a small port if a third journey justifies it.
+
+### University web routes, UX and local development
+
+| Route | Purpose |
+| --- | --- |
+| `GET /university-assessment` | Public form |
+| `POST /university-assessment` | Validate, submit once, Post/Redirect/Get |
+| `GET /university-assessment/{UUID}` | Read-only free result |
+| `POST /university-assessment/{UUID}/checkout` | Start checkout (CSRF-protected) |
+| `GET /university-assessment/{UUID}/report` | Frozen paid report, `ACTIVE` only |
+| `GET /university-assessment/{UUID}/report.pdf` | Immutable purchased PDF, `ACTIVE` only |
+| `GET`/`POST /university-assessment/{UUID}/checkout/local[/confirm]` | `local-fixture` only |
+| `POST /payments/stripe/university-webhook` | `live-payment` only, signature-authenticated |
+
+The result page is written for students, not software professionals. It explains what Future Readiness means before showing numbers, presents strengths and development areas side by side, uses "This assessment suggests…", "This course appears to develop…" and "One area you may want to strengthen…", and states plainly that no assessment can tell you whether a degree is right for you. Alarmist and verdict language is absent by construction and asserted against in tests. Result responses use `private, no-store` and request `noindex,nofollow`. CSRF is preserved for every browser POST; only the two Stripe webhook paths are exempt because Stripe's signature authenticates them.
+
+For local startup, run:
+
+```shell
+./mvnw spring-boot:run \
+  -Dspring-boot.run.profiles=local-fixture \
+  -Dspring-boot.run.arguments="--app.professional.fixture-id=senior_software_architect --app.university.fixture-id=computer_science"
+```
+
+`app.university.fixture-id` supports only the exact IDs `computer_science`, `economics`, `graphic_design`, `history`, `mechanical_engineering` and `nursing`. There is no fuzzy matching: a missing or unsupported ID fails at startup. The fixture ID is technical configuration; `UniversityAssessmentState.courseTitle` remains the user's real course. Fixture data is illustrative development data chosen to exercise contrasting presentation paths — it is not empirical intelligence about any subject, course or institution, and the UI marks it prominently as development data. Both journeys' fixture IDs are required under `local-fixture` because each journey wires its own provider independently.
+
+### University limitations and next sub-phases
+
+- There is no live university evidence adapter yet. Only the port, model, persistence and deterministic fixture exist.
+- There is no CV- or prospectus-upload equivalent for the university journey; input is manual only.
+- There is no occupation-classification equivalent, because the university evidence request is course-shaped rather than occupation-shaped.
+- As in the professional journey, there are no user accounts. The opaque assessment UUID is a temporary pre-authentication access reference, not production-grade authorisation. Anyone holding a saved URL may reach that assessment and an entitled report. There is no public listing route, but account-bound ownership belongs in a later phase.

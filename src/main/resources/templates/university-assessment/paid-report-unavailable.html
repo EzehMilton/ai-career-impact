@@ -1,0 +1,8 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Full report access | AI Career Impact</title><link rel="stylesheet" th:href="@{/css/professional-assessment.css}" href="/css/professional-assessment.css"></head>
+<body><main class="page-shell"><section class="panel"><h1>Full report access</h1>
+  <p th:if="${purchase.pending}">Payment confirmation is pending. This page will become available after payment is verified.</p>
+  <p th:unless="${purchase.pending}">An active paid entitlement is required to view this report.</p>
+  <p><a th:href="@{/university-assessment/{id}(id=${assessmentId})}">Return to your free assessment</a></p>
+</section></main></body></html>
