@@ -36,6 +36,7 @@ public final class ProfessionalPaidReportController {
                 model.addAttribute("purchase", ProfessionalPurchaseViewModel.from(purchaseService.accessFor(id)));
                 return "professional-assessment/paid-report-unavailable";
             }
+            model.addAttribute("assessmentId", id);
             model.addAttribute("report", viewMapper.toView(report.orElseThrow()));
             return "professional-assessment/paid-report";
         }
