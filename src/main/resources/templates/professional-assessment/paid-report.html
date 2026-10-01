@@ -17,6 +17,7 @@
     <p class="eyebrow">Full professional report</p>
     <h1 th:text="${report.headline}">Your detailed professional report</h1>
     <p class="intro">For <strong th:text="${report.profession}">your role</strong></p>
+    <p><a class="button-link" th:href="@{/professional-assessment/{id}/report.pdf(id=${assessmentId})}">Download PDF</a></p>
   </header>
   <section class="panel">
     <h2>Overall interpretation</h2><p class="narrative-summary" th:text="${report.interpretation}">Interpretation</p>

@@ -326,3 +326,40 @@ The purchased snapshot is JSONB because `ProfessionalReport` is an immutable pre
 The frozen snapshot, not today's assembler, is authoritative after purchase. A `professional-report-v1` bought in 2026 therefore remains V1 after a future V2 deploy. `GET /professional-assessment/{UUID}/report` denies absent, `PENDING`, `FAILED`, `REFUNDED` and `REVOKED` states and renders the snapshot only for `ACTIVE`. The free assessment remains available throughout checkout and all payment failures.
 
 There are no accounts yet. Entitlement is associated with the assessment UUID, so anyone who obtains that opaque URL may potentially reach both the assessment and an entitled report. There is no public listing route, but this is explicitly temporary pre-authentication access rather than final production-grade authorisation. Account-bound ownership belongs in a later phase.
+
+## Purchased professional report PDF
+
+```text
+Purchased professional-report-v1 snapshot
+        |
+        v
+ProfessionalReportPdfService
+        |
+        v
+ProfessionalReportPdfRenderer
+        |
+        v
+professional-report-pdf-v1
+        |
+        v
+immutable persisted PDF artifact
+        |
+        v
+authorised download
+```
+
+The PDF is a delivery artifact of the exact report already bought. `ProfessionalReportPdfService` reads an `ACTIVE` entitlement and its frozen purchased snapshot directly through persistence ports. It never calls `ProfessionalReportAssembler`, Jev, the decision policy, OpenAI, narrative generation, evidence retrieval, occupation classification or Stripe. This makes payment-confirmed `professional-report-v1` content—not current application state—the sole source of PDF text.
+
+`ProfessionalReportPdfRenderer` is a vendor-neutral application port receiving `ProfessionalReportPdfModel`, which contains the purchased content version, purchase timestamp, PDF template version and immutable purchased report. `OpenHtmlProfessionalReportPdfRenderer` is the local pure-Java implementation. It converts internally generated XHTML and conservative print CSS through OpenHTMLToPDF/PDFBox. The template uses built-in font families, inline packaged CSS and no images, remote stylesheets, CDN resources, tracking elements or other network inputs. Persisted safe HTTP(S) evidence URLs are emitted only as PDF hyperlinks; they are never fetched.
+
+Content and presentation versions are deliberately separate. `professional-report-v1` identifies what the customer bought. `professional-report-pdf-v1` identifies how those purchased fields are laid out. The purchased-snapshot codec now switches explicitly on `professional-report-v1`, giving future report versions a small version-aware reader seam rather than assuming that every historical JSON document matches the latest Java model. Future incompatible versions must add a reader/mapper and must not reinterpret V1.
+
+### Artifact lifecycle and persistence
+
+On the first authorised `GET /professional-assessment/{UUID}/report.pdf`, the service first checks for an existing artifact. If present it returns those exact bytes without loading the snapshot or invoking the renderer. Otherwise it loads the matching frozen snapshot, renders once, requires a `%PDF-` signature, rejects empty or over-limit output, calculates SHA-256, sanitises a profession-based filename and calls `ProfessionalReportPdfStore.saveIfAbsent`.
+
+Flyway V6 adds `purchased_professional_report_pdf`, with one row per entitlement and a unique assessment reference. It stores purchased report version, PDF template version, generation timestamp, safe filename, byte count, SHA-256 and PDF bytes in PostgreSQL `BYTEA`. The database checks positive and matching byte length plus hash format. BYTEA is appropriate for these small bounded consumer documents and avoids premature object-storage infrastructure. The storage port permits a later S3/object-store adapter without changing the service or controller.
+
+The insert uses PostgreSQL `ON CONFLICT DO NOTHING`, followed by reading the single stored winner. If simultaneous first requests both render, the entitlement primary key ensures one immutable artifact wins and both callers return that same persisted artifact. No distributed lock or queue is needed. Existing rows are never updated or regenerated; subsequent downloads and application restarts return identical bytes and SHA-256.
+
+Only an `ACTIVE` entitlement reaches generation or download. Missing, pending, failed, refunded and revoked states receive HTTP 403. Successful responses use `application/pdf`, an attachment disposition with a sanitised filename, an exact content length, `nosniff`, and private/no-store caching. Rendering or persistence failure leaves the entitlement, purchased snapshot and paid HTML report unchanged and returns a generic temporary PDF-unavailability message without provider or renderer details.

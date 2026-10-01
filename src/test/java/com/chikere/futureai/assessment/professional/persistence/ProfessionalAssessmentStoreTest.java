@@ -40,6 +40,7 @@ import java.time.LocalDate;
 import com.chikere.futureai.occupation.professional.application.*;
 import com.chikere.futureai.payment.professional.application.*;
 import com.chikere.futureai.report.professional.application.*;
+import com.chikere.futureai.pdf.professional.application.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -54,11 +55,12 @@ class ProfessionalAssessmentStoreTest {
     @Autowired ProfessionalEvidenceStore evidenceStore;
     @Autowired ProfessionalOccupationClassificationStore classificationStore;
     @Autowired ProfessionalPurchaseStore purchaseStore;
+    @Autowired ProfessionalReportPdfStore pdfStore;
     @Autowired Flyway flyway;
 
     @Test
     void migratedPostgresqlRoundTripPreservesCompleteSnapshot() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("5");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("6");
         var state = new ProfessionalAssessmentState("Software Architect",
                 "I design software and make consequential architecture decisions.",
                 List.of("Design platforms", "Resolve trade-offs"),
@@ -212,5 +214,25 @@ class ProfessionalAssessmentStoreTest {
         assertThat(purchaseStore.confirmAndFreeze(event, snapshot))
                 .isEqualTo(ProfessionalPurchaseStore.PurchaseConfirmationResult.ALREADY_PROCESSED);
         assertThat(purchaseStore.findSnapshotByAssessmentId(assessmentId)).contains(snapshot);
+
+        byte[] pdfBytes = "%PDF-1.7 persisted fixture".getBytes(java.nio.charset.StandardCharsets.US_ASCII);
+        var pdf = new PurchasedProfessionalReportPdf(entitlementId, assessmentId, report.reportVersion(),
+                ProfessionalReportPdfVersions.PDF_TEMPLATE, Instant.parse("2026-09-30T12:03:00Z"),
+                "ai-career-impact-software-architect-report.pdf", pdfBytes.length, "a".repeat(64), pdfBytes);
+        var storedPdf = pdfStore.saveIfAbsent(pdf);
+        assertThat(storedPdf).usingRecursiveComparison().isEqualTo(pdf);
+        assertThat(pdfStore.findByEntitlementId(entitlementId)).get().satisfies(reloaded -> {
+            assertThat(reloaded.bytes()).isEqualTo(pdfBytes);
+            assertThat(reloaded.sha256()).isEqualTo("a".repeat(64));
+            assertThat(reloaded.fileSize()).isEqualTo(pdfBytes.length);
+            assertThat(reloaded.generatedAt()).isEqualTo(Instant.parse("2026-09-30T12:03:00Z"));
+            assertThat(reloaded.purchasedReportVersion()).isEqualTo("professional-report-v1");
+            assertThat(reloaded.pdfTemplateVersion()).isEqualTo("professional-report-pdf-v1");
+        });
+        byte[] losingBytes = "%PDF-different-racing-candidate".getBytes(java.nio.charset.StandardCharsets.US_ASCII);
+        var losingCandidate = new PurchasedProfessionalReportPdf(entitlementId, assessmentId, report.reportVersion(),
+                ProfessionalReportPdfVersions.PDF_TEMPLATE, Instant.parse("2026-09-30T12:04:00Z"),
+                "different.pdf", losingBytes.length, "b".repeat(64), losingBytes);
+        assertThat(pdfStore.saveIfAbsent(losingCandidate).bytes()).isEqualTo(pdfBytes);
     }
 }

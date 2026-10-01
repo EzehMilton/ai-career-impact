@@ -1,9 +1,6 @@
 package com.chikere.futureai.payment.professional.persistence;
 
 import com.chikere.futureai.payment.professional.application.*;
-import com.chikere.futureai.report.professional.application.ProfessionalReport;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,15 +13,16 @@ class JpaProfessionalPurchaseStore implements ProfessionalPurchaseStore {
     private final ProfessionalReportEntitlementJpaRepository entitlements;
     private final PurchasedProfessionalReportSnapshotJpaRepository snapshots;
     private final ProcessedProfessionalPaymentEventJpaRepository events;
-    private final ObjectMapper objectMapper;
+    private final PurchasedProfessionalReportSnapshotCodec snapshotCodec;
 
     JpaProfessionalPurchaseStore(ProfessionalReportEntitlementJpaRepository entitlements,
             PurchasedProfessionalReportSnapshotJpaRepository snapshots,
-            ProcessedProfessionalPaymentEventJpaRepository events, ObjectMapper objectMapper) {
+            ProcessedProfessionalPaymentEventJpaRepository events,
+            PurchasedProfessionalReportSnapshotCodec snapshotCodec) {
         this.entitlements = entitlements;
         this.snapshots = snapshots;
         this.events = events;
-        this.objectMapper = objectMapper;
+        this.snapshotCodec = snapshotCodec;
     }
 
     @Override
@@ -111,7 +109,7 @@ class JpaProfessionalPurchaseStore implements ProfessionalPurchaseStore {
         snapshotEntity.assessmentId = snapshot.assessmentId();
         snapshotEntity.reportVersion = snapshot.reportVersion();
         snapshotEntity.frozenAt = snapshot.frozenAt();
-        snapshotEntity.reportJson = objectMapper.valueToTree(snapshot.report());
+        snapshotEntity.reportJson = snapshotCodec.write(snapshot.report());
         snapshots.save(snapshotEntity);
 
         entitlement.status = ProfessionalEntitlementStatus.ACTIVE;
@@ -156,13 +154,7 @@ class JpaProfessionalPurchaseStore implements ProfessionalPurchaseStore {
     }
 
     private PurchasedProfessionalReportSnapshot toSnapshot(PurchasedProfessionalReportSnapshotEntity entity) {
-        try {
-            ProfessionalReport report = objectMapper.treeToValue(entity.reportJson, ProfessionalReport.class);
-            return new PurchasedProfessionalReportSnapshot(entity.entitlementId, entity.assessmentId,
-                    entity.reportVersion, entity.frozenAt, report);
-        }
-        catch (JsonProcessingException invalidSnapshot) {
-            throw new IllegalStateException("stored purchased report snapshot is invalid", invalidSnapshot);
-        }
+        return new PurchasedProfessionalReportSnapshot(entity.entitlementId, entity.assessmentId,
+                entity.reportVersion, entity.frozenAt, snapshotCodec.read(entity.reportVersion, entity.reportJson));
     }
 }

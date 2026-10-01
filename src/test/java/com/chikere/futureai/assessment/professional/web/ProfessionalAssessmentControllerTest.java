@@ -77,7 +77,7 @@ class ProfessionalAssessmentControllerTest {
                 "&lt;script&gt;meaning&lt;/script&gt;");
         assertThat(html).doesNotContain("Why AI may affect your work", "What to focus on next",
                 "Skill-development priorities", "Illustrative evidence title", "Premium action one",
-                "secret-provider");
+                "secret-provider", "/report.pdf", "Download PDF");
         verify(reportService).assemble(ID, ProfessionalReportTier.FREE);
     }
 

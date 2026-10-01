@@ -15,6 +15,7 @@ public class WebSecurityConfiguration {
         http.authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(HttpMethod.GET, "/professional-assessment", "/professional-assessment/*",
                         "/professional-assessment/*/report", "/professional-assessment/*/checkout/local",
+                        "/professional-assessment/*/report.pdf",
                         "/css/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/professional-assessment",
                         "/professional-assessment/*/checkout",
