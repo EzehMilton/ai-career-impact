@@ -95,6 +95,19 @@ class ProductShellConsistencyTest {
     }
 
     @Test
+    void noTemplateRendersUserContentWithoutEscapingIt() throws IOException {
+        // Everything a visitor types is reflected back somewhere: a job title on a result page, a
+        // course name in a report heading. Thymeleaf escapes with th:text and does not with
+        // th:utext, so the safe default has to be the only option in the codebase.
+        for (Map.Entry<Path, String> page : pages().entrySet()) {
+            assertThat(page.getValue()).as("%s unescaped output", page.getKey())
+                    .doesNotContain("th:utext", "[(${", "data-th-utext");
+        }
+        assertThat(Files.readString(TEMPLATES.resolve("fragments/layout.html")))
+                .doesNotContain("th:utext", "[(${");
+    }
+
+    @Test
     void everyPageLetsAVisitorReachHomeAgain() throws IOException {
         for (Map.Entry<Path, String> page : pages().entrySet()) {
             // Either an explicit in-page link or the shared footer navigation, which every page has.

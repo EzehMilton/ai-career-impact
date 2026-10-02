@@ -188,4 +188,19 @@ class ALevelReportPdfServiceTest {
         return new ALevelReportAssembler().assemble(new ALevelReportSource(assessment,
                 Optional.empty(), Optional.empty()), ALevelReportTier.PAID);
     }
+
+    @Test
+    void aFilenameCannotCarryHeaderInjectionFromUserText() {
+        // The filename ends up in a Content-Disposition header. A carriage return would forge a
+        // header and a quote would end the filename early, so neither may survive. The slug is
+        // built from an allow-list rather than by stripping known-bad characters, which is why
+        // this holds for inputs nobody thought of as well as the ones below.
+        for (String hostile : java.util.List.of("Title\r\nX-Injected: yes",
+                "Title\"; filename=\"evil.exe", "Title\u0000truncated", "..\\..\\windows")) {
+            assertThat(ALevelReportPdfService.safeFilename(java.util.List.of(hostile)))
+                    .as("%s", hostile)
+                    .matches("ai-career-impact-[a-z0-9-]+\\.pdf")
+                    .doesNotContain("\r", "\n", "\"", "\\", "/", ";", ":", " ");
+        }
+    }
 }

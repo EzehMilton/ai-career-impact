@@ -1,5 +1,6 @@
 package com.chikere.futureai.assessment.university.web;
 
+import com.chikere.futureai.assessment.web.BoundedTextList;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -17,13 +18,16 @@ public class UniversityAssessmentForm {
 
     @NotBlank(message = "Add at least one module or topic.")
     @Size(max = 4000, message = "Keep modules under 4,000 characters.")
+    @BoundedTextList(maxItems = 40, maxItemLength = 200)
     private String keyModules = "";
 
     @NotBlank(message = "Add at least one skill you expect to develop.")
     @Size(max = 2000, message = "Keep skills under 2,000 characters.")
+    @BoundedTextList(maxItems = 40, maxItemLength = 120)
     private String skillsDeveloped = "";
 
     @Size(max = 2000, message = "Keep career areas under 2,000 characters.")
+    @BoundedTextList(maxItems = 20, maxItemLength = 120)
     private String preferredCareerAreas = "";
 
     @Size(max = 160, message = "Keep the institution under 160 characters.")

@@ -27,7 +27,7 @@ class PdfDocxProfessionalCvParserTest {
             """;
 
     private final PdfDocxProfessionalCvParser parser = new PdfDocxProfessionalCvParser(
-            new DeterministicProfessionalCvStructurer(), 100_000);
+            new DeterministicProfessionalCvStructurer(), ProfessionalCvParserLimits.defaults());
 
     @Test
     void extractsPdfAndUsesOnlyMostRecentRole() {
