@@ -16,6 +16,8 @@ import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseServi
 import com.chikere.futureai.report.alevel.application.ALevelReportAssembler;
 import com.chikere.futureai.report.alevel.application.ALevelReportService;
 import org.springframework.beans.factory.annotation.Value;
+import com.chikere.futureai.configuration.JourneyMetrics;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -54,8 +56,10 @@ public class ALevelAssessmentConfiguration {
 
     @Bean
     ALevelAssessmentWorkflow aLevelAssessmentWorkflow(ALevelAssessmentService assessmentService,
-            ALevelNarrativeService narrativeService, ALevelEvidenceService evidenceService) {
-        return new ALevelAssessmentWorkflow(assessmentService, narrativeService, evidenceService);
+            ALevelNarrativeService narrativeService, ALevelEvidenceService evidenceService,
+            ObjectProvider<JourneyMetrics> metrics) {
+        return new ALevelAssessmentWorkflow(assessmentService, narrativeService, evidenceService,
+                metrics.getIfAvailable(JourneyMetrics::disabled));
     }
 
     @Bean
@@ -68,9 +72,11 @@ public class ALevelAssessmentConfiguration {
     @Bean
     ALevelReportPurchaseService aLevelReportPurchaseService(ALevelReportService reportService,
             ALevelPurchaseStore purchaseStore, Optional<ALevelPaymentGateway> paymentGateway,
-            @Value("${app.a-level.report.base-url:http://localhost:8080}") URI applicationBaseUrl,
-            @Value("${app.a-level.report.display-price:}") String displayPrice) {
+            @Value("${app.a-level.report.base-url}") URI applicationBaseUrl,
+            @Value("${app.a-level.report.display-price:}") String displayPrice,
+            ObjectProvider<JourneyMetrics> metrics) {
         return new ALevelReportPurchaseService(reportService, purchaseStore, paymentGateway,
-                applicationBaseUrl, Optional.ofNullable(displayPrice), Clock.systemUTC());
+                applicationBaseUrl, Optional.ofNullable(displayPrice), Clock.systemUTC(),
+                metrics.getIfAvailable(JourneyMetrics::disabled));
     }
 }

@@ -1,5 +1,6 @@
 package com.chikere.futureai.product.web;
 
+import com.chikere.futureai.configuration.JourneyMetrics;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -44,9 +45,11 @@ public final class RateLimitFilter extends OncePerRequestFilter {
             new Group("checkout-start", List.of("/checkout")));
 
     private final Map<String, RequestRateLimiter> limiters;
+    private final JourneyMetrics metrics;
 
-    public RateLimitFilter(Map<String, RequestRateLimiter> limiters) {
+    public RateLimitFilter(Map<String, RequestRateLimiter> limiters, JourneyMetrics metrics) {
         this.limiters = Map.copyOf(limiters);
+        this.metrics = metrics;
     }
 
     @Override
@@ -70,6 +73,7 @@ public final class RateLimitFilter extends OncePerRequestFilter {
         // The group, not the path or the client, so the log says what was throttled without
         // recording who or what they submitted.
         LOGGER.warn("Rate limit reached for {}", group.get().name());
+        metrics.rateLimitRejected(group.get().name());
         response.setHeader("Retry-After", Long.toString(decision.retryAfterSeconds()));
         response.sendError(429);
     }

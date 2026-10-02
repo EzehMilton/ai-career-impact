@@ -46,7 +46,10 @@ import static org.mockito.Mockito.mock;
 class ProfessionalProviderWiringTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-            .withPropertyValues("spring.ai.openai.chat.model=gpt-test")
+            .withPropertyValues("spring.ai.openai.chat.model=gpt-test",
+                    // Return URLs come from the one configured public base URL. A context
+                    // runner does not read application.properties, so it is supplied here.
+                    "app.professional.report.base-url=http://localhost:8080")
             .withConfiguration(AutoConfigurations.of(ProfessionalJevAutoConfiguration.class))
             .withUserConfiguration(
                     ProfessionalAssessmentConfiguration.class,

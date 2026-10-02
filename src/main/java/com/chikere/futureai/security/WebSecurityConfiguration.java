@@ -90,9 +90,13 @@ public class WebSecurityConfiguration {
                         "/payments/stripe/webhook",
                         "/payments/stripe/university-webhook",
                         "/payments/stripe/a-level-webhook").permitAll()
-                // Operational endpoints are reachable by nobody today. They were already closed —
-                // the previous catch-all sent them to a login page — so keeping them closed changes
-                // nothing, and deciding what to publish belongs to the operational phase.
+                // Operational endpoints. Health and its probes are published because a load
+                // balancer and an orchestrator have to reach them before anyone is signed in, and
+                // they are configured to report a bare status with no component detail. Everything
+                // else Actuator can expose stays denied here as well as unexposed, so publishing
+                // one by accident in configuration is not enough to make it reachable.
+                .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/liveness",
+                        "/actuator/health/readiness", "/actuator/info").permitAll()
                 .requestMatchers("/actuator/**").denyAll()
                 // Everything else reaches Spring MVC, which answers an unknown URL with an ordinary
                 // 404 and the friendly not-found page. This does not open anything: no route in this

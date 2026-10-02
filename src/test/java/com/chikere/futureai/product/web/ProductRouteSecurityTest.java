@@ -154,14 +154,25 @@ class ProductRouteSecurityTest {
     }
 
     @Test
-    void operationalEndpointsAreNotPublished() throws Exception {
-        for (String path : List.of("/actuator", "/actuator/health", "/actuator/env",
-                "/actuator/beans", "/actuator/configprops", "/actuator/heapdump")) {
-            HttpResponse<String> response = get(path);
+    void onlyTheHealthEndpointsArePublishedAndNothingDescribesTheInside() throws Exception {
+        // Infrastructure has to be able to ask whether the application is up before anyone is
+        // signed in, and there is nobody to sign in as. Health is therefore reachable and says
+        // only "UP". Everything else Actuator can expose is denied here as well as unexposed.
+        HttpResponse<String> health = getJson("/actuator/health");
+        assertThat(health.statusCode()).isEqualTo(200);
+        assertThat(health.body()).contains("\"status\"")
+                .doesNotContain("diskSpace", "db", "components", "ping", "validationQuery");
+
+        for (String path : List.of("/actuator", "/actuator/env", "/actuator/beans",
+                "/actuator/configprops", "/actuator/mappings", "/actuator/heapdump",
+                "/actuator/threaddump", "/actuator/loggers", "/actuator/conditions",
+                "/actuator/metrics", "/actuator/prometheus")) {
+            HttpResponse<String> response = getJson(path);
 
             assertThat(response.statusCode()).as("%s", path).isIn(403, 404);
             assertThat(response.body()).as("%s body", path)
-                    .doesNotContain("java.version", "SPRING_DATASOURCE", "secret", "password");
+                    .doesNotContain("java.version", "SPRING_DATASOURCE", "secret", "password",
+                            "classpath", "jdbc:");
         }
     }
 
@@ -218,6 +229,11 @@ class ProductRouteSecurityTest {
 
     private String base() {
         return "http://localhost:" + port;
+    }
+
+    private HttpResponse<String> getJson(String path) throws IOException, InterruptedException {
+        return send(HttpRequest.newBuilder(URI.create(base() + path))
+                .header("Accept", "application/json").GET().build());
     }
 
     private HttpResponse<String> get(String path) throws IOException, InterruptedException {

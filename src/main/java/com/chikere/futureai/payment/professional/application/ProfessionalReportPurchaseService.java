@@ -5,6 +5,8 @@ import com.chikere.futureai.report.professional.application.ProfessionalReportSe
 import com.chikere.futureai.report.professional.application.ProfessionalReportTier;
 
 import java.net.URI;
+import com.chikere.futureai.configuration.JourneyMetrics;
+
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Objects;
@@ -18,15 +20,24 @@ public final class ProfessionalReportPurchaseService {
     private final URI applicationBaseUrl;
     private final Optional<String> displayPrice;
     private final Clock clock;
+    private final JourneyMetrics metrics;
 
     public ProfessionalReportPurchaseService(ProfessionalReportService reportService,
             ProfessionalPurchaseStore purchaseStore, Optional<ProfessionalPaymentGateway> paymentGateway,
             URI applicationBaseUrl, Optional<String> displayPrice, Clock clock) {
+        this(reportService, purchaseStore, paymentGateway, applicationBaseUrl, displayPrice, clock, JourneyMetrics.disabled());
+    }
+
+    public ProfessionalReportPurchaseService(ProfessionalReportService reportService,
+            ProfessionalPurchaseStore purchaseStore, Optional<ProfessionalPaymentGateway> paymentGateway,
+            URI applicationBaseUrl, Optional<String> displayPrice, Clock clock,
+            JourneyMetrics metrics) {
         this.reportService = Objects.requireNonNull(reportService);
         this.purchaseStore = Objects.requireNonNull(purchaseStore);
         this.paymentGateway = Objects.requireNonNull(paymentGateway);
         this.applicationBaseUrl = requireHttpBase(applicationBaseUrl);
         this.displayPrice = Objects.requireNonNull(displayPrice).map(String::strip).filter(value -> !value.isEmpty());
+        this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
         this.clock = Objects.requireNonNull(clock);
     }
 
@@ -88,6 +99,9 @@ public final class ProfessionalReportPurchaseService {
                 .findSnapshotByAssessmentId(event.assessmentId())
                 .orElseGet(() -> freezeCurrentPaidReport(entitlement));
         var result = purchaseStore.confirmAndFreeze(event, snapshot);
+        if (result == ProfessionalPurchaseStore.PurchaseConfirmationResult.ACTIVATED) {
+            metrics.paymentConfirmed("professional");
+        }
         return result == ProfessionalPurchaseStore.PurchaseConfirmationResult.ACTIVATED
                 ? ProfessionalPaymentProcessingResult.ACTIVATED
                 : ProfessionalPaymentProcessingResult.ALREADY_PROCESSED;

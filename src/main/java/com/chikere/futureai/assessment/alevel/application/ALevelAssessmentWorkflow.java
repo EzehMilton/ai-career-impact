@@ -3,6 +3,7 @@ package com.chikere.futureai.assessment.alevel.application;
 import com.chikere.futureai.assessment.domain.ALevelAssessmentState;
 import com.chikere.futureai.evidence.alevel.application.ALevelEvidenceService;
 import com.chikere.futureai.narrative.alevel.application.ALevelNarrativeService;
+import com.chikere.futureai.configuration.JourneyMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,16 +18,25 @@ public final class ALevelAssessmentWorkflow {
     private final ALevelAssessmentService assessmentService;
     private final ALevelNarrativeService narrativeService;
     private final ALevelEvidenceService evidenceService;
+    private final JourneyMetrics metrics;
 
     public ALevelAssessmentWorkflow(ALevelAssessmentService assessmentService,
             ALevelNarrativeService narrativeService, ALevelEvidenceService evidenceService) {
+        this(assessmentService, narrativeService, evidenceService, JourneyMetrics.disabled());
+    }
+
+    public ALevelAssessmentWorkflow(ALevelAssessmentService assessmentService,
+            ALevelNarrativeService narrativeService, ALevelEvidenceService evidenceService,
+            JourneyMetrics metrics) {
         this.assessmentService = Objects.requireNonNull(assessmentService);
         this.narrativeService = Objects.requireNonNull(narrativeService);
         this.evidenceService = Objects.requireNonNull(evidenceService);
+        this.metrics = Objects.requireNonNull(metrics);
     }
 
     public UUID submit(ALevelAssessmentState state) {
         UUID id = assessmentService.submitALevelAssessment(state);
+        metrics.assessmentCreated("a-level");
         try {
             narrativeService.generateFor(id);
         }
@@ -35,6 +45,7 @@ public final class ALevelAssessmentWorkflow {
             // presentation-layer failure into a failed assessment submission.
             LOGGER.error("Narrative lifecycle could not be persisted for A-level assessment {}",
                     id, persistenceFailure);
+            metrics.narrativeFailed("a-level");
         }
         try {
             evidenceService.gatherFor(id);
@@ -42,6 +53,7 @@ public final class ALevelAssessmentWorkflow {
         catch (RuntimeException persistenceFailure) {
             LOGGER.error("Evidence lifecycle could not be persisted for A-level assessment {}",
                     id, persistenceFailure);
+            metrics.evidenceFailed("a-level");
         }
         return id;
     }
