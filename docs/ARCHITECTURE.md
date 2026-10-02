@@ -901,6 +901,26 @@ The PDF call to action exists only inside the three `paid-report.html` templates
 
 `templates/error/404.html`, `403.html` and `5xx.html` (plus a top-level `error.html`) use the same shell and the same plain voice, and expose no stack trace, exception name, provider name, database detail or configuration value. A malformed assessment identifier and an unknown one produce byte-identical responses, so nothing signals to an enumerator that one guess was closer than another.
 
-### Known gap, deferred to security hardening
+### Routing, 404 and the absence of accounts
 
-`anyRequest().authenticated()` is still the catch-all rule, so a URL matching no route at all redirects to the form-login entry point instead of rendering the friendly 404. Every route a visitor can actually reach is explicitly permitted and renders the shell correctly, so this affects mistyped URLs only. Widening the catch-all is an access-control change rather than a navigation one, so it is deliberately left to the production security-hardening phase, which will decide the final authorisation model. `ProductErrorPageTest` pins the current behaviour so that change is made deliberately rather than by accident.
+The authorisation rules used to end in `anyRequest().authenticated()`, which meant a URL matching no route was handed to a generated login page — for a product with no accounts to log into. The rules now end in `permitAll`, so an unmatched request reaches Spring MVC and becomes an ordinary 404 rendering the friendly not-found page.
+
+That catch-all is permissive only because nothing here is protected by authentication in the first place. Paid reports and their PDFs are protected by an ACTIVE entitlement checked inside their controllers, and `ProductRouteSecurityTest` proves the distinction end to end: the filter chain lets the request through, and the application layer answers 403. Three outcomes are deliberately kept apart rather than collapsed into one handler:
+
+| Situation | Response |
+| --- | --- |
+| Unknown route | 404, friendly page, no redirect, no `WWW-Authenticate` |
+| Browser POST with a missing or stale CSRF token | 403 |
+| Paid report or PDF without an ACTIVE entitlement | 403 |
+
+Spring Boot creates an in-memory user and prints its generated password on every start whenever the context holds no authentication bean, and declaring a `SecurityFilterChain` does not stop it — the application was logging a password for a sign-in that does not exist. `WebSecurityConfiguration` therefore supplies a `UserDetailsService` that can never find a user, which backs the auto-configuration off without touching the application class. There is no form login, no HTTP Basic and no logout.
+
+Operational endpoints under `/actuator/**` are denied. They were already unreachable, and deciding what to publish belongs to the operational hardening phase rather than to this routing change.
+
+### Security headers
+
+Every response carries a `Content-Security-Policy` that starts from `default-src 'self'` and forbids scripts outright, which the application can afford because it serves no JavaScript and no inline styles. `form-action` names Stripe's hosted checkout, because paying leaves the site through a redirect that follows a form submission. Alongside it: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, and a `Permissions-Policy` that switches off camera, microphone, geolocation and the rest. The PDF response keeps its own `private, no-store` and attachment disposition.
+
+### Remaining production gaps
+
+Rate limiting, request correlation, DOCX decompression limits, a production profile, external configuration validation, a single public base URL, cookie and proxy settings, Actuator exposure, health groups, metrics and cache-control tuning are all still outstanding, and are the subject of the next hardening phases.

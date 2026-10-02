@@ -105,16 +105,19 @@ class ProductErrorPageTest {
     }
 
     @Test
-    void aWhollyUnknownUrlStillFallsThroughToTheAuthenticationEntryPoint() throws Exception {
-        // Documented current behaviour, not an endorsement: `anyRequest().authenticated()` is still in
-        // force, so an unmatched path redirects to the form-login entry point instead of showing the
-        // friendly 404. Every route a visitor can actually reach is permitted and renders the shell.
-        // Deciding the final authorisation model belongs to the security-hardening phase; this test
-        // exists so that change is a deliberate one rather than an accident.
-        HttpResponse<String> response = get("/no-such-page");
+    void aWhollyUnknownUrlGivesTheFriendlyNotFoundPageAndNeverALogin() throws Exception {
+        // This used to redirect to a generated login form, because the authorisation rules ended in
+        // `authenticated()` and there is nobody to authenticate. Unmatched requests now reach Spring
+        // MVC, which answers the way any missing page should be answered.
+        HttpResponse<String> response = get("/this-route-definitely-does-not-exist");
 
-        assertThat(response.statusCode()).isEqualTo(302);
-        assertThat(response.headers().firstValue("location")).get().asString().endsWith("/login");
+        assertThat(response.statusCode()).isEqualTo(404);
+        assertThat(response.headers().firstValue("location")).isEmpty();
+        assertThat(response.headers().firstValue("www-authenticate")).isEmpty();
+        assertThat(response.body()).contains("We couldn't find that page.", "Back to home",
+                "class=\"site-header\"");
+        assertThat(response.body()).doesNotContain("login", "Sign in", "password", "Whitelabel",
+                "Exception", "java.lang", "at com.chikere");
     }
 
     private HttpResponse<String> get(String path) throws IOException, InterruptedException {
