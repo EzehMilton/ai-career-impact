@@ -7,7 +7,11 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.writers.CacheControlHeadersWriter;
+import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 
 /**
  * This product has no accounts, so no route is protected by authentication. Access to a paid report
@@ -110,7 +114,16 @@ public class WebSecurityConfiguration {
                         .referrerPolicy(referrer -> referrer
                                 .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
                         .permissionsPolicyHeader(permissions -> permissions.policy(PERMISSIONS_POLICY))
-                        .frameOptions(frame -> frame.deny()));
+                        .frameOptions(frame -> frame.deny())
+                        // Spring Security writes no-store on every response, which is right for a
+                        // page that may show someone's assessment and wrong for the one stylesheet
+                        // the whole site shares. The writer is scoped rather than switched off, so
+                        // the secure default still applies everywhere it matters.
+                        .cacheControl(cache -> cache.disable())
+                        .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
+                                new NegatedRequestMatcher(
+                                        PathPatternRequestMatcher.withDefaults().matcher("/css/**")),
+                                new CacheControlHeadersWriter())));
         return http.build();
     }
 }

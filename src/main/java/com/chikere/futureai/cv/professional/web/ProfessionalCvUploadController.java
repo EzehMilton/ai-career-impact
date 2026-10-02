@@ -12,7 +12,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
 
 @Controller
@@ -30,6 +29,9 @@ public final class ProfessionalCvUploadController {
         this.formMapper = formMapper;
     }
 
+    // An upload that exceeds the configured size never reaches this method: the multipart parser
+    // rejects it before a handler is chosen, so it is answered by the shared 413 page instead.
+    // The validator's size check below still matters — it bounds what the parser is asked to read.
     @PostMapping("/professional-assessment/cv")
     public String upload(@RequestParam("cv") MultipartFile file, Model model,
             HttpSession session, HttpServletResponse response) {
@@ -56,13 +58,6 @@ public final class ProfessionalCvUploadController {
             response.setStatus(422);
             return errorForm(model, "We couldn't extract enough information from this CV. Please enter your work details manually.");
         }
-    }
-
-    @org.springframework.web.bind.annotation.ExceptionHandler(MaxUploadSizeExceededException.class)
-    public String oversized(Model model, HttpSession session, HttpServletResponse response) {
-        session.removeAttribute(ProfessionalCvSession.INPUT_METADATA);
-        response.setStatus(413);
-        return errorForm(model, "The CV is too large. Upload a file no larger than 5 MiB.");
     }
 
     private String errorForm(Model model, String message) {

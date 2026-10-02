@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Too many requests')}"></head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('')}"></header>
+
+<main class="page-shell" id="main">
+  <section class="panel error-panel" aria-labelledby="error-heading">
+    <p class="eyebrow">Too many requests</p>
+    <h1 id="error-heading">You've made a lot of requests just now.</h1>
+    <p>Please wait a moment and try again. This limit exists so the service stays responsive for everyone.</p>
+    <p>Nothing you have already submitted has been lost, and any result you have is still available from its own link.</p>
+    <p class="page-action">
+      <a th:href="@{/}" href="/">Back to home</a>
+    </p>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
+</body>
+</html>

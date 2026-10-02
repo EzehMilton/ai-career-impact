@@ -1,5 +1,6 @@
 package com.chikere.futureai.assessment.alevel.web;
 
+import com.chikere.futureai.assessment.web.BoundedTextList;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -14,12 +15,15 @@ public class ALevelAssessmentForm {
     private String predictedGrades = "";
 
     @Size(max = 1000, message = "Keep this under 1,000 characters.")
+    @BoundedTextList(maxItems = 20, maxItemLength = 200)
     private String strengthsAndInterests = "";
 
     @Size(max = 1000, message = "Keep degree areas under 1,000 characters.")
+    @BoundedTextList(maxItems = 20, maxItemLength = 120)
     private String preferredDegreeAreas = "";
 
     @Size(max = 1000, message = "Keep career areas under 1,000 characters.")
+    @BoundedTextList(maxItems = 20, maxItemLength = 120)
     private String preferredCareerAreas = "";
 
     @Size(max = 80, message = "Keep the country under 80 characters.")

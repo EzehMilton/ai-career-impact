@@ -2,6 +2,7 @@ package com.chikere.futureai.assessment.professional.web;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import com.chikere.futureai.assessment.web.BoundedTextList;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -18,10 +19,12 @@ public class ProfessionalAssessmentForm {
 
     @NotBlank(message = "Add at least one main responsibility.")
     @Size(max = 4000, message = "Keep responsibilities under 4,000 characters.")
+    @BoundedTextList(maxItems = 40, maxItemLength = 300)
     private String responsibilities = "";
 
     @NotBlank(message = "Add at least one skill you use.")
     @Size(max = 2000, message = "Keep skills under 2,000 characters.")
+    @BoundedTextList(maxItems = 40, maxItemLength = 120)
     private String skills = "";
 
     @Min(value = 0, message = "Years of experience cannot be negative.")

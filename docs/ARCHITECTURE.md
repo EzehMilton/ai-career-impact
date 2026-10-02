@@ -921,6 +921,15 @@ Operational endpoints under `/actuator/**` are denied. They were already unreach
 
 Every response carries a `Content-Security-Policy` that starts from `default-src 'self'` and forbids scripts outright, which the application can afford because it serves no JavaScript and no inline styles. `form-action` names Stripe's hosted checkout, because paying leaves the site through a redirect that follows a form submission. Alongside it: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, and a `Permissions-Policy` that switches off camera, microphone, geolocation and the rest. The PDF response keeps its own `private, no-store` and attachment disposition.
 
+### Request hardening
+
+Three filters and a set of bounds sit in front of the journeys. They are documented in full in [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md); the parts that affect how the application is put together are:
+
+- **Correlation runs first.** `RequestCorrelationFilter` is at highest precedence, so a request rejected by security still carries an `X-Request-ID` in its response and in every log line. An inbound identifier is reused only if it matches a narrow pattern, because it reaches both a log line and a response header.
+- **Rate limiting runs after security.** `RateLimitFilter` is ordered behind the Spring Security chain so a missing or stale CSRF token stays a 403 and never spends an allowance. The limiter is in-process and keyed on the container-reported client address; it is deliberately not reading forwarded headers while no trusted proxy is configured.
+- **Collections are bounded as well as characters.** `@BoundedTextList` caps how many entries a textarea may produce and how long any one may be, counting them exactly as the form mappers split them. A character limit alone leaves the number of judged, stored and rendered list entries unbounded.
+- **Extraction stops early.** PDF text is read a page at a time and abandoned once it passes the cap; DOCX inflation is bounded by Apache POI's own ZIP guards, which abort before the XML is materialised. Those guards are JVM-wide statics, which is POI's API rather than a choice made here.
+
 ### Remaining production gaps
 
-Rate limiting, request correlation, DOCX decompression limits, a production profile, external configuration validation, a single public base URL, cookie and proxy settings, Actuator exposure, health groups, metrics and cache-control tuning are all still outstanding, and are the subject of the next hardening phases.
+A production profile, external configuration validation, a single public base URL, forwarded-header and cookie settings, Actuator exposure, health groups, metrics, datasource tuning and a dependency review are all still outstanding. They are listed with their consequences at the end of [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md).
