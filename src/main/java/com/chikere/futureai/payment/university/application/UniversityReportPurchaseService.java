@@ -5,6 +5,8 @@ import com.chikere.futureai.report.university.application.UniversityReportServic
 import com.chikere.futureai.report.university.application.UniversityReportTier;
 
 import java.net.URI;
+import com.chikere.futureai.configuration.JourneyMetrics;
+
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Objects;
@@ -25,16 +27,25 @@ public final class UniversityReportPurchaseService {
     private final URI applicationBaseUrl;
     private final Optional<String> displayPrice;
     private final Clock clock;
+    private final JourneyMetrics metrics;
 
     public UniversityReportPurchaseService(UniversityReportService reportService,
             UniversityPurchaseStore purchaseStore, Optional<UniversityPaymentGateway> paymentGateway,
             URI applicationBaseUrl, Optional<String> displayPrice, Clock clock) {
+        this(reportService, purchaseStore, paymentGateway, applicationBaseUrl, displayPrice, clock, JourneyMetrics.disabled());
+    }
+
+    public UniversityReportPurchaseService(UniversityReportService reportService,
+            UniversityPurchaseStore purchaseStore, Optional<UniversityPaymentGateway> paymentGateway,
+            URI applicationBaseUrl, Optional<String> displayPrice, Clock clock,
+            JourneyMetrics metrics) {
         this.reportService = Objects.requireNonNull(reportService);
         this.purchaseStore = Objects.requireNonNull(purchaseStore);
         this.paymentGateway = Objects.requireNonNull(paymentGateway);
         this.applicationBaseUrl = requireHttpBase(applicationBaseUrl);
         this.displayPrice = Objects.requireNonNull(displayPrice)
                 .map(String::strip).filter(value -> !value.isEmpty());
+        this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
         this.clock = Objects.requireNonNull(clock);
     }
 
@@ -101,6 +112,9 @@ public final class UniversityReportPurchaseService {
                 .findSnapshotByAssessmentId(event.assessmentId())
                 .orElseGet(() -> freezeCurrentPaidReport(entitlement));
         var result = purchaseStore.confirmAndFreeze(event, snapshot);
+        if (result == UniversityPurchaseStore.PurchaseConfirmationResult.ACTIVATED) {
+            metrics.paymentConfirmed("university");
+        }
         return result == UniversityPurchaseStore.PurchaseConfirmationResult.ACTIVATED
                 ? UniversityPaymentProcessingResult.ACTIVATED
                 : UniversityPaymentProcessingResult.ALREADY_PROCESSED;

@@ -5,6 +5,8 @@ import com.chikere.futureai.report.alevel.application.ALevelReportService;
 import com.chikere.futureai.report.alevel.application.ALevelReportTier;
 
 import java.net.URI;
+import com.chikere.futureai.configuration.JourneyMetrics;
+
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Objects;
@@ -25,16 +27,25 @@ public final class ALevelReportPurchaseService {
     private final URI applicationBaseUrl;
     private final Optional<String> displayPrice;
     private final Clock clock;
+    private final JourneyMetrics metrics;
 
     public ALevelReportPurchaseService(ALevelReportService reportService,
             ALevelPurchaseStore purchaseStore, Optional<ALevelPaymentGateway> paymentGateway,
             URI applicationBaseUrl, Optional<String> displayPrice, Clock clock) {
+        this(reportService, purchaseStore, paymentGateway, applicationBaseUrl, displayPrice, clock, JourneyMetrics.disabled());
+    }
+
+    public ALevelReportPurchaseService(ALevelReportService reportService,
+            ALevelPurchaseStore purchaseStore, Optional<ALevelPaymentGateway> paymentGateway,
+            URI applicationBaseUrl, Optional<String> displayPrice, Clock clock,
+            JourneyMetrics metrics) {
         this.reportService = Objects.requireNonNull(reportService);
         this.purchaseStore = Objects.requireNonNull(purchaseStore);
         this.paymentGateway = Objects.requireNonNull(paymentGateway);
         this.applicationBaseUrl = requireHttpBase(applicationBaseUrl);
         this.displayPrice = Objects.requireNonNull(displayPrice)
                 .map(String::strip).filter(value -> !value.isEmpty());
+        this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
         this.clock = Objects.requireNonNull(clock);
     }
 
@@ -100,6 +111,9 @@ public final class ALevelReportPurchaseService {
                 .findSnapshotByAssessmentId(event.assessmentId())
                 .orElseGet(() -> freezeCurrentPaidReport(entitlement));
         var result = purchaseStore.confirmAndFreeze(event, snapshot);
+        if (result == ALevelPurchaseStore.PurchaseConfirmationResult.ACTIVATED) {
+            metrics.paymentConfirmed("a-level");
+        }
         return result == ALevelPurchaseStore.PurchaseConfirmationResult.ACTIVATED
                 ? ALevelPaymentProcessingResult.ACTIVATED
                 : ALevelPaymentProcessingResult.ALREADY_PROCESSED;

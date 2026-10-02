@@ -4,6 +4,7 @@ import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeService;
 import com.chikere.futureai.evidence.professional.application.ProfessionalEvidenceService;
 import com.chikere.futureai.occupation.professional.application.ProfessionalOccupationClassificationService;
+import com.chikere.futureai.configuration.JourneyMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,16 +19,28 @@ public final class ProfessionalAssessmentWorkflow {
     private final ProfessionalNarrativeService narrativeService;
     private final ProfessionalEvidenceService evidenceService;
     private final ProfessionalOccupationClassificationService classificationService;
+    private final JourneyMetrics metrics;
 
     public ProfessionalAssessmentWorkflow(
             ProfessionalAssessmentService assessmentService,
             ProfessionalNarrativeService narrativeService,
             ProfessionalOccupationClassificationService classificationService,
             ProfessionalEvidenceService evidenceService) {
+        this(assessmentService, narrativeService, classificationService, evidenceService,
+                JourneyMetrics.disabled());
+    }
+
+    public ProfessionalAssessmentWorkflow(
+            ProfessionalAssessmentService assessmentService,
+            ProfessionalNarrativeService narrativeService,
+            ProfessionalOccupationClassificationService classificationService,
+            ProfessionalEvidenceService evidenceService,
+            JourneyMetrics metrics) {
         this.assessmentService = Objects.requireNonNull(assessmentService);
         this.narrativeService = Objects.requireNonNull(narrativeService);
         this.classificationService = Objects.requireNonNull(classificationService);
         this.evidenceService = Objects.requireNonNull(evidenceService);
+        this.metrics = Objects.requireNonNull(metrics);
     }
 
     public UUID submit(ProfessionalAssessmentState state) {
@@ -39,6 +52,7 @@ public final class ProfessionalAssessmentWorkflow {
     }
 
     private UUID enrich(UUID id) {
+        metrics.assessmentCreated("professional");
         try {
             narrativeService.generateFor(id);
         }
@@ -46,6 +60,7 @@ public final class ProfessionalAssessmentWorkflow {
             // The authoritative assessment has already committed. Do not turn an optional
             // presentation-layer failure into a failed assessment submission.
             LOGGER.error("Narrative lifecycle could not be persisted for assessment {}", id, persistenceFailure);
+            metrics.narrativeFailed("professional");
         }
         try {
             classificationService.classifyFor(id);
@@ -58,6 +73,7 @@ public final class ProfessionalAssessmentWorkflow {
         }
         catch (RuntimeException persistenceFailure) {
             LOGGER.error("Evidence lifecycle could not be persisted for assessment {}", id, persistenceFailure);
+            metrics.evidenceFailed("professional");
         }
         return id;
     }

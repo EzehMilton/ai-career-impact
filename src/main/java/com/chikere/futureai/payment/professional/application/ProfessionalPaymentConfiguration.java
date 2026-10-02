@@ -4,6 +4,8 @@ import com.chikere.futureai.report.professional.application.ProfessionalReportSe
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import com.chikere.futureai.configuration.JourneyMetrics;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -24,9 +26,11 @@ public class ProfessionalPaymentConfiguration {
             ProfessionalReportService reportService,
             ProfessionalPurchaseStore purchaseStore,
             Optional<ProfessionalPaymentGateway> paymentGateway,
-            @Value("${app.professional.report.base-url:http://localhost:8080}") URI applicationBaseUrl,
-            @Value("${app.professional.report.display-price:}") String displayPrice) {
+            @Value("${app.professional.report.base-url}") URI applicationBaseUrl,
+            @Value("${app.professional.report.display-price:}") String displayPrice,
+            ObjectProvider<JourneyMetrics> metrics) {
         return new ProfessionalReportPurchaseService(reportService, purchaseStore, paymentGateway,
-                applicationBaseUrl, Optional.ofNullable(displayPrice), Clock.systemUTC());
+                applicationBaseUrl, Optional.ofNullable(displayPrice), Clock.systemUTC(),
+                metrics.getIfAvailable(JourneyMetrics::disabled));
     }
 }

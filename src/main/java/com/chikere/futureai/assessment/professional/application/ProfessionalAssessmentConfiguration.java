@@ -14,6 +14,8 @@ import com.chikere.futureai.occupation.professional.application.*;
 import com.chikere.futureai.report.professional.application.ProfessionalReportAssembler;
 import com.chikere.futureai.report.professional.application.ProfessionalReportService;
 import org.springframework.beans.factory.annotation.Value;
+import com.chikere.futureai.configuration.JourneyMetrics;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -51,9 +53,10 @@ public class ProfessionalAssessmentConfiguration {
             ProfessionalAssessmentService assessmentService,
             ProfessionalNarrativeService narrativeService,
             ProfessionalOccupationClassificationService classificationService,
-            ProfessionalEvidenceService evidenceService) {
+            ProfessionalEvidenceService evidenceService, ObjectProvider<JourneyMetrics> metrics) {
         return new ProfessionalAssessmentWorkflow(assessmentService, narrativeService,
-                classificationService, evidenceService);
+                classificationService, evidenceService,
+                metrics.getIfAvailable(JourneyMetrics::disabled));
     }
 
     @Bean

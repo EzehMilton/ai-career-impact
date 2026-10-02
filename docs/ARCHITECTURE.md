@@ -930,6 +930,20 @@ Three filters and a set of bounds sit in front of the journeys. They are documen
 - **Collections are bounded as well as characters.** `@BoundedTextList` caps how many entries a textarea may produce and how long any one may be, counting them exactly as the form mappers split them. A character limit alone leaves the number of judged, stored and rendered list entries unbounded.
 - **Extraction stops early.** PDF text is read a page at a time and abandoned once it passes the cap; DOCX inflation is bounded by Apache POI's own ZIP guards, which abort before the XML is materialised. Those guards are JVM-wide statics, which is POI's API rather than a choice made here.
 
-### Remaining production gaps
+### Production profile and configuration
 
-A production profile, external configuration validation, a single public base URL, forwarded-header and cookie settings, Actuator exposure, health groups, metrics, datasource tuning and a dependency review are all still outstanding. They are listed with their consequences at the end of [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md).
+A `prod` profile carries the production-only differences — secure cookies, forwarded-header handling, constrained Actuator exposure, quieter logging and connection-pool hooks — and nothing else. Everything the application needs in every environment stays in the base property file, so there is one place to read for what a setting does.
+
+`StartupConfigurationValidator` refuses to start on a contradiction or a gap. Asking for `prod` and `local-fixture` together, or for `live-payment` alongside the simulator that overrides it, is a request the application cannot satisfy as asked, so it stops rather than silently choosing. Missing configuration is checked per capability, which is what keeps `local-fixture` free of every production secret. No failure message ever repeats a configured value.
+
+`PublicBaseUrl` is the single authoritative address, and the three per-journey report base URLs now default to it. Stripe return links are built from configuration and never from a `Host` header, because a header is chosen by the caller.
+
+### Operational surface
+
+Health is published and nothing else is. Liveness depends on no external provider — a Stripe or OpenAI outage must not look like a dead process — while readiness includes the database, without which no request can be served usefully. Health reports a bare status with no component detail, and `/actuator/**` is denied in the filter chain in addition to being unexposed, so publishing an endpoint by accident in configuration is not enough to make it reachable.
+
+`JourneyMetrics` counts assessments, enrichment failures, payment confirmations and rate-limit rejections, tagged only by journey or group. It is observational by construction: it swallows its own failures, and every collaborator resolves it optionally and falls back to an instance that records nothing, so missing instrumentation can neither fail a request nor prevent a context from starting.
+
+### What is left
+
+Live provider integration: real Jev judgments, real OpenAI narratives, real Stripe checkout and signed webhooks, and live evidence retrieval. Those need real credentials and real calls, and are listed with the rest of the outstanding work at the end of [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md).

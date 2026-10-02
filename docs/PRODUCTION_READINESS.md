@@ -1,6 +1,6 @@
 # Production readiness
 
-What the application currently bounds, throttles and refuses, and what is still missing. This covers the hardening done in phases 17A and 17B. Operational concerns — a production profile, external configuration validation, a single public base URL, cookie and proxy settings, Actuator exposure, health groups and metrics — are not done yet and are listed at the end.
+What the application bounds, throttles, refuses and requires before it will start. This covers the hardening done in phases 17A, 17B and 17C. What remains is live integration, which is deliberately out of scope here and listed at the end.
 
 No credential appears in this document, and none should ever be added to it.
 
@@ -161,16 +161,250 @@ Unchanged in this phase and re-confirmed: an ACTIVE entitlement is required; the
 
 Audited line by line. No log statement records CV text, form content, assessment descriptions, contact details, API keys, webhook secrets or Stripe payloads. What is logged is an assessment UUID, an exception class name, a rate-limit group name, or a fixture-mode warning. Stack traces are written for genuinely unexpected failures only, and no exception message in the codebase interpolates user-submitted text — every interpolated value is a configuration key, question id, dimension id or report version.
 
-## Still outstanding
+## Profiles
 
-Reserved for the operational phase:
+| Profile | What it turns on |
+| --- | --- |
+| *(none)* | Ordinary development against real AI adapters. Requires AI credentials. |
+| `local-fixture` | Every external provider replaced by a deterministic fixture. Requires no secret of any kind. |
+| `prod` | Production defaults: secure cookies, proxy awareness, constrained Actuator, quiet logging, fail-fast configuration. |
+| `live-payment` | Real Stripe hosted checkout and webhooks. |
+| `live-evidence` | Real external evidence providers. |
 
-- a production profile;
-- fail-fast validation of required external configuration, including Stripe keys, webhook secrets and price ids;
-- a single public base URL instead of three per-journey settings that silently default to `http://localhost:8080`;
-- forwarded-header handling and a trusted proxy, which would also let rate limiting key on the real client address;
-- secure, HttpOnly and SameSite cookie settings;
-- Actuator exposure and health groups, with liveness that does not depend on an AI provider;
-- metrics;
-- datasource and connection-pool tuning;
-- a dependency and static-analysis review.
+`StartupConfigurationValidator` refuses these combinations rather than silently picking a winner:
+
+| Combination | Why it is refused |
+| --- | --- |
+| `prod` + `local-fixture` | Production must never serve a fixture result. |
+| `local-fixture` + `live-payment` | The simulator overrides Stripe, so no real payment would be taken. |
+| `local-fixture` + `live-evidence` | The fixture provider overrides the live one, so no real evidence would be used. |
+
+Valid combinations include `prod`, `prod,live-payment`, `prod,live-payment,live-evidence` and `local-fixture` on its own.
+
+**Note:** the judgment and narrative adapters are selected by `!local-fixture`, so any profile other than `local-fixture` uses the real Jev and OpenAI adapters and needs their credentials. There is deliberately no fallback from a real provider to a fixture.
+
+## Fail-fast configuration
+
+Startup stops, with every problem listed at once, when a capability is enabled but not configured. Messages name the setting and never its value, because startup failures get pasted into tickets.
+
+- **`prod`** requires `app.public-base-url`, and requires it to be `https` unless `app.public-base-url-allow-http=true` is set deliberately.
+- **`live-payment`** requires the Stripe secret, all three webhook secrets and all three price ids.
+- **`live-evidence`** requires the professional occupation mapping.
+- **`local-fixture`** requires none of the above. Keeping local development free of production secrets is a property worth protecting, and a test asserts it.
+
+The datasource is deliberately not checked here: Spring Boot already refuses to start without one and says so more clearly than a custom check could.
+
+## Public base URL
+
+One setting, `app.public-base-url` (`APP_PUBLIC_BASE_URL`), is the authoritative address. Every absolute link handed to someone else — Stripe success and cancel URLs — is built from it. The three per-journey `app.<journey>.report.base-url` settings now default to it and exist only so a journey can be pointed elsewhere deliberately.
+
+It is never inferred from a `Host` header. A header is chosen by the caller, and a payment return address chosen by the caller is a payment return address an attacker can choose.
+
+Validated as: absolute, `http` or `https`, with a host, no query, no fragment, and normalised to a trailing slash so resolution is predictable.
+
+## Reverse proxy and forwarded headers
+
+Under `prod`, `server.forward-headers-strategy=framework`. Spring handles `X-Forwarded-*`; nothing in this codebase parses them. This is safe only because the documented deployment shape puts a proxy in front that overwrites those headers — exposing the application directly to the internet under this profile would let a caller set them.
+
+**Rate-limit keying is unchanged.** The limiter still uses the container-reported client address. With `forward-headers-strategy=framework` that address becomes the real client under `prod`, which is the improvement this phase makes possible; under any other profile it stays the direct peer. The limiter was deliberately not given its own forwarded-header handling.
+
+## Session cookies
+
+| Setting | Production value |
+| --- | --- |
+| `HttpOnly` | true |
+| `Secure` | true |
+| `SameSite` | `Lax` |
+| Timeout | 30 minutes |
+
+`Lax` rather than `Strict` because returning from Stripe's hosted checkout is a cross-site top-level navigation back into the application, and `Strict` would withhold the cookie on arrival. `Lax` sends it on exactly that navigation while still withholding it from cross-site POSTs. `None` is not used: it would require `Secure` anyway and would broaden cookie sending for no gain here.
+
+Local development is unaffected — these apply only under `prod`, so plain HTTP still works.
+
+**What the session contains:** only `ProfessionalAssessmentInputMetadata` — original filename, content type, parser version and a timestamp — written after a CV upload and removed as soon as the form is submitted. No raw CV bytes, no extracted CV text, no secret, no payment payload and no AI prompt is ever placed in it.
+
+## Actuator
+
+| Endpoint | Exposed | Reachable |
+| --- | --- | --- |
+| `/actuator/health` | yes | yes |
+| `/actuator/health/liveness` | yes (`prod`) | yes |
+| `/actuator/health/readiness` | yes (`prod`) | yes |
+| `/actuator/info` | yes (`prod`) | yes |
+| everything else | no | denied in the filter chain |
+
+Two independent controls: the endpoint is not exposed, *and* the security chain denies `/actuator/**` apart from the four above. Publishing one by accident in configuration is therefore not enough to make it reachable.
+
+Health reports a bare status. `show-details=never` and `show-components=never`, so an unauthenticated caller learns that the application is up and nothing about what is inside it.
+
+## Liveness and readiness
+
+- **Liveness** (`livenessState`) answers "is this process working". It depends on nothing external. A Stripe, OpenAI, Jev or Nomis outage must not look like a dead process, or an orchestrator will restart healthy containers in a loop for the duration of someone else's incident.
+- **Readiness** (`readinessState`, `db`) answers "can this instance serve a useful request". It includes the database, because without it nothing can be assessed, stored or retrieved. It deliberately excludes every external SaaS.
+
+No health check calls an external provider. Prompt 18 handles real connectivity testing.
+
+## Metrics
+
+Micrometer is present through the Actuator starter. No Prometheus registry is on the classpath and none was added: there is no operational reason yet, and adding an exporter nobody scrapes is cost without benefit.
+
+| Counter | Tag |
+| --- | --- |
+| `assessments.created` | `journey` |
+| `narrative.failures` | `journey` |
+| `evidence.failures` | `journey` |
+| `checkout.failures` | `journey` |
+| `payment.confirmations` | `journey` |
+| `pdf.generation.failures` | `journey` |
+| `rate_limit.rejections` | `group` |
+
+The only tag is the journey or the rate-limit group. An assessment id, profession, course title, session or address as a tag would create unbounded time series and would turn a metrics backend into a second, unaudited copy of user data.
+
+Recording is never load-bearing. `JourneyMetrics` swallows its own failures, and every collaborator resolves it optionally and falls back to an instance that records nothing — so a missing or broken registry cannot fail an assessment, a payment, a report or a PDF, and cannot even stop a context from starting.
+
+`checkout.failures` and `pdf.generation.failures` are declared and tested but not yet incremented from the checkout and PDF controllers; wiring them requires threading the collaborator through six sliced controller tests and is the one piece of instrumentation left for the next phase.
+
+## Datasource
+
+Spring Boot defaults, with hooks so an operator can change them without a rebuild. These are deliberately close to the defaults: they exist to be adjustable, not because a number has been measured as correct.
+
+| Setting | Default | Environment |
+| --- | --- | --- |
+| `spring.datasource.hikari.maximum-pool-size` | 10 | `DB_POOL_MAX_SIZE` |
+| `spring.datasource.hikari.minimum-idle` | 10 | `DB_POOL_MIN_IDLE` |
+| `spring.datasource.hikari.connection-timeout` | 30000 ms | `DB_CONNECTION_TIMEOUT_MS` |
+
+Flyway runs on startup, validates what is already applied, and `clean` is disabled: a deployment must never be able to reset a production database. The schema is at **V17** and this phase added no migration. PostgreSQL only — there is no H2 anywhere, including in tests, which use Testcontainers.
+
+## Logging
+
+Production levels are set so the log is readable and says nothing it should not. SQL and Hibernate bind parameters stay at `WARN`: a bind parameter is somebody's job title or course description. Stripe and HTTP client logging is at `WARN` for the same reason. `ERROR` is never suppressed.
+
+Every line carries the request correlation id through `logging.pattern.level`. Startup and background lines, which have no request, read `no-request` rather than being blank.
+
+## Required, optional and development-only configuration
+
+### Application
+
+| Setting | Purpose | Required when | Secret | Example shape |
+| --- | --- | --- | --- | --- |
+| `app.public-base-url` / `APP_PUBLIC_BASE_URL` | Authoritative public address; builds payment return links | **Required in `prod`** | no | `https://example.com` |
+| `app.public-base-url-allow-http` | Deliberate escape hatch when TLS terminates elsewhere | optional | no | `true` |
+| `app.<journey>.report.base-url` | Per-journey override of the above | optional | no | `https://example.com` |
+| `app.<journey>.report.display-price` | Price shown on the result page | optional; no price is shown if unset | no | `£12.00` |
+
+### Database
+
+| Setting | Purpose | Required when | Secret | Example shape |
+| --- | --- | --- | --- | --- |
+| `SPRING_DATASOURCE_URL` | PostgreSQL connection | **always in `prod`** | no | `jdbc:postgresql://host:5432/db` |
+| `SPRING_DATASOURCE_USERNAME` | Database user | **always in `prod`** | no | `appuser` |
+| `SPRING_DATASOURCE_PASSWORD` | Database password | **always in `prod`** | **yes** | — |
+| `DB_POOL_MAX_SIZE`, `DB_POOL_MIN_IDLE`, `DB_CONNECTION_TIMEOUT_MS` | Pool tuning | optional | no | `10`, `10`, `30000` |
+
+### Jev / TypeSafe
+
+| Setting | Purpose | Required when | Secret | Example shape |
+| --- | --- | --- | --- | --- |
+| `TYPESAFE_API_KEY` | Structured judgments | any profile other than `local-fixture` | **yes** | — |
+| `spring.ai.typesafe.model` | Model name | optional | no | `jev-latest` |
+
+### OpenAI
+
+| Setting | Purpose | Required when | Secret | Example shape |
+| --- | --- | --- | --- | --- |
+| `OPENAI_API_KEY` | Narrative generation | any profile other than `local-fixture` | **yes** | — |
+| `OPENAI_MODEL` | Chat model | optional | no | `gpt-4o-mini` |
+
+### Stripe
+
+All required when `live-payment` is active, and checked at startup.
+
+| Setting | Purpose | Secret |
+| --- | --- | --- |
+| `STRIPE_SECRET_KEY` | Hosted checkout API | **yes** |
+| `STRIPE_WEBHOOK_SECRET` | Professional webhook signature | **yes** |
+| `UNIVERSITY_STRIPE_WEBHOOK_SECRET` | University webhook signature | **yes** |
+| `A_LEVEL_STRIPE_WEBHOOK_SECRET` | A-level webhook signature | **yes** |
+| `PROFESSIONAL_REPORT_STRIPE_PRICE_ID` | Professional price | no |
+| `UNIVERSITY_REPORT_STRIPE_PRICE_ID` | University price | no |
+| `A_LEVEL_REPORT_STRIPE_PRICE_ID` | A-level price | no |
+
+Webhook paths: `/payments/stripe/webhook`, `/payments/stripe/university-webhook`, `/payments/stripe/a-level-webhook`. Each journey has its own endpoint and its own signing secret.
+
+### Evidence
+
+| Setting | Purpose | Required when | Secret |
+| --- | --- | --- | --- |
+| `PROFESSIONAL_EVIDENCE_PROFESSION` | Occupation mapping | `live-evidence` | no |
+| `PROFESSIONAL_EVIDENCE_CANONICAL_OCCUPATION` | Occupation mapping | `live-evidence` | no |
+| `PROFESSIONAL_EVIDENCE_SOC2020_CODE` | Occupation mapping | `live-evidence` | no |
+| `PROFESSIONAL_EVIDENCE_GEOGRAPHY`, `UNIVERSITY_EVIDENCE_GEOGRAPHY`, `A_LEVEL_EVIDENCE_GEOGRAPHY` | Default geography | optional | no |
+
+### Development only
+
+| Setting | Purpose |
+| --- | --- |
+| `PROFESSIONAL_FIXTURE_ID`, `UNIVERSITY_FIXTURE_ID`, `A_LEVEL_FIXTURE_ID` | Which fixture each journey serves under `local-fixture` |
+
+Rate-limit, CV and PDF settings are listed in their own sections above; all are optional and all have working defaults.
+
+## Running it
+
+### Local development
+
+No secret of any kind is needed:
+
+```
+mvn spring-boot:run \
+  -Dspring-boot.run.profiles=local-fixture \
+  -Dspring-boot.run.arguments="--app.professional.fixture-id=senior_software_architect --app.university.fixture-id=computer_science --app.a-level.fixture-id=maths_economics_geography"
+```
+
+Docker must be running; `spring-boot-docker-compose` starts PostgreSQL from `compose.yaml`.
+
+### Production
+
+Not every live capability has to be enabled at once — `prod` on its own is a valid deployment that takes no payments.
+
+```
+export SPRING_PROFILES_ACTIVE=prod,live-payment
+export APP_PUBLIC_BASE_URL=https://example.com
+
+export SPRING_DATASOURCE_URL=jdbc:postgresql://db.internal:5432/aicareerimpact
+export SPRING_DATASOURCE_USERNAME=appuser
+export SPRING_DATASOURCE_PASSWORD=...        # from your secret store
+
+export TYPESAFE_API_KEY=...                   # from your secret store
+export OPENAI_API_KEY=...                     # from your secret store
+
+export STRIPE_SECRET_KEY=...                  # from your secret store
+export STRIPE_WEBHOOK_SECRET=...
+export UNIVERSITY_STRIPE_WEBHOOK_SECRET=...
+export A_LEVEL_STRIPE_WEBHOOK_SECRET=...
+export PROFESSIONAL_REPORT_STRIPE_PRICE_ID=price_...
+export UNIVERSITY_REPORT_STRIPE_PRICE_ID=price_...
+export A_LEVEL_REPORT_STRIPE_PRICE_ID=price_...
+
+java -jar target/ai-career-impact-0.0.1-SNAPSHOT.jar
+```
+
+If anything required is missing, the application names it and refuses to start.
+
+## Build-time analysis
+
+`mvn dependency:tree` shows no artifact resolved at two versions. PDFBox is 3.0.8, POI 5.5.1 across all three of its artifacts, Stripe 33.4.2, Spring AI 2.0.1 and TypeSafe 0.2.0 all aligned with their BOMs. One observation, not a conflict: `xmpbox` arrives at 3.0.7 through OpenHTMLToPDF while the rest of PDFBox is 3.0.8. Different artifacts, no duplication, and pinning it would mean adding a dependency to solve a cosmetic skew, so it was left alone and recorded here.
+
+No static-analysis or dependency-scanning plugin is configured — no SpotBugs, Checkstyle, PMD, JaCoCo, Enforcer or OWASP Dependency-Check. None was added: each is a standing build cost, and adding several at the end of a hardening phase would produce a backlog of findings nobody has budget to triage. Choosing one deliberately is a better next step than inheriting four.
+
+## Reserved for live integration
+
+Everything below needs real credentials and real provider calls, which this phase deliberately does not make:
+
+- a real Jev judgment end to end, and the behaviour when the provider is slow or returns something unexpected;
+- a real OpenAI narrative, including validator behaviour on real output;
+- a real Stripe checkout, a real signed webhook, and the full purchase-to-entitlement path against Stripe's test mode;
+- live evidence retrieval, including the Nomis adapter against the real dataset;
+- live University and A-level evidence adapters, which do not exist yet;
+- wiring `checkout.failures` and `pdf.generation.failures` into their controllers;
+- deciding whether a Prometheus registry is wanted, once there is somewhere to scrape it from.
