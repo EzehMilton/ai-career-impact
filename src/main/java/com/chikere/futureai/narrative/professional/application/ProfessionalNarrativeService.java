@@ -1,6 +1,8 @@
 package com.chikere.futureai.narrative.professional.application;
 
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -9,6 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public final class ProfessionalNarrativeService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProfessionalNarrativeService.class);
 
     private final ProfessionalAssessmentStore assessmentStore;
     private final ProfessionalNarrativeStore narrativeStore;
@@ -50,12 +53,15 @@ public final class ProfessionalNarrativeService {
             var available = stored(assessmentId, NarrativeStatus.AVAILABLE, Optional.of(narrative),
                     attemptedAt, Optional.of(Instant.now(clock)));
             narrativeStore.save(available);
+            LOGGER.info("Narrative journey=professional assessmentId={} outcome=AVAILABLE", assessmentId);
             return available;
         }
         catch (RuntimeException generationFailure) {
             var failed = stored(assessmentId, NarrativeStatus.FAILED, Optional.empty(),
                     attemptedAt, Optional.empty());
             narrativeStore.save(failed);
+            LOGGER.warn("Narrative journey=professional assessmentId={} outcome=FAILED failureType={}",
+                    assessmentId, generationFailure.getClass().getSimpleName());
             return failed;
         }
     }

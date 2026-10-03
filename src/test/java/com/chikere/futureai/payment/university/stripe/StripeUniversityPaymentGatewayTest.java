@@ -61,13 +61,13 @@ class StripeUniversityPaymentGatewayTest {
         var gateway = new StripeUniversityPaymentGateway(operations, verifier, "price_university");
         var notification = new UniversityPaymentNotification("payload", "signature");
         var verified = new StripeVerifiedEvent("evt_1", "cs_1", UUID.randomUUID(), UUID.randomUUID(),
-                Optional.of("pi_1"), Instant.EPOCH);
+                Optional.of("pi_1"), Instant.EPOCH, 499, "gbp");
         when(verifier.verify(notification)).thenReturn(Optional.of(verified));
 
         assertThat(gateway.verifyPaymentNotification(notification)).contains(new UniversityPaymentEvent(
                 "evt_1", UniversityPaymentProvider.STRIPE, "cs_1", verified.entitlementId(),
                 verified.assessmentId(), Optional.of("pi_1"), Instant.EPOCH));
-        verifyNoInteractions(operations);
+        verify(operations).validateCompletedSession(verified, "price_university");
 
         when(verifier.verify(notification)).thenReturn(Optional.empty());
         assertThat(gateway.verifyPaymentNotification(notification)).isEmpty();

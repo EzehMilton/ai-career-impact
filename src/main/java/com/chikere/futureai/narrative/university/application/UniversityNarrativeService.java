@@ -1,6 +1,8 @@
 package com.chikere.futureai.narrative.university.application;
 
 import com.chikere.futureai.assessment.university.application.UniversityAssessmentStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -13,6 +15,7 @@ import java.util.UUID;
  * persistence failure can never invalidate the saved deterministic result.
  */
 public final class UniversityNarrativeService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(UniversityNarrativeService.class);
 
     private final UniversityAssessmentStore assessmentStore;
     private final UniversityNarrativeStore narrativeStore;
@@ -54,12 +57,15 @@ public final class UniversityNarrativeService {
             var available = stored(assessmentId, NarrativeStatus.AVAILABLE, Optional.of(narrative),
                     attemptedAt, Optional.of(Instant.now(clock)));
             narrativeStore.save(available);
+            LOGGER.info("Narrative journey=university assessmentId={} outcome=AVAILABLE", assessmentId);
             return available;
         }
         catch (RuntimeException generationFailure) {
             var failed = stored(assessmentId, NarrativeStatus.FAILED, Optional.empty(),
                     attemptedAt, Optional.empty());
             narrativeStore.save(failed);
+            LOGGER.warn("Narrative journey=university assessmentId={} outcome=FAILED failureType={}",
+                    assessmentId, generationFailure.getClass().getSimpleName());
             return failed;
         }
     }

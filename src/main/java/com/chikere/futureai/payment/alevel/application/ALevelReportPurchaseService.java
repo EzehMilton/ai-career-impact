@@ -6,6 +6,8 @@ import com.chikere.futureai.report.alevel.application.ALevelReportTier;
 
 import java.net.URI;
 import com.chikere.futureai.configuration.JourneyMetrics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -21,6 +23,7 @@ import java.util.UUID;
  * professional or university one: none of them grants access to another.</p>
  */
 public final class ALevelReportPurchaseService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ALevelReportPurchaseService.class);
     private final ALevelReportService reportService;
     private final ALevelPurchaseStore purchaseStore;
     private final Optional<ALevelPaymentGateway> paymentGateway;
@@ -101,6 +104,8 @@ public final class ALevelReportPurchaseService {
                     "payment event provider does not match configured gateway");
         }
         if (purchaseStore.isEventProcessed(event.provider(), event.eventId())) {
+            LOGGER.info("A-level payment eventId={} sessionId={} assessmentId={} outcome=ALREADY_PROCESSED",
+                    event.eventId(), event.checkoutSessionId(), event.assessmentId());
             return ALevelPaymentProcessingResult.ALREADY_PROCESSED;
         }
         ALevelReportEntitlement entitlement = purchaseStore.findEntitlementById(event.entitlementId())
@@ -114,6 +119,8 @@ public final class ALevelReportPurchaseService {
         if (result == ALevelPurchaseStore.PurchaseConfirmationResult.ACTIVATED) {
             metrics.paymentConfirmed("a-level");
         }
+        LOGGER.info("A-level payment eventId={} sessionId={} assessmentId={} entitlementId={} outcome={}",
+                event.eventId(), event.checkoutSessionId(), event.assessmentId(), event.entitlementId(), result);
         return result == ALevelPurchaseStore.PurchaseConfirmationResult.ACTIVATED
                 ? ALevelPaymentProcessingResult.ACTIVATED
                 : ALevelPaymentProcessingResult.ALREADY_PROCESSED;

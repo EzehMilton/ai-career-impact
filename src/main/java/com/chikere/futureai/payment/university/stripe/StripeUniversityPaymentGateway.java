@@ -29,9 +29,11 @@ public final class StripeUniversityPaymentGateway implements UniversityPaymentGa
     @Override
     public Optional<UniversityPaymentEvent> verifyPaymentNotification(
             UniversityPaymentNotification notification) {
-        return webhookVerifier.verify(notification).map(event -> new UniversityPaymentEvent(event.eventId(),
-                provider(), event.sessionId(), event.entitlementId(), event.assessmentId(),
-                event.paymentReference(), event.occurredAt()));
+        return webhookVerifier.verify(notification).map(event -> {
+            checkoutOperations.validateCompletedSession(event, priceId);
+            return new UniversityPaymentEvent(event.eventId(), provider(), event.sessionId(),
+                    event.entitlementId(), event.assessmentId(), event.paymentReference(), event.occurredAt());
+        });
     }
 
     @Override

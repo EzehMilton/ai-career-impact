@@ -1,5 +1,8 @@
 package com.chikere.futureai.evidence.alevel.application;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.chikere.futureai.assessment.alevel.application.ALevelAssessmentStore;
 
 import java.time.Clock;
@@ -17,6 +20,7 @@ import java.util.UUID;
  * fallback.</p>
  */
 public final class ALevelEvidenceService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ALevelEvidenceService.class);
     private final ALevelAssessmentStore assessmentStore;
     private final ALevelEvidenceStore evidenceStore;
     private final Optional<ALevelEvidenceProvider> provider;
@@ -54,6 +58,8 @@ public final class ALevelEvidenceService {
             ALevelEvidenceBundle gathered = configuredProvider.gather(requestFactory.create(assessment));
             validateProviderResult(assessmentId, configuredProvider, gathered);
             evidenceStore.save(gathered);
+            LOGGER.info("Evidence journey=alevel assessmentId={} outcome={} itemCount={}",
+                    assessmentId, gathered.status(), gathered.items().size());
             return Optional.of(gathered);
         }
         catch (RuntimeException failure) {
@@ -61,6 +67,8 @@ public final class ALevelEvidenceService {
                     configuredProvider.source(), configuredProvider.providerIdentifier(),
                     EvidenceStatus.FAILED, attemptedAt, List.of());
             evidenceStore.save(failed);
+            LOGGER.warn("Evidence journey=alevel assessmentId={} outcome=FAILED failureType={}",
+                    assessmentId, failure.getClass().getSimpleName());
             return Optional.of(failed);
         }
     }

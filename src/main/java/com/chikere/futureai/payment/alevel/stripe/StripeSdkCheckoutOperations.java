@@ -2,6 +2,7 @@ package com.chikere.futureai.payment.alevel.stripe;
 
 import com.chikere.futureai.payment.alevel.application.ALevelCheckoutRequest;
 import com.chikere.futureai.payment.alevel.application.PaymentUnavailableException;
+import com.chikere.futureai.payment.alevel.application.InvalidPaymentNotificationException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.RequestOptions;
@@ -44,6 +45,52 @@ final class StripeSdkCheckoutOperations implements StripeCheckoutOperations {
         }
         catch (StripeException | IllegalArgumentException failure) {
             throw new PaymentUnavailableException("Stripe checkout session creation failed", failure);
+        }
+    }
+
+    @Override
+    public void validateCompletedSession(StripeVerifiedEvent event, String expectedPriceId) {
+        var options = RequestOptions.builder().setApiKey(secretKey).build();
+        final Session session;
+        final com.stripe.model.LineItemCollection lineItems;
+        try {
+            session = Session.retrieve(event.sessionId(), options);
+            lineItems = session.listLineItems(java.util.Map.of(), options);
+        }
+        catch (StripeException unavailable) {
+            throw new PaymentUnavailableException("Stripe checkout validation is temporarily unavailable", unavailable);
+        }
+        validateFetchedSession(event, expectedPriceId, session, lineItems);
+    }
+
+    static void validateFetchedSession(StripeVerifiedEvent event, String expectedPriceId,
+            Session session, com.stripe.model.LineItemCollection lineItems) {
+        if (!event.sessionId().equals(session.getId())
+                || !"paid".equals(session.getPaymentStatus())
+                || !"payment".equals(session.getMode())
+                || !event.entitlementId().toString().equals(session.getClientReferenceId())
+                || session.getMetadata() == null
+                || !ALevelStripeMetadata.PRODUCT_VALUE.equals(session.getMetadata().get(ALevelStripeMetadata.PRODUCT_KEY))
+                || !event.entitlementId().toString().equals(session.getMetadata().get(ALevelStripeMetadata.ENTITLEMENT_ID))
+                || !event.assessmentId().toString().equals(session.getMetadata().get(ALevelStripeMetadata.ASSESSMENT_ID))) {
+            throw new InvalidPaymentNotificationException("STRIPE_SESSION_MISMATCH");
+        }
+        if (!java.util.Objects.equals(event.amountTotal(), session.getAmountTotal())
+                || !event.currency().equalsIgnoreCase(session.getCurrency())) {
+            throw new InvalidPaymentNotificationException("STRIPE_AMOUNT_OR_CURRENCY_MISMATCH");
+        }
+        if (lineItems == null || lineItems.getData() == null || lineItems.getData().size() != 1
+                || Boolean.TRUE.equals(lineItems.getHasMore())) {
+            throw new InvalidPaymentNotificationException("STRIPE_LINE_ITEMS_INVALID");
+        }
+        var line = lineItems.getData().getFirst();
+        if (line.getPrice() == null || !expectedPriceId.equals(line.getPrice().getId())
+                || !Long.valueOf(1).equals(line.getQuantity())
+                || line.getAmountTotal() == null || line.getAmountTotal() <= 0
+                || !line.getAmountTotal().equals(session.getAmountTotal())
+                || !session.getCurrency().equalsIgnoreCase(line.getCurrency())
+                || !session.getCurrency().equalsIgnoreCase(line.getPrice().getCurrency())) {
+            throw new InvalidPaymentNotificationException("STRIPE_PRICE_OR_LINE_AMOUNT_MISMATCH");
         }
     }
 

@@ -1,5 +1,8 @@
 package com.chikere.futureai.evidence.professional.application;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentStore;
 import com.chikere.futureai.occupation.professional.application.ProfessionalOccupationClassificationStore;
 
@@ -11,6 +14,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public final class ProfessionalEvidenceService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProfessionalEvidenceService.class);
     private final ProfessionalAssessmentStore assessmentStore;
     private final ProfessionalEvidenceStore evidenceStore;
     private final Optional<ProfessionalEvidenceProvider> provider;
@@ -47,12 +51,16 @@ public final class ProfessionalEvidenceService {
                     classificationStore.findByAssessmentId(assessmentId)));
             validateProviderResult(assessmentId, configuredProvider, gathered);
             evidenceStore.save(gathered);
+            LOGGER.info("Evidence journey=professional assessmentId={} outcome={} itemCount={}",
+                    assessmentId, gathered.status(), gathered.items().size());
             return Optional.of(gathered);
         } catch (RuntimeException failure) {
             var failed = new ProfessionalEvidenceBundle(assessmentId,
                     ProfessionalEvidenceVersions.EVIDENCE_SCHEMA, configuredProvider.source(),
                     configuredProvider.providerIdentifier(), EvidenceStatus.FAILED, attemptedAt, List.of());
             evidenceStore.save(failed);
+            LOGGER.warn("Evidence journey=professional assessmentId={} outcome=FAILED failureType={}",
+                    assessmentId, failure.getClass().getSimpleName());
             return Optional.of(failed);
         }
     }

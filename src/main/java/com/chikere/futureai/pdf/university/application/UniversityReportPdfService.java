@@ -1,5 +1,8 @@
 package com.chikere.futureai.pdf.university.application;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.chikere.futureai.payment.university.application.PurchasedUniversityReportSnapshot;
 import com.chikere.futureai.payment.university.application.UniversityEntitlementStatus;
 import com.chikere.futureai.payment.university.application.UniversityPurchaseStore;
@@ -23,6 +26,7 @@ import java.util.UUID;
  * narrative generation, evidence retrieval or Stripe.</p>
  */
 public final class UniversityReportPdfService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(UniversityReportPdfService.class);
     private static final byte[] PDF_SIGNATURE = "%PDF-".getBytes(StandardCharsets.US_ASCII);
     private final UniversityPurchaseStore purchaseStore;
     private final UniversityReportPdfStore pdfStore;
@@ -72,7 +76,10 @@ public final class UniversityReportPdfService {
         var artifact = new PurchasedUniversityReportPdf(entitlement.entitlementId(), assessmentId,
                 snapshot.reportVersion(), UniversityReportPdfVersions.PDF_TEMPLATE, Instant.now(clock),
                 safeFilename(snapshot.report().courseTitle()), bytes.length, sha256(bytes), bytes);
-        return pdfStore.saveIfAbsent(artifact);
+        PurchasedUniversityReportPdf stored = pdfStore.saveIfAbsent(artifact);
+        LOGGER.info("PDF journey=university assessmentId={} entitlementId={} outcome=AVAILABLE byteCount={}",
+                assessmentId, entitlement.entitlementId(), stored.fileSize());
+        return stored;
     }
 
     private void validate(byte[] bytes) {
