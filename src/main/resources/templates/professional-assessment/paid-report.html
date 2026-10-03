@@ -104,6 +104,7 @@
   <section class="evidence-section">
     <h2>External career context</h2>
     <p class="helper">This is saved factual context, separate from the assessment scores.</p>
+    <p class="helper">Only the sourced items shown are verified here. Other evidence categories may be unavailable.</p>
     <div class="fixture-evidence-label" th:if="${report.developmentFixture}">Local development evidence — not live official data</div>
     <p class="panel" th:if="${report.evidence.items.isEmpty()}" th:text="${report.evidence.message}">Unavailable</p>
     <p class="notice" th:if="${report.evidence.status == 'Partial'}" th:text="${report.evidence.message}">Partial</p>
@@ -117,6 +118,7 @@
           <div><dt>Source</dt><dd><a th:if="${item.sourceUrl != null}" th:href="${item.sourceUrl}" th:text="${item.source}" target="_blank" rel="noopener noreferrer">Source</a><span th:if="${item.sourceUrl == null}" th:text="${item.source}">Source</span></dd></div>
           <div th:if="${item.geography != null}"><dt>Geography</dt><dd th:text="${item.geography}">UK</dd></div>
           <div><dt>Date</dt><dd th:text="${item.date}">Date</dd></div>
+          <div><dt>Source quality</dt><dd th:text="${item.quality}">Official</dd></div>
         </dl>
         <p class="evidence-relevance" th:text="${item.relevance}">Relevance</p>
       </article>

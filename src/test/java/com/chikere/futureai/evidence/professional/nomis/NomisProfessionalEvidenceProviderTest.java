@@ -20,7 +20,8 @@ class NomisProfessionalEvidenceProviderTest {
     void mapsOfflineClientObservationToSharedEvidenceContract() {
         Instant now = Instant.parse("2026-09-30T12:00:00Z");
         NomisApiClient client = code -> new NomisObservation("Apr 2025-Mar 2026",
-                "IT business analysts, architects and systems designers", new BigDecimal("123400"), "people");
+                "IT business analysts, architects and systems designers", "United Kingdom",
+                new BigDecimal("123400"), "people");
         var provider = new NomisProfessionalEvidenceProvider(client, Clock.fixed(now, ZoneOffset.UTC));
         var request = request(Optional.of("2133"));
 
@@ -45,6 +46,17 @@ class NomisProfessionalEvidenceProviderTest {
         var provider = new NomisProfessionalEvidenceProvider(unused, Clock.systemUTC());
         assertThatThrownBy(() -> provider.gather(request(Optional.empty())))
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("explicitly configured");
+    }
+
+    @Test
+    void rejectsUnsupportedGeographyBeforeMakingAnApiRequest() {
+        NomisApiClient unused = code -> { throw new AssertionError("must not call client"); };
+        var provider = new NomisProfessionalEvidenceProvider(unused, Clock.systemUTC());
+        var regional = new ProfessionalEvidenceRequest(UUID.randomUUID(), "Software Architect",
+                List.of("Design"), List.of("Architecture"), "England", JourneyType.PROFESSIONAL,
+                Optional.of("2133"));
+        assertThatThrownBy(() -> provider.gather(regional))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("United Kingdom only");
     }
 
     private ProfessionalEvidenceRequest request(Optional<String> code) {

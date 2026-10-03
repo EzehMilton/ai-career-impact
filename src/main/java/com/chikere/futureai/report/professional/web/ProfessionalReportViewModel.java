@@ -39,7 +39,8 @@ public record ProfessionalReportViewModel(
     public record EvidenceView(String status, String message, List<EvidenceItemView> items) { }
 
     public record EvidenceItemView(String category, String title, String summary, String source,
-            String sourceUrl, String geography, String date, String metric, String relevance) { }
+            String sourceUrl, String geography, String date, String quality, String metric,
+            String relevance) { }
 
     public record ClassificationView(String canonicalOccupation, String system, String code,
             String quality, String classifiedAt) { }

@@ -151,7 +151,7 @@ public final class ProfessionalReportAssembler {
             ProfessionalReportTier tier) {
         if (tier == ProfessionalReportTier.FREE) {
             return new ProfessionalReport.EvidenceContent(EvidenceStatus.NOT_REQUESTED,
-                    "Detailed external career context is included in the full report.", List.of());
+                    "Verified external career context appears in the full report where available.", List.of());
         }
         if (stored.isEmpty() || stored.orElseThrow().status() == EvidenceStatus.FAILED
                 || stored.orElseThrow().status() == EvidenceStatus.PENDING) {
