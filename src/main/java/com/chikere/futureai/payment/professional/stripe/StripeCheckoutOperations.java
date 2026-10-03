@@ -4,4 +4,5 @@ import com.chikere.futureai.payment.professional.application.ProfessionalCheckou
 
 interface StripeCheckoutOperations {
     StripeCheckoutData create(ProfessionalCheckoutRequest request);
+    void validateCompletedSession(StripeVerifiedEvent event, String expectedPriceId);
 }

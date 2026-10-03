@@ -38,12 +38,13 @@ class StripeProfessionalPaymentGatewayTest {
         var gateway = new StripeProfessionalPaymentGateway(operations, verifier, "price_configured");
         var notification = new ProfessionalPaymentNotification("payload", "signature");
         var verified = new StripeVerifiedEvent("evt_1", "cs_1", UUID.randomUUID(), UUID.randomUUID(),
-                Optional.of("pi_1"), Instant.EPOCH);
+                Optional.of("pi_1"), Instant.EPOCH, 499, "gbp");
         when(verifier.verify(notification)).thenReturn(Optional.of(verified));
 
         assertThat(gateway.verifyPaymentNotification(notification)).contains(new ProfessionalPaymentEvent(
                 "evt_1", ProfessionalPaymentProvider.STRIPE, "cs_1", verified.entitlementId(),
                 verified.assessmentId(), Optional.of("pi_1"), Instant.EPOCH));
-        verifyNoInteractions(operations);
+        verify(operations).validateCompletedSession(verified, "price_configured");
+        verifyNoMoreInteractions(operations);
     }
 }
