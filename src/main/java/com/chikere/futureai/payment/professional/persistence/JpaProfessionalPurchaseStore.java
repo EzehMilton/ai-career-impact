@@ -87,7 +87,7 @@ class JpaProfessionalPurchaseStore implements ProfessionalPurchaseStore {
         var eventId = new ProcessedProfessionalPaymentEventId(event.provider(), event.eventId());
         if (events.existsById(eventId)) return PurchaseConfirmationResult.ALREADY_PROCESSED;
         var entitlement = entitlements.findByIdForUpdate(event.entitlementId())
-                .orElseThrow(() -> new InvalidPaymentNotificationException("entitlement no longer exists"));
+                .orElseThrow(() -> new InvalidPaymentNotificationException("ENTITLEMENT_NOT_FOUND"));
         // A concurrent duplicate may have committed while this transaction waited for the row lock.
         if (events.existsById(eventId)) return PurchaseConfirmationResult.ALREADY_PROCESSED;
         if (entitlement.status == ProfessionalEntitlementStatus.ACTIVE) {
@@ -95,14 +95,14 @@ class JpaProfessionalPurchaseStore implements ProfessionalPurchaseStore {
             return PurchaseConfirmationResult.ALREADY_PROCESSED;
         }
         if (entitlement.status != ProfessionalEntitlementStatus.PENDING) {
-            throw new InvalidPaymentNotificationException("entitlement is not pending");
+            throw new InvalidPaymentNotificationException("ENTITLEMENT_STATUS_INVALID");
         }
         if (!entitlement.assessmentId.equals(event.assessmentId())
                 || entitlement.paymentProvider != event.provider()
                 || !entitlement.providerCheckoutSessionId.equals(event.checkoutSessionId())
                 || !snapshot.entitlementId().equals(entitlement.entitlementId)
                 || !snapshot.assessmentId().equals(entitlement.assessmentId)) {
-            throw new InvalidPaymentNotificationException("payment confirmation does not match entitlement");
+            throw new InvalidPaymentNotificationException("ENTITLEMENT_REFERENCE_MISMATCH");
         }
         var snapshotEntity = new PurchasedProfessionalReportSnapshotEntity();
         snapshotEntity.entitlementId = snapshot.entitlementId();

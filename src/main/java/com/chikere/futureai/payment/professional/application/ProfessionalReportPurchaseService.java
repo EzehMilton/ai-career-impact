@@ -3,6 +3,8 @@ package com.chikere.futureai.payment.professional.application;
 import com.chikere.futureai.report.professional.application.ProfessionalReport;
 import com.chikere.futureai.report.professional.application.ProfessionalReportService;
 import com.chikere.futureai.report.professional.application.ProfessionalReportTier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import com.chikere.futureai.configuration.JourneyMetrics;
@@ -14,6 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public final class ProfessionalReportPurchaseService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProfessionalReportPurchaseService.class);
     private final ProfessionalReportService reportService;
     private final ProfessionalPurchaseStore purchaseStore;
     private final Optional<ProfessionalPaymentGateway> paymentGateway;
@@ -86,14 +89,29 @@ public final class ProfessionalReportPurchaseService {
         Optional<ProfessionalPaymentEvent> verified = gateway.verifyPaymentNotification(notification);
         if (verified.isEmpty()) return ProfessionalPaymentProcessingResult.IGNORED;
         ProfessionalPaymentEvent event = verified.orElseThrow();
+        try {
+            return processVerifiedPaymentEvent(gateway, event);
+        }
+        catch (InvalidPaymentNotificationException invalid) {
+            LOGGER.warn("Professional payment eventId={} sessionId={} assessmentId={} entitlementId={} "
+                            + "outcome=REJECTED reason={}", event.eventId(), event.checkoutSessionId(),
+                    event.assessmentId(), event.entitlementId(), safeReason(invalid.getMessage()));
+            throw invalid;
+        }
+    }
+
+    private ProfessionalPaymentProcessingResult processVerifiedPaymentEvent(
+            ProfessionalPaymentGateway gateway, ProfessionalPaymentEvent event) {
         if (event.provider() != gateway.provider()) {
-            throw new InvalidPaymentNotificationException("payment event provider does not match configured gateway");
+            throw new InvalidPaymentNotificationException("PROVIDER_MISMATCH");
         }
         if (purchaseStore.isEventProcessed(event.provider(), event.eventId())) {
+            LOGGER.info("Professional payment eventId={} sessionId={} assessmentId={} outcome=ALREADY_PROCESSED",
+                    event.eventId(), event.checkoutSessionId(), event.assessmentId());
             return ProfessionalPaymentProcessingResult.ALREADY_PROCESSED;
         }
         ProfessionalReportEntitlement entitlement = purchaseStore.findEntitlementById(event.entitlementId())
-                .orElseThrow(() -> new InvalidPaymentNotificationException("payment event has no matching entitlement"));
+                .orElseThrow(() -> new InvalidPaymentNotificationException("ENTITLEMENT_NOT_FOUND"));
         validateEvent(entitlement, event);
         PurchasedProfessionalReportSnapshot snapshot = purchaseStore
                 .findSnapshotByAssessmentId(event.assessmentId())
@@ -102,9 +120,15 @@ public final class ProfessionalReportPurchaseService {
         if (result == ProfessionalPurchaseStore.PurchaseConfirmationResult.ACTIVATED) {
             metrics.paymentConfirmed("professional");
         }
+        LOGGER.info("Professional payment eventId={} sessionId={} assessmentId={} entitlementId={} outcome={}",
+                event.eventId(), event.checkoutSessionId(), event.assessmentId(), event.entitlementId(), result);
         return result == ProfessionalPurchaseStore.PurchaseConfirmationResult.ACTIVATED
                 ? ProfessionalPaymentProcessingResult.ACTIVATED
                 : ProfessionalPaymentProcessingResult.ALREADY_PROCESSED;
+    }
+
+    private static String safeReason(String message) {
+        return message != null && message.matches("[A-Z_]+") ? message : "INVALID_NOTIFICATION";
     }
 
     public ProfessionalPurchaseAccess accessFor(UUID assessmentId) {
@@ -133,7 +157,7 @@ public final class ProfessionalReportPurchaseService {
 
     private PurchasedProfessionalReportSnapshot freezeCurrentPaidReport(ProfessionalReportEntitlement entitlement) {
         ProfessionalReport report = reportService.assemble(entitlement.assessmentId(), ProfessionalReportTier.PAID)
-                .orElseThrow(() -> new InvalidPaymentNotificationException("assessment no longer exists"));
+                .orElseThrow(() -> new InvalidPaymentNotificationException("ASSESSMENT_NOT_FOUND"));
         return new PurchasedProfessionalReportSnapshot(entitlement.entitlementId(), entitlement.assessmentId(),
                 report.reportVersion(), Instant.now(clock), report);
     }
@@ -143,11 +167,11 @@ public final class ProfessionalReportPurchaseService {
                 || !entitlement.providerCheckoutSessionId().equals(event.checkoutSessionId())
                 || !entitlement.assessmentId().equals(event.assessmentId())
                 || !entitlement.entitlementId().equals(event.entitlementId())) {
-            throw new InvalidPaymentNotificationException("payment event does not match the pending entitlement");
+            throw new InvalidPaymentNotificationException("ENTITLEMENT_REFERENCE_MISMATCH");
         }
         if (entitlement.status() != ProfessionalEntitlementStatus.PENDING
                 && entitlement.status() != ProfessionalEntitlementStatus.ACTIVE) {
-            throw new InvalidPaymentNotificationException("entitlement cannot be activated from its current status");
+            throw new InvalidPaymentNotificationException("ENTITLEMENT_STATUS_INVALID");
         }
     }
 

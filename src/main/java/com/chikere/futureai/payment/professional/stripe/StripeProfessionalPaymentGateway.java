@@ -25,9 +25,11 @@ public final class StripeProfessionalPaymentGateway implements ProfessionalPayme
 
     @Override
     public Optional<ProfessionalPaymentEvent> verifyPaymentNotification(ProfessionalPaymentNotification notification) {
-        return webhookVerifier.verify(notification).map(event -> new ProfessionalPaymentEvent(event.eventId(),
-                provider(), event.sessionId(), event.entitlementId(), event.assessmentId(),
-                event.paymentReference(), event.occurredAt()));
+        return webhookVerifier.verify(notification).map(event -> {
+            checkoutOperations.validateCompletedSession(event, priceId);
+            return new ProfessionalPaymentEvent(event.eventId(), provider(), event.sessionId(),
+                    event.entitlementId(), event.assessmentId(), event.paymentReference(), event.occurredAt());
+        });
     }
 
     @Override public ProfessionalPaymentProvider provider() { return ProfessionalPaymentProvider.STRIPE; }
