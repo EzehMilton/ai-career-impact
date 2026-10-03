@@ -1,5 +1,8 @@
 package com.chikere.futureai.pdf.professional.application;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.chikere.futureai.payment.professional.application.*;
 
 import java.nio.charset.StandardCharsets;
@@ -13,6 +16,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 public final class ProfessionalReportPdfService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProfessionalReportPdfService.class);
     private static final byte[] PDF_SIGNATURE = "%PDF-".getBytes(StandardCharsets.US_ASCII);
     private final ProfessionalPurchaseStore purchaseStore;
     private final ProfessionalReportPdfStore pdfStore;
@@ -53,7 +57,10 @@ public final class ProfessionalReportPdfService {
         var artifact = new PurchasedProfessionalReportPdf(entitlement.entitlementId(), assessmentId,
                 snapshot.reportVersion(), ProfessionalReportPdfVersions.PDF_TEMPLATE, Instant.now(clock),
                 safeFilename(snapshot.report().profession()), bytes.length, sha256(bytes), bytes);
-        return pdfStore.saveIfAbsent(artifact);
+        PurchasedProfessionalReportPdf stored = pdfStore.saveIfAbsent(artifact);
+        LOGGER.info("PDF journey=professional assessmentId={} entitlementId={} outcome=AVAILABLE byteCount={}",
+                assessmentId, entitlement.entitlementId(), stored.fileSize());
+        return stored;
     }
 
     private void validate(byte[] bytes) {

@@ -6,6 +6,8 @@ import com.chikere.futureai.report.university.application.UniversityReportTier;
 
 import java.net.URI;
 import com.chikere.futureai.configuration.JourneyMetrics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -21,6 +23,7 @@ import java.util.UUID;
  * professional one: neither grants access to the other.</p>
  */
 public final class UniversityReportPurchaseService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(UniversityReportPurchaseService.class);
     private final UniversityReportService reportService;
     private final UniversityPurchaseStore purchaseStore;
     private final Optional<UniversityPaymentGateway> paymentGateway;
@@ -102,6 +105,8 @@ public final class UniversityReportPurchaseService {
                     "payment event provider does not match configured gateway");
         }
         if (purchaseStore.isEventProcessed(event.provider(), event.eventId())) {
+            LOGGER.info("University payment eventId={} sessionId={} assessmentId={} outcome=ALREADY_PROCESSED",
+                    event.eventId(), event.checkoutSessionId(), event.assessmentId());
             return UniversityPaymentProcessingResult.ALREADY_PROCESSED;
         }
         UniversityReportEntitlement entitlement = purchaseStore.findEntitlementById(event.entitlementId())
@@ -115,6 +120,8 @@ public final class UniversityReportPurchaseService {
         if (result == UniversityPurchaseStore.PurchaseConfirmationResult.ACTIVATED) {
             metrics.paymentConfirmed("university");
         }
+        LOGGER.info("University payment eventId={} sessionId={} assessmentId={} entitlementId={} outcome={}",
+                event.eventId(), event.checkoutSessionId(), event.assessmentId(), event.entitlementId(), result);
         return result == UniversityPurchaseStore.PurchaseConfirmationResult.ACTIVATED
                 ? UniversityPaymentProcessingResult.ACTIVATED
                 : UniversityPaymentProcessingResult.ALREADY_PROCESSED;

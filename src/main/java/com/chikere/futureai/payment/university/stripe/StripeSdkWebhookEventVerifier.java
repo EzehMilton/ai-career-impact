@@ -2,18 +2,22 @@ package com.chikere.futureai.payment.university.stripe;
 
 import com.chikere.futureai.payment.university.application.InvalidPaymentNotificationException;
 import com.chikere.futureai.payment.university.application.UniversityPaymentNotification;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
-import com.stripe.model.StripeObject;
-import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 final class StripeSdkWebhookEventVerifier implements StripeWebhookEventVerifier {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StripeSdkWebhookEventVerifier.class);
+    private static final ObjectMapper JSON = new ObjectMapper();
     private static final String CHECKOUT_COMPLETED = "checkout.session.completed";
     private final String webhookSecret;
 
@@ -31,36 +35,64 @@ final class StripeSdkWebhookEventVerifier implements StripeWebhookEventVerifier 
             event = Webhook.constructEvent(notification.payload(), notification.signature(), webhookSecret);
         }
         catch (SignatureVerificationException | RuntimeException invalid) {
+            LOGGER.warn("University Stripe webhook rejected reason=INVALID_SIGNATURE_OR_PAYLOAD");
             throw new InvalidPaymentNotificationException("Stripe webhook signature or payload is invalid", invalid);
         }
-        if (!CHECKOUT_COMPLETED.equals(event.getType())) return Optional.empty();
-        StripeObject object = event.getDataObjectDeserializer().getObject()
-                .orElseThrow(() -> new InvalidPaymentNotificationException(
-                        "Stripe checkout event could not be decoded"));
-        if (!(object instanceof Session session)) {
-            throw new InvalidPaymentNotificationException("Stripe event does not contain a checkout session");
-        }
-        Map<String, String> metadata = session.getMetadata();
-        // An event for a different product is not an error here: it is simply not ours.
-        if (metadata == null
-                || !UniversityStripeMetadata.PRODUCT_VALUE.equals(
-                        metadata.get(UniversityStripeMetadata.PRODUCT_KEY))) {
+        if (!CHECKOUT_COMPLETED.equals(event.getType())) {
+            LOGGER.info("University Stripe webhook ignored eventId={} eventType={}", event.getId(), event.getType());
             return Optional.empty();
         }
-        if (!"paid".equals(session.getPaymentStatus())) {
-            throw new InvalidPaymentNotificationException("Stripe checkout is not paid");
-        }
         try {
-            String entitlement = metadata.get(UniversityStripeMetadata.ENTITLEMENT_ID);
-            String assessment = metadata.get(UniversityStripeMetadata.ASSESSMENT_ID);
-            return Optional.of(new StripeVerifiedEvent(required(event.getId(), "event id"),
-                    required(session.getId(), "checkout session id"), UUID.fromString(entitlement),
-                    UUID.fromString(assessment), Optional.ofNullable(session.getPaymentIntent()),
-                    Instant.ofEpochSecond(event.getCreated())));
+            // The signature authenticates the raw event across Stripe API versions.
+            JsonNode session = JSON.readTree(event.getDataObjectDeserializer().getRawJson());
+            if (!"checkout.session".equals(field(session, "object"))) throw new IllegalArgumentException("WRONG_OBJECT");
+            JsonNode metadata = session.get("metadata");
+            if (metadata == null || !UniversityStripeMetadata.PRODUCT_VALUE.equals(
+                    metadata.path(UniversityStripeMetadata.PRODUCT_KEY).asText())) {
+                LOGGER.info("University Stripe webhook ignored eventId={} eventType={} reason=OTHER_PRODUCT",
+                        event.getId(), event.getType());
+                return Optional.empty();
+            }
+            String sessionId = required(field(session, "id"), "checkout session id");
+            String paymentStatus = field(session, "payment_status");
+            String mode = field(session, "mode");
+            if (!"paid".equals(paymentStatus)) throw new IllegalArgumentException("NOT_PAID");
+            if (!"payment".equals(mode)) throw new IllegalArgumentException("WRONG_MODE");
+            UUID entitlement = UUID.fromString(field(metadata, UniversityStripeMetadata.ENTITLEMENT_ID));
+            UUID assessment = UUID.fromString(field(metadata, UniversityStripeMetadata.ASSESSMENT_ID));
+            if (!entitlement.toString().equals(field(session, "client_reference_id"))) {
+                throw new IllegalArgumentException("WRONG_CLIENT_REFERENCE");
+            }
+            long amountTotal = session.get("amount_total").longValue();
+            String currency = field(session, "currency");
+            if (amountTotal <= 0 || currency.isBlank()) throw new IllegalArgumentException("INVALID_AMOUNT_OR_CURRENCY");
+            String eventId = required(event.getId(), "event id");
+            LOGGER.info("University Stripe checkout verified eventId={} eventType={} assessmentId={} "
+                            + "entitlementId={} sessionId={} paymentStatus={} mode={} apiVersion={}",
+                    eventId, event.getType(), assessment, entitlement, sessionId,
+                    paymentStatus, mode, event.getApiVersion());
+            return Optional.of(new StripeVerifiedEvent(eventId, sessionId, entitlement, assessment,
+                    Optional.ofNullable(session.get("payment_intent")).filter(value -> !value.isNull())
+                            .map(JsonNode::asText), Instant.ofEpochSecond(event.getCreated()),
+                    amountTotal, currency));
         }
-        catch (RuntimeException malformed) {
+        catch (JsonProcessingException | RuntimeException malformed) {
+            LOGGER.warn("University Stripe checkout rejected eventId={} eventType={} reason={}",
+                    event.getId(), event.getType(), reason(malformed));
             throw new InvalidPaymentNotificationException("Stripe checkout metadata is invalid", malformed);
         }
+    }
+
+    private static String field(JsonNode object, String name) {
+        if (object == null || !object.has(name) || object.get(name).isNull()) {
+            throw new IllegalArgumentException("MISSING_" + name.toUpperCase());
+        }
+        return object.get(name).asText();
+    }
+
+    private static String reason(Exception malformed) {
+        String message = malformed.getMessage();
+        return message != null && message.matches("[A-Z_]+") ? message : "MALFORMED_SESSION";
     }
 
     private static String required(String value, String name) {

@@ -28,9 +28,11 @@ public final class StripeALevelPaymentGateway implements ALevelPaymentGateway {
 
     @Override
     public Optional<ALevelPaymentEvent> verifyPaymentNotification(ALevelPaymentNotification notification) {
-        return webhookVerifier.verify(notification).map(event -> new ALevelPaymentEvent(event.eventId(),
-                provider(), event.sessionId(), event.entitlementId(), event.assessmentId(),
-                event.paymentReference(), event.occurredAt()));
+        return webhookVerifier.verify(notification).map(event -> {
+            checkoutOperations.validateCompletedSession(event, priceId);
+            return new ALevelPaymentEvent(event.eventId(), provider(), event.sessionId(),
+                    event.entitlementId(), event.assessmentId(), event.paymentReference(), event.occurredAt());
+        });
     }
 
     @Override

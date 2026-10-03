@@ -1,5 +1,8 @@
 package com.chikere.futureai.assessment.alevel.application;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.chikere.futureai.assessment.domain.ALevelAssessmentState;
 import com.chikere.futureai.decision.alevel.ALevelDecisionPolicyV1;
 import com.chikere.futureai.decision.alevel.ALevelDecisionResult;
@@ -16,6 +19,7 @@ import java.util.UUID;
  * immutable snapshot. It never scores a subject combination itself.
  */
 public final class ALevelAssessmentService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ALevelAssessmentService.class);
 
     private final ALevelJudgmentProvider judgmentProvider;
     private final ALevelDecisionPolicyV1 decisionPolicy;
@@ -60,7 +64,17 @@ public final class ALevelAssessmentService {
 
     private Execution execute(ALevelAssessmentState state) {
         Objects.requireNonNull(state, "state must not be null");
-        AssessmentJudgmentSet judgments = judgmentProvider.judge(state);
+        final AssessmentJudgmentSet judgments;
+        try {
+            judgments = judgmentProvider.judge(state);
+            LOGGER.info("Judgment journey=alevel outcome=SUCCEEDED schemaVersion={}",
+                    judgments.schemaVersion());
+        }
+        catch (RuntimeException failure) {
+            LOGGER.warn("Judgment journey=alevel outcome=FAILED failureType={}",
+                    failure.getClass().getSimpleName());
+            throw failure;
+        }
         ALevelDecisionResult decision = decisionPolicy.decide(judgments);
         ALevelAssessmentResult result = new ALevelAssessmentResult(
                 decision, judgmentProvider.source(), judgments.schemaVersion(), decision.policyVersion());

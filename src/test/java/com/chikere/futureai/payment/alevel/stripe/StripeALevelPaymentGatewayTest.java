@@ -63,13 +63,13 @@ class StripeALevelPaymentGatewayTest {
         var gateway = new StripeALevelPaymentGateway(operations, verifier, "price_a_level");
         var notification = new ALevelPaymentNotification("payload", "signature");
         var verified = new StripeVerifiedEvent("evt_1", "cs_1", UUID.randomUUID(), UUID.randomUUID(),
-                Optional.of("pi_1"), Instant.EPOCH);
+                Optional.of("pi_1"), Instant.EPOCH, 499, "gbp");
         when(verifier.verify(notification)).thenReturn(Optional.of(verified));
 
         assertThat(gateway.verifyPaymentNotification(notification)).contains(new ALevelPaymentEvent(
                 "evt_1", ALevelPaymentProvider.STRIPE, "cs_1", verified.entitlementId(),
                 verified.assessmentId(), Optional.of("pi_1"), Instant.EPOCH));
-        verifyNoInteractions(operations);
+        verify(operations).validateCompletedSession(verified, "price_a_level");
 
         when(verifier.verify(notification)).thenReturn(Optional.empty());
         assertThat(gateway.verifyPaymentNotification(notification)).isEmpty();

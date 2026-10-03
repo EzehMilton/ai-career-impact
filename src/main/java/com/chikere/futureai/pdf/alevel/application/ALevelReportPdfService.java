@@ -1,5 +1,8 @@
 package com.chikere.futureai.pdf.alevel.application;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.chikere.futureai.payment.alevel.application.ALevelEntitlementStatus;
 import com.chikere.futureai.payment.alevel.application.ALevelPurchaseStore;
 import com.chikere.futureai.payment.alevel.application.ALevelReportEntitlement;
@@ -24,6 +27,7 @@ import java.util.UUID;
  * narrative generation, evidence retrieval or Stripe.</p>
  */
 public final class ALevelReportPdfService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ALevelReportPdfService.class);
     private static final byte[] PDF_SIGNATURE = "%PDF-".getBytes(StandardCharsets.US_ASCII);
     private final ALevelPurchaseStore purchaseStore;
     private final ALevelReportPdfStore pdfStore;
@@ -71,7 +75,10 @@ public final class ALevelReportPdfService {
         var artifact = new PurchasedALevelReportPdf(entitlement.entitlementId(), assessmentId,
                 snapshot.reportVersion(), ALevelReportPdfVersions.PDF_TEMPLATE, Instant.now(clock),
                 safeFilename(snapshot.report().selectedSubjects()), bytes.length, sha256(bytes), bytes);
-        return pdfStore.saveIfAbsent(artifact);
+        PurchasedALevelReportPdf stored = pdfStore.saveIfAbsent(artifact);
+        LOGGER.info("PDF journey=alevel assessmentId={} entitlementId={} outcome=AVAILABLE byteCount={}",
+                assessmentId, entitlement.entitlementId(), stored.fileSize());
+        return stored;
     }
 
     private void validate(byte[] bytes) {

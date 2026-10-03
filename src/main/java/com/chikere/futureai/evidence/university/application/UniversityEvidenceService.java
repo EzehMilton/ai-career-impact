@@ -1,5 +1,8 @@
 package com.chikere.futureai.evidence.university.application;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.chikere.futureai.assessment.university.application.UniversityAssessmentStore;
 
 import java.time.Clock;
@@ -17,6 +20,7 @@ import java.util.UUID;
  * {@code FAILED} and never causes a fixture lookup or any other fallback.</p>
  */
 public final class UniversityEvidenceService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(UniversityEvidenceService.class);
     private final UniversityAssessmentStore assessmentStore;
     private final UniversityEvidenceStore evidenceStore;
     private final Optional<UniversityEvidenceProvider> provider;
@@ -54,6 +58,8 @@ public final class UniversityEvidenceService {
             UniversityEvidenceBundle gathered = configuredProvider.gather(requestFactory.create(assessment));
             validateProviderResult(assessmentId, configuredProvider, gathered);
             evidenceStore.save(gathered);
+            LOGGER.info("Evidence journey=university assessmentId={} outcome={} itemCount={}",
+                    assessmentId, gathered.status(), gathered.items().size());
             return Optional.of(gathered);
         }
         catch (RuntimeException failure) {
@@ -61,6 +67,8 @@ public final class UniversityEvidenceService {
                     UniversityEvidenceVersions.EVIDENCE_SCHEMA, configuredProvider.source(),
                     configuredProvider.providerIdentifier(), EvidenceStatus.FAILED, attemptedAt, List.of());
             evidenceStore.save(failed);
+            LOGGER.warn("Evidence journey=university assessmentId={} outcome=FAILED failureType={}",
+                    assessmentId, failure.getClass().getSimpleName());
             return Optional.of(failed);
         }
     }

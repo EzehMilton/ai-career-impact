@@ -39,6 +39,9 @@ public final class ALevelStripeWebhookController {
             return ResponseEntity.ok().build();
         }
         catch (InvalidPaymentNotificationException invalid) {
+            String reason = invalid.getMessage();
+            LOGGER.warn("A-level Stripe webhook rejected reason={}",
+                    reason != null && reason.matches("[A-Z_]+") ? reason : "INVALID_NOTIFICATION");
             return ResponseEntity.badRequest().build();
         }
         catch (RuntimeException retryable) {

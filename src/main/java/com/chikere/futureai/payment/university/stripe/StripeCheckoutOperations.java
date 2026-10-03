@@ -4,4 +4,5 @@ import com.chikere.futureai.payment.university.application.UniversityCheckoutReq
 
 interface StripeCheckoutOperations {
     StripeCheckoutData create(UniversityCheckoutRequest request);
+    void validateCompletedSession(StripeVerifiedEvent event, String expectedPriceId);
 }
