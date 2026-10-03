@@ -19,6 +19,9 @@ public final class OpenAiUniversityNarrativeGenerator implements UniversityNarra
             The supplied measures, bands, confidence, status, strengths and development opportunities are
             already decided and authoritative. Never recalculate, alter, override or invent them. Do not repeat
             numeric values. Do not add new assessment factors or contradict the saved decision.
+            The measure names and their LIMITED, DEVELOPING or STRONG bands are Java's final
+            vocabulary. Explain each measure using its supplied band; do not describe that same
+            measure with another band or an equivalent stronger or weaker verdict.
 
             Do not invent module content, teaching arrangements, institutions or anything else that is not in
             the supplied course description. Do not state salary figures, graduate employment rates, league
@@ -26,6 +29,12 @@ public final class OpenAiUniversityNarrativeGenerator implements UniversityNarra
             studies, reports or sources. Do not guarantee employment or imply a job is certain. Never call a
             course future-proof, safe, risky, a bad degree or a waste. Never tell the student to abandon or
             avoid the degree.
+            Explain the assessment without converting an inference into an external fact about
+            employment demand, graduate outcomes, employer behaviour or future labour-market
+            conditions. Do not imply that graduates are versatile candidates in the job market
+            or will find work because of this assessment. Avoid categorical AI capability and
+            future claims; use may, could, suggests or appears where uncertainty exists, without
+            hedging every ordinary description.
 
             Future Readiness describes how well this course appears to develop capabilities that stay valuable
             in an AI-shaped labour market. It is not a probability that a job will be automated, and it is not
@@ -34,6 +43,8 @@ public final class OpenAiUniversityNarrativeGenerator implements UniversityNarra
             capabilities that remain distinctly human. Skill Transferability and Career Adaptability describe
             the breadth of the capabilities and pathways the course appears to open, not the student's own
             motivation, ability, finances or circumstances.
+            Future Readiness is not an employment guarantee. Career Adaptability is not proof of
+            labour-market demand. Neither measure establishes a graduate employment outcome.
 
             Where preferred career areas are supplied, treat them only as context worth exploring. Use modest
             phrasing such as "a relevant area to explore", "skills that may help" or "additional preparation

@@ -141,6 +141,8 @@ ProfessionalJevJudgmentService    LocalFixtureProfessionalJudgmentProvider
 
 `ProfessionalJudgmentProvider` is the professional application port: it states the judgment capability the use case needs without TypeSafe, Jev, Spring AI, or HTTP types. `ProfessionalJevJudgmentService` is the normal adapter that supplies this capability through one Jev System One request for all nine `professional-v1` judgments. `ProfessionalAssessmentService` coordinates one provider call and one decision policy call, then stores a snapshot with source and version metadata. The application service does not score work itself.
 
+The `prod` profile also selects the real Jev and OpenAI adapters because both are guarded by `!local-fixture`. Production startup requires `TYPESAFE_API_KEY` and `OPENAI_API_KEY`; `StartupConfigurationValidator` names missing variables without logging values. Live AI verification status and the explicit Jev command are recorded in [LIVE_AI_VERIFICATION.md](LIVE_AI_VERIFICATION.md).
+
 ### Saved professional assessments
 
 Write flow: browser POST → form validation → form mapper → application service → Jev or explicit local fixture → `AssessmentJudgmentSet` → `ProfessionalDecisionPolicyV1` → `ProfessionalAssessmentResult` → `ProfessionalAssessmentStore` → JPA adapter → PostgreSQL → redirect to `/professional-assessment/{UUID}`.

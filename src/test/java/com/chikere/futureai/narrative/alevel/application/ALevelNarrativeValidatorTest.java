@@ -1,8 +1,15 @@
 package com.chikere.futureai.narrative.alevel.application;
 
+import com.chikere.futureai.assessment.alevel.application.AssessmentSource;
+import com.chikere.futureai.assessment.domain.AssessmentConfidence;
+import com.chikere.futureai.assessment.domain.AssessmentStatus;
+import com.chikere.futureai.decision.alevel.ALevelMeasure;
+import com.chikere.futureai.decision.alevel.OptionalityBand;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -10,6 +17,42 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 class ALevelNarrativeValidatorTest {
 
     private final ALevelNarrativeValidator validator = new ALevelNarrativeValidator();
+
+    @Test
+    void balancedHumanAndCreativeBandRejectsLiveStrongWording() {
+        ALevelNarrative drifted = withHumanExplanation(
+                "You also have a strong human and creative aspect to your skill set.");
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> validator.validate(drifted, balancedContext()))
+                .withMessageContaining("BALANCED human and creative");
+    }
+
+    @Test
+    void balancedHumanAndCreativeBandAcceptsAlignedExplanation() {
+        ALevelNarrative aligned = withHumanExplanation(
+                "The balanced human and creative measure reflects communication and interpretation.");
+        assertThat(validator.validate(aligned, balancedContext())).isSameAs(aligned);
+    }
+
+    private ALevelNarrative withHumanExplanation(String explanation) {
+        ALevelNarrative base = narrative("These subjects appear to preserve several directions.");
+        return new ALevelNarrative(base.headline(), base.summary(), base.whatThisMeans(),
+                base.futureOptionalityExplanation(), base.strengthsExplanation(),
+                base.degreePathwayExplanation(), base.analyticalFoundationExplanation(), explanation,
+                base.transferabilityExplanation(), base.adaptabilityExplanation(),
+                base.developmentOpportunitiesExplanation(), base.practicalActions(),
+                base.cautionOrLimitations());
+    }
+
+    private ALevelNarrativeContext balancedContext() {
+        var measures = java.util.Arrays.stream(ALevelMeasure.values())
+                .map(measure -> new ALevelNarrativeContext.MeasureContext(measure, 6.5,
+                        OptionalityBand.BALANCED, 0.8)).toList();
+        return new ALevelNarrativeContext(List.of("Mathematics", "Economics", "Geography"),
+                Map.of(), List.of(), List.of(), List.of(), Optional.empty(), Optional.empty(),
+                AssessmentStatus.READY_WITH_CAUTION, AssessmentConfidence.MODERATE,
+                measures, List.of(), List.of(), AssessmentSource.JEV, "a-level-v1", "a-level-decision-v1");
+    }
 
     @Test
     void acceptsCalmBritishEnglishThatMakesNoExternalClaims() {

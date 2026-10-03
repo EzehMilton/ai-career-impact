@@ -4,6 +4,9 @@ import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeService;
 import com.chikere.futureai.evidence.professional.application.ProfessionalEvidenceService;
 import com.chikere.futureai.occupation.professional.application.ProfessionalOccupationClassificationService;
+import com.chikere.futureai.configuration.JourneyMetrics;
+import com.chikere.futureai.narrative.professional.application.NarrativeStatus;
+import com.chikere.futureai.narrative.professional.application.StoredProfessionalNarrative;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,6 +20,25 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class ProfessionalAssessmentWorkflowTest {
+
+    @Test
+    void recordedNarrativeFailureIncrementsFailureMetric() {
+        var assessmentService = mock(ProfessionalAssessmentService.class);
+        var narrativeService = mock(ProfessionalNarrativeService.class);
+        var metrics = mock(JourneyMetrics.class);
+        var saved = mock(StoredProfessionalNarrative.class);
+        var state = new ProfessionalAssessmentState("Architect", "Designs software systems.",
+                List.of("Review designs"), List.of("Architecture"), OptionalInt.empty());
+        UUID id = UUID.randomUUID();
+        when(assessmentService.submitProfessionalAssessment(state)).thenReturn(id);
+        when(narrativeService.generateFor(id)).thenReturn(saved);
+        when(saved.status()).thenReturn(NarrativeStatus.FAILED);
+
+        assertThat(new ProfessionalAssessmentWorkflow(assessmentService, narrativeService,
+                mock(ProfessionalOccupationClassificationService.class),
+                mock(ProfessionalEvidenceService.class), metrics).submit(state)).isEqualTo(id);
+        verify(metrics).narrativeFailed("professional");
+    }
 
     @Test
     void narrativeInfrastructureFailureCannotTurnCommittedAssessmentIntoFailedSubmission() {

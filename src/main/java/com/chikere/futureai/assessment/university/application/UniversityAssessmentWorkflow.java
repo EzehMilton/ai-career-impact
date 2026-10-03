@@ -3,6 +3,7 @@ package com.chikere.futureai.assessment.university.application;
 import com.chikere.futureai.assessment.domain.UniversityAssessmentState;
 import com.chikere.futureai.evidence.university.application.UniversityEvidenceService;
 import com.chikere.futureai.narrative.university.application.UniversityNarrativeService;
+import com.chikere.futureai.narrative.university.application.NarrativeStatus;
 import com.chikere.futureai.configuration.JourneyMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +39,9 @@ public final class UniversityAssessmentWorkflow {
         UUID id = assessmentService.submitUniversityAssessment(state);
         metrics.assessmentCreated("university");
         try {
-            narrativeService.generateFor(id);
+            if (narrativeService.generateFor(id).status() == NarrativeStatus.FAILED) {
+                metrics.narrativeFailed("university");
+            }
         }
         catch (RuntimeException persistenceFailure) {
             // The authoritative assessment has already committed. Do not turn an optional

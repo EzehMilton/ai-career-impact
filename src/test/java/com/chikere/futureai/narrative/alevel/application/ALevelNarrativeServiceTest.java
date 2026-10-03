@@ -65,7 +65,7 @@ class ALevelNarrativeServiceTest {
         verify(narrativeStore, times(2)).save(saved.capture());
         assertThat(saved.getAllValues().getFirst().status()).isEqualTo(NarrativeStatus.PENDING);
         assertThat(stored.status()).isEqualTo(NarrativeStatus.AVAILABLE);
-        assertThat(stored.promptSchemaVersion()).isEqualTo("a-level-narrative-v1");
+        assertThat(stored.promptSchemaVersion()).isEqualTo("a-level-narrative-v2");
         assertThat(stored.source()).isEqualTo(NarrativeSource.OPENAI);
         assertThat(stored.modelIdentifier()).contains("gpt-test");
         assertThat(stored.generatedAt()).contains(Instant.parse("2026-10-01T12:00:00Z"));

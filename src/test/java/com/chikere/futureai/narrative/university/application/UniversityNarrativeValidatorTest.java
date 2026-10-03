@@ -19,6 +19,19 @@ class UniversityNarrativeValidatorTest {
     }
 
     @Test
+    void rejectsUnsupportedLabourMarketCertaintyButAcceptsAssessmentInference() {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> validator.validate(narrative("Graduates will find work in this field.")))
+                .withMessageContaining("unsupported employment");
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> validator.validate(narrative("Employers will hire these graduates.")))
+                .withMessageContaining("unsupported employment");
+        UniversityNarrative cautious = narrative("The assessment suggests these skills may transfer "
+                + "to several fields; employment outcomes depend on other factors.");
+        assertThat(validator.validate(cautious)).isSameAs(cautious);
+    }
+
+    @Test
     void rejectsRepeatedScoresAndPercentages() {
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> validator.validate(narrative("Future Readiness is 8.75 / 10.")))

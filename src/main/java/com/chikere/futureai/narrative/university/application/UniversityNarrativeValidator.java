@@ -26,6 +26,8 @@ public final class UniversityNarrativeValidator {
                     + "|employment\\s+rate|graduate\\s+(?:outcome|employment|salary)\\s+(?:rate|figure|statistic)"
                     + "|guarantee(?:s|d)?\\s+(?:you|a|your|employment|a\\s+job|work)"
                     + "|will\\s+(?:definitely|certainly)\\s+(?:get|find)\\s+(?:a\\s+job|work)"
+                    + "|(?:graduates|students)\\s+will\\s+(?:find|secure|get)\\s+(?:work|jobs?|employment)"
+                    + "|(?:employers\\s+will\\s+hire|graduates\\s+are\\s+in\\s+demand)"
                     + "|bad\\s+degree|worthless\\s+degree"
                     + "|you\\s+will\\s+struggle\\s+to\\s+find\\s+work)\\b");
 

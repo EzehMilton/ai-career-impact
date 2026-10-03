@@ -183,11 +183,14 @@ Valid combinations include `prod`, `prod,live-payment`, `prod,live-payment,live-
 
 **Note:** the judgment and narrative adapters are selected by `!local-fixture`, so any profile other than `local-fixture` uses the real Jev and OpenAI adapters and needs their credentials. There is deliberately no fallback from a real provider to a fixture.
 
+`prod` alone therefore requires both `TYPESAFE_API_KEY` and `OPENAI_API_KEY`. The startup validator checks their presence and lists either missing variable by name. The live verification runbook records what has and has not been exercised against real providers: [LIVE_AI_VERIFICATION.md](LIVE_AI_VERIFICATION.md).
+
 ## Fail-fast configuration
 
 Startup stops, with every problem listed at once, when a capability is enabled but not configured. Messages name the setting and never its value, because startup failures get pasted into tickets.
 
 - **`prod`** requires `app.public-base-url`, and requires it to be `https` unless `app.public-base-url-allow-http=true` is set deliberately.
+- **`prod`** requires `TYPESAFE_API_KEY` and `OPENAI_API_KEY` because it activates real AI adapters.
 - **`live-payment`** requires the Stripe secret, all three webhook secrets and all three price ids.
 - **`live-evidence`** requires the professional occupation mapping.
 - **`local-fixture`** requires none of the above. Keeping local development free of production secrets is a property worth protecting, and a test asserts it.
@@ -263,6 +266,8 @@ The only tag is the journey or the rate-limit group. An assessment id, professio
 Recording is never load-bearing. `JourneyMetrics` swallows its own failures, and every collaborator resolves it optionally and falls back to an instance that records nothing — so a missing or broken registry cannot fail an assessment, a payment, a report or a PDF, and cannot even stop a context from starting.
 
 `checkout.failures` and `pdf.generation.failures` are declared and tested but not yet incremented from the checkout and PDF controllers; wiring them requires threading the collaborator through six sliced controller tests and is the one piece of instrumentation left for the next phase.
+
+The three assessment workflows also increment `narrative.failures` when a provider or validator failure is persisted as narrative status `FAILED`, as well as when narrative lifecycle persistence throws. The metric remains tagged only by journey.
 
 ## Datasource
 
