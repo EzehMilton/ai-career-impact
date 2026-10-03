@@ -1,5 +1,8 @@
 package com.chikere.futureai.narrative.alevel.application;
 
+import com.chikere.futureai.decision.alevel.ALevelMeasure;
+import com.chikere.futureai.decision.alevel.OptionalityBand;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -42,6 +45,23 @@ public final class ALevelNarrativeValidator {
                     + "|wrong\\s+(?:subjects?|combination)|bad\\s+(?:subjects?|combination)"
                     + "|you\\s+(?:won't|will\\s+not)\\s+get\\s+into"
                     + "|limit\\s+your\\s+future)\\b");
+
+    // Scoped to the matching explanation field; "strong" may legitimately describe another skill.
+    private static final Pattern STRONG_HUMAN_CREATIVE = Pattern.compile(
+            "(?i)\\b(?:strong\\s+human\\s+(?:and|&)\\s+creative"
+                    + "|human\\s+(?:and|&)\\s+creative\\s+(?:aspect|strength|capabilit(?:y|ies))"
+                    + "\\s+(?:is|are|appears?\\s+to\\s+be)\\s+strong)\\b");
+
+    public ALevelNarrative validate(ALevelNarrative narrative, ALevelNarrativeContext context) {
+        validate(narrative);
+        if (context != null && context.measures().stream().anyMatch(measure ->
+                measure.measure() == ALevelMeasure.HUMAN_AND_CREATIVE_STRENGTH
+                        && measure.band() == OptionalityBand.BALANCED)
+                && STRONG_HUMAN_CREATIVE.matcher(narrative.humanAndCreativeExplanation()).find()) {
+            throw new IllegalArgumentException("narrative must preserve the BALANCED human and creative band");
+        }
+        return narrative;
+    }
 
     public ALevelNarrative validate(ALevelNarrative narrative) {
         if (narrative == null) {

@@ -31,7 +31,7 @@ class StartupConfigurationValidatorTest {
     }
 
     @Test
-    void anOrdinaryDevelopmentContextWithNoProfileStarts() {
+    void anOrdinaryDevelopmentContextWithNoProfileHasNoProductionValidation() {
         assertThatCode(() -> StartupConfigurationValidator.validate(environment()))
                 .doesNotThrowAnyException();
     }
@@ -86,7 +86,7 @@ class StartupConfigurationValidatorTest {
     void productionAcceptsPlainHttpOnlyWhenTheOperatorSaysSoDeliberately() {
         // TLS terminating at a load balancer is a real deployment, so there is an escape hatch —
         // but it has to be asked for, rather than being what happens when nobody thought about it.
-        MockEnvironment environment = environment("prod")
+        MockEnvironment environment = productionEnvironment()
                 .withProperty("app.public-base-url", "http://internal.example")
                 .withProperty("app.public-base-url-allow-http", "true");
 
@@ -96,9 +96,18 @@ class StartupConfigurationValidatorTest {
 
     @Test
     void productionWithAnHttpsBaseUrlStarts() {
-        assertThatCode(() -> StartupConfigurationValidator.validate(environment("prod")
+        assertThatCode(() -> StartupConfigurationValidator.validate(productionEnvironment()
                 .withProperty("app.public-base-url", "https://example.com")))
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    void productionNamesBothMissingAiKeysWithoutRevealingValues() {
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment("prod")
+                .withProperty("app.public-base-url", "https://example.com")))
+                .isInstanceOf(ConfigurationProblemException.class)
+                .hasMessageContaining("TYPESAFE_API_KEY")
+                .hasMessageContaining("OPENAI_API_KEY");
     }
 
     @Test
@@ -149,5 +158,11 @@ class StartupConfigurationValidatorTest {
         MockEnvironment environment = new MockEnvironment();
         environment.setActiveProfiles(profiles);
         return environment;
+    }
+
+    private MockEnvironment productionEnvironment() {
+        return environment("prod")
+                .withProperty("TYPESAFE_API_KEY", "test-only-jev-key")
+                .withProperty("OPENAI_API_KEY", "test-only-openai-key");
     }
 }

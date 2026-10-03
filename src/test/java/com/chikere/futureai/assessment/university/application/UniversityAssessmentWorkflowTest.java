@@ -2,6 +2,9 @@ package com.chikere.futureai.assessment.university.application;
 
 import com.chikere.futureai.assessment.domain.UniversityAssessmentState;
 import com.chikere.futureai.evidence.university.application.UniversityEvidenceService;
+import com.chikere.futureai.configuration.JourneyMetrics;
+import com.chikere.futureai.narrative.university.application.NarrativeStatus;
+import com.chikere.futureai.narrative.university.application.StoredUniversityNarrative;
 import com.chikere.futureai.narrative.university.application.UniversityNarrativeService;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
@@ -20,6 +23,21 @@ import static org.mockito.Mockito.when;
 class UniversityAssessmentWorkflowTest {
 
     private static final UUID ID = UUID.fromString("1a28e0d8-9c3e-4e9f-9f4f-2e1a1d0a7b11");
+
+    @Test
+    void recordedNarrativeFailureIncrementsFailureMetric() {
+        var assessmentService = mock(UniversityAssessmentService.class);
+        var narrativeService = mock(UniversityNarrativeService.class);
+        var metrics = mock(JourneyMetrics.class);
+        var saved = mock(StoredUniversityNarrative.class);
+        when(assessmentService.submitUniversityAssessment(state())).thenReturn(ID);
+        when(narrativeService.generateFor(ID)).thenReturn(saved);
+        when(saved.status()).thenReturn(NarrativeStatus.FAILED);
+
+        assertThat(new UniversityAssessmentWorkflow(assessmentService, narrativeService,
+                mock(UniversityEvidenceService.class), metrics).submit(state())).isEqualTo(ID);
+        verify(metrics).narrativeFailed("university");
+    }
 
     @Test
     void persistsTheAssessmentBeforeAnyEnrichmentRuns() {

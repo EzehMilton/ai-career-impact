@@ -2,6 +2,7 @@ package com.chikere.futureai.assessment.professional.application;
 
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeService;
+import com.chikere.futureai.narrative.professional.application.NarrativeStatus;
 import com.chikere.futureai.evidence.professional.application.ProfessionalEvidenceService;
 import com.chikere.futureai.occupation.professional.application.ProfessionalOccupationClassificationService;
 import com.chikere.futureai.configuration.JourneyMetrics;
@@ -54,7 +55,9 @@ public final class ProfessionalAssessmentWorkflow {
     private UUID enrich(UUID id) {
         metrics.assessmentCreated("professional");
         try {
-            narrativeService.generateFor(id);
+            if (narrativeService.generateFor(id).status() == NarrativeStatus.FAILED) {
+                metrics.narrativeFailed("professional");
+            }
         }
         catch (RuntimeException persistenceFailure) {
             // The authoritative assessment has already committed. Do not turn an optional

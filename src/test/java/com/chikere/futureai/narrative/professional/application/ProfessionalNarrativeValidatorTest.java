@@ -5,8 +5,32 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class ProfessionalNarrativeValidatorTest {
+
+    @Test
+    void rejectsCategoricalAiCapabilityAndReplacementClaims() {
+        for (String claim : List.of("AI cannot replicate this work at present.",
+                "AI will replace this role.", "This role is safe from AI.",
+                "This role will disappear.")) {
+            assertThatThrownBy(() -> new ProfessionalNarrativeValidator().validate(withSummary(claim)))
+                    .hasMessageContaining("categorical AI");
+        }
+    }
+
+    @Test
+    void acceptsCautiousCapabilityExplanationAndUnrelatedCannot() {
+        var cautious = withSummary("The assessment suggests AI may assist with some tasks; "
+                + "it cannot determine your individual job prospects.");
+        assertThat(new ProfessionalNarrativeValidator().validate(cautious)).isSameAs(cautious);
+    }
+
+    private ProfessionalNarrative withSummary(String summary) {
+        return new ProfessionalNarrative("Headline", summary, "Meaning", "Exposure", "Human",
+                "Complementarity", "Adaptability", List.of("Action one", "Action two", "Action three"),
+                "Limitations");
+    }
 
     @Test
     void rejectsNumericScoreOrPercentageClaims() {

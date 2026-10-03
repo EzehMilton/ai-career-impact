@@ -39,6 +39,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ActiveProfiles("prod")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
         "app.public-base-url=https://ai-career-impact.example",
+        "TYPESAFE_API_KEY=test-only-jev-key",
+        "OPENAI_API_KEY=test-only-openai-key",
         "spring.ai.model.chat=none"})
 class ProductionShapeTest {
 

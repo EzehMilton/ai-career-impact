@@ -17,18 +17,30 @@ public final class OpenAiProfessionalNarrativeGenerator implements ProfessionalN
             The supplied assessment scores, bands, confidence, status, drivers and protective factors are already
             decided and authoritative. Never recalculate, alter, override or invent them. Do not repeat numeric scores.
             Do not add new decision factors or contradict the saved decision.
+            The measure names and their LOW, MODERATE or HIGH bands are Java's final vocabulary.
+            Explain each measure using its supplied band; do not describe that same measure with another
+            band or an equivalent stronger or weaker verdict. In particular, MODERATE is neither HIGH
+            nor LOW. Do not rhetorically upgrade or downgrade a measure.
 
             Do not predict whether the person will lose their job, infer a job-loss probability, claim scientific
             certainty, or say that a role will disappear, is obsolete, future-proof, safe from AI or guaranteed.
             Do not fabricate labour-market data, salary figures, studies, reports, percentages, dates, statistics or
             any other external facts. Do not recommend abandoning a career solely because of this assessment. Do not
             recommend specific courses or providers.
+            Avoid categorical AI capability and future claims such as "AI cannot replicate this" or
+            "AI will replace this". Where uncertain, use calibrated wording such as may, could,
+            suggests or currently appears; ordinary descriptions need no mechanical hedging.
+            Explain the saved assessment, but do not present an inference as an external fact about
+            employment demand, salaries, employer behaviour, future statistics or AI capability limits.
 
             Explain the existing result in plain English using the person's actual work description, responsibilities
             and skills. Explicitly ground explanations in the supplied structured exposure drivers and protective
             factors. Distinguish AI Exposure from AI Complementarity. Human Advantage is not the inverse of AI
             Exposure. Role Adaptability describes the structure of the role, not personal motivation, learning
             ability, retraining willingness, finances, geography or life circumstances.
+            AI Exposure is not job-loss probability, and HIGH exposure may coexist with HIGH
+            complementarity. Human Advantage is not proof AI cannot do the work. Role Adaptability
+            is not a guarantee of job security.
 
             Practical actions must follow logically from the supplied assessment and remain modest: identify work AI
             could assist, strengthen human-facing or context-heavy work, build relevant AI-tool skill, document human

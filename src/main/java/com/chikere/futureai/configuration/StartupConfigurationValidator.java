@@ -104,6 +104,12 @@ public class StartupConfigurationValidator {
         // without one, with a clearer message than this could give, and a DataSource can legitimately
         // be supplied other than through spring.datasource.url.
         List<String> problems = new ArrayList<>();
+        if (environment.getProperty("TYPESAFE_API_KEY", "").isBlank()) {
+            problems.add("Missing required configuration: TYPESAFE_API_KEY");
+        }
+        if (environment.getProperty("OPENAI_API_KEY", "").isBlank()) {
+            problems.add("Missing required configuration: OPENAI_API_KEY");
+        }
         String configured = environment.getProperty("app.public-base-url", "");
         if (configured.isBlank()) {
             problems.add("Missing required configuration: app.public-base-url");

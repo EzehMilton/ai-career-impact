@@ -211,6 +211,25 @@
 
 	<profiles>
 		<profile>
+			<id>live-openai-evaluation</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<configuration>
+							<systemPropertyVariables>
+								<openai.live.evaluation.enabled>true</openai.live.evaluation.enabled>
+							</systemPropertyVariables>
+							<includes>
+								<include>**/LiveOpenAiNarrativeIT.java</include>
+							</includes>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
 			<id>live-jev-evaluation</id>
 			<build>
 				<plugins>
@@ -223,6 +242,7 @@
 							</systemPropertyVariables>
 							<includes>
 								<include>**/ProfessionalJevLiveEvaluationIT.java</include>
+								<include>**/StudentJevLiveEvaluationIT.java</include>
 							</includes>
 						</configuration>
 						<executions>

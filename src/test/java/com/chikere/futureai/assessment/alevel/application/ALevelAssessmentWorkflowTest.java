@@ -2,6 +2,9 @@ package com.chikere.futureai.assessment.alevel.application;
 
 import com.chikere.futureai.assessment.domain.ALevelAssessmentState;
 import com.chikere.futureai.evidence.alevel.application.ALevelEvidenceService;
+import com.chikere.futureai.configuration.JourneyMetrics;
+import com.chikere.futureai.narrative.alevel.application.NarrativeStatus;
+import com.chikere.futureai.narrative.alevel.application.StoredALevelNarrative;
 import com.chikere.futureai.narrative.alevel.application.ALevelNarrativeService;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
@@ -23,6 +26,21 @@ import static org.mockito.Mockito.when;
 class ALevelAssessmentWorkflowTest {
 
     private static final UUID ID = UUID.fromString("3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f");
+
+    @Test
+    void recordedNarrativeFailureIncrementsFailureMetric() {
+        var assessmentService = mock(ALevelAssessmentService.class);
+        var narrativeService = mock(ALevelNarrativeService.class);
+        var metrics = mock(JourneyMetrics.class);
+        var saved = mock(StoredALevelNarrative.class);
+        when(assessmentService.submitALevelAssessment(state())).thenReturn(ID);
+        when(narrativeService.generateFor(ID)).thenReturn(saved);
+        when(saved.status()).thenReturn(NarrativeStatus.FAILED);
+
+        assertThat(new ALevelAssessmentWorkflow(assessmentService, narrativeService,
+                mock(ALevelEvidenceService.class), metrics).submit(state())).isEqualTo(ID);
+        verify(metrics).narrativeFailed("a-level");
+    }
 
     @Test
     void persistsTheAssessmentBeforeAnyEnrichmentRuns() {

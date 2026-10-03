@@ -46,7 +46,7 @@ public final class ALevelNarrativeService {
                 attemptedAt, Optional.empty()));
         try {
             ALevelNarrativeContext context = contextFactory.create(assessment);
-            ALevelNarrative narrative = validator.validate(generator.generate(context));
+            ALevelNarrative narrative = validator.validate(generator.generate(context), context);
             var available = stored(assessmentId, NarrativeStatus.AVAILABLE, Optional.of(narrative),
                     attemptedAt, Optional.of(Instant.now(clock)));
             narrativeStore.save(available);

@@ -10,6 +10,11 @@ public final class ProfessionalNarrativeValidator {
     // No trailing \\b: a percent sign is not a word character, so "92%" would otherwise slip through.
     private static final Pattern NUMERIC_CLAIM = Pattern.compile(
             "(?i)\\b\\d+(?:\\.\\d+)?\\s*(?:%|/\\s*10\\b|out\\s+of\\s+10\\b)");
+    private static final Pattern CATEGORICAL_AI_CLAIM = Pattern.compile(
+            "(?i)\\b(?:AI\\s+cannot\\s+(?:replicate|perform|do)\\b"
+                    + "|AI\\s+will\\s+replace\\b"
+                    + "|(?:this|the)\\s+(?:role|career|job)\\s+is\\s+safe\\s+from\\s+AI\\b"
+                    + "|(?:this|the)\\s+(?:role|career|job)\\s+will\\s+disappear\\b)");
 
     public ProfessionalNarrative validate(ProfessionalNarrative narrative) {
         if (narrative == null) {
@@ -23,6 +28,9 @@ public final class ProfessionalNarrativeValidator {
         text.addAll(narrative.practicalActions());
         if (text.stream().anyMatch(value -> NUMERIC_CLAIM.matcher(value).find())) {
             throw new IllegalArgumentException("narrative must not repeat numeric scores or percentage claims");
+        }
+        if (text.stream().anyMatch(value -> CATEGORICAL_AI_CLAIM.matcher(value).find())) {
+            throw new IllegalArgumentException("narrative must not make categorical AI capability or job-loss claims");
         }
         return narrative;
     }

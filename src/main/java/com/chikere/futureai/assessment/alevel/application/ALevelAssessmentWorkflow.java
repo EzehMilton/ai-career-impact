@@ -3,6 +3,7 @@ package com.chikere.futureai.assessment.alevel.application;
 import com.chikere.futureai.assessment.domain.ALevelAssessmentState;
 import com.chikere.futureai.evidence.alevel.application.ALevelEvidenceService;
 import com.chikere.futureai.narrative.alevel.application.ALevelNarrativeService;
+import com.chikere.futureai.narrative.alevel.application.NarrativeStatus;
 import com.chikere.futureai.configuration.JourneyMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +39,9 @@ public final class ALevelAssessmentWorkflow {
         UUID id = assessmentService.submitALevelAssessment(state);
         metrics.assessmentCreated("a-level");
         try {
-            narrativeService.generateFor(id);
+            if (narrativeService.generateFor(id).status() == NarrativeStatus.FAILED) {
+                metrics.narrativeFailed("a-level");
+            }
         }
         catch (RuntimeException persistenceFailure) {
             // The authoritative assessment has already committed. Do not turn an optional
