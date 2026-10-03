@@ -58,7 +58,7 @@ public final class ProfessionalReportViewMapper {
                 + value.stripTrailingZeros().toPlainString() + " " + item.metricUnit().orElseThrow()).orElse(null);
         return new ProfessionalReportViewModel.EvidenceItemView(label(item.category()), item.title(), item.summary(),
                 source, item.sourceUrl().map(Object::toString).orElse(null), item.geography().orElse(null),
-                date, metric, item.relevanceNote());
+                date, label(item.sourceQuality().name()), metric, item.relevanceNote());
     }
 
     private String measureLabel(String name) {

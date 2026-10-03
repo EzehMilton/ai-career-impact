@@ -76,6 +76,7 @@ class ALevelReportAssemblerTest {
         assertThat(free.preferredAreas().careerAreas()).isEmpty();
         assertThat(free.evidence().status()).isEqualTo(EvidenceStatus.NOT_REQUESTED);
         assertThat(free.evidence().items()).isEmpty();
+        assertThat(free.evidence().message()).contains("where available");
         assertThat(free.measures()).allSatisfy(measure ->
                 assertThat(measure.detailedExplanation()).isEmpty());
     }

@@ -211,6 +211,26 @@
 
 	<profiles>
 		<profile>
+			<id>live-evidence-evaluation</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<configuration>
+							<systemPropertyVariables>
+								<evidence.live.evaluation.enabled>true</evidence.live.evaluation.enabled>
+							</systemPropertyVariables>
+							<includes>
+								<include>**/NomisLiveEvidenceIT.java</include>
+								<include>**/ProfessionalLiveEvidenceFlowIT.java</include>
+							</includes>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
 			<id>live-openai-evaluation</id>
 			<build>
 				<plugins>

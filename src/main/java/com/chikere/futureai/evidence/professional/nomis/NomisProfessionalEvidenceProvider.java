@@ -21,6 +21,9 @@ public final class NomisProfessionalEvidenceProvider implements ProfessionalEvid
 
     @Override
     public ProfessionalEvidenceBundle gather(ProfessionalEvidenceRequest request) {
+        if (!"United Kingdom".equals(request.geography())) {
+            throw new IllegalArgumentException("APS218 evidence currently supports United Kingdom only");
+        }
         String classification = request.occupationClassification().orElseThrow(() ->
                 new IllegalArgumentException("An explicitly configured SOC 2020 occupation code is required"));
         NomisObservation observation = client.latestUnitedKingdomEmployment(classification);
@@ -30,7 +33,7 @@ public final class NomisProfessionalEvidenceProvider implements ProfessionalEvid
                 "The latest available Annual Population Survey estimate for this SOC 2020 occupation is shown below.",
                 "Nomis APS218", Optional.of("APS218 / SOC 2020 " + classification),
                 Optional.of(DATASET_URL), Optional.of("Office for National Statistics"),
-                Optional.of(request.geography()), Optional.empty(), retrievedAt,
+                Optional.of(observation.geography()), Optional.empty(), retrievedAt,
                 Optional.of("Estimated employment (" + observation.period() + ")"),
                 Optional.of(observation.value()), Optional.of(observation.unit()),
                 EvidenceSourceQuality.OFFICIAL,

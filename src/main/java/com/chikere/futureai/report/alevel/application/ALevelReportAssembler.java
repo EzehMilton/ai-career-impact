@@ -198,7 +198,7 @@ public final class ALevelReportAssembler {
     private ALevelReport.EvidenceContent evidence(Optional<ALevelEvidenceBundle> stored, boolean paid) {
         if (!paid) {
             return new ALevelReport.EvidenceContent(EvidenceStatus.NOT_REQUESTED,
-                    "Factual course and labour-market context is included in the full report.",
+                    "Verified factual course context appears in the full report where available.",
                     EVIDENCE_SEPARATION_NOTE, List.of());
         }
         if (stored.isEmpty() || stored.orElseThrow().status() == EvidenceStatus.FAILED

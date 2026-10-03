@@ -7,6 +7,7 @@ import com.chikere.futureai.evidence.professional.application.*;
 import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfessionalJudgmentProvider;
 import com.chikere.futureai.narrative.professional.application.*;
 import com.chikere.futureai.occupation.professional.application.*;
+import com.chikere.futureai.report.professional.web.ProfessionalReportViewMapper;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -38,6 +39,7 @@ class ProfessionalReportAssemblerTest {
         assertThat(free.skillPriorities()).isEmpty();
         assertThat(free.workFocus().areas()).isEmpty();
         assertThat(free.evidence().items()).isEmpty();
+        assertThat(free.evidence().message()).contains("where available");
         assertThat(free.occupationClassification()).isEmpty();
 
         assertThat(paid.narrative().exposureExplanation()).contains("Detailed exposure");
@@ -48,6 +50,9 @@ class ProfessionalReportAssemblerTest {
                         && value.relatedResponsibilities().contains("Design systems"));
         assertThat(paid.evidence().items()).singleElement().satisfies(item ->
                 assertThat(item.sourceName()).isEqualTo("Local fixture evidence"));
+        assertThat(new ProfessionalReportViewMapper().toView(paid).evidence().items())
+                .singleElement().satisfies(item ->
+                        assertThat(item.quality()).isEqualTo("Development fixture"));
         assertThat(paid.occupationClassification()).get().extracting(
                 ProfessionalReport.OccupationClassification::classificationCode).isEqualTo("2133");
         assertThat(paid.methodology().reportVersion()).isEqualTo("professional-report-v1");

@@ -394,7 +394,7 @@ export A_LEVEL_REPORT_STRIPE_PRICE_ID=price_...
 java -jar target/ai-career-impact-0.0.1-SNAPSHOT.jar
 ```
 
-If anything required is missing, the application names it and refuses to start.
+If anything required is missing, the application names it and refuses to start. The `live-evidence` profile currently supplies only Professional UK Nomis data for an exactly configured occupation; it does not activate University or A-level live evidence. Those report sections must be read as unavailable where no sourced item exists. The profile cannot be combined with `local-fixture`. See [LIVE_EVIDENCE_VERIFICATION.md](LIVE_EVIDENCE_VERIFICATION.md) for the tested source path and limits.
 
 ## Build-time analysis
 
@@ -404,12 +404,12 @@ No static-analysis or dependency-scanning plugin is configured — no SpotBugs, 
 
 ## Reserved for live integration
 
-Everything below needs real credentials and real provider calls, which this phase deliberately does not make:
+The remaining external-provider work is:
 
-- a real Jev judgment end to end, and the behaviour when the provider is slow or returns something unexpected;
-- a real OpenAI narrative, including validator behaviour on real output;
 - a real Stripe checkout, a real signed webhook, and the full purchase-to-entitlement path against Stripe's test mode;
-- live evidence retrieval, including the Nomis adapter against the real dataset;
-- live University and A-level evidence adapters, which do not exist yet;
+- broader official occupation mapping and additional Professional evidence categories beyond the verified UK Nomis employment snapshot;
+- University and A-level live evidence adapters only after exact course/provider identifiers and defensible source ingestion are available;
 - wiring `checkout.failures` and `pdf.generation.failures` into their controllers;
 - deciding whether a Prometheus registry is wanted, once there is somewhere to scrape it from.
+
+Real Jev and OpenAI verification is recorded in [LIVE_AI_VERIFICATION.md](LIVE_AI_VERIFICATION.md). Prompt 18B's independent Nomis request and saved-report flow are recorded in [LIVE_EVIDENCE_VERIFICATION.md](LIVE_EVIDENCE_VERIFICATION.md). Normal `mvn clean verify` runs neither live suite.

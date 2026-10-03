@@ -67,7 +67,7 @@ The live narrative harness is gated by `-Plive-openai-evaluation`, a non-empty `
 
 Each invocation creates a fresh PostgreSQL Testcontainer. The Professional selector makes a new Jev and OpenAI call; do not rerun it merely to improve wording or recheck the corrected page assertion. The three requested live narrative calls and the real-AI Professional flow are complete. The remaining wording findings are review findings, not permission to silently change authoritative decisions or weaken validators.
 
-Prompt 18B covers live evidence providers and Nomis. Prompt 18C covers Stripe integration. Prompt 18D retains release work and any remaining operational checks; none are part of this verification record.
+Prompt 18B's live Nomis verification and student source decisions are recorded separately in [LIVE_EVIDENCE_VERIFICATION.md](LIVE_EVIDENCE_VERIFICATION.md). Prompt 18C covers Stripe integration. Prompt 18D retains release work and any remaining operational checks; none are part of this AI verification record.
 
 The offline review also found that narrative provider failures were persisted as `FAILED` but did not increment `narrative.failures`; the metric previously covered only thrown lifecycle persistence errors. Each journey workflow now counts a returned `FAILED` state. Focused offline tests cover the three paths.
 

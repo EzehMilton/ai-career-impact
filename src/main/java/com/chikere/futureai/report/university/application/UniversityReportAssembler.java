@@ -165,7 +165,7 @@ public final class UniversityReportAssembler {
     private UniversityReport.EvidenceContent evidence(Optional<UniversityEvidenceBundle> stored, boolean paid) {
         if (!paid) {
             return new UniversityReport.EvidenceContent(EvidenceStatus.NOT_REQUESTED,
-                    "External course and labour-market context is included in the full report.", List.of());
+                    "Verified external course context appears in the full report where available.", List.of());
         }
         if (stored.isEmpty() || stored.orElseThrow().status() == EvidenceStatus.FAILED
                 || stored.orElseThrow().status() == EvidenceStatus.PENDING) {
