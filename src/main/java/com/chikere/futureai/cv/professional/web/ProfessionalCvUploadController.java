@@ -1,7 +1,7 @@
 package com.chikere.futureai.cv.professional.web;
 
 import com.chikere.futureai.assessment.professional.web.ProfessionalAssessmentForm;
-import com.chikere.futureai.cv.professional.application.ProfessionalCvParseStatus;
+import com.chikere.futureai.cv.professional.application.ProfessionalProfileExtractionException;
 import com.chikere.futureai.cv.professional.application.ProfessionalCvParsingException;
 import com.chikere.futureai.cv.professional.application.ProfessionalCvUploadService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,13 +20,11 @@ public final class ProfessionalCvUploadController {
     private static final String FORM_VIEW = "professional-assessment/form";
     private final ProfessionalCvUploadValidator validator;
     private final ProfessionalCvUploadService uploadService;
-    private final ProfessionalCvFormPrefillMapper formMapper;
 
     public ProfessionalCvUploadController(ProfessionalCvUploadValidator validator,
-            ProfessionalCvUploadService uploadService, ProfessionalCvFormPrefillMapper formMapper) {
+            ProfessionalCvUploadService uploadService) {
         this.validator = validator;
         this.uploadService = uploadService;
-        this.formMapper = formMapper;
     }
 
     // An upload that exceeds the configured size never reaches this method: the multipart parser
@@ -36,27 +34,30 @@ public final class ProfessionalCvUploadController {
     public String upload(@RequestParam("cv") MultipartFile file, Model model,
             HttpSession session, HttpServletResponse response) {
         session.removeAttribute(ProfessionalCvSession.INPUT_METADATA);
+        session.removeAttribute(ProfessionalCvSession.PROFILE);
         try {
-            var prefill = uploadService.parse(validator.validate(file));
-            model.addAttribute("form", formMapper.toForm(prefill.result()));
-            if (prefill.result().status() == ProfessionalCvParseStatus.INSUFFICIENT_TEXT) {
-                model.addAttribute("cvError", prefill.result().warnings().getFirst());
-                return FORM_VIEW;
-            }
-            model.addAttribute("cvPrefill", true);
-            model.addAttribute("cvFilename", prefill.inputMetadata().originalFilename().orElse("CV"));
-            model.addAttribute("cvWarnings", prefill.result().warnings());
-            session.setAttribute(ProfessionalCvSession.INPUT_METADATA, prefill.inputMetadata());
-            return FORM_VIEW;
+            var document = validator.validate(file);
+            LOGGER.info("Professional CV uploaded fileType={}", document.type());
+            var result = uploadService.extractProfile(document);
+            LOGGER.info("Professional profile extraction succeeded fileType={} outcome=SUCCESS", document.type());
+            session.setAttribute(ProfessionalCvSession.INPUT_METADATA, result.inputMetadata());
+            session.setAttribute(ProfessionalCvSession.PROFILE, result.profile());
+            return "redirect:/professional-assessment/cv/review";
         }
         catch (ProfessionalCvUploadValidationException exception) {
             response.setStatus(exception.status());
             return errorForm(model, exception.getMessage());
         }
         catch (ProfessionalCvParsingException exception) {
-            LOGGER.warn("CV parsing failed safely ({})", exception.getClass().getSimpleName());
+            LOGGER.warn("Professional CV parsed outcome=FAILED failureType={}", exception.getClass().getSimpleName());
             response.setStatus(422);
-            return errorForm(model, "We couldn't extract enough information from this CV. Please enter your work details manually.");
+            return errorForm(model, "We couldn't read this CV safely. Describe your work manually instead.");
+        }
+        catch (ProfessionalProfileExtractionException exception) {
+            LOGGER.warn("Professional profile extraction failed outcome=FAILED failureType={}",
+                    exception.getClass().getSimpleName());
+            response.setStatus(422);
+            return errorForm(model, "We couldn't identify enough reliable career information from this CV. Describe your work manually instead.");
         }
     }
 

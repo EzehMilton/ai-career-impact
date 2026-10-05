@@ -52,6 +52,7 @@ public final class ProfessionalAssessmentController {
     @GetMapping("/professional-assessment")
     public String showForm(Model model, HttpSession session) {
         session.removeAttribute(ProfessionalCvSession.INPUT_METADATA);
+        session.removeAttribute(ProfessionalCvSession.PROFILE);
         model.addAttribute("form", new ProfessionalAssessmentForm());
         return FORM_VIEW;
     }
@@ -68,11 +69,9 @@ public final class ProfessionalAssessmentController {
         }
         try {
             ProfessionalAssessmentState state = formMapper.toState(form);
-            Object sessionMetadata = session.getAttribute(ProfessionalCvSession.INPUT_METADATA);
-            var inputMetadata = sessionMetadata instanceof ProfessionalAssessmentInputMetadata metadata
-                    ? metadata : ProfessionalAssessmentInputMetadata.manual();
-            UUID id = workflow.submit(state, inputMetadata);
+            UUID id = workflow.submit(state, ProfessionalAssessmentInputMetadata.manual());
             session.removeAttribute(ProfessionalCvSession.INPUT_METADATA);
+            session.removeAttribute(ProfessionalCvSession.PROFILE);
             return "redirect:/professional-assessment/" + id;
         }
         catch (RuntimeException exception) {

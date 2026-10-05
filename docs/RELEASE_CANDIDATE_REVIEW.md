@@ -10,7 +10,7 @@ The review is based on source inspection, existing automated tests, the baseline
 
 Each journey has its own web forms, application workflow, typed Jev judgment schema, deterministic Java policy, narrative adapter, evidence records, assessment tables, payment records, purchased snapshot and PDF artifact. Controllers delegate decisions to application services. Jev supplies structured judgments; Java owns scores, bands and thresholds. OpenAI generates narrative from the saved decision and cannot change a measure. Factual claims belong to saved evidence with source provenance. Assessment GETs and paid-report GETs read saved state; they do not rerun providers or recalculate historical policy.
 
-Professional takes the form and optional CV extraction into the assessment workflow. It saves judgment and policy results, then narrative, occupation classification and evidence lifecycle records. The free report reads the saved state. Checkout creates a PENDING entitlement; only a verified Stripe event can freeze a PAID report snapshot and activate the entitlement. The paid report and PDF require ACTIVE status. CV extraction is a known quality defect and is outside this review.
+Professional takes either manual form input or a confirmed structured CV profile into the assessment workflow. It saves judgment and policy results, then narrative, occupation classification and evidence lifecycle records. The free report reads the saved state. Checkout creates a PENDING entitlement; only a verified Stripe event can freeze a PAID report snapshot and activate the entitlement. The paid report and PDF require ACTIVE status. The CV quality defect recorded by this review was addressed on 2026-10-04 by replacing direct form prefilling with parse, typed extraction and explicit confirmation.
 
 University and A-level use the equivalent journey-specific sequence. Their judgment schemas, policies, tables and purchase references are distinct. A-level copy and narrative validation avoid admission guarantees, invented prerequisites and instructions to drop or change a subject. The A-level report tells students to check published course requirements. There is no live University or A-level evidence adapter; unavailable sourced context stays unavailable rather than becoming a fixture in non-fixture profiles.
 
@@ -66,7 +66,7 @@ Previously recorded manual checks include Professional live Jev, live OpenAI nar
 
 ## Known defects and release blockers
 
-1. **CV extraction quality:** a real Professional CV placed a technical responsibility in Job title and extracted other fields poorly. No extraction change was made here.
+1. **CV extraction quality (resolved 2026-10-04):** CV upload no longer prefills the manual form. A separate structured profile is validated and confirmed; unreliable extraction fails to manual entry.
 2. **Checkout availability after runtime switch:** after IntelliJ changed from Java 25 to Java 21, a later Professional assessment displayed “Paid report checkout is not currently available.” The earlier Stripe TEST checkout and activation succeeded. The later configuration/integration cause is unknown and must be investigated, without a payment fallback.
 3. **PDF runtime:** Java 25 on the development Mac failed when OpenHTMLToPDF/AWT tried to load an unavailable macOS native framework. Java 21 is the intended runtime. A real Professional paid PDF download and reopen under Java 21 is still required; no OS-specific workaround is claimed.
 4. **Authorization:** opaque assessment links plus ACTIVE entitlement are insufficient to establish a purchaser's identity for a genuine public production release. Owner authorization and privacy policy decisions remain to be designed.
@@ -75,6 +75,6 @@ Previously recorded manual checks include Professional live Jev, live OpenAI nar
 
 ## Deferred work and release assessment
 
-UI and visual refinement from the landing page through generated PDFs belongs to the next product-polish phase. Broader verified occupation mapping, student evidence ingestion, CV extraction improvement and metric wiring remain separate work. Do not substitute fixtures for failed live providers or a success redirect for payment confirmation.
+UI and visual refinement from the landing page through generated PDFs belongs to the next product-polish phase. Broader verified occupation mapping, student evidence ingestion and metric wiring remain separate work. Do not substitute fixtures for failed live providers or a success redirect for payment confirmation.
 
 The code has a passing offline baseline, separated journey policies, saved provenance, strict signed payment processing, frozen purchases and guarded PDFs. A genuine production release remains blocked by the checkout-unavailable observation, Java 21 live PDF re-verification, missing owner authorization, and operator validation of the student live-payment paths. This is a release candidate for controlled further testing, not a claim of production readiness.

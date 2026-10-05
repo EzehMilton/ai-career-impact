@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Review your professional profile')}"></head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('professional')}"></header>
+<main class="page-shell" id="main">
+  <div class="page-header">
+    <p class="eyebrow">Professional assessment</p>
+    <h1>We analysed your CV</h1>
+    <p class="intro">Check the professional profile below. It contains what we understood, not the raw CV text.</p>
+  </div>
+
+  <section class="panel" aria-labelledby="profile-heading">
+    <h2 id="profile-heading">Your professional profile</h2>
+    <h3>Current role</h3><p th:text="${profile.currentRole}">Senior Software Architect</p>
+    <h3>Role summary</h3><p th:text="${profile.roleSummary}">Role summary</p>
+    <h3>Main responsibilities</h3>
+    <ul><li th:each="item : ${profile.responsibilities}" th:text="${item}"></li></ul>
+    <h3>Technical skills</h3>
+    <ul th:if="${!profile.technicalSkills.isEmpty()}"><li th:each="item : ${profile.technicalSkills}" th:text="${item}"></li></ul>
+    <p class="helper" th:if="${profile.technicalSkills.isEmpty()}">No technical skills were identified reliably.</p>
+    <h3>Human / leadership strengths</h3>
+    <ul th:if="${!profile.humanSkills.isEmpty()}"><li th:each="item : ${profile.humanSkills}" th:text="${item}"></li></ul>
+    <p class="helper" th:if="${profile.humanSkills.isEmpty()}">No human skills were identified reliably.</p>
+    <h3>Years of experience</h3>
+    <p th:if="${profile.yearsExperience.present}" th:text="${profile.yearsExperience.asInt}">12</p>
+    <p class="helper" th:unless="${profile.yearsExperience.present}">Could not be determined reliably.</p>
+
+    <div class="notice" th:if="${!profile.warnings.isEmpty()}">
+      <strong>Please review these points</strong>
+      <ul><li th:each="warning : ${profile.warnings}" th:text="${warning}"></li></ul>
+    </div>
+
+    <div class="button-row">
+      <form th:action="@{/professional-assessment/cv/confirm}" method="post">
+        <button type="submit">Continue with this profile</button>
+      </form>
+      <a class="button-link button-secondary" th:href="@{/professional-assessment/cv/edit}">Edit what we understood</a>
+    </div>
+  </section>
+  <p class="page-action"><a th:href="@{/professional-assessment}">Describe my work manually</a></p>
+</main>
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
+</body>
+</html>

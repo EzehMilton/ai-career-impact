@@ -402,39 +402,47 @@ Only an `ACTIVE` entitlement reaches generation or download. Missing, pending, f
 CV upload is an alternative input path, not an assessment engine:
 
 ```text
-Manual input ------------------------\
-                                      -> ProfessionalAssessmentForm
-CV upload -> ProfessionalCvParser ---/             |
-                    |                              v
-                    v                  ProfessionalAssessmentState
-        ProfessionalCvParseResult                   |
-                    |                              v
-             prefill and review          existing assessment pipeline
+Manual input -> ProfessionalAssessmentForm -> ProfessionalAssessmentState --\
+                                                                             -> existing judgment/policy pipeline
+CV upload -> ProfessionalCvParser -> ProfessionalProfileExtractor            /
+                    |                         |
+                    v                         v
+          transient clean text       ProfessionalProfile
+                                              |
+                                      review / edit / confirm
+                                              |
+                              ProfessionalProfileAssessmentMapper
 ```
 
-`ProfessionalCvParser` accepts a Spring-independent `ProfessionalCvDocument` and returns
-candidate work details. PDFBox extracts text from PDF and Apache POI extracts text from DOCX.
-`DeterministicProfessionalCvStructurer` then uses conservative document headings and explicit
-content; it does not calculate impact measures or infer typical skills from a job title. The
-browser always shows the existing editable form before the existing assessment POST can run.
+`ProfessionalCvParser` accepts a Spring-independent `ProfessionalCvDocument` and does one job:
+PDFBox or Apache POI converts it to bounded, cleaned text. It never decides a role, skill,
+responsibility or years of experience. `ProfessionalProfileExtractor` is the separate information-
+extraction boundary. The normal adapter uses Spring AI/OpenAI provider structured output to create
+the small immutable `ProfessionalProfile`; under `local-fixture`, a deterministic fixture adapter
+supports the complete browser flow without OpenAI or Jev.
 
-The parser is versioned as `professional-cv-parser-v1`. No AI structurer is used in V1, so local
-fixture development and ordinary operation use the same deterministic, network-free extraction.
-Instruction-like CV lines are discarded as untrusted data. Obvious email, phone and postcode
-lines are removed before structuring; this is deliberately modest data minimisation rather than
-a claim of comprehensive PII detection.
+The text-only parser contract is versioned `professional-cv-parser-v2`; historical V1 assessment
+metadata is retained unchanged.
+
+The extraction prompt requires support from the document, null/empty values under uncertainty,
+separation of responsibilities and skills, and warnings for ambiguity. It explicitly forbids
+assessment measures, job-loss predictions and labour-market claims. `ProfessionalProfileValidator`
+then applies only structural safeguards: title shape and length, required responsibilities, concise
+skills, duplicate role/responsibility text and plausible experience bounds. It does not attempt
+semantic classification.
 
 Only PDF and DOCX are accepted. Filename, declared media type, file signature, configured size,
-and actual parseability are checked. Scanned/image-only PDFs receive an insufficient-text warning;
-there is no OCR or network fallback. For multi-role CVs the first, most recent role is selected and
-the user is warned. Years of experience is populated only from an explicit statement, otherwise it
-is left blank.
+and actual parseability are checked. Scanned/image-only PDFs fail safely; there is no OCR fallback.
+Encrypted/unreadable files, sparse career information, unavailable extraction, malformed structured
+output and timeouts return to manual entry rather than populating guessed values.
 
-Raw CV bytes and extracted raw text are never persisted. A short-lived server session carries
-trusted parse provenance across the review form. V7 stores only `MANUAL`/`CV_UPLOAD`, the sanitised
-filename, canonical media type, parser version and parse timestamp alongside the resulting
-assessment snapshot. These fields are audit metadata and never affect scoring. Existing rows are
-backfilled as `MANUAL`; purchased reports and PDFs are unchanged.
+Raw CV bytes and extracted text exist only during the upload call and are never persisted or logged.
+A short-lived server session carries only the structured profile and trusted parse provenance across
+review/edit/confirm. `ProfessionalProfileAssessmentMapper` combines the confirmed role, summary,
+responsibilities, technical/human skills, context and optional experience into the unchanged
+`ProfessionalAssessmentState`. V7 still stores only `MANUAL`/`CV_UPLOAD`, the sanitised filename,
+canonical media type, parser version and parse timestamp alongside the assessment snapshot. These
+fields do not affect scoring; historical rows, judgments, policies, reports and PDFs are unchanged.
 
 ## University journey
 

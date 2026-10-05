@@ -4,11 +4,11 @@ import com.chikere.futureai.assessment.professional.application.ProfessionalAsse
 
 import java.util.Objects;
 
-public record ProfessionalCvPrefill(
-        ProfessionalCvParseResult result,
+public record ProfessionalCvProfileResult(
+        ProfessionalProfile profile,
         ProfessionalAssessmentInputMetadata inputMetadata) {
-    public ProfessionalCvPrefill {
-        Objects.requireNonNull(result);
+    public ProfessionalCvProfileResult {
+        Objects.requireNonNull(profile);
         Objects.requireNonNull(inputMetadata);
     }
 }

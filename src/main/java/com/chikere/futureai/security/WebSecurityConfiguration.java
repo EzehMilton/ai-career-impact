@@ -68,6 +68,7 @@ public class WebSecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/", "/methodology", "/privacy").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers(HttpMethod.GET, "/professional-assessment", "/professional-assessment/*",
+                        "/professional-assessment/cv/review", "/professional-assessment/cv/edit",
                         "/professional-assessment/*/report", "/professional-assessment/*/checkout/local",
                         "/professional-assessment/*/report.pdf",
                         "/university-assessment", "/university-assessment/*",
@@ -79,6 +80,7 @@ public class WebSecurityConfiguration {
                         "/css/**", "/favicon.ico").permitAll()
                 .requestMatchers(HttpMethod.POST, "/professional-assessment",
                         "/professional-assessment/cv",
+                        "/professional-assessment/cv/edit", "/professional-assessment/cv/confirm",
                         "/professional-assessment/*/checkout",
                         "/professional-assessment/*/checkout/local/confirm",
                         "/university-assessment",

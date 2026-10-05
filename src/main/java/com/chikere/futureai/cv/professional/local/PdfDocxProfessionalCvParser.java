@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
 /**
@@ -26,12 +27,9 @@ import java.util.stream.Collectors;
  */
 @Component
 public final class PdfDocxProfessionalCvParser implements ProfessionalCvParser {
-    private final ProfessionalCvStructurer structurer;
     private final ProfessionalCvParserLimits limits;
 
-    public PdfDocxProfessionalCvParser(ProfessionalCvStructurer structurer,
-            ProfessionalCvParserLimits limits) {
-        this.structurer = structurer;
+    public PdfDocxProfessionalCvParser(ProfessionalCvParserLimits limits) {
         this.limits = limits;
         ZipSecureFile.setMinInflateRatio(limits.minimumInflateRatio());
         ZipSecureFile.setMaxEntrySize(limits.maximumEntryBytes());
@@ -39,16 +37,17 @@ public final class PdfDocxProfessionalCvParser implements ProfessionalCvParser {
     }
 
     @Override
-    public ProfessionalCvParseResult parse(ProfessionalCvDocument document) {
+    public ProfessionalCvText parse(ProfessionalCvDocument document) {
         try {
-            String text = switch (document.type()) {
+            ExtractedDocument extracted = switch (document.type()) {
                 case PDF -> extractPdf(document.bytes());
-                case DOCX -> extractDocx(document.bytes());
+                case DOCX -> new ExtractedDocument(extractDocx(document.bytes()), OptionalInt.empty());
             };
+            String text = clean(extracted.text());
             if (text.length() > limits.maximumExtractedCharacters()) {
                 throw new ProfessionalCvParsingException("CV contains too much extracted text");
             }
-            return structurer.structure(text);
+            return new ProfessionalCvText(text, extracted.pageCount(), ProfessionalCvVersions.PARSER_V2);
         }
         catch (ProfessionalCvParsingException exception) {
             throw exception;
@@ -61,7 +60,7 @@ public final class PdfDocxProfessionalCvParser implements ProfessionalCvParser {
         }
     }
 
-    private String extractPdf(byte[] bytes) throws IOException {
+    private ExtractedDocument extractPdf(byte[] bytes) throws IOException {
         try (PDDocument pdf = Loader.loadPDF(bytes)) {
             int pages = pdf.getNumberOfPages();
             if (pages > limits.maximumPages()) {
@@ -77,7 +76,7 @@ public final class PdfDocxProfessionalCvParser implements ProfessionalCvParser {
                     throw new ProfessionalCvParsingException("CV contains too much extracted text");
                 }
             }
-            return text.toString();
+            return new ExtractedDocument(text.toString(), OptionalInt.of(pages));
         }
     }
 
@@ -96,4 +95,15 @@ public final class PdfDocxProfessionalCvParser implements ProfessionalCvParser {
             return paragraphs + (tables.isBlank() ? "" : "\n" + tables);
         }
     }
+
+    private String clean(String text) {
+        return text.replace('\u00a0', ' ')
+                .lines()
+                .map(line -> line.strip().replaceAll("[\\t ]+", " "))
+                .collect(Collectors.joining("\n"))
+                .replaceAll("\n{3,}", "\n\n")
+                .strip();
+    }
+
+    private record ExtractedDocument(String text, OptionalInt pageCount) {}
 }

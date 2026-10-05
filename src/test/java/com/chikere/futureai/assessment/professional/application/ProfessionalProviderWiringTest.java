@@ -2,6 +2,11 @@ package com.chikere.futureai.assessment.professional.application;
 
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.decision.professional.ProfessionalMeasure;
+import com.chikere.futureai.cv.professional.application.ProfessionalProfileExtractor;
+import com.chikere.futureai.cv.professional.fixture.LocalFixtureProfessionalProfileConfiguration;
+import com.chikere.futureai.cv.professional.fixture.LocalFixtureProfessionalProfileExtractor;
+import com.chikere.futureai.cv.professional.openai.OpenAiProfessionalProfileConfiguration;
+import com.chikere.futureai.cv.professional.openai.OpenAiProfessionalProfileExtractor;
 import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfessionalConfiguration;
 import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfessionalJudgmentProvider;
 import com.chikere.futureai.judgment.typesafe.professional.ProfessionalJevAutoConfiguration;
@@ -62,6 +67,8 @@ class ProfessionalProviderWiringTest {
                     ProfessionalPaymentConfiguration.class,
                     LocalFixtureProfessionalPaymentConfiguration.class,
                     StripeProfessionalPaymentConfiguration.class,
+                    LocalFixtureProfessionalProfileConfiguration.class,
+                    OpenAiProfessionalProfileConfiguration.class,
                     OpenAiProfessionalNarrativeConfiguration.class)
             .withBean(TypeSafeClient.class, () -> mock(TypeSafeClient.class))
             .withBean(ProfessionalAssessmentStore.class, () -> mock(ProfessionalAssessmentStore.class))
@@ -96,6 +103,10 @@ class ProfessionalProviderWiringTest {
                     .isEqualTo(NarrativeSource.OPENAI);
             assertThat(context.getBean(ProfessionalNarrativeGenerator.class).modelIdentifier())
                     .contains("gpt-test");
+            assertThat(context).hasSingleBean(ProfessionalProfileExtractor.class);
+            assertThat(context.getBean(ProfessionalProfileExtractor.class))
+                    .isInstanceOf(OpenAiProfessionalProfileExtractor.class);
+            assertThat(context).doesNotHaveBean(LocalFixtureProfessionalProfileExtractor.class);
             assertThat(context).doesNotHaveBean(ProfessionalEvidenceProvider.class);
             assertThat(context).doesNotHaveBean(ProfessionalOccupationClassifier.class);
             assertThat(context).doesNotHaveBean(ProfessionalPaymentGateway.class);
@@ -126,6 +137,10 @@ class ProfessionalProviderWiringTest {
                     assertThat(context.getBean(ProfessionalNarrativeGenerator.class).source())
                             .isEqualTo(NarrativeSource.LOCAL_FIXTURE);
                     assertThat(context).doesNotHaveBean(OpenAiProfessionalNarrativeGenerator.class);
+                    assertThat(context).hasSingleBean(ProfessionalProfileExtractor.class);
+                    assertThat(context.getBean(ProfessionalProfileExtractor.class))
+                            .isInstanceOf(LocalFixtureProfessionalProfileExtractor.class);
+                    assertThat(context).doesNotHaveBean(OpenAiProfessionalProfileExtractor.class);
                     assertThat(context).hasSingleBean(ProfessionalEvidenceProvider.class);
                     assertThat(context.getBean(ProfessionalEvidenceProvider.class))
                             .isInstanceOf(LocalFixtureProfessionalEvidenceProvider.class);

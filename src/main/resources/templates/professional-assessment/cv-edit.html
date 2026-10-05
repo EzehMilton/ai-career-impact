@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Edit your professional profile')}"></head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('professional')}"></header>
+<main class="page-shell" id="main">
+  <div class="page-header">
+    <p class="eyebrow">Professional assessment</p>
+    <h1>Edit what we understood</h1>
+    <p class="intro">Correct the concise profile below. Add one responsibility or skill per line.</p>
+  </div>
+  <section class="panel work-form">
+    <p class="field-error" role="alert" th:if="${profileError}" th:text="${profileError}"></p>
+    <form th:action="@{/professional-assessment/cv/edit}" th:object="${profileForm}" method="post" novalidate>
+      <div class="field">
+        <label for="currentRole">Current or most recent role <span class="required">Required</span></label>
+        <input id="currentRole" th:field="*{currentRole}" maxlength="120">
+        <p class="field-error" th:if="${#fields.hasErrors('currentRole')}" th:errors="*{currentRole}"></p>
+      </div>
+      <div class="field">
+        <label for="roleSummary">Role summary <span class="required">Required</span></label>
+        <textarea id="roleSummary" th:field="*{roleSummary}" rows="5" minlength="40" maxlength="4000"></textarea>
+        <p class="field-error" th:if="${#fields.hasErrors('roleSummary')}" th:errors="*{roleSummary}"></p>
+      </div>
+      <div class="field">
+        <label for="responsibilities">Main responsibilities <span class="required">Required</span></label>
+        <textarea id="responsibilities" th:field="*{responsibilities}" rows="6" maxlength="4000"></textarea>
+        <p class="field-error" th:if="${#fields.hasErrors('responsibilities')}" th:errors="*{responsibilities}"></p>
+      </div>
+      <div class="field">
+        <label for="technicalSkills">Technical skills</label>
+        <textarea id="technicalSkills" th:field="*{technicalSkills}" rows="4" maxlength="2000"></textarea>
+      </div>
+      <div class="field">
+        <label for="humanSkills">Human / leadership strengths</label>
+        <textarea id="humanSkills" th:field="*{humanSkills}" rows="4" maxlength="2000"></textarea>
+        <p class="field-error" th:if="${#fields.hasErrors('skillPresent')}" th:errors="*{skillPresent}"></p>
+      </div>
+      <div class="field field-short">
+        <label for="yearsExperience">Years of experience <span class="optional">Optional</span></label>
+        <input id="yearsExperience" type="number" th:field="*{yearsExperience}" min="0" max="70">
+        <p class="field-error" th:if="${#fields.hasErrors('yearsExperience')}" th:errors="*{yearsExperience}"></p>
+      </div>
+      <button type="submit">Save and review</button>
+      <a class="button-link button-secondary" th:href="@{/professional-assessment/cv/review}">Cancel</a>
+    </form>
+  </section>
+</main>
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
+</body>
+</html>

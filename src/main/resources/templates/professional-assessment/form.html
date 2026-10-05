@@ -18,7 +18,7 @@
     <p>
       This is for anyone already working, or with a role they can describe. You will need a few
       minutes and a sense of your day-to-day responsibilities and the skills you use. You can type
-      everything in, or upload a CV and we will fill the form in for you to check.
+      everything in, or upload a CV and review the concise professional profile we understand from it.
     </p>
     <p>
       It describes the <strong>characteristics of the work</strong>: how repeatable it is, how much it
@@ -39,23 +39,16 @@
         <p class="helper">PDF or DOCX, up to 5 MiB. We do not retain the raw file.</p>
         <label for="cv">Choose CV</label>
         <input id="cv" name="cv" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required>
-        <button type="submit">Extract work details</button>
+        <button type="submit">Analyse my CV</button>
       </form>
     </div>
     <p class="field-error" role="alert" th:if="${cvError}" th:text="${cvError}"></p>
+    <p th:if="${cvError}"><a href="#form-heading">Describe my work manually</a></p>
   </section>
 
   <section class="panel work-form" aria-labelledby="form-heading">
     <h2 id="form-heading">Tell us about your work</h2>
     <p class="helper">Focus on your day-to-day activities, decisions and responsibilities. A job title alone is not enough.</p>
-    <div class="notice" th:if="${cvPrefill}">
-      <strong>Review your extracted details</strong>
-      <p>We extracted candidate details from <span th:text="${cvFilename}">your CV</span>. Please correct anything before continuing.</p>
-      <ul th:if="${cvWarnings != null and !cvWarnings.isEmpty()}">
-        <li th:each="warning : ${cvWarnings}" th:text="${warning}"></li>
-      </ul>
-    </div>
-
     <form th:action="@{/professional-assessment}" th:object="${form}" method="post" novalidate>
       <div class="field">
         <label for="profession">Job title <span class="required">Required</span></label>
