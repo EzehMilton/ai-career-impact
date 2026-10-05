@@ -6,14 +6,14 @@ import java.util.List;
 
 /** Provider-facing schema. Nullable scalar fields mean the CV did not support a value. */
 public record OpenAiProfessionalProfileResponse(
-        @JsonPropertyDescription("Current or most recent role title, or null when unclear") String currentRole,
-        @JsonPropertyDescription("Concise factual summary of the person's current or most recent work") String roleSummary,
-        @JsonPropertyDescription("Concrete work responsibilities, one concise item each") List<String> responsibilities,
-        @JsonPropertyDescription("Named tools, technologies and technical capabilities") List<String> technicalSkills,
-        @JsonPropertyDescription("Communication, collaboration and other human skills explicitly supported") List<String> humanSkills,
-        @JsonPropertyDescription("People or organisational leadership responsibilities") List<String> leadershipResponsibilities,
-        @JsonPropertyDescription("Decisions or judgements the person is responsible for") List<String> decisionMakingResponsibilities,
-        @JsonPropertyDescription("Industries, domains or operating contexts explicitly supported") List<String> domainContext,
-        @JsonPropertyDescription("Whole years of experience only when explicitly stated or reliably calculable, otherwise null") Integer yearsExperience,
+        @JsonPropertyDescription("Title of the single current dated employment entry, or null if current role is ambiguous") String currentRole,
+        @JsonPropertyDescription("Concise factual summary based only on the selected current employment entry") String roleSummary,
+        @JsonPropertyDescription("Responsibilities from only the selected current employment entry; empty if it is unclear") List<String> responsibilities,
+        @JsonPropertyDescription("Named technical skills from an explicit profile/skills section or clearly demonstrated by the current role") List<String> technicalSkills,
+        @JsonPropertyDescription("Human skills from an explicit profile/skills section or clearly demonstrated by the current role") List<String> humanSkills,
+        @JsonPropertyDescription("Leadership responsibilities from only the selected current employment entry") List<String> leadershipResponsibilities,
+        @JsonPropertyDescription("Decision-making responsibilities from only the selected current employment entry") List<String> decisionMakingResponsibilities,
+        @JsonPropertyDescription("Role-specific domain context from only the selected current employment entry") List<String> domainContext,
+        @JsonPropertyDescription("Approximate relevant experience in years across clearly dated relevant employment, overlaps counted once; null if uncertain, never zero as a placeholder") Integer yearsExperience,
         @JsonPropertyDescription("Short warnings about ambiguity or missing information") List<String> warnings) {
 }

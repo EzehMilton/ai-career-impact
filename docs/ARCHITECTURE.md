@@ -421,6 +421,13 @@ extraction boundary. The normal adapter uses Spring AI/OpenAI provider structure
 the small immutable `ProfessionalProfile`; under `local-fixture`, a deterministic fixture adapter
 supports the complete browser flow without OpenAI or Jev.
 
+For local extraction-quality testing, `local-fixture,live-cv-extraction` replaces only that fixture
+extractor with the OpenAI adapter. The fixture judgment, narrative, occupation, evidence and payment
+providers remain active, so the mode cannot silently become a production or mixed-provider setup.
+It requires only `OPENAI_API_KEY` and never falls back to fixture profile values after extraction or
+validation failure. Exact setup and acceptance steps are in
+[`LIVE_CV_EXTRACTION_TEST.md`](LIVE_CV_EXTRACTION_TEST.md).
+
 The text-only parser contract is versioned `professional-cv-parser-v2`; historical V1 assessment
 metadata is retained unchanged.
 
