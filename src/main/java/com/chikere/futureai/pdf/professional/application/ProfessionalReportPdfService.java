@@ -15,7 +15,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 
-public final class ProfessionalReportPdfService {
+public final class ProfessionalReportPdfService implements ProfessionalReportPdfUseCase {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProfessionalReportPdfService.class);
     private static final byte[] PDF_SIGNATURE = "%PDF-".getBytes(StandardCharsets.US_ASCII);
     private final ProfessionalPurchaseStore purchaseStore;
@@ -34,6 +34,7 @@ public final class ProfessionalReportPdfService {
         this.maximumBytes = maximumBytes; this.clock = Objects.requireNonNull(clock);
     }
 
+    @Override
     public PurchasedProfessionalReportPdf getOrCreate(UUID assessmentId) {
         Objects.requireNonNull(assessmentId);
         ProfessionalReportEntitlement entitlement = purchaseStore.findEntitlementByAssessmentId(assessmentId)

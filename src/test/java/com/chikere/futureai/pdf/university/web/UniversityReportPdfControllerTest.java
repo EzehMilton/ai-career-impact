@@ -3,7 +3,7 @@ package com.chikere.futureai.pdf.university.web;
 import com.chikere.futureai.pdf.university.application.PurchasedUniversityReportPdf;
 import com.chikere.futureai.pdf.university.application.UniversityReportPdfAccessDeniedException;
 import com.chikere.futureai.pdf.university.application.UniversityReportPdfGenerationException;
-import com.chikere.futureai.pdf.university.application.UniversityReportPdfService;
+import com.chikere.futureai.pdf.university.application.UniversityReportPdfUseCase;
 import com.chikere.futureai.security.WebSecurityConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class UniversityReportPdfControllerTest {
 
     @Autowired MockMvc mvc;
-    @MockitoBean UniversityReportPdfService pdfService;
+    @MockitoBean UniversityReportPdfUseCase pdfService;
 
     @Test
     void anAuthorisedDownloadReturnsTheExactPersistedBytes() throws Exception {

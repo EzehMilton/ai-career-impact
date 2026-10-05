@@ -1,7 +1,7 @@
 package com.chikere.futureai.payment.alevel.web;
 
 import com.chikere.futureai.payment.alevel.application.ALevelEntitlementStatus;
-import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseService;
+import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseUseCase;
 import com.chikere.futureai.payment.alevel.fixture.LocalALevelPaymentSimulator;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Profile;
@@ -19,10 +19,10 @@ import java.util.UUID;
 @Profile("local-fixture")
 public final class LocalALevelCheckoutController {
 
-    private final ALevelReportPurchaseService purchaseService;
+    private final ALevelReportPurchaseUseCase purchaseService;
     private final LocalALevelPaymentSimulator simulator;
 
-    public LocalALevelCheckoutController(ALevelReportPurchaseService purchaseService,
+    public LocalALevelCheckoutController(ALevelReportPurchaseUseCase purchaseService,
             LocalALevelPaymentSimulator simulator) {
         this.purchaseService = purchaseService;
         this.simulator = simulator;

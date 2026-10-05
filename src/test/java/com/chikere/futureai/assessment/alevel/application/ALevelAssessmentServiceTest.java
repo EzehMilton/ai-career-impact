@@ -24,7 +24,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -73,7 +72,7 @@ class ALevelAssessmentServiceTest {
         var state = state();
         var judgments = new LocalFixtureALevelJudgmentProvider("english_history_politics").judge(state);
         var provider = mock(ALevelJudgmentProvider.class);
-        var policy = spy(new ALevelDecisionPolicyV1());
+        var policy = new ALevelDecisionPolicyV1();
         var store = mock(ALevelAssessmentStore.class);
         doReturn(judgments).when(provider).judge(state);
         when(provider.source()).thenReturn(AssessmentSource.JEV);
@@ -91,14 +90,15 @@ class ALevelAssessmentServiceTest {
         assertThat(saved.createdAt()).isEqualTo(Instant.parse("2026-10-01T12:00:00Z"));
         assertThat(saved.state()).isEqualTo(state);
         assertThat(saved.judgments()).isEqualTo(judgments);
+        var expectedDecision = policy.decide(judgments);
+        assertThat(saved.result()).isEqualTo(new ALevelAssessmentResult(expectedDecision,
+                AssessmentSource.JEV, judgments.schemaVersion(), expectedDecision.policyVersion()));
         assertThat(saved.modelIdentifier()).contains("jev-latest");
         verify(provider, times(1)).judge(state);
-        verify(policy, times(1)).decide(judgments);
 
         when(store.findById(id)).thenReturn(Optional.of(saved));
         assertThat(service.getALevelAssessment(id)).contains(saved);
         verify(provider, times(1)).judge(state);
-        verify(policy, times(1)).decide(judgments);
     }
 
     @Test

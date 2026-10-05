@@ -14,9 +14,9 @@ import java.util.UUID;
 public final class ProfessionalReportPdfController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProfessionalReportPdfController.class);
     private static final CacheControl PRIVATE_NO_STORE = CacheControl.noStore().cachePrivate();
-    private final ProfessionalReportPdfService pdfService;
+    private final ProfessionalReportPdfUseCase pdfService;
 
-    public ProfessionalReportPdfController(ProfessionalReportPdfService pdfService) {
+    public ProfessionalReportPdfController(ProfessionalReportPdfUseCase pdfService) {
         this.pdfService = pdfService;
     }
 

@@ -13,7 +13,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-public final class ProfessionalEvidenceService {
+public final class ProfessionalEvidenceService implements ProfessionalEvidenceGathering {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProfessionalEvidenceService.class);
     private final ProfessionalAssessmentStore assessmentStore;
     private final ProfessionalEvidenceStore evidenceStore;
@@ -34,6 +34,7 @@ public final class ProfessionalEvidenceService {
         this.clock = Objects.requireNonNull(clock);
     }
 
+    @Override
     public Optional<ProfessionalEvidenceBundle> gatherFor(UUID assessmentId) {
         Objects.requireNonNull(assessmentId);
         Optional<ProfessionalEvidenceBundle> existing = evidenceStore.findByAssessmentId(assessmentId);

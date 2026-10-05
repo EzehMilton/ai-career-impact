@@ -1,13 +1,13 @@
 package com.chikere.futureai.assessment.professional.web;
 
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
-import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentWorkflow;
+import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentUseCase;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentInputMetadata;
 import com.chikere.futureai.cv.professional.web.ProfessionalCvSession;
-import com.chikere.futureai.report.professional.application.ProfessionalReportService;
+import com.chikere.futureai.report.professional.application.ProfessionalReportQuery;
 import com.chikere.futureai.report.professional.application.ProfessionalReportTier;
 import com.chikere.futureai.report.professional.web.ProfessionalReportViewMapper;
-import com.chikere.futureai.payment.professional.application.ProfessionalReportPurchaseService;
+import com.chikere.futureai.payment.professional.application.ProfessionalReportPurchaseUseCase;
 import com.chikere.futureai.payment.professional.web.ProfessionalPurchaseViewModel;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,18 +30,18 @@ public final class ProfessionalAssessmentController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProfessionalAssessmentController.class);
     private static final String FORM_VIEW = "professional-assessment/form";
 
-    private final ProfessionalAssessmentWorkflow workflow;
-    private final ProfessionalReportService reportService;
+    private final ProfessionalAssessmentUseCase workflow;
+    private final ProfessionalReportQuery reportService;
     private final ProfessionalAssessmentFormMapper formMapper;
     private final ProfessionalReportViewMapper reportViewMapper;
-    private final ProfessionalReportPurchaseService purchaseService;
+    private final ProfessionalReportPurchaseUseCase purchaseService;
 
     public ProfessionalAssessmentController(
-            ProfessionalAssessmentWorkflow workflow,
-            ProfessionalReportService reportService,
+            ProfessionalAssessmentUseCase workflow,
+            ProfessionalReportQuery reportService,
             ProfessionalAssessmentFormMapper formMapper,
             ProfessionalReportViewMapper reportViewMapper,
-            ProfessionalReportPurchaseService purchaseService) {
+            ProfessionalReportPurchaseUseCase purchaseService) {
         this.workflow = workflow;
         this.reportService = reportService;
         this.formMapper = formMapper;

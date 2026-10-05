@@ -2,7 +2,7 @@ package com.chikere.futureai.pdf.university.web;
 
 import com.chikere.futureai.pdf.university.application.PurchasedUniversityReportPdf;
 import com.chikere.futureai.pdf.university.application.UniversityReportPdfAccessDeniedException;
-import com.chikere.futureai.pdf.university.application.UniversityReportPdfService;
+import com.chikere.futureai.pdf.university.application.UniversityReportPdfUseCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.CacheControl;
@@ -23,9 +23,9 @@ public final class UniversityReportPdfController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UniversityReportPdfController.class);
     private static final CacheControl PRIVATE_NO_STORE = CacheControl.noStore().cachePrivate();
-    private final UniversityReportPdfService pdfService;
+    private final UniversityReportPdfUseCase pdfService;
 
-    public UniversityReportPdfController(UniversityReportPdfService pdfService) {
+    public UniversityReportPdfController(UniversityReportPdfUseCase pdfService) {
         this.pdfService = pdfService;
     }
 

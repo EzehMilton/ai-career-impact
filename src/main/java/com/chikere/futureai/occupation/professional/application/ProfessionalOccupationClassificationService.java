@@ -8,7 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-public final class ProfessionalOccupationClassificationService {
+public final class ProfessionalOccupationClassificationService implements ProfessionalOccupationClassificationUseCase {
     private final ProfessionalAssessmentStore assessmentStore;
     private final ProfessionalOccupationClassificationStore classificationStore;
     private final Optional<ProfessionalOccupationClassifier> classifier;
@@ -26,6 +26,7 @@ public final class ProfessionalOccupationClassificationService {
         this.clock = Objects.requireNonNull(clock);
     }
 
+    @Override
     public Optional<StoredProfessionalOccupationClassification> classifyFor(UUID assessmentId) {
         Objects.requireNonNull(assessmentId);
         var existing = classificationStore.findByAssessmentId(assessmentId);

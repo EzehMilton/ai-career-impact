@@ -9,7 +9,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 
-public final class ProfessionalCvUploadService {
+public final class ProfessionalCvUploadService implements ProfessionalCvAnalysisUseCase {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProfessionalCvUploadService.class);
     private final ProfessionalCvParser parser;
     private final Optional<ProfessionalProfileExtractor> profileExtractor;
@@ -25,6 +25,7 @@ public final class ProfessionalCvUploadService {
         this.clock = Objects.requireNonNull(clock);
     }
 
+    @Override
     public ProfessionalCvProfileResult extractProfile(ProfessionalCvDocument document) {
         var parsed = parser.parse(document);
         LOGGER.info("Professional CV parsed fileType={} pageCount={} outcome=SUCCESS", document.type(),

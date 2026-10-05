@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(WebSecurityConfiguration.class)
 class LocalProfessionalCheckoutControllerTest {
     @Autowired MockMvc mvc;
-    @MockitoBean ProfessionalReportPurchaseService purchaseService;
+    @MockitoBean ProfessionalReportPurchaseUseCase purchaseService;
     @MockitoBean LocalProfessionalPaymentSimulator simulator;
 
     @Test

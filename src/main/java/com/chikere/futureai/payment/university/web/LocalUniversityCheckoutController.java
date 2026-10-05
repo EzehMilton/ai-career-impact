@@ -1,7 +1,7 @@
 package com.chikere.futureai.payment.university.web;
 
 import com.chikere.futureai.payment.university.application.UniversityEntitlementStatus;
-import com.chikere.futureai.payment.university.application.UniversityReportPurchaseService;
+import com.chikere.futureai.payment.university.application.UniversityReportPurchaseUseCase;
 import com.chikere.futureai.payment.university.fixture.LocalUniversityPaymentSimulator;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Profile;
@@ -19,10 +19,10 @@ import java.util.UUID;
 @Profile("local-fixture")
 public final class LocalUniversityCheckoutController {
 
-    private final UniversityReportPurchaseService purchaseService;
+    private final UniversityReportPurchaseUseCase purchaseService;
     private final LocalUniversityPaymentSimulator simulator;
 
-    public LocalUniversityCheckoutController(UniversityReportPurchaseService purchaseService,
+    public LocalUniversityCheckoutController(UniversityReportPurchaseUseCase purchaseService,
             LocalUniversityPaymentSimulator simulator) {
         this.purchaseService = purchaseService;
         this.simulator = simulator;

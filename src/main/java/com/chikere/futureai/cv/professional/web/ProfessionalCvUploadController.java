@@ -3,7 +3,7 @@ package com.chikere.futureai.cv.professional.web;
 import com.chikere.futureai.assessment.professional.web.ProfessionalAssessmentForm;
 import com.chikere.futureai.cv.professional.application.ProfessionalProfileExtractionException;
 import com.chikere.futureai.cv.professional.application.ProfessionalCvParsingException;
-import com.chikere.futureai.cv.professional.application.ProfessionalCvUploadService;
+import com.chikere.futureai.cv.professional.application.ProfessionalCvAnalysisUseCase;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
@@ -19,10 +19,10 @@ public final class ProfessionalCvUploadController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProfessionalCvUploadController.class);
     private static final String FORM_VIEW = "professional-assessment/form";
     private final ProfessionalCvUploadValidator validator;
-    private final ProfessionalCvUploadService uploadService;
+    private final ProfessionalCvAnalysisUseCase uploadService;
 
     public ProfessionalCvUploadController(ProfessionalCvUploadValidator validator,
-            ProfessionalCvUploadService uploadService) {
+            ProfessionalCvAnalysisUseCase uploadService) {
         this.validator = validator;
         this.uploadService = uploadService;
     }

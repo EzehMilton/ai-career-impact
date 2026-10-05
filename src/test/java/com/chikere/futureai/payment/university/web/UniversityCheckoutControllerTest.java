@@ -3,7 +3,7 @@ package com.chikere.futureai.payment.university.web;
 import com.chikere.futureai.payment.university.application.PaymentUnavailableException;
 import com.chikere.futureai.payment.university.application.UniversityCheckoutSession;
 import com.chikere.futureai.payment.university.application.UniversityPaymentProvider;
-import com.chikere.futureai.payment.university.application.UniversityReportPurchaseService;
+import com.chikere.futureai.payment.university.application.UniversityReportPurchaseUseCase;
 import com.chikere.futureai.security.WebSecurityConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class UniversityCheckoutControllerTest {
 
     @Autowired MockMvc mvc;
-    @MockitoBean UniversityReportPurchaseService purchaseService;
+    @MockitoBean UniversityReportPurchaseUseCase purchaseService;
 
     @Test
     void checkoutRequiresCsrfAndRedirectsOnlyToTheGatewaySession() throws Exception {

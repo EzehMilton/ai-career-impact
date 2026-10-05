@@ -1,7 +1,7 @@
 package com.chikere.futureai.payment.alevel.application;
 
 import com.chikere.futureai.report.alevel.application.ALevelReport;
-import com.chikere.futureai.report.alevel.application.ALevelReportService;
+import com.chikere.futureai.report.alevel.application.ALevelReportQuery;
 import com.chikere.futureai.report.alevel.application.ALevelReportTier;
 
 import java.net.URI;
@@ -22,9 +22,9 @@ import java.util.UUID;
  * evidence retrieval or report composition. An A-level entitlement is entirely separate from a
  * professional or university one: none of them grants access to another.</p>
  */
-public final class ALevelReportPurchaseService {
+public final class ALevelReportPurchaseService implements ALevelReportPurchaseUseCase {
     private static final Logger LOGGER = LoggerFactory.getLogger(ALevelReportPurchaseService.class);
-    private final ALevelReportService reportService;
+    private final ALevelReportQuery reportService;
     private final ALevelPurchaseStore purchaseStore;
     private final Optional<ALevelPaymentGateway> paymentGateway;
     private final URI applicationBaseUrl;
@@ -32,13 +32,13 @@ public final class ALevelReportPurchaseService {
     private final Clock clock;
     private final JourneyMetrics metrics;
 
-    public ALevelReportPurchaseService(ALevelReportService reportService,
+    public ALevelReportPurchaseService(ALevelReportQuery reportService,
             ALevelPurchaseStore purchaseStore, Optional<ALevelPaymentGateway> paymentGateway,
             URI applicationBaseUrl, Optional<String> displayPrice, Clock clock) {
         this(reportService, purchaseStore, paymentGateway, applicationBaseUrl, displayPrice, clock, JourneyMetrics.disabled());
     }
 
-    public ALevelReportPurchaseService(ALevelReportService reportService,
+    public ALevelReportPurchaseService(ALevelReportQuery reportService,
             ALevelPurchaseStore purchaseStore, Optional<ALevelPaymentGateway> paymentGateway,
             URI applicationBaseUrl, Optional<String> displayPrice, Clock clock,
             JourneyMetrics metrics) {
@@ -53,6 +53,7 @@ public final class ALevelReportPurchaseService {
     }
 
     /** Calls the external gateway before opening the short pending-entitlement database transaction. */
+    @Override
     public ALevelCheckoutSession startCheckout(UUID assessmentId) {
         Objects.requireNonNull(assessmentId);
         ALevelPaymentGateway gateway = paymentGateway.orElseThrow(() ->
@@ -91,6 +92,7 @@ public final class ALevelReportPurchaseService {
         return session;
     }
 
+    @Override
     public ALevelPaymentProcessingResult processPaymentNotification(ALevelPaymentNotification notification) {
         ALevelPaymentGateway gateway = paymentGateway.orElseThrow(() ->
                 new PaymentUnavailableException("payment notifications are not configured"));
@@ -126,6 +128,7 @@ public final class ALevelReportPurchaseService {
                 : ALevelPaymentProcessingResult.ALREADY_PROCESSED;
     }
 
+    @Override
     public ALevelPurchaseAccess accessFor(UUID assessmentId) {
         Optional<ALevelReportEntitlement> entitlement =
                 purchaseStore.findEntitlementByAssessmentId(Objects.requireNonNull(assessmentId));
@@ -137,6 +140,7 @@ public final class ALevelReportPurchaseService {
     }
 
     /** Only an ACTIVE entitlement returns the frozen purchased report. */
+    @Override
     public Optional<ALevelReport> findPurchasedReport(UUID assessmentId) {
         Optional<ALevelReportEntitlement> entitlement =
                 purchaseStore.findEntitlementByAssessmentId(Objects.requireNonNull(assessmentId));
@@ -148,6 +152,7 @@ public final class ALevelReportPurchaseService {
                 .map(PurchasedALevelReportSnapshot::report);
     }
 
+    @Override
     public Optional<ALevelReportEntitlement> findEntitlement(UUID assessmentId) {
         return purchaseStore.findEntitlementByAssessmentId(Objects.requireNonNull(assessmentId));
     }

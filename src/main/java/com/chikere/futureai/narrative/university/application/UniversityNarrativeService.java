@@ -14,7 +14,7 @@ import java.util.UUID;
  * Narrative is downstream of the committed assessment. It never reassesses, and a generation or
  * persistence failure can never invalidate the saved deterministic result.
  */
-public final class UniversityNarrativeService {
+public final class UniversityNarrativeService implements UniversityNarrativeGeneration {
     private static final Logger LOGGER = LoggerFactory.getLogger(UniversityNarrativeService.class);
 
     private final UniversityAssessmentStore assessmentStore;
@@ -39,6 +39,7 @@ public final class UniversityNarrativeService {
         this.clock = Objects.requireNonNull(clock);
     }
 
+    @Override
     public StoredUniversityNarrative generateFor(UUID assessmentId) {
         Objects.requireNonNull(assessmentId, "assessmentId must not be null");
         Optional<StoredUniversityNarrative> existing = narrativeStore.findByAssessmentId(assessmentId);

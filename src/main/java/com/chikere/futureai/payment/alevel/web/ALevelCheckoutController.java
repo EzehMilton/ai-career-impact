@@ -1,6 +1,6 @@
 package com.chikere.futureai.payment.alevel.web;
 
-import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseService;
+import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseUseCase;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,9 +15,9 @@ import java.util.UUID;
 public final class ALevelCheckoutController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ALevelCheckoutController.class);
-    private final ALevelReportPurchaseService purchaseService;
+    private final ALevelReportPurchaseUseCase purchaseService;
 
-    public ALevelCheckoutController(ALevelReportPurchaseService purchaseService) {
+    public ALevelCheckoutController(ALevelReportPurchaseUseCase purchaseService) {
         this.purchaseService = purchaseService;
     }
 

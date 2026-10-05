@@ -1,17 +1,20 @@
 package com.chikere.futureai.assessment.university.application;
 
 import com.chikere.futureai.assessment.domain.UniversityAssessmentState;
-import com.chikere.futureai.evidence.university.application.UniversityEvidenceService;
+import com.chikere.futureai.evidence.university.application.UniversityEvidenceGathering;
 import com.chikere.futureai.configuration.JourneyMetrics;
 import com.chikere.futureai.narrative.university.application.NarrativeStatus;
+import com.chikere.futureai.narrative.university.application.NarrativeSource;
 import com.chikere.futureai.narrative.university.application.StoredUniversityNarrative;
-import com.chikere.futureai.narrative.university.application.UniversityNarrativeService;
+import com.chikere.futureai.narrative.university.application.UniversityNarrativeGeneration;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doThrow;
@@ -26,24 +29,25 @@ class UniversityAssessmentWorkflowTest {
 
     @Test
     void recordedNarrativeFailureIncrementsFailureMetric() {
-        var assessmentService = mock(UniversityAssessmentService.class);
-        var narrativeService = mock(UniversityNarrativeService.class);
-        var metrics = mock(JourneyMetrics.class);
-        var saved = mock(StoredUniversityNarrative.class);
+        var assessmentService = mock(UniversityAssessmentSubmission.class);
+        var narrativeService = mock(UniversityNarrativeGeneration.class);
+        var registry = new SimpleMeterRegistry();
+        var metrics = new JourneyMetrics(registry);
+        var saved = new StoredUniversityNarrative(ID, NarrativeStatus.FAILED, Optional.empty(),
+                NarrativeSource.LOCAL_FIXTURE, "fixture", Optional.empty(), "university-narrative-v1",
+                Instant.EPOCH, Optional.empty());
         when(assessmentService.submitUniversityAssessment(state())).thenReturn(ID);
         when(narrativeService.generateFor(ID)).thenReturn(saved);
-        when(saved.status()).thenReturn(NarrativeStatus.FAILED);
-
         assertThat(new UniversityAssessmentWorkflow(assessmentService, narrativeService,
-                mock(UniversityEvidenceService.class), metrics).submit(state())).isEqualTo(ID);
-        verify(metrics).narrativeFailed("university");
+                mock(UniversityEvidenceGathering.class), metrics).submit(state())).isEqualTo(ID);
+        assertThat(registry.counter("narrative.failures", "journey", "university").count()).isEqualTo(1.0);
     }
 
     @Test
     void persistsTheAssessmentBeforeAnyEnrichmentRuns() {
-        var assessmentService = mock(UniversityAssessmentService.class);
-        var narrativeService = mock(UniversityNarrativeService.class);
-        var evidenceService = mock(UniversityEvidenceService.class);
+        var assessmentService = mock(UniversityAssessmentSubmission.class);
+        var narrativeService = mock(UniversityNarrativeGeneration.class);
+        var evidenceService = mock(UniversityEvidenceGathering.class);
         var state = state();
         when(assessmentService.submitUniversityAssessment(state)).thenReturn(ID);
 
@@ -60,9 +64,9 @@ class UniversityAssessmentWorkflowTest {
 
     @Test
     void narrativeOrEvidenceFailureNeverInvalidatesTheCommittedAssessment() {
-        var assessmentService = mock(UniversityAssessmentService.class);
-        var narrativeService = mock(UniversityNarrativeService.class);
-        var evidenceService = mock(UniversityEvidenceService.class);
+        var assessmentService = mock(UniversityAssessmentSubmission.class);
+        var narrativeService = mock(UniversityNarrativeGeneration.class);
+        var evidenceService = mock(UniversityEvidenceGathering.class);
         var state = state();
         when(assessmentService.submitUniversityAssessment(state)).thenReturn(ID);
         doThrow(new IllegalStateException("narrative store down")).when(narrativeService).generateFor(ID);
@@ -78,9 +82,9 @@ class UniversityAssessmentWorkflowTest {
 
     @Test
     void assessmentFailureStopsBeforeEnrichment() {
-        var assessmentService = mock(UniversityAssessmentService.class);
-        var narrativeService = mock(UniversityNarrativeService.class);
-        var evidenceService = mock(UniversityEvidenceService.class);
+        var assessmentService = mock(UniversityAssessmentSubmission.class);
+        var narrativeService = mock(UniversityNarrativeGeneration.class);
+        var evidenceService = mock(UniversityEvidenceGathering.class);
         var state = state();
         doThrow(new IllegalStateException("Jev unavailable"))
                 .when(assessmentService).submitUniversityAssessment(state);

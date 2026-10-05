@@ -2,7 +2,7 @@ package com.chikere.futureai.payment.professional.web;
 
 import com.chikere.futureai.payment.professional.application.InvalidPaymentNotificationException;
 import com.chikere.futureai.payment.professional.application.ProfessionalPaymentNotification;
-import com.chikere.futureai.payment.professional.application.ProfessionalReportPurchaseService;
+import com.chikere.futureai.payment.professional.application.ProfessionalReportPurchaseUseCase;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.*;
 @Profile("live-payment & !local-fixture")
 public final class StripeWebhookController {
     private static final Logger LOGGER = LoggerFactory.getLogger(StripeWebhookController.class);
-    private final ProfessionalReportPurchaseService purchaseService;
+    private final ProfessionalReportPurchaseUseCase purchaseService;
 
-    public StripeWebhookController(ProfessionalReportPurchaseService purchaseService) {
+    public StripeWebhookController(ProfessionalReportPurchaseUseCase purchaseService) {
         this.purchaseService = purchaseService;
     }
 

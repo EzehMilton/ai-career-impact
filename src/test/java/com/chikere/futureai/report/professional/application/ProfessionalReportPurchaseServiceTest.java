@@ -21,7 +21,7 @@ class ProfessionalReportPurchaseServiceTest {
         var source = ProfessionalReportAssemblerTest.source(true, true, true);
         UUID assessmentId = source.assessment().id();
         var paid = new ProfessionalReportAssembler().assemble(source, ProfessionalReportTier.PAID);
-        var reports = mock(ProfessionalReportService.class);
+        var reports = mock(ProfessionalReportQuery.class);
         var store = mock(ProfessionalPurchaseStore.class);
         var gateway = mock(ProfessionalPaymentGateway.class);
         when(store.findEntitlementByAssessmentId(assessmentId)).thenReturn(Optional.empty());
@@ -55,7 +55,7 @@ class ProfessionalReportPurchaseServiceTest {
     @Test
     void gatewayFailureDoesNotCreateEntitlementOrFallBack() {
         var source = ProfessionalReportAssemblerTest.source(true, true, true);
-        var reports = mock(ProfessionalReportService.class);
+        var reports = mock(ProfessionalReportQuery.class);
         var store = mock(ProfessionalPurchaseStore.class);
         var gateway = mock(ProfessionalPaymentGateway.class);
         when(store.findEntitlementByAssessmentId(source.assessment().id())).thenReturn(Optional.empty());
@@ -78,7 +78,7 @@ class ProfessionalReportPurchaseServiceTest {
         var entitlement = pending(entitlementId, source.assessment().id());
         var event = new ProfessionalPaymentEvent("evt_1", ProfessionalPaymentProvider.STRIPE, "cs_1",
                 entitlementId, source.assessment().id(), Optional.of("pi_1"), NOW);
-        var reports = mock(ProfessionalReportService.class);
+        var reports = mock(ProfessionalReportQuery.class);
         var store = mock(ProfessionalPurchaseStore.class);
         var gateway = mock(ProfessionalPaymentGateway.class);
         var notification = new ProfessionalPaymentNotification("signed payload", "signature");
@@ -114,7 +114,7 @@ class ProfessionalReportPurchaseServiceTest {
                 "price_configured", Optional.of("pi_1"), Optional.of(report.reportVersion()), NOW, Optional.of(NOW));
         var snapshot = new PurchasedProfessionalReportSnapshot(entitlementId, source.assessment().id(),
                 report.reportVersion(), NOW, report);
-        var reports = mock(ProfessionalReportService.class);
+        var reports = mock(ProfessionalReportQuery.class);
         var store = mock(ProfessionalPurchaseStore.class);
         when(store.findEntitlementByAssessmentId(source.assessment().id())).thenReturn(Optional.of(active));
         when(store.findSnapshotByAssessmentId(source.assessment().id())).thenReturn(Optional.of(snapshot));
@@ -126,7 +126,7 @@ class ProfessionalReportPurchaseServiceTest {
 
     @Test
     void mismatchedVerifiedMetadataIsRejectedBeforeSnapshotAssembly() {
-        var reports = mock(ProfessionalReportService.class);
+        var reports = mock(ProfessionalReportQuery.class);
         var store = mock(ProfessionalPurchaseStore.class);
         var gateway = mock(ProfessionalPaymentGateway.class);
         UUID assessmentId = UUID.randomUUID(); UUID entitlementId = UUID.randomUUID();
@@ -153,7 +153,7 @@ class ProfessionalReportPurchaseServiceTest {
         var event = new ProfessionalPaymentEvent("evt_retry", ProfessionalPaymentProvider.STRIPE, "cs_1",
                 entitlementId, source.assessment().id(), Optional.of("pi_1"), NOW);
         var notification = new ProfessionalPaymentNotification("payload", "signature");
-        var reports = mock(ProfessionalReportService.class);
+        var reports = mock(ProfessionalReportQuery.class);
         var store = mock(ProfessionalPurchaseStore.class);
         var gateway = mock(ProfessionalPaymentGateway.class);
         when(gateway.provider()).thenReturn(ProfessionalPaymentProvider.STRIPE);
@@ -181,7 +181,7 @@ class ProfessionalReportPurchaseServiceTest {
                 URI.create("https://checkout.stripe.test/failed"), "price_configured", Optional.empty(),
                 Optional.empty(), NOW.minusSeconds(60), Optional.empty());
         var paid = new ProfessionalReportAssembler().assemble(source, ProfessionalReportTier.PAID);
-        var reports = mock(ProfessionalReportService.class); var store = mock(ProfessionalPurchaseStore.class);
+        var reports = mock(ProfessionalReportQuery.class); var store = mock(ProfessionalPurchaseStore.class);
         var gateway = mock(ProfessionalPaymentGateway.class);
         when(store.findEntitlementByAssessmentId(assessmentId)).thenReturn(Optional.of(failed));
         when(reports.assemble(assessmentId, ProfessionalReportTier.PAID)).thenReturn(Optional.of(paid));
@@ -201,7 +201,7 @@ class ProfessionalReportPurchaseServiceTest {
                 && value.providerCheckoutSessionId().equals("cs_retry")));
     }
 
-    private ProfessionalReportPurchaseService service(ProfessionalReportService reports,
+    private ProfessionalReportPurchaseService service(ProfessionalReportQuery reports,
             ProfessionalPurchaseStore store, Optional<ProfessionalPaymentGateway> gateway) {
         return new ProfessionalReportPurchaseService(reports, store, gateway,
                 URI.create("https://example.test"), Optional.of("Configured price"), CLOCK);

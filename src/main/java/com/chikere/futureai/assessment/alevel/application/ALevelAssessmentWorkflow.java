@@ -1,8 +1,8 @@
 package com.chikere.futureai.assessment.alevel.application;
 
 import com.chikere.futureai.assessment.domain.ALevelAssessmentState;
-import com.chikere.futureai.evidence.alevel.application.ALevelEvidenceService;
-import com.chikere.futureai.narrative.alevel.application.ALevelNarrativeService;
+import com.chikere.futureai.evidence.alevel.application.ALevelEvidenceGathering;
+import com.chikere.futureai.narrative.alevel.application.ALevelNarrativeGeneration;
 import com.chikere.futureai.narrative.alevel.application.NarrativeStatus;
 import com.chikere.futureai.configuration.JourneyMetrics;
 import org.slf4j.Logger;
@@ -12,22 +12,22 @@ import java.util.Objects;
 import java.util.UUID;
 
 /** Coordinates persistence-first submission and the independent enrichment lifecycles. */
-public final class ALevelAssessmentWorkflow {
+public final class ALevelAssessmentWorkflow implements ALevelAssessmentUseCase {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ALevelAssessmentWorkflow.class);
 
-    private final ALevelAssessmentService assessmentService;
-    private final ALevelNarrativeService narrativeService;
-    private final ALevelEvidenceService evidenceService;
+    private final ALevelAssessmentSubmission assessmentService;
+    private final ALevelNarrativeGeneration narrativeService;
+    private final ALevelEvidenceGathering evidenceService;
     private final JourneyMetrics metrics;
 
-    public ALevelAssessmentWorkflow(ALevelAssessmentService assessmentService,
-            ALevelNarrativeService narrativeService, ALevelEvidenceService evidenceService) {
+    public ALevelAssessmentWorkflow(ALevelAssessmentSubmission assessmentService,
+            ALevelNarrativeGeneration narrativeService, ALevelEvidenceGathering evidenceService) {
         this(assessmentService, narrativeService, evidenceService, JourneyMetrics.disabled());
     }
 
-    public ALevelAssessmentWorkflow(ALevelAssessmentService assessmentService,
-            ALevelNarrativeService narrativeService, ALevelEvidenceService evidenceService,
+    public ALevelAssessmentWorkflow(ALevelAssessmentSubmission assessmentService,
+            ALevelNarrativeGeneration narrativeService, ALevelEvidenceGathering evidenceService,
             JourneyMetrics metrics) {
         this.assessmentService = Objects.requireNonNull(assessmentService);
         this.narrativeService = Objects.requireNonNull(narrativeService);
@@ -35,6 +35,7 @@ public final class ALevelAssessmentWorkflow {
         this.metrics = Objects.requireNonNull(metrics);
     }
 
+    @Override
     public UUID submit(ALevelAssessmentState state) {
         UUID id = assessmentService.submitALevelAssessment(state);
         metrics.assessmentCreated("a-level");

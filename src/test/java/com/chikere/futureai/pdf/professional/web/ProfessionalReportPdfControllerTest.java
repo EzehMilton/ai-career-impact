@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(WebSecurityConfiguration.class)
 class ProfessionalReportPdfControllerTest {
     @Autowired MockMvc mvc;
-    @MockitoBean ProfessionalReportPdfService pdfService;
+    @MockitoBean ProfessionalReportPdfUseCase pdfService;
 
     @Test
     void activeDownloadHasPdfAttachmentAndPrivateNoStoreHeaders() throws Exception {

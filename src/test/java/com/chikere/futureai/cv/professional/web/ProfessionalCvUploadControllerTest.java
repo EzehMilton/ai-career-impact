@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(OutputCaptureExtension.class)
 class ProfessionalCvUploadControllerTest {
     @Autowired MockMvc mvc;
-    @MockitoBean ProfessionalCvUploadService uploadService;
+    @MockitoBean ProfessionalCvAnalysisUseCase uploadService;
 
     @Test
     void csrfIsRequiredAndSuccessfulUploadStartsDedicatedReviewFlow(CapturedOutput output) throws Exception {

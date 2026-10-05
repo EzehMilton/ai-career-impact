@@ -12,7 +12,7 @@ import com.chikere.futureai.narrative.alevel.application.NarrativeStatus;
 import com.chikere.futureai.narrative.alevel.application.StoredALevelNarrative;
 import com.chikere.futureai.payment.alevel.application.ALevelEntitlementStatus;
 import com.chikere.futureai.payment.alevel.application.ALevelPurchaseAccess;
-import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseService;
+import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseUseCase;
 import com.chikere.futureai.report.alevel.application.ALevelReport;
 import com.chikere.futureai.report.alevel.application.ALevelReportAssembler;
 import com.chikere.futureai.report.alevel.application.ALevelReportSource;
@@ -45,7 +45,7 @@ class ALevelPaidReportControllerTest {
     private static final UUID ID = UUID.fromString("7e8f9a0b-1c2d-4e3f-8a4b-5c6d7e8f9a0b");
 
     @Autowired MockMvc mvc;
-    @MockitoBean ALevelReportPurchaseService purchaseService;
+    @MockitoBean ALevelReportPurchaseUseCase purchaseService;
 
     @Test
     void anActiveEntitlementRendersOnlyTheFrozenPurchasedSnapshot() throws Exception {

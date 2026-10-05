@@ -10,7 +10,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-public final class ProfessionalNarrativeService {
+public final class ProfessionalNarrativeService implements ProfessionalNarrativeGeneration {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProfessionalNarrativeService.class);
 
     private final ProfessionalAssessmentStore assessmentStore;
@@ -35,6 +35,7 @@ public final class ProfessionalNarrativeService {
         this.clock = Objects.requireNonNull(clock);
     }
 
+    @Override
     public StoredProfessionalNarrative generateFor(UUID assessmentId) {
         Objects.requireNonNull(assessmentId, "assessmentId must not be null");
         Optional<StoredProfessionalNarrative> existing = narrativeStore.findByAssessmentId(assessmentId);

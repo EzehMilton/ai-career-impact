@@ -19,7 +19,7 @@ import java.util.UUID;
  * provider failure is recorded as {@code FAILED} and never causes a fixture lookup or any other
  * fallback.</p>
  */
-public final class ALevelEvidenceService {
+public final class ALevelEvidenceService implements ALevelEvidenceGathering {
     private static final Logger LOGGER = LoggerFactory.getLogger(ALevelEvidenceService.class);
     private final ALevelAssessmentStore assessmentStore;
     private final ALevelEvidenceStore evidenceStore;
@@ -37,6 +37,7 @@ public final class ALevelEvidenceService {
         this.clock = Objects.requireNonNull(clock);
     }
 
+    @Override
     public Optional<ALevelEvidenceBundle> gatherFor(UUID assessmentId) {
         Objects.requireNonNull(assessmentId);
         Optional<ALevelEvidenceBundle> existing = evidenceStore.findByAssessmentId(assessmentId);

@@ -1,10 +1,10 @@
 package com.chikere.futureai.assessment.university.web;
 
 import com.chikere.futureai.assessment.domain.UniversityAssessmentState;
-import com.chikere.futureai.assessment.university.application.UniversityAssessmentWorkflow;
-import com.chikere.futureai.payment.university.application.UniversityReportPurchaseService;
+import com.chikere.futureai.assessment.university.application.UniversityAssessmentUseCase;
+import com.chikere.futureai.payment.university.application.UniversityReportPurchaseUseCase;
 import com.chikere.futureai.payment.university.web.UniversityPurchaseViewModel;
-import com.chikere.futureai.report.university.application.UniversityReportService;
+import com.chikere.futureai.report.university.application.UniversityReportQuery;
 import com.chikere.futureai.report.university.application.UniversityReportTier;
 import com.chikere.futureai.report.university.web.UniversityReportViewMapper;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,18 +28,18 @@ public final class UniversityAssessmentController {
     private static final Logger LOGGER = LoggerFactory.getLogger(UniversityAssessmentController.class);
     private static final String FORM_VIEW = "university-assessment/form";
 
-    private final UniversityAssessmentWorkflow workflow;
-    private final UniversityReportService reportService;
+    private final UniversityAssessmentUseCase workflow;
+    private final UniversityReportQuery reportService;
     private final UniversityAssessmentFormMapper formMapper;
     private final UniversityReportViewMapper reportViewMapper;
-    private final UniversityReportPurchaseService purchaseService;
+    private final UniversityReportPurchaseUseCase purchaseService;
 
     public UniversityAssessmentController(
-            UniversityAssessmentWorkflow workflow,
-            UniversityReportService reportService,
+            UniversityAssessmentUseCase workflow,
+            UniversityReportQuery reportService,
             UniversityAssessmentFormMapper formMapper,
             UniversityReportViewMapper reportViewMapper,
-            UniversityReportPurchaseService purchaseService) {
+            UniversityReportPurchaseUseCase purchaseService) {
         this.workflow = workflow;
         this.reportService = reportService;
         this.formMapper = formMapper;

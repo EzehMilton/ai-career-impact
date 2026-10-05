@@ -1,7 +1,7 @@
 package com.chikere.futureai.assessment.alevel.web;
 
 import com.chikere.futureai.assessment.alevel.application.ALevelAssessmentResult;
-import com.chikere.futureai.assessment.alevel.application.ALevelAssessmentWorkflow;
+import com.chikere.futureai.assessment.alevel.application.ALevelAssessmentUseCase;
 import com.chikere.futureai.assessment.alevel.application.AssessmentSource;
 import com.chikere.futureai.assessment.alevel.application.StoredALevelAssessment;
 import com.chikere.futureai.assessment.domain.ALevelAssessmentState;
@@ -18,10 +18,10 @@ import com.chikere.futureai.narrative.alevel.application.NarrativeSource;
 import com.chikere.futureai.narrative.alevel.application.NarrativeStatus;
 import com.chikere.futureai.narrative.alevel.application.StoredALevelNarrative;
 import com.chikere.futureai.payment.alevel.application.ALevelPurchaseAccess;
-import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseService;
+import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseUseCase;
 import com.chikere.futureai.report.alevel.application.ALevelReport;
 import com.chikere.futureai.report.alevel.application.ALevelReportAssembler;
-import com.chikere.futureai.report.alevel.application.ALevelReportService;
+import com.chikere.futureai.report.alevel.application.ALevelReportQuery;
 import com.chikere.futureai.report.alevel.application.ALevelReportSource;
 import com.chikere.futureai.report.alevel.application.ALevelReportTier;
 import com.chikere.futureai.report.alevel.web.ALevelReportViewMapper;
@@ -63,9 +63,9 @@ class ALevelAssessmentControllerTest {
     private static final UUID ID = UUID.fromString("5c6d7e8f-9a0b-4c1d-8e2f-3a4b5c6d7e8f");
 
     @Autowired MockMvc mvc;
-    @MockitoBean ALevelAssessmentWorkflow workflow;
-    @MockitoBean ALevelReportService reportService;
-    @MockitoBean ALevelReportPurchaseService purchaseService;
+    @MockitoBean ALevelAssessmentUseCase workflow;
+    @MockitoBean ALevelReportQuery reportService;
+    @MockitoBean ALevelReportPurchaseUseCase purchaseService;
 
     @BeforeEach
     void purchaseState() {
