@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(WebSecurityConfiguration.class)
 class StripeWebhookControllerTest {
     @Autowired MockMvc mvc;
-    @MockitoBean ProfessionalReportPurchaseService purchaseService;
+    @MockitoBean ProfessionalReportPurchaseUseCase purchaseService;
 
     @Test
     void exactWebhookPathUsesSignatureRatherThanBrowserCsrf() throws Exception {

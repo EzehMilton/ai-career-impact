@@ -9,7 +9,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-public final class ProfessionalReportService {
+public final class ProfessionalReportService implements ProfessionalReportQuery {
     private final ProfessionalAssessmentStore assessmentStore;
     private final ProfessionalNarrativeStore narrativeStore;
     private final ProfessionalEvidenceStore evidenceStore;
@@ -26,6 +26,7 @@ public final class ProfessionalReportService {
         this.assembler = Objects.requireNonNull(assembler);
     }
 
+    @Override
     public Optional<ProfessionalReport> assemble(UUID assessmentId, ProfessionalReportTier tier) {
         Objects.requireNonNull(assessmentId); Objects.requireNonNull(tier);
         return assessmentStore.findById(assessmentId).map(assessment -> assembler.assemble(

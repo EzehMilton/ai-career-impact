@@ -15,7 +15,7 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ProfessionalReportAssemblerTest {
+public class ProfessionalReportAssemblerTest {
     private static final UUID ID = UUID.fromString("b0285ff5-7dc4-4808-aef4-1b975de59151");
     private final ProfessionalReportAssembler assembler = new ProfessionalReportAssembler();
 
@@ -81,7 +81,7 @@ class ProfessionalReportAssemblerTest {
                 .allMatch(value -> value.category() == WorkFocusCategory.USER_REVIEW_REQUIRED);
     }
 
-    static ProfessionalReportSource source(boolean narrativeAvailable, boolean evidenceAvailable,
+    public static ProfessionalReportSource source(boolean narrativeAvailable, boolean evidenceAvailable,
             boolean classificationAvailable) {
         Instant time = Instant.parse("2026-09-30T12:00:00Z");
         var state = new ProfessionalAssessmentState("Software Architect", "Designs complex systems.",

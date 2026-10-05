@@ -1,7 +1,7 @@
 package com.chikere.futureai.pdf.alevel.web;
 
 import com.chikere.futureai.pdf.alevel.application.ALevelReportPdfAccessDeniedException;
-import com.chikere.futureai.pdf.alevel.application.ALevelReportPdfService;
+import com.chikere.futureai.pdf.alevel.application.ALevelReportPdfUseCase;
 import com.chikere.futureai.pdf.alevel.application.PurchasedALevelReportPdf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,9 +23,9 @@ public final class ALevelReportPdfController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ALevelReportPdfController.class);
     private static final CacheControl PRIVATE_NO_STORE = CacheControl.noStore().cachePrivate();
-    private final ALevelReportPdfService pdfService;
+    private final ALevelReportPdfUseCase pdfService;
 
-    public ALevelReportPdfController(ALevelReportPdfService pdfService) {
+    public ALevelReportPdfController(ALevelReportPdfUseCase pdfService) {
         this.pdfService = pdfService;
     }
 

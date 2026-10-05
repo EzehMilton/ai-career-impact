@@ -1,11 +1,13 @@
 package com.chikere.futureai.assessment.alevel.application;
 
 import com.chikere.futureai.assessment.domain.ALevelAssessmentState;
-import com.chikere.futureai.evidence.alevel.application.ALevelEvidenceService;
+import com.chikere.futureai.evidence.alevel.application.ALevelEvidenceGathering;
 import com.chikere.futureai.configuration.JourneyMetrics;
+import com.chikere.futureai.narrative.alevel.application.ALevelNarrativeGeneration;
 import com.chikere.futureai.narrative.alevel.application.NarrativeStatus;
+import com.chikere.futureai.narrative.alevel.application.NarrativeSource;
 import com.chikere.futureai.narrative.alevel.application.StoredALevelNarrative;
-import com.chikere.futureai.narrative.alevel.application.ALevelNarrativeService;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
@@ -13,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -29,24 +32,25 @@ class ALevelAssessmentWorkflowTest {
 
     @Test
     void recordedNarrativeFailureIncrementsFailureMetric() {
-        var assessmentService = mock(ALevelAssessmentService.class);
-        var narrativeService = mock(ALevelNarrativeService.class);
-        var metrics = mock(JourneyMetrics.class);
-        var saved = mock(StoredALevelNarrative.class);
+        var assessmentService = mock(ALevelAssessmentSubmission.class);
+        var narrativeService = mock(ALevelNarrativeGeneration.class);
+        var registry = new SimpleMeterRegistry();
+        var metrics = new JourneyMetrics(registry);
+        var saved = new StoredALevelNarrative(ID, NarrativeStatus.FAILED, Optional.empty(),
+                NarrativeSource.LOCAL_FIXTURE, "fixture", Optional.empty(), "a-level-narrative-v1",
+                Instant.EPOCH, Optional.empty());
         when(assessmentService.submitALevelAssessment(state())).thenReturn(ID);
         when(narrativeService.generateFor(ID)).thenReturn(saved);
-        when(saved.status()).thenReturn(NarrativeStatus.FAILED);
-
         assertThat(new ALevelAssessmentWorkflow(assessmentService, narrativeService,
-                mock(ALevelEvidenceService.class), metrics).submit(state())).isEqualTo(ID);
-        verify(metrics).narrativeFailed("a-level");
+                mock(ALevelEvidenceGathering.class), metrics).submit(state())).isEqualTo(ID);
+        assertThat(registry.counter("narrative.failures", "journey", "a-level").count()).isEqualTo(1.0);
     }
 
     @Test
     void persistsTheAssessmentBeforeAnyEnrichmentRuns() {
-        var assessmentService = mock(ALevelAssessmentService.class);
-        var narrativeService = mock(ALevelNarrativeService.class);
-        var evidenceService = mock(ALevelEvidenceService.class);
+        var assessmentService = mock(ALevelAssessmentSubmission.class);
+        var narrativeService = mock(ALevelNarrativeGeneration.class);
+        var evidenceService = mock(ALevelEvidenceGathering.class);
         var state = state();
         when(assessmentService.submitALevelAssessment(state)).thenReturn(ID);
 
@@ -63,9 +67,9 @@ class ALevelAssessmentWorkflowTest {
 
     @Test
     void narrativeOrEvidenceFailureNeverInvalidatesTheCommittedAssessment() {
-        var assessmentService = mock(ALevelAssessmentService.class);
-        var narrativeService = mock(ALevelNarrativeService.class);
-        var evidenceService = mock(ALevelEvidenceService.class);
+        var assessmentService = mock(ALevelAssessmentSubmission.class);
+        var narrativeService = mock(ALevelNarrativeGeneration.class);
+        var evidenceService = mock(ALevelEvidenceGathering.class);
         var state = state();
         when(assessmentService.submitALevelAssessment(state)).thenReturn(ID);
         doThrow(new IllegalStateException("narrative store down")).when(narrativeService).generateFor(ID);
@@ -81,9 +85,9 @@ class ALevelAssessmentWorkflowTest {
 
     @Test
     void assessmentFailureStopsBeforeEnrichment() {
-        var assessmentService = mock(ALevelAssessmentService.class);
-        var narrativeService = mock(ALevelNarrativeService.class);
-        var evidenceService = mock(ALevelEvidenceService.class);
+        var assessmentService = mock(ALevelAssessmentSubmission.class);
+        var narrativeService = mock(ALevelNarrativeGeneration.class);
+        var evidenceService = mock(ALevelEvidenceGathering.class);
         var state = state();
         doThrow(new IllegalStateException("Jev unavailable"))
                 .when(assessmentService).submitALevelAssessment(state);

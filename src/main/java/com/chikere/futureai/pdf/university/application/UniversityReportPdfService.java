@@ -25,7 +25,7 @@ import java.util.UUID;
  * persistence ports. It never calls the report assembler, Jev, the decision policy, OpenAI,
  * narrative generation, evidence retrieval or Stripe.</p>
  */
-public final class UniversityReportPdfService {
+public final class UniversityReportPdfService implements UniversityReportPdfUseCase {
     private static final Logger LOGGER = LoggerFactory.getLogger(UniversityReportPdfService.class);
     private static final byte[] PDF_SIGNATURE = "%PDF-".getBytes(StandardCharsets.US_ASCII);
     private final UniversityPurchaseStore purchaseStore;
@@ -47,6 +47,7 @@ public final class UniversityReportPdfService {
         this.clock = Objects.requireNonNull(clock);
     }
 
+    @Override
     public PurchasedUniversityReportPdf getOrCreate(UUID assessmentId) {
         Objects.requireNonNull(assessmentId);
         UniversityReportEntitlement entitlement = purchaseStore.findEntitlementByAssessmentId(assessmentId)

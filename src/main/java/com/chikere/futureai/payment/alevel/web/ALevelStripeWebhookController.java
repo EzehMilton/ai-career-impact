@@ -1,7 +1,7 @@
 package com.chikere.futureai.payment.alevel.web;
 
 import com.chikere.futureai.payment.alevel.application.ALevelPaymentNotification;
-import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseService;
+import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseUseCase;
 import com.chikere.futureai.payment.alevel.application.InvalidPaymentNotificationException;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -24,9 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
 public final class ALevelStripeWebhookController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ALevelStripeWebhookController.class);
-    private final ALevelReportPurchaseService purchaseService;
+    private final ALevelReportPurchaseUseCase purchaseService;
 
-    public ALevelStripeWebhookController(ALevelReportPurchaseService purchaseService) {
+    public ALevelStripeWebhookController(ALevelReportPurchaseUseCase purchaseService) {
         this.purchaseService = purchaseService;
     }
 

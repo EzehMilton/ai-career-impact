@@ -19,7 +19,7 @@ import java.util.UUID;
  * Transferability, Career Adaptability, status or confidence. A provider failure is recorded as
  * {@code FAILED} and never causes a fixture lookup or any other fallback.</p>
  */
-public final class UniversityEvidenceService {
+public final class UniversityEvidenceService implements UniversityEvidenceGathering {
     private static final Logger LOGGER = LoggerFactory.getLogger(UniversityEvidenceService.class);
     private final UniversityAssessmentStore assessmentStore;
     private final UniversityEvidenceStore evidenceStore;
@@ -37,6 +37,7 @@ public final class UniversityEvidenceService {
         this.clock = Objects.requireNonNull(clock);
     }
 
+    @Override
     public Optional<UniversityEvidenceBundle> gatherFor(UUID assessmentId) {
         Objects.requireNonNull(assessmentId);
         Optional<UniversityEvidenceBundle> existing = evidenceStore.findByAssessmentId(assessmentId);

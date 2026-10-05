@@ -5,7 +5,7 @@ import com.chikere.futureai.payment.alevel.application.ALevelPaymentNotification
 import com.chikere.futureai.payment.alevel.application.ALevelPaymentProcessingResult;
 import com.chikere.futureai.payment.alevel.application.ALevelPaymentProvider;
 import com.chikere.futureai.payment.alevel.application.ALevelReportEntitlement;
-import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseService;
+import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseUseCase;
 import com.chikere.futureai.payment.alevel.fixture.LocalALevelPaymentSimulator;
 import com.chikere.futureai.report.alevel.application.ALevelReportTier;
 import com.chikere.futureai.security.WebSecurityConfiguration;
@@ -37,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class LocalALevelCheckoutControllerTest {
 
     @Autowired MockMvc mvc;
-    @MockitoBean ALevelReportPurchaseService purchaseService;
+    @MockitoBean ALevelReportPurchaseUseCase purchaseService;
     @MockitoBean LocalALevelPaymentSimulator simulator;
 
     @Test

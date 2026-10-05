@@ -18,7 +18,7 @@ import java.util.UUID;
  * Coordinates exactly one judgment-provider call and one decision-policy call, then stores an
  * immutable snapshot. It never scores a course itself.
  */
-public final class UniversityAssessmentService {
+public final class UniversityAssessmentService implements UniversityAssessmentSubmission {
     private static final Logger LOGGER = LoggerFactory.getLogger(UniversityAssessmentService.class);
 
     private final UniversityJudgmentProvider judgmentProvider;
@@ -47,6 +47,7 @@ public final class UniversityAssessmentService {
         return execute(state).result();
     }
 
+    @Override
     public UUID submitUniversityAssessment(UniversityAssessmentState state) {
         if (store == null) {
             throw new IllegalStateException("UniversityAssessmentStore is required for submission");

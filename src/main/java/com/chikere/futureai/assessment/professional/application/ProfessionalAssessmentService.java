@@ -14,7 +14,7 @@ import java.util.UUID;
 import java.time.Clock;
 import java.time.Instant;
 
-public final class ProfessionalAssessmentService {
+public final class ProfessionalAssessmentService implements ProfessionalAssessmentSubmission {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProfessionalAssessmentService.class);
 
     private final ProfessionalJudgmentProvider judgmentProvider;
@@ -43,10 +43,12 @@ public final class ProfessionalAssessmentService {
         return execute(state).result();
     }
 
+    @Override
     public UUID submitProfessionalAssessment(ProfessionalAssessmentState state) {
         return submitProfessionalAssessment(state, ProfessionalAssessmentInputMetadata.manual());
     }
 
+    @Override
     public UUID submitProfessionalAssessment(ProfessionalAssessmentState state,
             ProfessionalAssessmentInputMetadata inputMetadata) {
         Objects.requireNonNull(inputMetadata, "inputMetadata must not be null");

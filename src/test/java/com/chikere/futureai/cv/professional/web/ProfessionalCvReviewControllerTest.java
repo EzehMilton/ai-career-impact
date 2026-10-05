@@ -2,7 +2,7 @@ package com.chikere.futureai.cv.professional.web;
 
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentInputMetadata;
-import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentWorkflow;
+import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentUseCase;
 import com.chikere.futureai.cv.professional.application.*;
 import com.chikere.futureai.security.WebSecurityConfiguration;
 import org.junit.jupiter.api.Test;
@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         ProfessionalProfileValidator.class, ProfessionalProfileAssessmentMapper.class})
 class ProfessionalCvReviewControllerTest {
     @Autowired MockMvc mvc;
-    @MockitoBean ProfessionalAssessmentWorkflow workflow;
+    @MockitoBean ProfessionalAssessmentUseCase workflow;
 
     @Test
     void reviewPageShowsStructuredProfileButNeverRawCv() throws Exception {

@@ -2,7 +2,7 @@ package com.chikere.futureai.payment.alevel.web;
 
 import com.chikere.futureai.payment.alevel.application.ALevelCheckoutSession;
 import com.chikere.futureai.payment.alevel.application.ALevelPaymentProvider;
-import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseService;
+import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseUseCase;
 import com.chikere.futureai.payment.alevel.application.PaymentUnavailableException;
 import com.chikere.futureai.security.WebSecurityConfiguration;
 import org.junit.jupiter.api.Test;
@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ALevelCheckoutControllerTest {
 
     @Autowired MockMvc mvc;
-    @MockitoBean ALevelReportPurchaseService purchaseService;
+    @MockitoBean ALevelReportPurchaseUseCase purchaseService;
 
     @Test
     void checkoutRequiresCsrfAndRedirectsOnlyToTheGatewaySession() throws Exception {

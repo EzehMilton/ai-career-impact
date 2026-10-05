@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /** Reads only persistence ports. It never runs an assessment. */
-public final class UniversityReportService {
+public final class UniversityReportService implements UniversityReportQuery {
     private final UniversityAssessmentStore assessmentStore;
     private final UniversityNarrativeStore narrativeStore;
     private final UniversityEvidenceStore evidenceStore;
@@ -24,6 +24,7 @@ public final class UniversityReportService {
         this.assembler = Objects.requireNonNull(assembler);
     }
 
+    @Override
     public Optional<UniversityReport> assemble(UUID assessmentId, UniversityReportTier tier) {
         Objects.requireNonNull(assessmentId);
         Objects.requireNonNull(tier);

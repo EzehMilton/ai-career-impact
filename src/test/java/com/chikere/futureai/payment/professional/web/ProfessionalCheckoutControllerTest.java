@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(WebSecurityConfiguration.class)
 class ProfessionalCheckoutControllerTest {
     @Autowired MockMvc mvc;
-    @MockitoBean ProfessionalReportPurchaseService purchaseService;
+    @MockitoBean ProfessionalReportPurchaseUseCase purchaseService;
 
     @Test
     void checkoutPostRequiresCsrfAndRedirectsOnlyToGatewaySession() throws Exception {

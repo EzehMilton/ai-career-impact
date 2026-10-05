@@ -1,7 +1,7 @@
 package com.chikere.futureai.payment.professional.web;
 
 import com.chikere.futureai.payment.professional.application.ProfessionalEntitlementStatus;
-import com.chikere.futureai.payment.professional.application.ProfessionalReportPurchaseService;
+import com.chikere.futureai.payment.professional.application.ProfessionalReportPurchaseUseCase;
 import com.chikere.futureai.payment.professional.fixture.LocalProfessionalPaymentSimulator;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Profile;
@@ -14,10 +14,10 @@ import java.util.UUID;
 @Controller
 @Profile("local-fixture")
 public final class LocalProfessionalCheckoutController {
-    private final ProfessionalReportPurchaseService purchaseService;
+    private final ProfessionalReportPurchaseUseCase purchaseService;
     private final LocalProfessionalPaymentSimulator simulator;
 
-    public LocalProfessionalCheckoutController(ProfessionalReportPurchaseService purchaseService,
+    public LocalProfessionalCheckoutController(ProfessionalReportPurchaseUseCase purchaseService,
             LocalProfessionalPaymentSimulator simulator) {
         this.purchaseService = purchaseService;
         this.simulator = simulator;

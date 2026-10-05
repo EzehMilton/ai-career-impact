@@ -24,7 +24,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.never;
 import static org.mockito.ArgumentMatchers.any;
 
@@ -85,7 +84,7 @@ class ProfessionalAssessmentServiceTest {
         var state = state("Software Architect");
         var judgments = new LocalFixtureProfessionalJudgmentProvider("senior_software_architect").judge(state);
         var provider = mock(ProfessionalJudgmentProvider.class);
-        var policy = spy(new ProfessionalDecisionPolicyV1());
+        var policy = new ProfessionalDecisionPolicyV1();
         var store = mock(ProfessionalAssessmentStore.class);
         org.mockito.Mockito.doReturn(judgments).when(provider).judge(state);
         when(provider.source()).thenReturn(AssessmentSource.JEV);
@@ -103,14 +102,15 @@ class ProfessionalAssessmentServiceTest {
         assertThat(saved.state()).isEqualTo(state);
         assertThat(saved.judgments()).isEqualTo(judgments);
         assertThat(saved.result().source()).isEqualTo(AssessmentSource.JEV);
+        var expectedDecision = policy.decide(judgments);
+        assertThat(saved.result()).isEqualTo(new ProfessionalAssessmentResult(expectedDecision,
+                AssessmentSource.JEV, judgments.schemaVersion(), expectedDecision.policyVersion()));
         assertThat(saved.modelIdentifier()).contains("jev-latest");
         verify(provider, times(1)).judge(state);
-        verify(policy, times(1)).decide(judgments);
 
         when(store.findById(id)).thenReturn(Optional.of(saved));
         assertThat(service.getProfessionalAssessment(id)).contains(saved);
         verify(provider, times(1)).judge(state);
-        verify(policy, times(1)).decide(judgments);
     }
 
     @Test

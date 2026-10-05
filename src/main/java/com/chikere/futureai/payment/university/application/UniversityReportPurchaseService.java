@@ -1,7 +1,7 @@
 package com.chikere.futureai.payment.university.application;
 
 import com.chikere.futureai.report.university.application.UniversityReport;
-import com.chikere.futureai.report.university.application.UniversityReportService;
+import com.chikere.futureai.report.university.application.UniversityReportQuery;
 import com.chikere.futureai.report.university.application.UniversityReportTier;
 
 import java.net.URI;
@@ -22,9 +22,9 @@ import java.util.UUID;
  * evidence retrieval or report composition. A university entitlement is entirely separate from a
  * professional one: neither grants access to the other.</p>
  */
-public final class UniversityReportPurchaseService {
+public final class UniversityReportPurchaseService implements UniversityReportPurchaseUseCase {
     private static final Logger LOGGER = LoggerFactory.getLogger(UniversityReportPurchaseService.class);
-    private final UniversityReportService reportService;
+    private final UniversityReportQuery reportService;
     private final UniversityPurchaseStore purchaseStore;
     private final Optional<UniversityPaymentGateway> paymentGateway;
     private final URI applicationBaseUrl;
@@ -32,13 +32,13 @@ public final class UniversityReportPurchaseService {
     private final Clock clock;
     private final JourneyMetrics metrics;
 
-    public UniversityReportPurchaseService(UniversityReportService reportService,
+    public UniversityReportPurchaseService(UniversityReportQuery reportService,
             UniversityPurchaseStore purchaseStore, Optional<UniversityPaymentGateway> paymentGateway,
             URI applicationBaseUrl, Optional<String> displayPrice, Clock clock) {
         this(reportService, purchaseStore, paymentGateway, applicationBaseUrl, displayPrice, clock, JourneyMetrics.disabled());
     }
 
-    public UniversityReportPurchaseService(UniversityReportService reportService,
+    public UniversityReportPurchaseService(UniversityReportQuery reportService,
             UniversityPurchaseStore purchaseStore, Optional<UniversityPaymentGateway> paymentGateway,
             URI applicationBaseUrl, Optional<String> displayPrice, Clock clock,
             JourneyMetrics metrics) {
@@ -53,6 +53,7 @@ public final class UniversityReportPurchaseService {
     }
 
     /** Calls the external gateway before opening the short pending-entitlement database transaction. */
+    @Override
     public UniversityCheckoutSession startCheckout(UUID assessmentId) {
         Objects.requireNonNull(assessmentId);
         UniversityPaymentGateway gateway = paymentGateway.orElseThrow(() ->
@@ -91,6 +92,7 @@ public final class UniversityReportPurchaseService {
         return session;
     }
 
+    @Override
     public UniversityPaymentProcessingResult processPaymentNotification(
             UniversityPaymentNotification notification) {
         UniversityPaymentGateway gateway = paymentGateway.orElseThrow(() ->
@@ -127,6 +129,7 @@ public final class UniversityReportPurchaseService {
                 : UniversityPaymentProcessingResult.ALREADY_PROCESSED;
     }
 
+    @Override
     public UniversityPurchaseAccess accessFor(UUID assessmentId) {
         Optional<UniversityReportEntitlement> entitlement =
                 purchaseStore.findEntitlementByAssessmentId(Objects.requireNonNull(assessmentId));
@@ -138,6 +141,7 @@ public final class UniversityReportPurchaseService {
     }
 
     /** Only an ACTIVE entitlement returns the frozen purchased report. */
+    @Override
     public Optional<UniversityReport> findPurchasedReport(UUID assessmentId) {
         Optional<UniversityReportEntitlement> entitlement =
                 purchaseStore.findEntitlementByAssessmentId(Objects.requireNonNull(assessmentId));
@@ -149,6 +153,7 @@ public final class UniversityReportPurchaseService {
                 .map(PurchasedUniversityReportSnapshot::report);
     }
 
+    @Override
     public Optional<UniversityReportEntitlement> findEntitlement(UUID assessmentId) {
         return purchaseStore.findEntitlementByAssessmentId(Objects.requireNonNull(assessmentId));
     }

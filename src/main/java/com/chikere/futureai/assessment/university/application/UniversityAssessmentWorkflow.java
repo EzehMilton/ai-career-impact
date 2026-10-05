@@ -1,8 +1,8 @@
 package com.chikere.futureai.assessment.university.application;
 
 import com.chikere.futureai.assessment.domain.UniversityAssessmentState;
-import com.chikere.futureai.evidence.university.application.UniversityEvidenceService;
-import com.chikere.futureai.narrative.university.application.UniversityNarrativeService;
+import com.chikere.futureai.evidence.university.application.UniversityEvidenceGathering;
+import com.chikere.futureai.narrative.university.application.UniversityNarrativeGeneration;
 import com.chikere.futureai.narrative.university.application.NarrativeStatus;
 import com.chikere.futureai.configuration.JourneyMetrics;
 import org.slf4j.Logger;
@@ -12,22 +12,22 @@ import java.util.Objects;
 import java.util.UUID;
 
 /** Coordinates persistence-first submission and the independent enrichment lifecycles. */
-public final class UniversityAssessmentWorkflow {
+public final class UniversityAssessmentWorkflow implements UniversityAssessmentUseCase {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UniversityAssessmentWorkflow.class);
 
-    private final UniversityAssessmentService assessmentService;
-    private final UniversityNarrativeService narrativeService;
-    private final UniversityEvidenceService evidenceService;
+    private final UniversityAssessmentSubmission assessmentService;
+    private final UniversityNarrativeGeneration narrativeService;
+    private final UniversityEvidenceGathering evidenceService;
     private final JourneyMetrics metrics;
 
-    public UniversityAssessmentWorkflow(UniversityAssessmentService assessmentService,
-            UniversityNarrativeService narrativeService, UniversityEvidenceService evidenceService) {
+    public UniversityAssessmentWorkflow(UniversityAssessmentSubmission assessmentService,
+            UniversityNarrativeGeneration narrativeService, UniversityEvidenceGathering evidenceService) {
         this(assessmentService, narrativeService, evidenceService, JourneyMetrics.disabled());
     }
 
-    public UniversityAssessmentWorkflow(UniversityAssessmentService assessmentService,
-            UniversityNarrativeService narrativeService, UniversityEvidenceService evidenceService,
+    public UniversityAssessmentWorkflow(UniversityAssessmentSubmission assessmentService,
+            UniversityNarrativeGeneration narrativeService, UniversityEvidenceGathering evidenceService,
             JourneyMetrics metrics) {
         this.assessmentService = Objects.requireNonNull(assessmentService);
         this.narrativeService = Objects.requireNonNull(narrativeService);
@@ -35,6 +35,7 @@ public final class UniversityAssessmentWorkflow {
         this.metrics = Objects.requireNonNull(metrics);
     }
 
+    @Override
     public UUID submit(UniversityAssessmentState state) {
         UUID id = assessmentService.submitUniversityAssessment(state);
         metrics.assessmentCreated("university");

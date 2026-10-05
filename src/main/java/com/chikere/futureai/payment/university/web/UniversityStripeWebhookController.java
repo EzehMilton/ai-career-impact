@@ -2,7 +2,7 @@ package com.chikere.futureai.payment.university.web;
 
 import com.chikere.futureai.payment.university.application.InvalidPaymentNotificationException;
 import com.chikere.futureai.payment.university.application.UniversityPaymentNotification;
-import com.chikere.futureai.payment.university.application.UniversityReportPurchaseService;
+import com.chikere.futureai.payment.university.application.UniversityReportPurchaseUseCase;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,9 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
 public final class UniversityStripeWebhookController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UniversityStripeWebhookController.class);
-    private final UniversityReportPurchaseService purchaseService;
+    private final UniversityReportPurchaseUseCase purchaseService;
 
-    public UniversityStripeWebhookController(UniversityReportPurchaseService purchaseService) {
+    public UniversityStripeWebhookController(UniversityReportPurchaseUseCase purchaseService) {
         this.purchaseService = purchaseService;
     }
 

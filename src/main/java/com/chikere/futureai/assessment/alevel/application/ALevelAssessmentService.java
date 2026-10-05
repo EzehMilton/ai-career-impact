@@ -18,7 +18,7 @@ import java.util.UUID;
  * Coordinates exactly one judgment-provider call and one decision-policy call, then stores an
  * immutable snapshot. It never scores a subject combination itself.
  */
-public final class ALevelAssessmentService {
+public final class ALevelAssessmentService implements ALevelAssessmentSubmission {
     private static final Logger LOGGER = LoggerFactory.getLogger(ALevelAssessmentService.class);
 
     private final ALevelJudgmentProvider judgmentProvider;
@@ -43,6 +43,7 @@ public final class ALevelAssessmentService {
         return execute(state).result();
     }
 
+    @Override
     public UUID submitALevelAssessment(ALevelAssessmentState state) {
         if (store == null) {
             throw new IllegalStateException("ALevelAssessmentStore is required for submission");

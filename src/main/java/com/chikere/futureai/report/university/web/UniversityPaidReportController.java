@@ -1,6 +1,6 @@
 package com.chikere.futureai.report.university.web;
 
-import com.chikere.futureai.payment.university.application.UniversityReportPurchaseService;
+import com.chikere.futureai.payment.university.application.UniversityReportPurchaseUseCase;
 import com.chikere.futureai.payment.university.web.UniversityPurchaseViewModel;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -17,10 +17,10 @@ import java.util.UUID;
 public final class UniversityPaidReportController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UniversityPaidReportController.class);
-    private final UniversityReportPurchaseService purchaseService;
+    private final UniversityReportPurchaseUseCase purchaseService;
     private final UniversityReportViewMapper viewMapper;
 
-    public UniversityPaidReportController(UniversityReportPurchaseService purchaseService,
+    public UniversityPaidReportController(UniversityReportPurchaseUseCase purchaseService,
             UniversityReportViewMapper viewMapper) {
         this.purchaseService = purchaseService;
         this.viewMapper = viewMapper;

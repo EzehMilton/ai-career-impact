@@ -1,7 +1,7 @@
 package com.chikere.futureai.cv.professional.web;
 
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentInputMetadata;
-import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentWorkflow;
+import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentUseCase;
 import com.chikere.futureai.cv.professional.application.*;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -24,11 +24,11 @@ public final class ProfessionalCvReviewController {
     private final ProfessionalProfileEditMapper editMapper;
     private final ProfessionalProfileValidator validator;
     private final ProfessionalProfileAssessmentMapper assessmentMapper;
-    private final ProfessionalAssessmentWorkflow workflow;
+    private final ProfessionalAssessmentUseCase workflow;
 
     public ProfessionalCvReviewController(ProfessionalProfileEditMapper editMapper,
             ProfessionalProfileValidator validator, ProfessionalProfileAssessmentMapper assessmentMapper,
-            ProfessionalAssessmentWorkflow workflow) {
+            ProfessionalAssessmentUseCase workflow) {
         this.editMapper = editMapper;
         this.validator = validator;
         this.assessmentMapper = assessmentMapper;

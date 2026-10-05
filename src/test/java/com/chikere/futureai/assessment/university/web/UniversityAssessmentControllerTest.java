@@ -4,7 +4,7 @@ import com.chikere.futureai.assessment.domain.UniversityAssessmentState;
 import com.chikere.futureai.assessment.university.application.AssessmentSource;
 import com.chikere.futureai.assessment.university.application.StoredUniversityAssessment;
 import com.chikere.futureai.assessment.university.application.UniversityAssessmentResult;
-import com.chikere.futureai.assessment.university.application.UniversityAssessmentWorkflow;
+import com.chikere.futureai.assessment.university.application.UniversityAssessmentUseCase;
 import com.chikere.futureai.decision.university.UniversityDecisionPolicyV1;
 import com.chikere.futureai.evidence.university.application.EvidenceSource;
 import com.chikere.futureai.evidence.university.application.EvidenceSourceQuality;
@@ -18,10 +18,10 @@ import com.chikere.futureai.narrative.university.application.NarrativeStatus;
 import com.chikere.futureai.narrative.university.application.StoredUniversityNarrative;
 import com.chikere.futureai.narrative.university.application.UniversityNarrative;
 import com.chikere.futureai.payment.university.application.UniversityPurchaseAccess;
-import com.chikere.futureai.payment.university.application.UniversityReportPurchaseService;
+import com.chikere.futureai.payment.university.application.UniversityReportPurchaseUseCase;
 import com.chikere.futureai.report.university.application.UniversityReport;
 import com.chikere.futureai.report.university.application.UniversityReportAssembler;
-import com.chikere.futureai.report.university.application.UniversityReportService;
+import com.chikere.futureai.report.university.application.UniversityReportQuery;
 import com.chikere.futureai.report.university.application.UniversityReportSource;
 import com.chikere.futureai.report.university.application.UniversityReportTier;
 import com.chikere.futureai.report.university.web.UniversityReportViewMapper;
@@ -63,9 +63,9 @@ class UniversityAssessmentControllerTest {
     private static final UUID ID = UUID.fromString("1d2e3f4a-5b6c-4d8e-9f0a-1b2c3d4e5f6a");
 
     @Autowired MockMvc mvc;
-    @MockitoBean UniversityAssessmentWorkflow workflow;
-    @MockitoBean UniversityReportService reportService;
-    @MockitoBean UniversityReportPurchaseService purchaseService;
+    @MockitoBean UniversityAssessmentUseCase workflow;
+    @MockitoBean UniversityReportQuery reportService;
+    @MockitoBean UniversityReportPurchaseUseCase purchaseService;
 
     @BeforeEach
     void purchaseState() {

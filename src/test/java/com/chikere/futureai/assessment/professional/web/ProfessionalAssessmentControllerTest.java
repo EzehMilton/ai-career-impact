@@ -35,9 +35,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ProfessionalAssessmentControllerTest {
     private static final UUID ID = UUID.fromString("30eff44e-eaa0-4d2e-a853-90983b1c150a");
     @Autowired MockMvc mvc;
-    @MockitoBean ProfessionalAssessmentWorkflow workflow;
-    @MockitoBean ProfessionalReportService reportService;
-    @MockitoBean ProfessionalReportPurchaseService purchaseService;
+    @MockitoBean ProfessionalAssessmentUseCase workflow;
+    @MockitoBean ProfessionalReportQuery reportService;
+    @MockitoBean ProfessionalReportPurchaseUseCase purchaseService;
 
     @BeforeEach
     void purchaseState() {

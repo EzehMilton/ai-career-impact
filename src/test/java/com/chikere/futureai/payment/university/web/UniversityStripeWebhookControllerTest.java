@@ -2,7 +2,7 @@ package com.chikere.futureai.payment.university.web;
 
 import com.chikere.futureai.payment.university.application.InvalidPaymentNotificationException;
 import com.chikere.futureai.payment.university.application.UniversityPaymentProcessingResult;
-import com.chikere.futureai.payment.university.application.UniversityReportPurchaseService;
+import com.chikere.futureai.payment.university.application.UniversityReportPurchaseUseCase;
 import com.chikere.futureai.security.WebSecurityConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class UniversityStripeWebhookControllerTest {
 
     @Autowired MockMvc mvc;
-    @MockitoBean UniversityReportPurchaseService purchaseService;
+    @MockitoBean UniversityReportPurchaseUseCase purchaseService;
 
     @Test
     void itsOwnPathIsCsrfExemptButStillRequiresAStripeSignature() throws Exception {

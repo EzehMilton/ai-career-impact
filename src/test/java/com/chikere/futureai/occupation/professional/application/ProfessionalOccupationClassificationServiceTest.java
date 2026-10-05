@@ -3,6 +3,10 @@ package com.chikere.futureai.occupation.professional.application;
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentStore;
 import com.chikere.futureai.assessment.professional.application.StoredProfessionalAssessment;
+import com.chikere.futureai.assessment.professional.application.AssessmentSource;
+import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentResult;
+import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV1;
+import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfessionalJudgmentProvider;
 import org.junit.jupiter.api.Test;
 
 import java.time.Clock;
@@ -22,18 +26,21 @@ class ProfessionalOccupationClassificationServiceTest {
         UUID id = UUID.randomUUID();
         Instant now = Instant.parse("2026-09-30T12:00:00Z");
         var assessments = mock(ProfessionalAssessmentStore.class);
-        var assessment = mock(StoredProfessionalAssessment.class);
         var store = mock(ProfessionalOccupationClassificationStore.class);
         var classifier = mock(ProfessionalOccupationClassifier.class);
         var state = new ProfessionalAssessmentState("Registered Nurse", "Provides ward-based care.",
                 List.of("Assess patients", "Coordinate care"), List.of("Clinical judgement"), OptionalInt.of(8));
+        var judgments = new LocalFixtureProfessionalJudgmentProvider("electrician").judge(state);
+        var decision = new ProfessionalDecisionPolicyV1().decide(judgments);
+        var assessment = new StoredProfessionalAssessment(id, now, state, judgments,
+                new ProfessionalAssessmentResult(decision, AssessmentSource.LOCAL_FIXTURE,
+                        judgments.schemaVersion(), decision.policyVersion()), Optional.empty());
         var classification = new ProfessionalOccupationClassification("Nurses", OccupationClassificationSystem.SOC_2020,
                 "2231", OccupationClassificationSource.LOCAL_FIXTURE,
                 OccupationClassificationQuality.DEVELOPMENT_FIXTURE, "fixture",
                 ProfessionalOccupationClassifierVersions.V1);
         when(store.findByAssessmentId(id)).thenReturn(Optional.empty());
         when(assessments.findById(id)).thenReturn(Optional.of(assessment));
-        when(assessment.state()).thenReturn(state);
         when(classifier.classify(any())).thenReturn(Optional.of(classification));
         var service = new ProfessionalOccupationClassificationService(assessments, store,
                 Optional.of(classifier), "United Kingdom", Clock.fixed(now, ZoneOffset.UTC));

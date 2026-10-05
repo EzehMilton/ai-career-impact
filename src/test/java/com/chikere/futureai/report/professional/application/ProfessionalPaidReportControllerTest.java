@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import({WebSecurityConfiguration.class, ProfessionalReportViewMapper.class})
 class ProfessionalPaidReportControllerTest {
     @Autowired MockMvc mvc;
-    @MockitoBean ProfessionalReportPurchaseService purchaseService;
+    @MockitoBean ProfessionalReportPurchaseUseCase purchaseService;
 
     @Test
     void activeEntitlementRendersFrozenPurchasedReport() throws Exception {

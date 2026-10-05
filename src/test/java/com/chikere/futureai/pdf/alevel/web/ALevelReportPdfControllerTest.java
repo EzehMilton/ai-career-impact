@@ -2,7 +2,7 @@ package com.chikere.futureai.pdf.alevel.web;
 
 import com.chikere.futureai.pdf.alevel.application.ALevelReportPdfAccessDeniedException;
 import com.chikere.futureai.pdf.alevel.application.ALevelReportPdfGenerationException;
-import com.chikere.futureai.pdf.alevel.application.ALevelReportPdfService;
+import com.chikere.futureai.pdf.alevel.application.ALevelReportPdfUseCase;
 import com.chikere.futureai.pdf.alevel.application.PurchasedALevelReportPdf;
 import com.chikere.futureai.security.WebSecurityConfiguration;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ALevelReportPdfControllerTest {
 
     @Autowired MockMvc mvc;
-    @MockitoBean ALevelReportPdfService pdfService;
+    @MockitoBean ALevelReportPdfUseCase pdfService;
 
     @Test
     void anAuthorisedDownloadReturnsTheExactPersistedBytes() throws Exception {

@@ -1,7 +1,7 @@
 package com.chikere.futureai.payment.professional.application;
 
 import com.chikere.futureai.report.professional.application.ProfessionalReport;
-import com.chikere.futureai.report.professional.application.ProfessionalReportService;
+import com.chikere.futureai.report.professional.application.ProfessionalReportQuery;
 import com.chikere.futureai.report.professional.application.ProfessionalReportTier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,9 +15,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-public final class ProfessionalReportPurchaseService {
+public final class ProfessionalReportPurchaseService implements ProfessionalReportPurchaseUseCase {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProfessionalReportPurchaseService.class);
-    private final ProfessionalReportService reportService;
+    private final ProfessionalReportQuery reportService;
     private final ProfessionalPurchaseStore purchaseStore;
     private final Optional<ProfessionalPaymentGateway> paymentGateway;
     private final URI applicationBaseUrl;
@@ -25,13 +25,13 @@ public final class ProfessionalReportPurchaseService {
     private final Clock clock;
     private final JourneyMetrics metrics;
 
-    public ProfessionalReportPurchaseService(ProfessionalReportService reportService,
+    public ProfessionalReportPurchaseService(ProfessionalReportQuery reportService,
             ProfessionalPurchaseStore purchaseStore, Optional<ProfessionalPaymentGateway> paymentGateway,
             URI applicationBaseUrl, Optional<String> displayPrice, Clock clock) {
         this(reportService, purchaseStore, paymentGateway, applicationBaseUrl, displayPrice, clock, JourneyMetrics.disabled());
     }
 
-    public ProfessionalReportPurchaseService(ProfessionalReportService reportService,
+    public ProfessionalReportPurchaseService(ProfessionalReportQuery reportService,
             ProfessionalPurchaseStore purchaseStore, Optional<ProfessionalPaymentGateway> paymentGateway,
             URI applicationBaseUrl, Optional<String> displayPrice, Clock clock,
             JourneyMetrics metrics) {
@@ -45,6 +45,7 @@ public final class ProfessionalReportPurchaseService {
     }
 
     /** Calls the external gateway before opening the short pending-entitlement database transaction. */
+    @Override
     public ProfessionalCheckoutSession startCheckout(UUID assessmentId) {
         Objects.requireNonNull(assessmentId);
         ProfessionalPaymentGateway gateway = paymentGateway.orElseThrow(() ->
@@ -83,6 +84,7 @@ public final class ProfessionalReportPurchaseService {
         return session;
     }
 
+    @Override
     public ProfessionalPaymentProcessingResult processPaymentNotification(ProfessionalPaymentNotification notification) {
         ProfessionalPaymentGateway gateway = paymentGateway.orElseThrow(() ->
                 new PaymentUnavailableException("payment notifications are not configured"));
@@ -131,6 +133,7 @@ public final class ProfessionalReportPurchaseService {
         return message != null && message.matches("[A-Z_]+") ? message : "INVALID_NOTIFICATION";
     }
 
+    @Override
     public ProfessionalPurchaseAccess accessFor(UUID assessmentId) {
         Optional<ProfessionalReportEntitlement> entitlement =
                 purchaseStore.findEntitlementByAssessmentId(Objects.requireNonNull(assessmentId));
@@ -140,6 +143,7 @@ public final class ProfessionalReportPurchaseService {
         return new ProfessionalPurchaseAccess(status, checkoutAvailable, displayPrice);
     }
 
+    @Override
     public Optional<ProfessionalReport> findPurchasedReport(UUID assessmentId) {
         Optional<ProfessionalReportEntitlement> entitlement =
                 purchaseStore.findEntitlementByAssessmentId(Objects.requireNonNull(assessmentId));
@@ -151,6 +155,7 @@ public final class ProfessionalReportPurchaseService {
                 .map(PurchasedProfessionalReportSnapshot::report);
     }
 
+    @Override
     public Optional<ProfessionalReportEntitlement> findEntitlement(UUID assessmentId) {
         return purchaseStore.findEntitlementByAssessmentId(Objects.requireNonNull(assessmentId));
     }

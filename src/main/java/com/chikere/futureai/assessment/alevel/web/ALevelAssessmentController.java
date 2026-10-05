@@ -1,10 +1,10 @@
 package com.chikere.futureai.assessment.alevel.web;
 
-import com.chikere.futureai.assessment.alevel.application.ALevelAssessmentWorkflow;
+import com.chikere.futureai.assessment.alevel.application.ALevelAssessmentUseCase;
 import com.chikere.futureai.assessment.domain.ALevelAssessmentState;
-import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseService;
+import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseUseCase;
 import com.chikere.futureai.payment.alevel.web.ALevelPurchaseViewModel;
-import com.chikere.futureai.report.alevel.application.ALevelReportService;
+import com.chikere.futureai.report.alevel.application.ALevelReportQuery;
 import com.chikere.futureai.report.alevel.application.ALevelReportTier;
 import com.chikere.futureai.report.alevel.web.ALevelReportViewMapper;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,15 +28,15 @@ public final class ALevelAssessmentController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ALevelAssessmentController.class);
     private static final String FORM_VIEW = "a-level-assessment/form";
 
-    private final ALevelAssessmentWorkflow workflow;
-    private final ALevelReportService reportService;
+    private final ALevelAssessmentUseCase workflow;
+    private final ALevelReportQuery reportService;
     private final ALevelAssessmentFormMapper formMapper;
     private final ALevelReportViewMapper reportViewMapper;
-    private final ALevelReportPurchaseService purchaseService;
+    private final ALevelReportPurchaseUseCase purchaseService;
 
-    public ALevelAssessmentController(ALevelAssessmentWorkflow workflow,
-            ALevelReportService reportService, ALevelAssessmentFormMapper formMapper,
-            ALevelReportViewMapper reportViewMapper, ALevelReportPurchaseService purchaseService) {
+    public ALevelAssessmentController(ALevelAssessmentUseCase workflow,
+            ALevelReportQuery reportService, ALevelAssessmentFormMapper formMapper,
+            ALevelReportViewMapper reportViewMapper, ALevelReportPurchaseUseCase purchaseService) {
         this.workflow = workflow;
         this.reportService = reportService;
         this.formMapper = formMapper;

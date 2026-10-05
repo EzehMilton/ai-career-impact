@@ -7,18 +7,21 @@ import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
 import com.chikere.futureai.judgment.domain.DimensionJudgment;
 import org.junit.jupiter.api.Test;
 import org.springaicommunity.typesafe.TypeSafeClient;
+import org.springaicommunity.typesafe.JsonContent;
+import org.springaicommunity.typesafe.response.Answer;
 import org.springaicommunity.typesafe.response.NoulAnswer;
 import org.springaicommunity.typesafe.response.ScoreAnswer;
 import org.springaicommunity.typesafe.response.SystemOneResponse;
+import org.springaicommunity.typesafe.response.Usage;
 
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -77,21 +80,17 @@ class UniversityJevJudgmentServiceTest {
     }
 
     private SystemOneResponse stubbedResponse() {
-        SystemOneResponse response = mock(SystemOneResponse.class);
-        NoulAnswer noul = mock(NoulAnswer.class);
-        doReturn(0.88).when(noul).value();
-        doReturn(noul).when(response).noul(UniversityJudgmentSchema.INFORMATION_SUFFICIENT);
+        LinkedHashMap<String, Answer> answers = new LinkedHashMap<>();
+        answers.put(UniversityJudgmentSchema.INFORMATION_SUFFICIENT, new NoulAnswer(0.88));
         schema.questions().keySet().stream()
                 .filter(id -> !id.equals(UniversityJudgmentSchema.INFORMATION_SUFFICIENT))
-                .forEach(id -> {
-                    ScoreAnswer score = mock(ScoreAnswer.class);
-                    doReturn(3.2).when(score).value();
-                    doReturn(0.81).when(score).confidence();
-                    doReturn("substantial").when(score).nearestLabel();
-                    doReturn(Map.of(3, 1.0)).when(score).probabilities();
-                    doReturn(score).when(response).score(id);
-                });
-        return response;
+                .forEach(id -> answers.put(id, scoreAnswer()));
+        return new SystemOneResponse("jev-test", answers, Usage.EMPTY, "test-request-id");
+    }
+
+    private ScoreAnswer scoreAnswer() {
+        return new ScoreAnswer(3.2, Map.of(3, JsonContent.of("substantial")),
+                Map.of(3, 1.0), 0.81);
     }
 
     private UniversityAssessmentState state() {

@@ -35,11 +35,9 @@ class ProfessionalStripeCheckoutFlowTest {
         var gateway = new StripeProfessionalPaymentGateway(operations,
                 new StripeSdkWebhookEventVerifier(SECRET), "price_expected");
         var store = mock(ProfessionalPurchaseStore.class);
-        var reportService = mock(ProfessionalReportService.class);
-        var paid = mock(ProfessionalReport.class);
-        when(paid.tier()).thenReturn(ProfessionalReportTier.PAID);
-        when(paid.reportVersion()).thenReturn("professional-report-v1");
-        when(paid.profession()).thenReturn("Software Developer");
+        var reportService = mock(ProfessionalReportQuery.class);
+        var paid = new ProfessionalReportAssembler().assemble(
+                ProfessionalReportAssemblerTest.source(true, true, true), ProfessionalReportTier.PAID);
         when(reportService.assemble(ASSESSMENT, ProfessionalReportTier.PAID))
                 .thenReturn(Optional.of(paid));
         when(store.findEntitlementById(ENTITLEMENT)).thenReturn(Optional.of(entitlement(ProfessionalEntitlementStatus.PENDING)));
@@ -84,7 +82,7 @@ class ProfessionalStripeCheckoutFlowTest {
         var store = mock(ProfessionalPurchaseStore.class);
         var gateway = new StripeProfessionalPaymentGateway(mock(StripeCheckoutOperations.class),
                 new StripeSdkWebhookEventVerifier(SECRET), "price_expected");
-        var service = new ProfessionalReportPurchaseService(mock(ProfessionalReportService.class), store,
+        var service = new ProfessionalReportPurchaseService(mock(ProfessionalReportQuery.class), store,
                 Optional.of(gateway), URI.create("http://localhost:8080"), Optional.empty(), CLOCK);
         var controller = new StripeWebhookController(service);
         assertThat(controller.receive(payload(ENTITLEMENT.toString(), "paid", "payment"), null)
@@ -105,7 +103,7 @@ class ProfessionalStripeCheckoutFlowTest {
         var gateway = new StripeProfessionalPaymentGateway(operations,
                 new StripeSdkWebhookEventVerifier(SECRET), "price_expected");
         var store = mock(ProfessionalPurchaseStore.class);
-        var service = new ProfessionalReportPurchaseService(mock(ProfessionalReportService.class), store,
+        var service = new ProfessionalReportPurchaseService(mock(ProfessionalReportQuery.class), store,
                 Optional.of(gateway), URI.create("http://localhost:8080"), Optional.empty(), CLOCK);
         String payload = payload(ENTITLEMENT.toString(), "paid", "payment");
         assertThat(new StripeWebhookController(service).receive(payload, signature(payload)).getStatusCode())

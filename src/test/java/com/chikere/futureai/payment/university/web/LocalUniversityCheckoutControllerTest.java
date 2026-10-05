@@ -5,7 +5,7 @@ import com.chikere.futureai.payment.university.application.UniversityPaymentNoti
 import com.chikere.futureai.payment.university.application.UniversityPaymentProcessingResult;
 import com.chikere.futureai.payment.university.application.UniversityPaymentProvider;
 import com.chikere.futureai.payment.university.application.UniversityReportEntitlement;
-import com.chikere.futureai.payment.university.application.UniversityReportPurchaseService;
+import com.chikere.futureai.payment.university.application.UniversityReportPurchaseUseCase;
 import com.chikere.futureai.payment.university.fixture.LocalUniversityPaymentSimulator;
 import com.chikere.futureai.report.university.application.UniversityReportTier;
 import com.chikere.futureai.security.WebSecurityConfiguration;
@@ -37,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class LocalUniversityCheckoutControllerTest {
 
     @Autowired MockMvc mvc;
-    @MockitoBean UniversityReportPurchaseService purchaseService;
+    @MockitoBean UniversityReportPurchaseUseCase purchaseService;
     @MockitoBean LocalUniversityPaymentSimulator simulator;
 
     @Test

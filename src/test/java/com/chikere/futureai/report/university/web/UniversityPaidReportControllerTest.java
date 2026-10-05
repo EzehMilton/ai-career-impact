@@ -12,7 +12,7 @@ import com.chikere.futureai.narrative.university.application.StoredUniversityNar
 import com.chikere.futureai.narrative.university.application.UniversityNarrative;
 import com.chikere.futureai.payment.university.application.UniversityEntitlementStatus;
 import com.chikere.futureai.payment.university.application.UniversityPurchaseAccess;
-import com.chikere.futureai.payment.university.application.UniversityReportPurchaseService;
+import com.chikere.futureai.payment.university.application.UniversityReportPurchaseUseCase;
 import com.chikere.futureai.report.university.application.UniversityReport;
 import com.chikere.futureai.report.university.application.UniversityReportAssembler;
 import com.chikere.futureai.report.university.application.UniversityReportSource;
@@ -44,7 +44,7 @@ class UniversityPaidReportControllerTest {
     private static final UUID ID = UUID.fromString("2e3f4a5b-6c7d-4e9f-8a0b-1c2d3e4f5a6b");
 
     @Autowired MockMvc mvc;
-    @MockitoBean UniversityReportPurchaseService purchaseService;
+    @MockitoBean UniversityReportPurchaseUseCase purchaseService;
 
     @Test
     void anActiveEntitlementRendersOnlyTheFrozenPurchasedSnapshot() throws Exception {
