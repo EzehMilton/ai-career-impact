@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ProfessionalCvResourceLimitsTest {
 
     private final PdfDocxProfessionalCvParser parser = new PdfDocxProfessionalCvParser(
-            new DeterministicProfessionalCvStructurer(), ProfessionalCvParserLimits.defaults());
+            ProfessionalCvParserLimits.defaults());
 
     @Test
     void anOrdinaryPdfAndDocxStillParse() {
@@ -72,8 +72,7 @@ class ProfessionalCvResourceLimitsTest {
         // configured to refuse an entry that inflates past the ceiling, so this is rejected during
         // inflation rather than after a few hundred megabytes have been allocated.
         var limits = new ProfessionalCvParserLimits(100_000, 50, 64 * 1024, 0.01);
-        var strictParser = new PdfDocxProfessionalCvParser(
-                new DeterministicProfessionalCvStructurer(), limits);
+        var strictParser = new PdfDocxProfessionalCvParser(limits);
         var output = new ByteArrayOutputStream();
         try (var zip = new ZipOutputStream(output)) {
             zip.putNextEntry(new ZipEntry("word/document.xml"));
@@ -95,8 +94,7 @@ class ProfessionalCvResourceLimitsTest {
     @Test
     void aPdfWithMorePagesThanWeWillReadIsRefusedBeforeExtraction() throws IOException {
         var limits = new ProfessionalCvParserLimits(100_000, 2, 16L * 1024 * 1024, 0.01);
-        var strictParser = new PdfDocxProfessionalCvParser(
-                new DeterministicProfessionalCvStructurer(), limits);
+        var strictParser = new PdfDocxProfessionalCvParser(limits);
         byte[] manyPages = pdfWithPages(40);
 
         try {
@@ -127,8 +125,7 @@ class ProfessionalCvResourceLimitsTest {
     @Test
     void extractedTextIsRejectedOnceItPassesTheCapRatherThanBeingTruncated() {
         var limits = new ProfessionalCvParserLimits(1_000, 50, 16L * 1024 * 1024, 0.01);
-        var strictParser = new PdfDocxProfessionalCvParser(
-                new DeterministicProfessionalCvStructurer(), limits);
+        var strictParser = new PdfDocxProfessionalCvParser(limits);
         String wordy = "Experience\n"
                 + "Delivered a great many things for a great many people.\n".repeat(80);
 
@@ -159,8 +156,7 @@ class ProfessionalCvResourceLimitsTest {
      * that tightens them has to put them back or it changes how every later test behaves.
      */
     private void restoreShippedLimits() {
-        new PdfDocxProfessionalCvParser(new DeterministicProfessionalCvStructurer(),
-                ProfessionalCvParserLimits.defaults());
+        new PdfDocxProfessionalCvParser(ProfessionalCvParserLimits.defaults());
     }
 
     private ProfessionalCvDocument document(ProfessionalCvDocumentType type, byte[] bytes) {

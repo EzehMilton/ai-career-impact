@@ -63,9 +63,12 @@ From the landing page, follow **My current job**.
 
 **CV upload.** Return to `/professional-assessment` and upload a PDF or DOCX.
 
-- [ ] The form reappears with a **Review your extracted details** notice
-- [ ] Extracted values are editable, and you are asked to check them rather than told they are correct
-- [ ] Uploading a file that is not really a CV produces empty or sparse fields and the same review prompt, not an error page
+- [ ] A dedicated **We analysed your CV** page shows only a concise structured profile, never raw CV text
+- [ ] **Edit what we understood** permits corrections to role, summary, responsibilities, technical skills, human skills and years
+- [ ] **Continue with this profile** submits the confirmed profile through the existing assessment pipeline
+- [ ] A CV with insufficient career information offers **Describe my work manually** and does not guess form values
+- [ ] A corrupt/encrypted document, malformed extraction response or unavailable extractor fails safely to manual entry
+- [ ] Under `local-fixture`, both `senior_software_architect` and `routine_software_developer` complete this flow without network calls
 
 ## 4. University journey
 

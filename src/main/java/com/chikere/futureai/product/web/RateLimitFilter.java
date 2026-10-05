@@ -40,7 +40,7 @@ public final class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private static final List<Group> GROUPS = List.of(
-            new Group("assessment-submission", List.of("-assessment")),
+            new Group("assessment-submission", List.of("-assessment", "-assessment/cv/confirm")),
             new Group("cv-upload", List.of("-assessment/cv")),
             new Group("checkout-start", List.of("/checkout")));
 

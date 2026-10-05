@@ -79,7 +79,10 @@ Both parsers stop early rather than building an unbounded string and rejecting i
 
 **Known limitation:** POI's guards are JVM-wide statics, not per-document settings. They are applied once at startup and are identical for every upload. That is POI's API, not a choice made here.
 
-Unchanged from before: PDF and DOCX only, extension and MIME and magic-signature checks, filename sanitisation, no OCR, and raw CV bytes are never persisted.
+PDF and DOCX parsing is deterministic and separate from structured profile extraction. Extension,
+MIME and magic-signature checks, filename sanitisation, no OCR, and all existing resource limits
+remain. Raw CV bytes and extracted text are never persisted or logged. OpenAI performs typed
+information extraction only; confirmed data then enters the unchanged Java/Jev assessment pipeline.
 
 ## Rate limiting
 
@@ -224,7 +227,10 @@ Under `prod`, `server.forward-headers-strategy=framework`. Spring handles `X-For
 
 Local development is unaffected — these apply only under `prod`, so plain HTTP still works.
 
-**What the session contains:** only `ProfessionalAssessmentInputMetadata` — original filename, content type, parser version and a timestamp — written after a CV upload and removed as soon as the form is submitted. No raw CV bytes, no extracted CV text, no secret, no payment payload and no AI prompt is ever placed in it.
+**What the session contains:** after a successful CV upload, only the structured
+`ProfessionalProfile` and `ProfessionalAssessmentInputMetadata` (sanitised filename, content type,
+parser version and timestamp). Both are removed on confirmation or when manual entry starts. No raw
+CV bytes, extracted CV text, secret, payment payload or AI prompt is placed in the session.
 
 ## Actuator
 

@@ -69,11 +69,12 @@ class ProfessionalAssessmentControllerTest {
     }
 
     @Test
-    void reviewedCvValuesUseTrustedSessionProvenanceAndStillSubmitOnlyOnce() throws Exception {
+    void manualPostCannotBypassCvReviewOrClaimCvProvenance() throws Exception {
         var session = new MockHttpSession();
         var metadata = ProfessionalAssessmentInputMetadata.cvUpload("safe-cv.pdf", "application/pdf",
                 "professional-cv-parser-v1", Instant.parse("2026-10-01T08:00:00Z"));
         session.setAttribute(ProfessionalCvSession.INPUT_METADATA, metadata);
+        session.setAttribute(ProfessionalCvSession.PROFILE, "unexpected stale profile");
         when(workflow.submit(any(), any())).thenReturn(ID);
 
         mvc.perform(validPost().session(session).with(csrf()).with(request -> {
@@ -87,8 +88,9 @@ class ProfessionalAssessmentControllerTest {
                 ArgumentCaptor.forClass(ProfessionalAssessmentInputMetadata.class);
         verify(workflow).submit(state.capture(), provenance.capture());
         assertThat(state.getValue().profession()).isEqualTo("Edited Architect");
-        assertThat(provenance.getValue()).isEqualTo(metadata);
+        assertThat(provenance.getValue()).isEqualTo(ProfessionalAssessmentInputMetadata.manual());
         assertThat(session.getAttribute(ProfessionalCvSession.INPUT_METADATA)).isNull();
+        assertThat(session.getAttribute(ProfessionalCvSession.PROFILE)).isNull();
     }
 
     @Test
