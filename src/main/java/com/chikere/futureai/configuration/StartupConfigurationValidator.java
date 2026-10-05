@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.chikere.futureai.configuration.ApplicationProfiles.LIVE_EVIDENCE;
+import static com.chikere.futureai.configuration.ApplicationProfiles.LIVE_CV_EXTRACTION;
 import static com.chikere.futureai.configuration.ApplicationProfiles.LIVE_PAYMENT;
 import static com.chikere.futureai.configuration.ApplicationProfiles.LOCAL_FIXTURE;
 import static com.chikere.futureai.configuration.ApplicationProfiles.PROD;
@@ -82,6 +83,10 @@ public class StartupConfigurationValidator {
             conflicts.add("Profiles 'local-fixture' and 'live-evidence' are contradictory: the "
                     + "fixture provider overrides the live one, so no real evidence would be used.");
         }
+        if (active.contains(LIVE_CV_EXTRACTION) && !active.contains(LOCAL_FIXTURE)) {
+            conflicts.add("Profile 'live-cv-extraction' is a local development overlay and must "
+                    + "be combined with 'local-fixture'.");
+        }
         return conflicts;
     }
 
@@ -95,6 +100,11 @@ public class StartupConfigurationValidator {
         }
         if (active.contains(LIVE_EVIDENCE) && !active.contains(LOCAL_FIXTURE)) {
             problems.addAll(missing(environment, LIVE_EVIDENCE_SETTINGS));
+        }
+        if (active.contains(LIVE_CV_EXTRACTION)
+                && environment.getProperty("OPENAI_API_KEY", "").isBlank()) {
+            problems.add("Missing required configuration: OPENAI_API_KEY "
+                    + "(required by profile 'live-cv-extraction')");
         }
         return problems;
     }

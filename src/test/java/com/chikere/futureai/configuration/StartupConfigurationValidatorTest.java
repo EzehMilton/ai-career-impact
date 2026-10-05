@@ -31,6 +31,30 @@ class StartupConfigurationValidatorTest {
     }
 
     @Test
+    void liveCvExtractionRequiresOnlyTheOpenAiKey() {
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(
+                environment("local-fixture", "live-cv-extraction")))
+                .isInstanceOf(ConfigurationProblemException.class)
+                .hasMessageContaining("Missing required configuration: OPENAI_API_KEY")
+                .hasMessageNotContaining("TYPESAFE_API_KEY")
+                .hasMessageNotContaining("stripe")
+                .hasMessageNotContaining("evidence");
+
+        assertThatCode(() -> StartupConfigurationValidator.validate(
+                environment("local-fixture", "live-cv-extraction")
+                        .withProperty("OPENAI_API_KEY", "test-only-key")))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void liveCvExtractionCannotAccidentallyBecomeAStandaloneOrProductionMode() {
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(
+                environment("live-cv-extraction").withProperty("OPENAI_API_KEY", "test-only-key")))
+                .isInstanceOf(ConfigurationProblemException.class)
+                .hasMessageContaining("must be combined with 'local-fixture'");
+    }
+
+    @Test
     void anOrdinaryDevelopmentContextWithNoProfileHasNoProductionValidation() {
         assertThatCode(() -> StartupConfigurationValidator.validate(environment()))
                 .doesNotThrowAnyException();

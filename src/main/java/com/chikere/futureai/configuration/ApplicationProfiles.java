@@ -9,6 +9,9 @@ public final class ApplicationProfiles {
     /** Local development: every external provider is replaced by a deterministic fixture. */
     public static final String LOCAL_FIXTURE = "local-fixture";
 
+    /** Local-fixture overlay that makes only professional CV extraction call OpenAI. */
+    public static final String LIVE_CV_EXTRACTION = "live-cv-extraction";
+
     /** Real Stripe checkout and webhooks. */
     public static final String LIVE_PAYMENT = "live-payment";
 

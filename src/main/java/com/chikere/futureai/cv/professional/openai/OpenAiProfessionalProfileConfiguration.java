@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 @Configuration(proxyBeanMethods = false)
-@Profile("!local-fixture")
+@Profile("!local-fixture | live-cv-extraction")
 public class OpenAiProfessionalProfileConfiguration {
     @Bean
     @ConditionalOnProperty(prefix = "spring.ai.model", name = "chat", havingValue = "openai")

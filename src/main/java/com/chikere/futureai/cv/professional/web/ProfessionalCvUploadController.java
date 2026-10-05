@@ -39,7 +39,6 @@ public final class ProfessionalCvUploadController {
             var document = validator.validate(file);
             LOGGER.info("Professional CV uploaded fileType={}", document.type());
             var result = uploadService.extractProfile(document);
-            LOGGER.info("Professional profile extraction succeeded fileType={} outcome=SUCCESS", document.type());
             session.setAttribute(ProfessionalCvSession.INPUT_METADATA, result.inputMetadata());
             session.setAttribute(ProfessionalCvSession.PROFILE, result.profile());
             return "redirect:/professional-assessment/cv/review";
@@ -49,13 +48,10 @@ public final class ProfessionalCvUploadController {
             return errorForm(model, exception.getMessage());
         }
         catch (ProfessionalCvParsingException exception) {
-            LOGGER.warn("Professional CV parsed outcome=FAILED failureType={}", exception.getClass().getSimpleName());
             response.setStatus(422);
             return errorForm(model, "We couldn't read this CV safely. Describe your work manually instead.");
         }
         catch (ProfessionalProfileExtractionException exception) {
-            LOGGER.warn("Professional profile extraction failed outcome=FAILED failureType={}",
-                    exception.getClass().getSimpleName());
             response.setStatus(422);
             return errorForm(model, "We couldn't identify enough reliable career information from this CV. Describe your work manually instead.");
         }
