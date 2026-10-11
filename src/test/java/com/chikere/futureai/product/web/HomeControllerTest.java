@@ -27,23 +27,25 @@ class HomeControllerTest {
         String html = mvc.perform(get("/")).andExpect(status().isOk())
                 .andExpect(view().name("home")).andReturn().getResponse().getContentAsString();
 
-        assertThat(html).contains("AI is changing how people work and what they study");
-        assertThat(html).contains("It will not tell you what will happen to you");
-        assertThat(html).contains("<title>Think clearly about AI and your future | AI Career Impact</title>");
+        assertThat(html).contains("AI Career &amp; Future Assessment",
+                "Understand how AI may affect your work, course, or subject choices.",
+                "clear explanations and practical next steps");
+        assertThat(html).contains("<title>Understand how AI may affect your choices | AI Career Impact</title>");
     }
 
     @Test
     void theHomePageOffersTheThreeJourneysInPlainLanguage() throws Exception {
         String html = mvc.perform(get("/")).andReturn().getResponse().getContentAsString();
 
-        assertThat(html).contains("What are you thinking about?");
-        // Plain-language framing, then the journey name, question and call to action.
-        assertThat(html).contains("My current job", "Professional",
-                "How might AI affect the work I do?", "Assess my role");
-        assertThat(html).contains("A university course", "University",
-                "How well does this course prepare me for an AI-shaped labour market?", "Assess a course");
-        assertThat(html).contains("My A-level subjects", "A-level",
-                "How many future options do these subjects preserve?", "Assess A-level choices");
+        assertThat(html).contains("Choose the question that matters to you.");
+        // Each distinct journey carries its question, description and route-specific action.
+        assertThat(html).contains("Professional", "How will AI affect the work I currently do?",
+                "where human strengths remain", "Assess my work");
+        assertThat(html).contains("University",
+                "How well does this course position me for an AI-shaped labour market?",
+                "transferable, human and AI-complementary capabilities", "Assess a course");
+        assertThat(html).contains("A-level", "Do these choices preserve strong future options?",
+                "future study pathways, transferable skills and adaptability", "Assess my choices");
 
         assertThat(html).contains("href=\"/professional-assessment\"");
         assertThat(html).contains("href=\"/university-assessment\"");
@@ -57,10 +59,9 @@ class HomeControllerTest {
     void theHomePageIsHonestAboutFreePaidAndWhatAScoreIsNot() throws Exception {
         String html = mvc.perform(get("/")).andReturn().getResponse().getContentAsString();
 
-        assertThat(html).contains("Free assessment", "Full report", "downloadable PDF");
-        assertThat(html).contains("Both tiers use exactly the same assessment");
-        assertThat(html).contains("is never a guarantee of employment, university admission or career success");
-        assertThat(html).contains("indicator");
+        assertThat(html).contains("Free assessment", "Deeper report", "£4.99", "Downloadable PDF");
+        assertThat(html).contains("The paid report uses the same assessment. Payment adds depth and explanation; it does not change or re-run your result.");
+        assertThat(html).contains("These assessments describe characteristics of the work, course or choices you tell us about. They do not predict your personal outcome.");
         // None of the hype the product deliberately avoids.
         assertThat(html).doesNotContain("AI-proof", "Beat AI", "future-proof", "Future-proof",
                 "risk score", "will take your job", "guaranteed");
@@ -111,10 +112,10 @@ class HomeControllerTest {
                     .andReturn().getResponse().getContentAsString();
 
             assertThat(html).as("%s header", path)
-                    .contains("class=\"site-header\"", ">AI Career Impact</a>",
-                            ">Home</a>", ">Professional</a>", ">University</a>", ">A-level</a>");
+                    .contains("class=\"site-header\"", "AI Career Impact home",
+                            ">Professional</a>", ">University</a>", ">A-level</a>", ">How this works</a>");
             assertThat(html).as("%s footer", path)
-                    .contains("class=\"site-footer\"", "How this works", "Your information");
+                    .contains("class=\"site-footer\"", "How this works", "Privacy");
             assertThat(html).as("%s accessibility basics", path)
                     .contains("Skip to main content", "id=\"main\"", "<html lang=\"en\">", "<h1");
         }
@@ -124,7 +125,7 @@ class HomeControllerTest {
     void theCurrentJourneyIsMarkedInTheHeader() throws Exception {
         String html = mvc.perform(get("/")).andReturn().getResponse().getContentAsString();
 
-        // The home link is both styled and announced as the current page.
-        assertThat(html).contains("aria-current=\"page\" class=\"is-current\">Home</a>");
+        // The brand link is both styled and announced as the current page.
+        assertThat(html).contains("aria-current=\"page\"", "class=\"site-brand is-current\"");
     }
 }

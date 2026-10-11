@@ -21,11 +21,13 @@
 */-->
 <header class="site-header" th:fragment="siteHeader(active)">
   <div class="site-header-inner">
-    <a class="site-brand" th:href="@{/}" href="/">AI Career Impact</a>
+    <a class="site-brand" th:href="@{/}" href="/" aria-label="AI Career Impact home"
+       th:classappend="${active == 'home'} ? 'is-current'"
+       th:attr="aria-current=${active == 'home'} ? 'page' : null">
+      <span class="brand-mark" aria-hidden="true">AI</span>
+      <span>AI Career <span class="brand-light">Impact</span></span>
+    </a>
     <nav class="site-nav" aria-label="Main">
-      <a th:href="@{/}" href="/"
-         th:classappend="${active == 'home'} ? 'is-current'"
-         th:attr="aria-current=${active == 'home'} ? 'page' : null">Home</a>
       <a th:href="@{/professional-assessment}" href="/professional-assessment"
          th:classappend="${active == 'professional'} ? 'is-current'"
          th:attr="aria-current=${active == 'professional'} ? 'page' : null">Professional</a>
@@ -35,6 +37,9 @@
       <a th:href="@{/a-level-assessment}" href="/a-level-assessment"
          th:classappend="${active == 'a-level'} ? 'is-current'"
          th:attr="aria-current=${active == 'a-level'} ? 'page' : null">A-level</a>
+      <a th:href="@{/methodology}" href="/methodology"
+         th:classappend="${active == 'methodology'} ? 'is-current'"
+         th:attr="aria-current=${active == 'methodology'} ? 'page' : null">How this works</a>
     </nav>
   </div>
 </header>
@@ -62,15 +67,10 @@
 
 <footer class="site-footer" th:fragment="siteFooter">
   <div class="site-footer-inner">
-    <p class="site-footer-note">
-      AI Career Impact is a structured way to think about how AI may affect the roles, courses and
-      subjects you are considering. It does not predict anyone's future, and no result here is a
-      guarantee of employment, university admission or career success.
-    </p>
+    <p class="site-footer-note">These assessments describe characteristics of the work, course or choices you tell us about. They do not predict your personal outcome.</p>
     <nav class="site-footer-nav" aria-label="Footer">
-      <a th:href="@{/}" href="/">Home</a>
       <a th:href="@{/methodology}" href="/methodology">How this works</a>
-      <a th:href="@{/privacy}" href="/privacy">Your information</a>
+      <a th:href="@{/privacy}" href="/privacy">Privacy</a>
     </nav>
     <p class="site-footer-meta">
       <span th:text="'© ' + ${currentYear} + ' AI Career Impact'">© AI Career Impact</span>
