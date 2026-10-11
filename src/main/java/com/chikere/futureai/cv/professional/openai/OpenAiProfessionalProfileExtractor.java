@@ -5,35 +5,19 @@ import org.springframework.ai.chat.client.ChatClient;
 
 import java.time.Clock;
 import java.time.LocalDate;
-import java.time.YearMonth;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
-import java.util.OptionalInt;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class OpenAiProfessionalProfileExtractor implements ProfessionalProfileExtractor {
     public static final int DEFAULT_MAXIMUM_EXTRACTION_CHARACTERS = 30_000;
     static final String TRUNCATION_WARNING =
             "Only the first part of a long CV was analysed; check that nothing important is missing.";
-    private static final String YEAR = "(?:19\\d{2}|20\\d{2})(?!\\d)";
-    private static final String MONTH_NAME = "jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?"
-            + "|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?";
-    /** A start date followed by an open end, e.g. "03/2021 - Present", "Mar 2021 – Current", "2021 to now". */
-    private static final Pattern ACTIVE_RANGE = Pattern.compile("(?i)(?:"
-            + "(?<!\\d)(?<numericMonth>0?[1-9]|1[0-2])[/.-](?<numericYear>" + YEAR + ")"
-            + "|\\b(?<monthName>" + MONTH_NAME + ")\\.?,?\\s+(?<namedYear>" + YEAR + ")"
-            + "|(?<![\\d/.-])(?<yearOnly>" + YEAR + "))"
-            + "\\s*(?:-|–|—|\\bto\\b)\\s*(?:present|current|now)\\b");
     private static final Pattern DATA_MARKER = Pattern.compile("(?i)<\\s*/?\\s*cv-data\\s*>");
     static final String UNMATCHED_DUTY_WARNING =
             "Some duties were left out because they could not be matched to your CV.";
-    static final String ZERO_YEARS_WARNING =
-            "Years of experience was omitted because zero conflicted with the dated current role.";
     static final String MISSING_YEARS_WARNING =
             "We couldn't work out your years of experience from your CV. If you know it, please add it, as it "
                     + "helps the assessment.";
@@ -78,12 +62,10 @@ public final class OpenAiProfessionalProfileExtractor implements ProfessionalPro
             by the current role. Do not import obsolete or unrelated skills solely because they appear in an old job.
             Do not invent qualifications or skills.
 
-            yearsExperience means approximate years of relevant experience represented by the CV across clearly
-            dated relevant employment, not years in the current role. Count overlapping periods once. Use the supplied
-            current date for an end date stated as Present/current. Return a non-negative approximate whole number only
-            when relevance and dates support it; otherwise return null. Never use zero as a
-            placeholder for uncertainty. Zero is valid only when the CV clearly establishes no completed relevant
-            experience. A current role that began more than a year before the supplied current date is not zero.
+            employmentHistory lists every dated employment entry in the CV, including the current one. Copy start
+            and end dates exactly as written. Set relevantToCurrentRole to true only when the entry is the same or
+            a closely related profession to the current role. The current entry is always relevant. Do not
+            calculate years of experience.
 
             roleSummary is one or two sentences, at least 40 characters, describing what the person does in the
             current role in an ordinary working week. Base it on the current entry only: its title, any listed
@@ -106,6 +88,7 @@ public final class OpenAiProfessionalProfileExtractor implements ProfessionalPro
 
     private final ChatClient chatClient;
     private final Clock clock;
+    private final ProfessionalExperienceCalculator experienceCalculator;
     private final int maximumExtractionCharacters;
 
     public OpenAiProfessionalProfileExtractor(ChatClient chatClient) {
@@ -122,6 +105,7 @@ public final class OpenAiProfessionalProfileExtractor implements ProfessionalPro
         }
         this.chatClient = Objects.requireNonNull(chatClient);
         this.clock = Objects.requireNonNull(clock);
+        this.experienceCalculator = new ProfessionalExperienceCalculator(clock);
         this.maximumExtractionCharacters = maximumExtractionCharacters;
     }
 
@@ -143,7 +127,7 @@ public final class OpenAiProfessionalProfileExtractor implements ProfessionalPro
             if (response == null) {
                 throw new ProfessionalProfileExtractionException("OpenAI returned no structured profile");
             }
-            return toProfile(response, cvText, text, truncated);
+            return toProfile(response, text, truncated);
         }
         catch (ProfessionalProfileExtractionException exception) {
             throw exception;
@@ -164,19 +148,19 @@ public final class OpenAiProfessionalProfileExtractor implements ProfessionalPro
         return text.substring(0, end);
     }
 
-    private ProfessionalProfile toProfile(OpenAiProfessionalProfileResponse value, String cvText,
-            String sentText, boolean truncated) {
+    private ProfessionalProfile toProfile(OpenAiProfessionalProfileResponse value, String sentText,
+            boolean truncated) {
         var warnings = new ArrayList<>(list(value.warnings()));
-        OptionalInt years = yearsExperience(value, cvText, warnings);
-        // The zero-years correction already explains its own omission.
-        if (years.isEmpty() && !warnings.contains(ZERO_YEARS_WARNING)) warnings.add(MISSING_YEARS_WARNING);
+        var experience = experienceCalculator.calculate(employment(value.employmentHistory()),
+                value.currentRoleStart(), value.currentRoleEnd(), sentText);
+        if (experience.years().isEmpty()) warnings.add(MISSING_YEARS_WARNING);
         List<String> responsibilities = verifiedDuties(value.dayToDayDuties(), sentText, warnings);
         if (truncated) warnings.add(TRUNCATION_WARNING);
         return new ProfessionalProfile(value.currentRole(), value.currentEmployer(), value.currentRoleStart(),
                 value.currentRoleEnd(), value.roleSummary(), responsibilities,
                 list(value.technicalSkills()), list(value.humanSkills()), list(value.leadershipResponsibilities()),
-                list(value.decisionMakingResponsibilities()), list(value.domainContext()), years,
-                ProfessionalProfileCompleteness.PARTIAL, warnings);
+                list(value.decisionMakingResponsibilities()), list(value.domainContext()), experience.years(),
+                experience.basis(), ProfessionalProfileCompleteness.PARTIAL, warnings);
     }
 
     /**
@@ -187,12 +171,12 @@ public final class OpenAiProfessionalProfileExtractor implements ProfessionalPro
     private List<String> verifiedDuties(List<OpenAiProfessionalProfileResponse.Duty> duties, String sentText,
             List<String> warnings) {
         if (duties == null) return List.of();
-        String text = normalise(sentText);
+        String text = ProfessionalCvTextMatching.normalise(sentText);
         var verified = new LinkedHashSet<String>();
         boolean rejected = false;
         for (var duty : duties) {
             if (verified.size() == MAXIMUM_DUTIES) break;
-            String evidence = duty == null || duty.evidence() == null ? "" : stripBullet(normalise(duty.evidence()));
+            String evidence = duty == null ? "" : ProfessionalCvTextMatching.normaliseQuote(duty.evidence());
             if (duty == null || duty.duty() == null || duty.duty().isBlank()
                     || evidence.length() < MINIMUM_EVIDENCE_CHARACTERS || !text.contains(evidence)) {
                 rejected = true;
@@ -204,51 +188,12 @@ public final class OpenAiProfessionalProfileExtractor implements ProfessionalPro
         return List.copyOf(verified);
     }
 
-    private static String normalise(String value) {
-        return value.toLowerCase(Locale.ROOT)
-                .replaceAll("[\u2018\u2019\u201A\u201B\u2032]", "'")
-                .replaceAll("[\u201C\u201D\u201E\u201F\u2033]", "\"")
-                .replaceAll("[\u2013\u2014]", "-")
-                .replaceAll("[\\s\u00A0]+", " ")
-                .strip();
-    }
-
-    private static String stripBullet(String evidence) {
-        return evidence.replaceFirst("^[•▪◦●·*-]+\\s*", "");
-    }
-
-    /** Java, not the model, rejects a zero that the CV's single long-running active role contradicts. */
-    private OptionalInt yearsExperience(OpenAiProfessionalProfileResponse value, String cvText,
-            List<String> warnings) {
-        if (value.yearsExperience() == null) return OptionalInt.empty();
-        if (value.yearsExperience() != 0 || cvText == null) return OptionalInt.of(value.yearsExperience());
-        Matcher matcher = ACTIVE_RANGE.matcher(cvText);
-        if (!matcher.find()) return OptionalInt.of(0);
-        YearMonth employmentStart = start(matcher);
-        YearMonth now = YearMonth.from(LocalDate.now(clock));
-        long elapsedMonths = ChronoUnit.MONTHS.between(employmentStart, now);
-        if (elapsedMonths < 12 || matcher.find()) return OptionalInt.of(0);
-
-        warnings.add(ZERO_YEARS_WARNING);
-        return OptionalInt.empty();
-    }
-
-    /** A year without a month is treated as starting in January. */
-    private YearMonth start(Matcher matcher) {
-        if (matcher.group("numericYear") != null) {
-            return YearMonth.of(Integer.parseInt(matcher.group("numericYear")),
-                    Integer.parseInt(matcher.group("numericMonth")));
-        }
-        if (matcher.group("namedYear") != null) {
-            return YearMonth.of(Integer.parseInt(matcher.group("namedYear")), month(matcher.group("monthName")));
-        }
-        return YearMonth.of(Integer.parseInt(matcher.group("yearOnly")), 1);
-    }
-
-    private int month(String name) {
-        String prefix = name.substring(0, 3).toLowerCase(Locale.ROOT);
-        return List.of("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")
-                .indexOf(prefix) + 1;
+    private List<ProfessionalEmploymentEntry> employment(List<OpenAiProfessionalProfileResponse.Employment> history) {
+        if (history == null) return List.of();
+        return history.stream().filter(Objects::nonNull)
+                .map(job -> new ProfessionalEmploymentEntry(job.title(), job.employer(), job.start(), job.end(),
+                        Boolean.TRUE.equals(job.relevantToCurrentRole())))
+                .toList();
     }
 
     /** One null or blank item from the model must not fail the whole extraction. */

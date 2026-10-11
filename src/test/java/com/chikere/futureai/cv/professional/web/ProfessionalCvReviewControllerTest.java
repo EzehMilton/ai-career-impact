@@ -175,13 +175,85 @@ class ProfessionalCvReviewControllerTest {
 
     private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder editRequest(
             MockHttpSession session) {
+        return editRequest(session, "13");
+    }
+
+    private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder editRequest(
+            MockHttpSession session, String years) {
         return post("/professional-assessment/cv/edit").session(session).with(csrf())
                 .param("currentRole", "Principal Architect")
                 .param("roleSummary", "Designs and governs complex software platforms for operational teams.")
                 .param("responsibilities", "Design platforms\nApprove designs")
                 .param("technicalSkills", "Architecture\nJava")
                 .param("humanSkills", "Communication")
-                .param("yearsExperience", "13");
+                .param("yearsExperience", years);
+    }
+
+    @Test
+    void reviewPageShowsWhichJobsTheYearsAreBasedOnAndEscapesThem() throws Exception {
+        String html = mvc.perform(get("/professional-assessment/cv/review").session(session(profile(List.of(
+                        "Software Engineer at Push Gaming (08/2025 – Present)",
+                        "Developer at <b>Sopra</b> & Co (04/2023 – 08/2025)")))))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("Based on: Software Engineer at Push Gaming (08/2025 – Present)",
+                "Based on: Developer at &lt;b&gt;Sopra&lt;/b&gt; &amp; Co (04/2023 – 08/2025)")
+                .doesNotContain("<b>Sopra</b>");
+        assertThat(html.indexOf("Based on:")).isGreaterThan(html.indexOf("Years of experience"));
+    }
+
+    @Test
+    void reviewPageShowsNoBasisWhenItIsEmpty() throws Exception {
+        String html = mvc.perform(get("/professional-assessment/cv/review").session(session(profile(List.of()))))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("Years of experience").doesNotContain("Based on:");
+    }
+
+    @Test
+    void editingTheYearsClearsTheBasis() throws Exception {
+        var session = session(profile(List.of("Software Engineer at Push Gaming (08/2025 – Present)")));
+
+        mvc.perform(editRequest(session, "15"))
+                .andExpect(redirectedUrl("/professional-assessment/cv/review"));
+
+        var profile = (ProfessionalProfile) session.getAttribute(ProfessionalCvSession.PROFILE);
+        assertThat(profile.yearsExperience()).hasValue(15);
+        assertThat(profile.experienceBasis()).isEmpty();
+        assertThat(mvc.perform(get("/professional-assessment/cv/review").session(session))
+                .andReturn().getResponse().getContentAsString()).doesNotContain("Based on:");
+    }
+
+    @Test
+    void editingOtherFieldsWithTheSameYearsKeepsTheBasis() throws Exception {
+        var session = session(profile(List.of("Software Engineer at Push Gaming (08/2025 – Present)")));
+
+        mvc.perform(editRequest(session, "12"))
+                .andExpect(redirectedUrl("/professional-assessment/cv/review"));
+
+        var profile = (ProfessionalProfile) session.getAttribute(ProfessionalCvSession.PROFILE);
+        assertThat(profile.currentRole()).isEqualTo("Principal Architect");
+        assertThat(profile.experienceBasis()).containsExactly("Software Engineer at Push Gaming (08/2025 – Present)");
+    }
+
+    @Test
+    void clearingTheYearsAlsoClearsTheBasis() throws Exception {
+        var session = session(profile(List.of("Software Engineer at Push Gaming (08/2025 – Present)")));
+
+        mvc.perform(editRequest(session, ""))
+                .andExpect(redirectedUrl("/professional-assessment/cv/review"));
+
+        var profile = (ProfessionalProfile) session.getAttribute(ProfessionalCvSession.PROFILE);
+        assertThat(profile.yearsExperience()).isEmpty();
+        assertThat(profile.experienceBasis()).isEmpty();
+    }
+
+    private static ProfessionalProfile profile(List<String> basis) {
+        return new ProfessionalProfile("Software Architect", "", "", "",
+                "Designs dependable software platforms and resolves complex technical trade-offs.",
+                List.of("Design platforms"), List.of("Architecture"), List.of("Communication"),
+                List.of(), List.of(), List.of("Payments"), OptionalInt.of(12),
+                basis, ProfessionalProfileCompleteness.COMPLETE, List.of());
     }
 
     private static ProfessionalProfile profile(String employer, String start, String end) {
@@ -189,7 +261,7 @@ class ProfessionalCvReviewControllerTest {
                 "Designs dependable software platforms and resolves complex technical trade-offs.",
                 List.of("Design platforms"), List.of("Architecture"), List.of("Communication"),
                 List.of(), List.of(), List.of("Payments"), OptionalInt.of(12),
-                ProfessionalProfileCompleteness.COMPLETE, List.of());
+                List.of(), ProfessionalProfileCompleteness.COMPLETE, List.of());
     }
 
     private MockHttpSession session(ProfessionalProfile profile) {
@@ -206,7 +278,7 @@ class ProfessionalCvReviewControllerTest {
                 "Designs dependable software platforms and resolves complex technical trade-offs.",
                 List.of("Design platforms"), List.of("Architecture"), List.of("Communication"),
                 List.of(), List.of(), List.of("Payments"), OptionalInt.of(12),
-                ProfessionalProfileCompleteness.COMPLETE, List.of("Several roles were present.")));
+                List.of(), ProfessionalProfileCompleteness.COMPLETE, List.of("Several roles were present.")));
         session.setAttribute(ProfessionalCvSession.INPUT_METADATA, ProfessionalAssessmentInputMetadata.cvUpload(
                 "cv.pdf", "application/pdf", ProfessionalCvVersions.PARSER_V2, Instant.EPOCH));
         return session;

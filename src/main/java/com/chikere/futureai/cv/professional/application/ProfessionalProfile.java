@@ -8,8 +8,11 @@ import java.util.OptionalInt;
 /**
  * The small, reviewable set of professional facts understood from a CV.
  *
- * <p>The employer and dates only tell the user which job was used. They are never sent to an
- * assessment and never persisted.</p>
+ * <p>The employer, dates and experience basis only tell the user which jobs were used. They are
+ * never sent to an assessment and never persisted.</p>
+ *
+ * @param experienceBasis preformatted descriptions of the jobs counted towards {@code yearsExperience},
+ *                        at most ten
  */
 public record ProfessionalProfile(
         String currentRole,
@@ -24,8 +27,10 @@ public record ProfessionalProfile(
         List<String> decisionMakingResponsibilities,
         List<String> domainContext,
         OptionalInt yearsExperience,
+        List<String> experienceBasis,
         ProfessionalProfileCompleteness completeness,
         List<String> warnings) implements Serializable {
+    public static final int MAXIMUM_EXPERIENCE_BASIS = 10;
 
     public ProfessionalProfile {
         currentRole = text(currentRole);
@@ -40,6 +45,7 @@ public record ProfessionalProfile(
         decisionMakingResponsibilities = copy(decisionMakingResponsibilities);
         domainContext = copy(domainContext);
         yearsExperience = Objects.requireNonNull(yearsExperience);
+        experienceBasis = copy(experienceBasis).stream().limit(MAXIMUM_EXPERIENCE_BASIS).toList();
         completeness = Objects.requireNonNull(completeness);
         warnings = copy(warnings);
     }

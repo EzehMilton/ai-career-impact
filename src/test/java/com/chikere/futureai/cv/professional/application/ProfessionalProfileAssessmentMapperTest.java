@@ -14,7 +14,7 @@ class ProfessionalProfileAssessmentMapperTest {
                 "Designs complex platforms and guides teams through technical trade-offs.",
                 List.of("Design platforms"), List.of("Java"), List.of("Communication"),
                 List.of("Mentor engineers"), List.of("Approve architecture decisions"),
-                List.of("Financial services"), OptionalInt.of(12), ProfessionalProfileCompleteness.COMPLETE, List.of());
+                List.of("Financial services"), OptionalInt.of(12), List.of(), ProfessionalProfileCompleteness.COMPLETE, List.of());
 
         var state = new ProfessionalProfileAssessmentMapper().toState(profile);
 
@@ -41,11 +41,25 @@ class ProfessionalProfileAssessmentMapperTest {
         assertThat(mapper.toState(with).toString()).doesNotContain("Northbridge", "March 2019", "Present");
     }
 
+    @Test
+    void experienceBasisNeverReachesTheAssessmentState() {
+        var mapper = new ProfessionalProfileAssessmentMapper();
+        var withBasis = profile("", "", "", List.of("Software Engineer at Push Gaming (08/2025 – Present)"));
+
+        assertThat(mapper.toState(withBasis)).isEqualTo(mapper.toState(profile("", "", "")));
+        assertThat(mapper.toState(withBasis).yearsOfExperience()).hasValue(12);
+        assertThat(mapper.toState(withBasis).toString()).doesNotContain("Push Gaming", "08/2025");
+    }
+
     private static ProfessionalProfile profile(String employer, String start, String end) {
+        return profile(employer, start, end, List.of());
+    }
+
+    private static ProfessionalProfile profile(String employer, String start, String end, List<String> basis) {
         return new ProfessionalProfile("Software Architect", employer, start, end,
                 "Designs complex platforms and guides teams through technical trade-offs.",
                 List.of("Design platforms"), List.of("Java"), List.of("Communication"),
                 List.of("Mentor engineers"), List.of(), List.of(), OptionalInt.of(12),
-                ProfessionalProfileCompleteness.COMPLETE, List.of());
+                basis, ProfessionalProfileCompleteness.COMPLETE, List.of());
     }
 }

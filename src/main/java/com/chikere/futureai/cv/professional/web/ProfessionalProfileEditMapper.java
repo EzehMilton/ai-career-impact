@@ -25,12 +25,15 @@ final class ProfessionalProfileEditMapper {
     }
 
     ProfessionalProfile update(ProfessionalProfile existing, ProfessionalProfileEditForm form) {
+        OptionalInt years = form.getYearsExperience() == null
+                ? OptionalInt.empty() : OptionalInt.of(form.getYearsExperience());
         return new ProfessionalProfile(form.getCurrentRole(), form.getCurrentEmployer(), form.getCurrentRoleStart(),
                 form.getCurrentRoleEnd(), form.getRoleSummary(), lines(form.getResponsibilities()),
                 lines(form.getTechnicalSkills()), lines(form.getHumanSkills()),
                 existing.leadershipResponsibilities(), existing.decisionMakingResponsibilities(),
-                existing.domainContext(), form.getYearsExperience() == null
-                        ? OptionalInt.empty() : OptionalInt.of(form.getYearsExperience()),
+                existing.domainContext(), years,
+                // The basis explains a calculated number; once the user changes it, it no longer does.
+                years.equals(existing.yearsExperience()) ? existing.experienceBasis() : List.of(),
                 ProfessionalProfileCompleteness.COMPLETE, existing.warnings());
     }
 

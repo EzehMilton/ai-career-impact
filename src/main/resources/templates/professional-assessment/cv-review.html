@@ -36,6 +36,7 @@
     <p class="helper" th:if="${profile.humanSkills.isEmpty()}">No human skills were identified reliably.</p>
     <h3>Years of experience</h3>
     <p th:if="${profile.yearsExperience.present}" th:text="${profile.yearsExperience.asInt}">12</p>
+    <p class="helper" th:each="item : ${profile.experienceBasis}" th:text="|Based on: ${item}|">Based on: Job at Employer (start – end)</p>
     <p class="helper" th:unless="${profile.yearsExperience.present}">Could not be determined reliably.</p>
 
     <div class="notice" th:if="${!profile.warnings.isEmpty()}">

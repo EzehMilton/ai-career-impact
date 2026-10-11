@@ -40,7 +40,7 @@ class ProfessionalCvUploadControllerTest {
                 "Designs dependable platforms and resolves complex technical trade-offs.",
                 List.of("Design platforms", "Guide technical decisions"),
                 List.of("Architecture"), List.of("Communication"), List.of(), List.of(), List.of(),
-                OptionalInt.of(12), ProfessionalProfileCompleteness.PARTIAL,
+                OptionalInt.of(12), List.of(), ProfessionalProfileCompleteness.PARTIAL,
                 List.of("Review the selected current role."));
         var metadata = ProfessionalAssessmentInputMetadata.cvUpload("software.pdf", "application/pdf",
                 ProfessionalCvVersions.PARSER_V2, Instant.parse("2026-10-01T08:00:00Z"));

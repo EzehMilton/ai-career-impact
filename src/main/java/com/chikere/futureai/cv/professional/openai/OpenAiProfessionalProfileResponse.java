@@ -18,8 +18,17 @@ public record OpenAiProfessionalProfileResponse(
         @JsonPropertyDescription("Leadership responsibilities from only the selected current employment entry") List<String> leadershipResponsibilities,
         @JsonPropertyDescription("Decision-making responsibilities from only the selected current employment entry") List<String> decisionMakingResponsibilities,
         @JsonPropertyDescription("Role-specific domain context from only the selected current employment entry") List<String> domainContext,
-        @JsonPropertyDescription("Approximate relevant experience in years across clearly dated relevant employment, overlaps counted once; null if uncertain, never zero as a placeholder") Integer yearsExperience,
+        @JsonPropertyDescription("Every dated employment entry in the CV, including the current one, in CV order; dates copied exactly as written") List<Employment> employmentHistory,
         @JsonPropertyDescription("Short warnings about ambiguity or missing information") List<String> warnings) {
+
+    /** One dated job. Java, not the model, turns these dates into years of experience. */
+    public record Employment(
+            @JsonPropertyDescription("Job title of this employment entry as written in the CV") String title,
+            @JsonPropertyDescription("Employer of this employment entry as written in the CV, or null if not stated") String employer,
+            @JsonPropertyDescription("Start date of this employment entry copied exactly as written in the CV") String start,
+            @JsonPropertyDescription("End date of this employment entry copied exactly as written in the CV; \"Present\" when the job is ongoing") String end,
+            @JsonPropertyDescription("True only when this entry is the same as, or a closely related profession to, the current role; always true for the current entry") Boolean relevantToCurrentRole) {
+    }
 
     /** A recurring duty and the CV text that supports it. */
     public record Duty(
