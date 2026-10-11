@@ -70,6 +70,7 @@ public final class ProfessionalProfileValidator {
         boolean complete = years.isPresent() && warnings.isEmpty();
         return new ProfessionalProfile(role, employer, start, end, summary, responsibilities, technical, human,
                 leadership, decisions, domain, years, years.isPresent() ? candidate.experienceBasis() : List.of(),
+                years.isPresent() ? candidate.experienceExcluded() : List.of(),
                 complete ? ProfessionalProfileCompleteness.COMPLETE : ProfessionalProfileCompleteness.PARTIAL,
                 List.copyOf(new LinkedHashSet<>(warnings)));
     }

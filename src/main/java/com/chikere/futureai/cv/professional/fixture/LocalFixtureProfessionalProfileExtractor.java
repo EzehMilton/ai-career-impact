@@ -78,6 +78,7 @@ public final class LocalFixtureProfessionalProfileExtractor implements Professio
         }
         return new ProfessionalProfile(role, employer, start, "Present", summary, responsibilities, technical,
                 human, List.of(), List.of(), List.of(), experience.years(), experience.basis(),
+                experience.excluded(),
                 ProfessionalProfileCompleteness.COMPLETE, List.of());
     }
 }

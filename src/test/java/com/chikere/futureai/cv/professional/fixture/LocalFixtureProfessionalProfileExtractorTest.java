@@ -35,6 +35,8 @@ class LocalFixtureProfessionalProfileExtractorTest {
         assertThat(nurse.yearsExperience()).hasValue(9);
         assertThat(nurse.experienceBasis()).containsExactly(
                 "Registered Nurse at St Aldric's Hospital (September 2017 – Present)");
+        assertThat(nurse.experienceExcluded()).containsExactly(
+                "Retail Assistant at Market Row Stores (June 2014 – August 2017)");
 
         var developer = new LocalFixtureProfessionalProfileExtractor("routine_software_developer", clock).extract("");
         assertThat(developer.experienceBasis()).isEmpty();

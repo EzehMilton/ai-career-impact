@@ -64,9 +64,10 @@ public final class OpenAiProfessionalProfileExtractor implements ProfessionalPro
             Do not invent qualifications or skills.
 
             employmentHistory lists every dated employment entry in the CV, including the current one. Copy start
-            and end dates exactly as written. Set relevantToCurrentRole to true only when the entry is the same or
-            a closely related profession to the current role. The current entry is always relevant. Do not
-            calculate years of experience.
+            and end dates exactly as written. Set relevantToCurrentRole to true unless the entry is clearly a
+            different profession from the current role. Jobs in the same field with a different title (for
+            example Software Developer, Programmer or Engineer for a Software Engineer) are relevant. The current
+            entry is always relevant. When unsure, use true. Do not calculate years of experience.
 
             roleSummary is one or two sentences, at least 40 characters, describing what the person does in the
             current role in an ordinary working week. Base it on the current entry only: its title, any listed
@@ -168,7 +169,7 @@ public final class OpenAiProfessionalProfileExtractor implements ProfessionalPro
                 value.currentRoleEnd(), value.roleSummary(), responsibilities,
                 list(value.technicalSkills()), list(value.humanSkills()), list(value.leadershipResponsibilities()),
                 list(value.decisionMakingResponsibilities()), list(value.domainContext()), experience.years(),
-                experience.basis(), ProfessionalProfileCompleteness.PARTIAL, warnings);
+                experience.basis(), experience.excluded(), ProfessionalProfileCompleteness.PARTIAL, warnings);
     }
 
     /**
@@ -200,7 +201,8 @@ public final class OpenAiProfessionalProfileExtractor implements ProfessionalPro
         if (history == null) return List.of();
         return history.stream().filter(Objects::nonNull)
                 .map(job -> new ProfessionalEmploymentEntry(job.title(), job.employer(), job.start(), job.end(),
-                        Boolean.TRUE.equals(job.relevantToCurrentRole())))
+                        // Relevance includes by default: only an explicit false excludes a job.
+                        !Boolean.FALSE.equals(job.relevantToCurrentRole())))
                 .toList();
     }
 

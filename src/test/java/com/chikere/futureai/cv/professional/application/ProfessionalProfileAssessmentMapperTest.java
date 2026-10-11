@@ -14,7 +14,7 @@ class ProfessionalProfileAssessmentMapperTest {
                 "Designs complex platforms and guides teams through technical trade-offs.",
                 List.of("Design platforms"), List.of("Java"), List.of("Communication"),
                 List.of("Mentor engineers"), List.of("Approve architecture decisions"),
-                List.of("Financial services"), OptionalInt.of(12), List.of(), ProfessionalProfileCompleteness.COMPLETE, List.of());
+                List.of("Financial services"), OptionalInt.of(12), List.of(), List.of(), ProfessionalProfileCompleteness.COMPLETE, List.of());
 
         var state = new ProfessionalProfileAssessmentMapper().toState(profile);
 
@@ -51,6 +51,20 @@ class ProfessionalProfileAssessmentMapperTest {
         assertThat(mapper.toState(withBasis).toString()).doesNotContain("Push Gaming", "08/2025");
     }
 
+    @Test
+    void excludedJobsNeverReachTheAssessmentState() {
+        var mapper = new ProfessionalProfileAssessmentMapper();
+        var withExclusions = new ProfessionalProfile("Software Architect", "", "", "",
+                "Designs complex platforms and guides teams through technical trade-offs.",
+                List.of("Design platforms"), List.of("Java"), List.of("Communication"),
+                List.of("Mentor engineers"), List.of(), List.of(), OptionalInt.of(12),
+                List.of(), List.of("EOD Technician at US Navy (03/2009 – 02/2016)"),
+                ProfessionalProfileCompleteness.COMPLETE, List.of());
+
+        assertThat(mapper.toState(withExclusions)).isEqualTo(mapper.toState(profile("", "", "")));
+        assertThat(mapper.toState(withExclusions).toString()).doesNotContain("US Navy", "EOD");
+    }
+
     private static ProfessionalProfile profile(String employer, String start, String end) {
         return profile(employer, start, end, List.of());
     }
@@ -60,6 +74,6 @@ class ProfessionalProfileAssessmentMapperTest {
                 "Designs complex platforms and guides teams through technical trade-offs.",
                 List.of("Design platforms"), List.of("Java"), List.of("Communication"),
                 List.of("Mentor engineers"), List.of(), List.of(), OptionalInt.of(12),
-                basis, ProfessionalProfileCompleteness.COMPLETE, List.of());
+                basis, List.of(), ProfessionalProfileCompleteness.COMPLETE, List.of());
     }
 }

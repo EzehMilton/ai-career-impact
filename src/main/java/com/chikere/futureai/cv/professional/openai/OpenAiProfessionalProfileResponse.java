@@ -27,7 +27,7 @@ public record OpenAiProfessionalProfileResponse(
             @JsonPropertyDescription("Employer of this employment entry as written in the CV, or null if not stated") String employer,
             @JsonPropertyDescription("Start date of this employment entry copied exactly as written in the CV") String start,
             @JsonPropertyDescription("End date of this employment entry copied exactly as written in the CV; \"Present\" when the job is ongoing") String end,
-            @JsonPropertyDescription("True only when this entry is the same as, or a closely related profession to, the current role; always true for the current entry") Boolean relevantToCurrentRole) {
+            @JsonPropertyDescription("True unless this entry is clearly a different profession from the current role; jobs in the same field with a different title (for example Software Developer, Programmer or Engineer for a Software Engineer) are relevant; always true for the current entry; true when unsure") Boolean relevantToCurrentRole) {
     }
 
     /** A recurring duty and the CV text that supports it. */

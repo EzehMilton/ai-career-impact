@@ -32,8 +32,10 @@ final class ProfessionalProfileEditMapper {
                 lines(form.getTechnicalSkills()), lines(form.getHumanSkills()),
                 existing.leadershipResponsibilities(), existing.decisionMakingResponsibilities(),
                 existing.domainContext(), years,
-                // The basis explains a calculated number; once the user changes it, it no longer does.
+                // The basis and exclusions explain a calculated number; once the user changes it, they no
+                // longer do.
                 years.equals(existing.yearsExperience()) ? existing.experienceBasis() : List.of(),
+                years.equals(existing.yearsExperience()) ? existing.experienceExcluded() : List.of(),
                 ProfessionalProfileCompleteness.COMPLETE, existing.warnings());
     }
 

@@ -52,8 +52,14 @@ public final class ProfessionalExperienceCalculator {
 
         var periods = new ArrayList<Period>();
         var basis = new ArrayList<String>();
+        var excluded = new ArrayList<String>();
         for (var entry : history) {
-            if (entry == null || !relevant(entry, currentStart, currentEnd)) continue;
+            if (entry == null) continue;
+            if (!relevant(entry, currentStart, currentEnd)) {
+                // Shown to the user so a wrong exclusion can be spotted and corrected.
+                if (!entry.start().isEmpty()) excluded.add(describe(entry));
+                continue;
+            }
             Optional<YearMonth> start = copied(entry.start(), text)
                     .flatMap(value -> parse(value, false, now));
             Optional<YearMonth> end = ongoing(entry.end()) ? Optional.of(now)
@@ -71,7 +77,8 @@ public final class ProfessionalExperienceCalculator {
         int years = (int) (months / 12 + (months % 12 >= 6 ? 1 : 0));
         if (years > MAXIMUM_YEARS) return ProfessionalExperience.unknown();
         return new ProfessionalExperience(OptionalInt.of(years),
-                basis.stream().limit(ProfessionalProfile.MAXIMUM_EXPERIENCE_BASIS).toList());
+                basis.stream().limit(ProfessionalProfile.MAXIMUM_EXPERIENCE_BASIS).toList(),
+                excluded.stream().limit(ProfessionalProfile.MAXIMUM_EXPERIENCE_BASIS).toList());
     }
 
     /**

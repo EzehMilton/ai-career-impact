@@ -80,7 +80,7 @@ class ProfessionalCvUploadServiceTest {
 
         ProfessionalProfile invalid = new ProfessionalProfile("", "", "", "", "Too short", List.of(),
                 List.of(), List.of(), List.of(), List.of(), List.of(), OptionalInt.empty(),
-                List.of(), ProfessionalProfileCompleteness.PARTIAL, List.of());
+                List.of(), List.of(), ProfessionalProfileCompleteness.PARTIAL, List.of());
         var malformed = new ProfessionalCvUploadService(parser, Optional.of(extractor(text -> invalid)),
                 new ProfessionalProfileValidator(), Clock.systemUTC());
 
@@ -117,7 +117,7 @@ class ProfessionalCvUploadServiceTest {
                 "Designs dependable software platforms and resolves complex technical trade-offs.",
                 List.of("Design platforms"), List.of("Java"), List.of("Communication"),
                 List.of(), List.of(), List.of(), OptionalInt.empty(),
-                List.of(), ProfessionalProfileCompleteness.PARTIAL, List.of());
+                List.of(), List.of(), ProfessionalProfileCompleteness.PARTIAL, List.of());
     }
 
     private ProfessionalCvDocument document() {

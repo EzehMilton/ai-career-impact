@@ -40,6 +40,21 @@ class ProfessionalExperienceCalculatorTest {
         assertThat(experience.basis()).containsExactly(
                 "Software Engineer at Push Gaming (08/2025 – Present)",
                 "Software Developer at Sopra Banking Software (04/2023 – 08/2025)");
+        assertThat(experience.excluded()).containsExactly(
+                "Security Design Engineer at Buro Happold (06/2021 – 04/2023)",
+                "EOD Technician at US Navy (03/2009 – 02/2016)");
+    }
+
+    @Test
+    void excludedJobsAreListedOnlyWhenDatedAndOnlyAlongsideAResult() {
+        var history = List.of(job("01/2024", "12/2024", true),
+                new ProfessionalEmploymentEntry("Volunteer", "Charity", "", "", false),
+                new ProfessionalEmploymentEntry("Barista", "Cafe", "2015", "2016", false));
+        assertThat(calculator.calculate(history, "", "", text(history)).excluded())
+                .containsExactly("Barista at Cafe (2015 – 2016)");
+
+        var unknown = List.of(job("Spring 2020", "Present", true), job("2015", "2016", false));
+        assertThat(calculator.calculate(unknown, "", "", text(unknown)).excluded()).isEmpty();
     }
 
     @ParameterizedTest

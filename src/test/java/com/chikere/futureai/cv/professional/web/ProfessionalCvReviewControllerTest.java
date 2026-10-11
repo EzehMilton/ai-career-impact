@@ -249,11 +249,67 @@ class ProfessionalCvReviewControllerTest {
     }
 
     private static ProfessionalProfile profile(List<String> basis) {
+        return profile(basis, List.of());
+    }
+
+    private static ProfessionalProfile profile(List<String> basis, List<String> excluded) {
         return new ProfessionalProfile("Software Architect", "", "", "",
                 "Designs dependable software platforms and resolves complex technical trade-offs.",
                 List.of("Design platforms"), List.of("Architecture"), List.of("Communication"),
                 List.of(), List.of(), List.of("Payments"), OptionalInt.of(12),
-                basis, ProfessionalProfileCompleteness.COMPLETE, List.of());
+                basis, excluded, ProfessionalProfileCompleteness.COMPLETE, List.of());
+    }
+
+    private static final String COUNT_HINT = "If any of these should count, change your years of experience.";
+
+    @Test
+    void reviewPageListsJobsThatWereNotCountedAndEscapesThem() throws Exception {
+        String html = mvc.perform(get("/professional-assessment/cv/review").session(session(profile(
+                        List.of("Software Engineer at Push Gaming (08/2025 – Present)"),
+                        List.of("EOD Technician at US Navy (03/2009 – 02/2016)",
+                                "Designer at <i>Buro</i> & Partners (06/2021 – 04/2023)")))))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("Not counted: EOD Technician at US Navy (03/2009 – 02/2016)",
+                "Not counted: Designer at &lt;i&gt;Buro&lt;/i&gt; &amp; Partners (06/2021 – 04/2023)")
+                .doesNotContain("<i>Buro</i>");
+        assertThat(html).containsOnlyOnce(COUNT_HINT);
+        assertThat(html.indexOf("Not counted:")).isGreaterThan(html.indexOf("Based on:"));
+        assertThat(html.indexOf(COUNT_HINT)).isGreaterThan(html.lastIndexOf("Not counted:"));
+    }
+
+    @Test
+    void reviewPageShowsNoExclusionsOrHintWhenEveryJobCounted() throws Exception {
+        String html = mvc.perform(get("/professional-assessment/cv/review").session(session(profile(
+                        List.of("Software Engineer at Push Gaming (08/2025 – Present)")))))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("Based on:").doesNotContain("Not counted:", COUNT_HINT);
+    }
+
+    @Test
+    void editingTheYearsClearsTheExclusionsTogetherWithTheBasis() throws Exception {
+        var session = session(profile(List.of("Software Engineer at Push Gaming (08/2025 – Present)"),
+                List.of("EOD Technician at US Navy (03/2009 – 02/2016)")));
+
+        mvc.perform(editRequest(session, "15")).andExpect(redirectedUrl("/professional-assessment/cv/review"));
+
+        var profile = (ProfessionalProfile) session.getAttribute(ProfessionalCvSession.PROFILE);
+        assertThat(profile.experienceBasis()).isEmpty();
+        assertThat(profile.experienceExcluded()).isEmpty();
+        assertThat(mvc.perform(get("/professional-assessment/cv/review").session(session))
+                .andReturn().getResponse().getContentAsString()).doesNotContain("Not counted:", COUNT_HINT);
+    }
+
+    @Test
+    void editingOtherFieldsWithTheSameYearsKeepsTheExclusions() throws Exception {
+        var session = session(profile(List.of("Software Engineer at Push Gaming (08/2025 – Present)"),
+                List.of("EOD Technician at US Navy (03/2009 – 02/2016)")));
+
+        mvc.perform(editRequest(session, "12")).andExpect(redirectedUrl("/professional-assessment/cv/review"));
+
+        var profile = (ProfessionalProfile) session.getAttribute(ProfessionalCvSession.PROFILE);
+        assertThat(profile.experienceExcluded()).containsExactly("EOD Technician at US Navy (03/2009 – 02/2016)");
     }
 
     private static ProfessionalProfile profile(String employer, String start, String end) {
@@ -261,7 +317,7 @@ class ProfessionalCvReviewControllerTest {
                 "Designs dependable software platforms and resolves complex technical trade-offs.",
                 List.of("Design platforms"), List.of("Architecture"), List.of("Communication"),
                 List.of(), List.of(), List.of("Payments"), OptionalInt.of(12),
-                List.of(), ProfessionalProfileCompleteness.COMPLETE, List.of());
+                List.of(), List.of(), ProfessionalProfileCompleteness.COMPLETE, List.of());
     }
 
     private MockHttpSession session(ProfessionalProfile profile) {
@@ -278,7 +334,7 @@ class ProfessionalCvReviewControllerTest {
                 "Designs dependable software platforms and resolves complex technical trade-offs.",
                 List.of("Design platforms"), List.of("Architecture"), List.of("Communication"),
                 List.of(), List.of(), List.of("Payments"), OptionalInt.of(12),
-                List.of(), ProfessionalProfileCompleteness.COMPLETE, List.of("Several roles were present.")));
+                List.of(), List.of(), ProfessionalProfileCompleteness.COMPLETE, List.of("Several roles were present.")));
         session.setAttribute(ProfessionalCvSession.INPUT_METADATA, ProfessionalAssessmentInputMetadata.cvUpload(
                 "cv.pdf", "application/pdf", ProfessionalCvVersions.PARSER_V2, "professional-cv-extractor-v2", Instant.EPOCH));
         return session;

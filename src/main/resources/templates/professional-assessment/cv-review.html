@@ -37,6 +37,8 @@
     <h3>Years of experience</h3>
     <p th:if="${profile.yearsExperience.present}" th:text="${profile.yearsExperience.asInt}">12</p>
     <p class="helper" th:each="item : ${profile.experienceBasis}" th:text="|Based on: ${item}|">Based on: Job at Employer (start – end)</p>
+    <p class="helper" th:each="item : ${profile.experienceExcluded}" th:text="|Not counted: ${item}|">Not counted: Job at Employer (start – end)</p>
+    <p class="helper" th:if="${!profile.experienceExcluded.isEmpty()}">If any of these should count, change your years of experience.</p>
     <p class="helper" th:unless="${profile.yearsExperience.present}">Could not be determined reliably.</p>
 
     <div class="notice" th:if="${!profile.warnings.isEmpty()}">

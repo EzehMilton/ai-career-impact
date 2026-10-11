@@ -116,16 +116,19 @@ class OpenAiProfessionalProfileExtractorTest {
                 "Placeholders such as [email], [phone], [link] and [postcode] replace removed contact details; "
                 + "ignore them.",
                 "employmentHistory lists every dated employment entry in the CV, including the current one. Copy "
-                + "start and end dates exactly as written. Set relevantToCurrentRole to true only when the entry "
-                + "is the same or a closely related profession to the current role. The current entry is always "
-                + "relevant. Do not calculate years of experience.",
+                + "start and end dates exactly as written.",
+                "Set relevantToCurrentRole to true unless the entry is clearly a different profession from the "
+                + "current role. Jobs in the same field with a different title (for example Software Developer, "
+                + "Programmer or Engineer for a Software Engineer) are relevant. The current entry is always "
+                + "relevant. When unsure, use true.", "Do not calculate years of experience.",
                 "Write it in the third person without 'I' or the person's name (for example 'Designs and "
                 + "maintains…').");
         assertThat(system.getValue().replaceAll("\\s+", " ")).doesNotContain(
                 "Add warnings for ambiguity and material missing information",
                 "explain the uncertainty in warnings", "return null and add a warning",
                 "yearsExperience means", "Count overlapping periods once", "Never use zero as a placeholder",
-                "is not zero", "otherwise return null");
+                "is not zero", "otherwise return null",
+                "Set relevantToCurrentRole to true only when");
         ArgumentCaptor<String> user = ArgumentCaptor.forClass(String.class);
         verify(request).user(user.capture());
         assertThat(user.getValue()).contains("2026-10-01", "current responsibility A",
@@ -593,6 +596,33 @@ class OpenAiProfessionalProfileExtractorTest {
 
         assertThat(profile.yearsExperience()).hasValue(4);
         assertThat(capturedUser(mocks)).contains("03/2009 – 02/2016").doesNotContain("cuttsbrians");
+    }
+
+    @Test
+    void aMissingRelevanceFlagCountsTheJobAndExcludedJobsAreListed() {
+        String cv = """
+                Software Engineer, Push Gaming, 08/2025 – Present
+                Software Developer, Sopra Banking Software, 04/2023 – 08/2025
+                Security Design Engineer, Buro Happold, 06/2021 – 04/2023
+                EOD Technician, US Navy, 03/2009 – 02/2016
+                """;
+        var mocks = mockClient(new OpenAiProfessionalProfileResponse("Software Engineer", "Push Gaming", "08/2025",
+                "Present", "Builds and maintains online casino game platforms for operator brands.", List.of(),
+                List.of(), List.of("Java"), List.of("Communication"), List.of(), List.of(), List.of(),
+                List.of(new Employment("Software Engineer", "Push Gaming", "08/2025", "Present", null),
+                        new Employment("Software Developer", "Sopra Banking Software", "04/2023", "08/2025", null),
+                        new Employment("Security Design Engineer", "Buro Happold", "06/2021", "04/2023", false),
+                        new Employment("EOD Technician", "US Navy", "03/2009", "02/2016", false)),
+                List.of()));
+
+        var profile = new OpenAiProfessionalProfileExtractor(mocks.client(), OCTOBER_2026).extract(cv);
+
+        assertThat(profile.yearsExperience()).hasValue(4);
+        assertThat(profile.experienceBasis()).containsExactly("Software Engineer at Push Gaming (08/2025 – Present)",
+                "Software Developer at Sopra Banking Software (04/2023 – 08/2025)");
+        assertThat(profile.experienceExcluded()).containsExactly(
+                "Security Design Engineer at Buro Happold (06/2021 – 04/2023)",
+                "EOD Technician at US Navy (03/2009 – 02/2016)");
     }
 
     private record Mocks(ChatClient client, ChatClient.ChatClientRequestSpec request) {}
