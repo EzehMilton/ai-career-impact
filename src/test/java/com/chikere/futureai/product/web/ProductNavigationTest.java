@@ -34,9 +34,9 @@ class ProductNavigationTest {
     private record Journey(String path, String framing, String navLabel) { }
 
     private static final List<Journey> JOURNEYS = List.of(
-            new Journey("/professional-assessment", "My current job", "Professional"),
-            new Journey("/university-assessment", "A university course", "University"),
-            new Journey("/a-level-assessment", "My A-level subjects", "A-levels"));
+            new Journey("/professional-assessment", "How will AI affect the work I currently do?", "Professional"),
+            new Journey("/university-assessment", "How well does this course position me for an AI-shaped labour market?", "University"),
+            new Journey("/a-level-assessment", "Do these choices preserve strong future options?", "A-level"));
 
     @MockitoBean ProfessionalJudgmentProvider professionalJudgmentProvider;
     @MockitoBean ProfessionalNarrativeGenerator professionalNarrativeGenerator;
@@ -72,9 +72,8 @@ class ProductNavigationTest {
 
     @Test
     void theHeaderMarksTheCurrentJourneyAndTheFooterIsTheSameEverywhere() throws Exception {
-        // The header carries the four primary destinations; the informational pages are reached from
-        // the footer instead, so on those nothing in the header may claim to be the current page.
-        var primary = List.of("/", "/professional-assessment", "/university-assessment",
+        // The brand and primary navigation identify the current destination, including methodology.
+        var primary = List.of("/", "/methodology", "/professional-assessment", "/university-assessment",
                 "/a-level-assessment");
         for (String path : List.of("/", "/methodology", "/privacy",
                 "/professional-assessment", "/university-assessment", "/a-level-assessment")) {
