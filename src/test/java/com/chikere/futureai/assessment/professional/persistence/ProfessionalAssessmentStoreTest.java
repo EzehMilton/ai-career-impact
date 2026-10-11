@@ -21,6 +21,9 @@ import com.chikere.futureai.narrative.professional.application.ProfessionalNarra
 import com.chikere.futureai.narrative.professional.application.StoredProfessionalNarrative;
 import com.chikere.futureai.evidence.professional.application.*;
 import org.flywaydb.core.Flyway;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import javax.sql.DataSource;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -44,6 +47,7 @@ import com.chikere.futureai.report.professional.application.*;
 import com.chikere.futureai.pdf.professional.application.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
@@ -66,10 +70,11 @@ class ProfessionalAssessmentStoreTest {
     @Autowired ProfessionalPurchaseStore purchaseStore;
     @Autowired ProfessionalReportPdfStore pdfStore;
     @Autowired Flyway flyway;
+    @Autowired DataSource dataSource;
 
     @Test
     void migratedPostgresqlRoundTripPreservesCompleteSnapshot() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("17");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("18");
         var state = new ProfessionalAssessmentState("Software Architect",
                 "I design software and make consequential architecture decisions.",
                 List.of("Design platforms", "Resolve trade-offs"),
@@ -87,7 +92,7 @@ class ProfessionalAssessmentStoreTest {
         var snapshot = new StoredProfessionalAssessment(UUID.randomUUID(),
                 Instant.parse("2026-09-30T12:00:00Z"), state, judgments, result, Optional.empty(),
                 ProfessionalAssessmentInputMetadata.cvUpload("architect-cv.pdf", "application/pdf",
-                        "professional-cv-parser-v1", Instant.parse("2026-09-30T11:59:00Z")));
+                        "professional-cv-parser-v1", "professional-cv-extractor-v2", Instant.parse("2026-09-30T11:59:00Z")));
 
         store.save(snapshot);
         var loaded = store.findById(snapshot.id()).orElseThrow();
@@ -100,8 +105,108 @@ class ProfessionalAssessmentStoreTest {
         assertThat(loaded.result().decision().measures()).hasSize(4);
         assertThat(loaded.result().decision().topExposureDrivers()).isNotEmpty();
         assertThat(loaded.inputMetadata()).isEqualTo(snapshot.inputMetadata());
+        assertThat(loaded.inputMetadata().extractorVersion()).contains("professional-cv-extractor-v2");
+        assertThat(new JdbcTemplate(dataSource).queryForObject(
+                "select cv_extractor_version from professional_assessment where id = ?", String.class,
+                snapshot.id())).isEqualTo("professional-cv-extractor-v2");
         assertThat(store.findById(UUID.randomUUID())).isEmpty();
     }
+
+    @Test
+    void manualAssessmentStoresNoExtractorVersion() {
+        var state = new ProfessionalAssessmentState("Electrician", "Installs and tests electrical systems.",
+                List.of("Install wiring"), List.of("Diagnostics"), OptionalInt.of(8));
+        var judgments = new LocalFixtureProfessionalJudgmentProvider("electrician").judge(state);
+        var decision = new ProfessionalDecisionPolicyV1().decide(judgments);
+        var result = new ProfessionalAssessmentResult(decision, AssessmentSource.LOCAL_FIXTURE,
+                judgments.schemaVersion(), decision.policyVersion());
+        UUID id = UUID.randomUUID();
+
+        store.save(new StoredProfessionalAssessment(id, Instant.parse("2026-10-15T12:00:00Z"), state,
+                judgments, result, Optional.empty(), ProfessionalAssessmentInputMetadata.manual()));
+
+        assertThat(store.findById(id).orElseThrow().inputMetadata().extractorVersion()).isEmpty();
+        assertThat(new JdbcTemplate(dataSource).queryForObject(
+                "select cv_extractor_version from professional_assessment where id = ?", String.class, id))
+                .isNull();
+    }
+
+    @Test
+    void databaseRejectsACvUploadRowWithoutAnExtractorVersion() {
+        var jdbc = new JdbcTemplate(dataSource);
+        assertThatThrownBy(() -> insertRow(jdbc, "public", "CV_UPLOAD", "professional-cv-parser-v2", null))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("professional_assessment_cv_metadata_consistent");
+    }
+
+    @Test
+    void databaseRejectsAManualRowWithAnExtractorVersion() {
+        var jdbc = new JdbcTemplate(dataSource);
+        assertThatThrownBy(() -> insertRow(jdbc, "public", "MANUAL", null, "professional-cv-extractor-v2"))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("professional_assessment_cv_metadata_consistent");
+    }
+
+    /**
+     * Migrates a separate schema on the same PostgreSQL container to V17, inserts rows the way the
+     * application saved them then, and confirms V18 backfills only the CV upload.
+     */
+    @Test
+    void v18BackfillsTheExtractorVersionOfExistingCvUploads() {
+        String schema = "v18_backfill_" + UUID.randomUUID().toString().replace("-", "");
+        var jdbc = new JdbcTemplate(dataSource);
+        try {
+            Flyway.configure().dataSource(dataSource).schemas(schema).target("17").load().migrate();
+            UUID cvUpload = insertV17Row(jdbc, schema, "CV_UPLOAD");
+            UUID manual = insertV17Row(jdbc, schema, "MANUAL");
+
+            var upgraded = Flyway.configure().dataSource(dataSource).schemas(schema).target("18").load();
+            upgraded.migrate();
+
+            assertThat(upgraded.info().current().getVersion().getVersion()).isEqualTo("18");
+            assertThat(extractorVersion(jdbc, schema, cvUpload)).isEqualTo("professional-cv-extractor-v1");
+            assertThat(extractorVersion(jdbc, schema, manual)).isNull();
+        }
+        finally {
+            jdbc.execute("drop schema if exists " + schema + " cascade");
+        }
+    }
+
+    private static UUID insertV17Row(JdbcTemplate jdbc, String schema, String inputSource) {
+        boolean cv = inputSource.equals("CV_UPLOAD");
+        UUID id = UUID.randomUUID();
+        jdbc.update("insert into " + schema + ".professional_assessment (" + REQUIRED_COLUMNS + ", input_source, "
+                        + "cv_original_filename, cv_media_type, cv_parser_version, cv_parsed_at) values ("
+                        + REQUIRED_VALUES + ", ?, ?, ?, ?, ?)",
+                id, inputSource, cv ? "cv.pdf" : null, cv ? "application/pdf" : null,
+                cv ? "professional-cv-parser-v2" : null,
+                cv ? java.sql.Timestamp.from(Instant.parse("2026-09-30T12:00:00Z")) : null);
+        return id;
+    }
+
+    private static void insertRow(JdbcTemplate jdbc, String schema, String inputSource, String parserVersion,
+            String extractorVersion) {
+        boolean cv = inputSource.equals("CV_UPLOAD");
+        jdbc.update("insert into " + schema + ".professional_assessment (" + REQUIRED_COLUMNS + ", input_source, "
+                        + "cv_original_filename, cv_media_type, cv_parser_version, cv_extractor_version, "
+                        + "cv_parsed_at) values (" + REQUIRED_VALUES + ", ?, ?, ?, ?, ?, ?)",
+                UUID.randomUUID(), inputSource, cv ? "cv.pdf" : null, cv ? "application/pdf" : null,
+                parserVersion, extractorVersion,
+                cv ? java.sql.Timestamp.from(Instant.parse("2026-10-15T12:00:00Z")) : null);
+    }
+
+    private static String extractorVersion(JdbcTemplate jdbc, String schema, UUID id) {
+        return jdbc.queryForObject("select cv_extractor_version from " + schema
+                + ".professional_assessment where id = ?", String.class, id);
+    }
+
+    private static final String REQUIRED_COLUMNS = "id, created_at, profession, work_description, "
+            + "responsibilities, skills, source, judgment_schema_version, decision_policy_version, "
+            + "judgment_journey, information_sufficiency, decision_journey, result_label, "
+            + "assessment_confidence, assessment_status, key_drivers, decision_protective_factors";
+    private static final String REQUIRED_VALUES = "?, now(), 'Software Engineer', 'Builds services', "
+            + "'[]'::jsonb, '[]'::jsonb, 'LOCAL_FIXTURE', 'professional-v1', 'professional-policy-v1', "
+            + "'PROFESSIONAL', 0.9, 'PROFESSIONAL', 'Moderate', 'MODERATE', 'COMPLETE', '[]'::jsonb, '[]'::jsonb";
 
     @Test
     void migratedPostgresqlRoundTripPreservesNarrativeLifecycleContentAndProvenance() {

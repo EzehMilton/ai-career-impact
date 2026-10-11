@@ -58,6 +58,12 @@ class LocalFixtureProfessionalProfileExtractorTest {
     }
 
     @Test
+    void reportsTheFixtureExtractorVersion() {
+        assertThat(new LocalFixtureProfessionalProfileExtractor("electrician").version())
+                .isEqualTo("professional-cv-extractor-fixture-v1");
+    }
+
+    @Test
     void routineDeveloperFixtureDoesNotInventYears() {
         var extractor = new LocalFixtureProfessionalProfileExtractor("routine_software_developer");
         var profile = extractor.extract("arbitrary local document text");

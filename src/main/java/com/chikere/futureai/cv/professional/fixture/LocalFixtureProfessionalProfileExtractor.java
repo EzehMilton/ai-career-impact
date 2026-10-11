@@ -55,6 +55,11 @@ public final class LocalFixtureProfessionalProfileExtractor implements Professio
         };
     }
 
+    @Override
+    public String version() {
+        return ProfessionalCvVersions.EXTRACTOR_FIXTURE_V1;
+    }
+
     /**
      * Years are calculated from the fixture's own dated history, exactly as for a real CV. A null
      * earlier history stands for a CV without usable dates, so years stay unknown.

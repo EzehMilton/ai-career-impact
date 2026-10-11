@@ -42,6 +42,7 @@ final class ProfessionalAssessmentPersistenceMapper {
         entity.cvOriginalFilename = input.originalFilename().orElse(null);
         entity.cvMediaType = input.mediaType().orElse(null);
         entity.cvParserVersion = input.parserVersion().orElse(null);
+        entity.cvExtractorVersion = input.extractorVersion().orElse(null);
         entity.cvParsedAt = input.parsedAt().orElse(null);
         entity.source = result.source();
         entity.modelIdentifier = snapshot.modelIdentifier().orElse(null);
@@ -85,7 +86,8 @@ final class ProfessionalAssessmentPersistenceMapper {
                 entity.judgmentSchemaVersion, entity.decisionPolicyVersion);
         var input = new ProfessionalAssessmentInputMetadata(entity.inputSource,
                 Optional.ofNullable(entity.cvOriginalFilename), Optional.ofNullable(entity.cvMediaType),
-                Optional.ofNullable(entity.cvParserVersion), Optional.ofNullable(entity.cvParsedAt));
+                Optional.ofNullable(entity.cvParserVersion), Optional.ofNullable(entity.cvExtractorVersion),
+                Optional.ofNullable(entity.cvParsedAt));
         return new StoredProfessionalAssessment(entity.id, entity.createdAt, state, judgments,
                 result, Optional.ofNullable(entity.modelIdentifier), input);
     }

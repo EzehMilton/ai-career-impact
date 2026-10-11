@@ -268,7 +268,7 @@ class ProfessionalCvReviewControllerTest {
         var session = new MockHttpSession();
         session.setAttribute(ProfessionalCvSession.PROFILE, profile);
         session.setAttribute(ProfessionalCvSession.INPUT_METADATA, ProfessionalAssessmentInputMetadata.cvUpload(
-                "cv.pdf", "application/pdf", ProfessionalCvVersions.PARSER_V2, Instant.EPOCH));
+                "cv.pdf", "application/pdf", ProfessionalCvVersions.PARSER_V2, "professional-cv-extractor-v2", Instant.EPOCH));
         return session;
     }
 
@@ -280,7 +280,7 @@ class ProfessionalCvReviewControllerTest {
                 List.of(), List.of(), List.of("Payments"), OptionalInt.of(12),
                 List.of(), ProfessionalProfileCompleteness.COMPLETE, List.of("Several roles were present.")));
         session.setAttribute(ProfessionalCvSession.INPUT_METADATA, ProfessionalAssessmentInputMetadata.cvUpload(
-                "cv.pdf", "application/pdf", ProfessionalCvVersions.PARSER_V2, Instant.EPOCH));
+                "cv.pdf", "application/pdf", ProfessionalCvVersions.PARSER_V2, "professional-cv-extractor-v2", Instant.EPOCH));
         return session;
     }
 }

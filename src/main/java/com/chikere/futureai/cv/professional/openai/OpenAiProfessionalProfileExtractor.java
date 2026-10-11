@@ -137,6 +137,11 @@ public final class OpenAiProfessionalProfileExtractor implements ProfessionalPro
         }
     }
 
+    @Override
+    public String version() {
+        return ProfessionalCvVersions.EXTRACTOR_V2;
+    }
+
     /** The CV must not be able to close the data block early and continue as instructions. */
     private String neutraliseDataMarkers(String text) {
         return DATA_MARKER.matcher(text).replaceAll("[cv-data marker removed]");

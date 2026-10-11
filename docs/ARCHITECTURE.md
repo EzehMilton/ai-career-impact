@@ -508,9 +508,15 @@ Raw CV bytes and extracted text exist only during the upload call and are never 
 A short-lived server session carries only the structured profile and trusted parse provenance across
 review/edit/confirm. `ProfessionalProfileAssessmentMapper` combines the confirmed role, summary,
 responsibilities, technical/human skills, context and optional experience into the unchanged
-`ProfessionalAssessmentState`. V7 still stores only `MANUAL`/`CV_UPLOAD`, the sanitised filename,
-canonical media type, parser version and parse timestamp alongside the assessment snapshot. These
-fields do not affect scoring; historical rows, judgments, policies, reports and PDFs are unchanged.
+`ProfessionalAssessmentState`. Alongside the assessment snapshot, V7 stores `MANUAL`/`CV_UPLOAD`,
+the sanitised filename, canonical media type, parser version and parse timestamp, and V18 adds
+`cv_extractor_version`. Every `ProfessionalProfileExtractor` reports a `version()`, which
+`ProfessionalCvUploadService` records next to the parser version: `professional-cv-extractor-v2` for
+the OpenAI extractor and `professional-cv-extractor-fixture-v1` for the local fixture. V18 backfills
+`professional-cv-extractor-v1` on every earlier CV upload, since all of them used that extractor, and
+re-creates `professional_assessment_cv_metadata_consistent` so a manual row must have no extractor
+version and a CV upload must have one. These fields do not affect scoring; judgments, policies,
+reports and PDFs are unchanged.
 
 ## University journey
 
@@ -856,7 +862,8 @@ Factor wording explains capability contribution rather than judging a subject: "
 
 ### A-level persistence and migrations
 
-Flyway **V13** adds `a_level_assessment` with input, provenance and headline decision, plus ordered judgment, measure and factor tables; a check constraint pins both journey columns to `A_LEVEL`. **V14** adds `a_level_assessment_narrative`, **V15** the evidence bundle and items, **V16** the entitlement, purchased snapshot and processed payment event, and **V17** the purchased PDF. A-level tables are entirely separate from professional and university tables. V1–V12 are unchanged. The repository is now at Flyway v17.
+Flyway **V13** adds `a_level_assessment` with input, provenance and headline decision, plus ordered judgment, measure and factor tables; a check constraint pins both journey columns to `A_LEVEL`. **V14** adds `a_level_assessment_narrative`, **V15** the evidence bundle and items, **V16** the entitlement, purchased snapshot and processed payment event, and **V17** the purchased PDF. A-level tables are entirely separate from professional and university tables. V1–V12 are unchanged. **V18** later added the professional `cv_extractor_version` column (see
+Professional CV input). The repository is now at Flyway v18.
 
 Selected subjects, strengths, degree areas and career areas are JSONB arrays (order preserved); predicted grades are a JSONB object keyed by canonical subject (PostgreSQL does not preserve jsonb object key order, so grade display order follows the subject array). `ALevelAssessmentStore` inserts only, and `GET /a-level-assessment/{UUID}` loads saved records without invoking any provider or policy.
 

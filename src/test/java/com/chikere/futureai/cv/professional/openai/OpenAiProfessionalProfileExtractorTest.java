@@ -256,6 +256,12 @@ class OpenAiProfessionalProfileExtractorTest {
     }
 
     @Test
+    void reportsTheV2ExtractorVersion() {
+        assertThat(new OpenAiProfessionalProfileExtractor(mock(ChatClient.class)).version())
+                .isEqualTo("professional-cv-extractor-v2");
+    }
+
+    @Test
     void nullChatClientIsRejected() {
         assertThatThrownBy(() -> new OpenAiProfessionalProfileExtractor(null, OCTOBER_2026))
                 .isInstanceOf(NullPointerException.class);

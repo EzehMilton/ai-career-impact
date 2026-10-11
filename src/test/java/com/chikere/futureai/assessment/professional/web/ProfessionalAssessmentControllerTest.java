@@ -72,7 +72,7 @@ class ProfessionalAssessmentControllerTest {
     void manualPostCannotBypassCvReviewOrClaimCvProvenance() throws Exception {
         var session = new MockHttpSession();
         var metadata = ProfessionalAssessmentInputMetadata.cvUpload("safe-cv.pdf", "application/pdf",
-                "professional-cv-parser-v1", Instant.parse("2026-10-01T08:00:00Z"));
+                "professional-cv-parser-v1", "professional-cv-extractor-v2", Instant.parse("2026-10-01T08:00:00Z"));
         session.setAttribute(ProfessionalCvSession.INPUT_METADATA, metadata);
         session.setAttribute(ProfessionalCvSession.PROFILE, "unexpected stale profile");
         when(workflow.submit(any(), any())).thenReturn(ID);
