@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static com.chikere.futureai.configuration.ApplicationProfiles.JEV_CAPTURE;
 import static com.chikere.futureai.configuration.ApplicationProfiles.LIVE_EVIDENCE;
 import static com.chikere.futureai.configuration.ApplicationProfiles.LIVE_CV_EXTRACTION;
 import static com.chikere.futureai.configuration.ApplicationProfiles.LIVE_PAYMENT;
@@ -82,6 +83,10 @@ public class StartupConfigurationValidator {
         if (active.contains(LOCAL_FIXTURE) && active.contains(LIVE_EVIDENCE)) {
             conflicts.add("Profiles 'local-fixture' and 'live-evidence' are contradictory: the "
                     + "fixture provider overrides the live one, so no real evidence would be used.");
+        }
+        if (active.contains(PROD) && active.contains(JEV_CAPTURE)) {
+            conflicts.add("Profiles 'prod' and 'jev-capture' are contradictory: capture writes "
+                    + "assessment input to local files and is for development only.");
         }
         if (active.contains(LIVE_CV_EXTRACTION) && !active.contains(LOCAL_FIXTURE)) {
             conflicts.add("Profile 'live-cv-extraction' is a local development overlay and must "
