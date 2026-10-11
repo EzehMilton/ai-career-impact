@@ -14,10 +14,20 @@
 
   <section class="panel" aria-labelledby="profile-heading">
     <h2 id="profile-heading">Your professional profile</h2>
+    <th:block th:with="hasEmployer=${!profile.currentEmployer.isEmpty()},
+                       hasDates=${!profile.currentRoleStart.isEmpty() and !profile.currentRoleEnd.isEmpty()}">
+      <p class="helper" th:if="${hasEmployer and hasDates}"
+         th:text="|We used your role at ${profile.currentEmployer} (${profile.currentRoleStart} – ${profile.currentRoleEnd}).|">We used your role at Employer (start – end).</p>
+      <p class="helper" th:if="${hasEmployer and !hasDates}"
+         th:text="|We used your role at ${profile.currentEmployer}.|">We used your role at Employer.</p>
+      <p class="helper" th:if="${!hasEmployer and hasDates}"
+         th:text="|We used your current role (${profile.currentRoleStart} – ${profile.currentRoleEnd}).|">We used your current role (start – end).</p>
+    </th:block>
     <h3>Current role</h3><p th:text="${profile.currentRole}">Senior Software Architect</p>
     <h3>Role summary</h3><p th:text="${profile.roleSummary}">Role summary</p>
     <h3>Main responsibilities</h3>
     <ul><li th:each="item : ${profile.responsibilities}" th:text="${item}"></li></ul>
+    <p class="helper">CVs usually list achievements rather than everyday tasks. Add the main things you do in a typical week, even if your CV doesn't mention them, and remove one-offs or tasks from earlier jobs.</p>
     <h3>Technical skills</h3>
     <ul th:if="${!profile.technicalSkills.isEmpty()}"><li th:each="item : ${profile.technicalSkills}" th:text="${item}"></li></ul>
     <p class="helper" th:if="${profile.technicalSkills.isEmpty()}">No technical skills were identified reliably.</p>
@@ -26,6 +36,9 @@
     <p class="helper" th:if="${profile.humanSkills.isEmpty()}">No human skills were identified reliably.</p>
     <h3>Years of experience</h3>
     <p th:if="${profile.yearsExperience.present}" th:text="${profile.yearsExperience.asInt}">12</p>
+    <p class="helper" th:each="item : ${profile.experienceBasis}" th:text="|Based on: ${item}|">Based on: Job at Employer (start – end)</p>
+    <p class="helper" th:each="item : ${profile.experienceExcluded}" th:text="|Not counted: ${item}|">Not counted: Job at Employer (start – end)</p>
+    <p class="helper" th:if="${!profile.experienceExcluded.isEmpty()}">If any of these should count, change your years of experience.</p>
     <p class="helper" th:unless="${profile.yearsExperience.present}">Could not be determined reliably.</p>
 
     <div class="notice" th:if="${!profile.warnings.isEmpty()}">

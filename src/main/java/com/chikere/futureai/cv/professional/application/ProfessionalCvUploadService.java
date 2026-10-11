@@ -80,7 +80,7 @@ public final class ProfessionalCvUploadService implements ProfessionalCvAnalysis
         LOGGER.info("Professional profile extraction succeeded fileType={} outcome=SUCCESS latencyMs={}",
                 document.type(), elapsedMilliseconds(started));
         var metadata = ProfessionalAssessmentInputMetadata.cvUpload(document.originalFilename(),
-                document.type().mediaType(), parsed.parserVersion(), Instant.now(clock));
+                document.type().mediaType(), parsed.parserVersion(), extractor.version(), Instant.now(clock));
         return new ProfessionalCvProfileResult(profile, metadata);
     }
 

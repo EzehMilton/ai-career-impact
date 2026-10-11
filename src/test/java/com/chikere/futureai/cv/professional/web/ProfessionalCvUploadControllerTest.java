@@ -36,14 +36,14 @@ class ProfessionalCvUploadControllerTest {
     @Test
     void csrfIsRequiredAndSuccessfulUploadStartsDedicatedReviewFlow(CapturedOutput output) throws Exception {
         var file = pdf("../../software.pdf", ProfessionalCvTestDocuments.pdf("Synthetic content"));
-        var profile = new ProfessionalProfile("Software Architect",
+        var profile = new ProfessionalProfile("Software Architect", "", "", "",
                 "Designs dependable platforms and resolves complex technical trade-offs.",
                 List.of("Design platforms", "Guide technical decisions"),
                 List.of("Architecture"), List.of("Communication"), List.of(), List.of(), List.of(),
-                OptionalInt.of(12), ProfessionalProfileCompleteness.PARTIAL,
+                OptionalInt.of(12), List.of(), List.of(), ProfessionalProfileCompleteness.PARTIAL,
                 List.of("Review the selected current role."));
         var metadata = ProfessionalAssessmentInputMetadata.cvUpload("software.pdf", "application/pdf",
-                ProfessionalCvVersions.PARSER_V2, Instant.parse("2026-10-01T08:00:00Z"));
+                ProfessionalCvVersions.PARSER_V2, "professional-cv-extractor-v2", Instant.parse("2026-10-01T08:00:00Z"));
         when(uploadService.extractProfile(any())).thenReturn(new ProfessionalCvProfileResult(profile, metadata));
 
         mvc.perform(multipart("/professional-assessment/cv").file(file)).andExpect(status().isForbidden());

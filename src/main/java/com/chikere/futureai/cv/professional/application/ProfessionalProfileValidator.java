@@ -12,6 +12,8 @@ import java.util.Set;
 /** Small structural safeguards; semantic interpretation remains the extractor's responsibility. */
 @Component
 public final class ProfessionalProfileValidator {
+    public static final int MAXIMUM_EMPLOYER_LENGTH = 120;
+    public static final int MAXIMUM_ROLE_DATE_LENGTH = 40;
     private static final Set<String> RESPONSIBILITY_PREFIXES = Set.of(
             "responsible for ", "managed ", "developed ", "worked on ", "designed ", "delivered ",
             "leading ", "managing ", "developing ", "working ", "designing ", "delivering ");
@@ -60,9 +62,15 @@ public final class ProfessionalProfileValidator {
             throw new ProfessionalProfileExtractionException(
                     "The extracted profile did not contain enough reliable career information");
         }
+        // Employer and dates only tell the user which job was used: an implausible value is dropped
+        // silently and never rejects the profile.
+        String employer = bounded(candidate.currentEmployer(), MAXIMUM_EMPLOYER_LENGTH);
+        String start = bounded(candidate.currentRoleStart(), MAXIMUM_ROLE_DATE_LENGTH);
+        String end = bounded(candidate.currentRoleEnd(), MAXIMUM_ROLE_DATE_LENGTH);
         boolean complete = years.isPresent() && warnings.isEmpty();
-        return new ProfessionalProfile(role, summary, responsibilities, technical, human,
-                leadership, decisions, domain, years,
+        return new ProfessionalProfile(role, employer, start, end, summary, responsibilities, technical, human,
+                leadership, decisions, domain, years, years.isPresent() ? candidate.experienceBasis() : List.of(),
+                years.isPresent() ? candidate.experienceExcluded() : List.of(),
                 complete ? ProfessionalProfileCompleteness.COMPLETE : ProfessionalProfileCompleteness.PARTIAL,
                 List.copyOf(new LinkedHashSet<>(warnings)));
     }
@@ -91,6 +99,11 @@ public final class ProfessionalProfileValidator {
         }
         if (omitted) warnings.add(warning);
         return new ArrayList<>(values);
+    }
+
+    private String bounded(String value, int maxLength) {
+        String stripped = value == null ? "" : value.strip();
+        return stripped.length() > maxLength ? "" : stripped;
     }
 
     private String clean(String value) {

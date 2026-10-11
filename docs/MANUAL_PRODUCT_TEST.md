@@ -12,7 +12,7 @@ Sections 0 to 8 were executed against the running application on 2026-10-01 over
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=local-fixture
 ```
 
-Docker must be running: `spring-boot-docker-compose` starts the PostgreSQL service from `compose.yaml` automatically, and Flyway applies V1–V17 on first start.
+Docker must be running: `spring-boot-docker-compose` starts the PostgreSQL service from `compose.yaml` automatically, and Flyway applies V1–V18 on first start.
 
 Confirm in the startup log, once per journey (three lines in total):
 

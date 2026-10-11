@@ -46,6 +46,7 @@ class ProfessionalAssessmentEntity {
     @Column(name = "cv_original_filename", columnDefinition = "text") String cvOriginalFilename;
     @Column(name = "cv_media_type", columnDefinition = "text") String cvMediaType;
     @Column(name = "cv_parser_version") String cvParserVersion;
+    @Column(name = "cv_extractor_version") String cvExtractorVersion;
     @Column(name = "cv_parsed_at") Instant cvParsedAt;
     @Enumerated(EnumType.STRING) @Column(nullable = false) AssessmentSource source;
     @Column(name = "model_identifier", columnDefinition = "text") String modelIdentifier;

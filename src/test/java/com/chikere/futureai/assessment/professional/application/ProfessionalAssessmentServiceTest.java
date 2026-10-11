@@ -143,7 +143,7 @@ class ProfessionalAssessmentServiceTest {
         var service = new ProfessionalAssessmentService(provider, new ProfessionalDecisionPolicyV1(), store,
                 Clock.fixed(Instant.parse("2026-10-01T08:00:00Z"), ZoneOffset.UTC));
         var metadata = ProfessionalAssessmentInputMetadata.cvUpload("safe.pdf", "application/pdf",
-                "professional-cv-parser-v1", Instant.parse("2026-10-01T07:59:00Z"));
+                "professional-cv-parser-v1", "professional-cv-extractor-v2", Instant.parse("2026-10-01T07:59:00Z"));
 
         service.submitProfessionalAssessment(state, metadata);
 

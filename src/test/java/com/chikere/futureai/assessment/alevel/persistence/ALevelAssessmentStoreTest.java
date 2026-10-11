@@ -76,11 +76,11 @@ class ALevelAssessmentStoreTest {
     @Autowired Flyway flyway;
 
     @Test
-    void allSeventeenMigrationsAreAppliedAndALevelTablesAreSeparate() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("17");
+    void allEighteenMigrationsAreAppliedAndALevelTablesAreSeparate() {
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("18");
         assertThat(flyway.info().applied()).extracting(info -> info.getVersion().getVersion())
                 .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
-                        "13", "14", "15", "16", "17");
+                        "13", "14", "15", "16", "17", "18");
     }
 
     @Test

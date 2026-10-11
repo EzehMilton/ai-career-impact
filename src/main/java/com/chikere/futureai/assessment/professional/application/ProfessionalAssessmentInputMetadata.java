@@ -10,6 +10,7 @@ public record ProfessionalAssessmentInputMetadata(
         Optional<String> originalFilename,
         Optional<String> mediaType,
         Optional<String> parserVersion,
+        Optional<String> extractorVersion,
         Optional<Instant> parsedAt) implements Serializable {
 
     public ProfessionalAssessmentInputMetadata {
@@ -17,27 +18,29 @@ public record ProfessionalAssessmentInputMetadata(
         originalFilename = Objects.requireNonNull(originalFilename);
         mediaType = Objects.requireNonNull(mediaType);
         parserVersion = Objects.requireNonNull(parserVersion);
+        extractorVersion = Objects.requireNonNull(extractorVersion);
         parsedAt = Objects.requireNonNull(parsedAt);
         if (source == ProfessionalInputSource.MANUAL
                 && (originalFilename.isPresent() || mediaType.isPresent()
-                || parserVersion.isPresent() || parsedAt.isPresent())) {
+                || parserVersion.isPresent() || extractorVersion.isPresent() || parsedAt.isPresent())) {
             throw new IllegalArgumentException("manual input must not contain CV metadata");
         }
         if (source == ProfessionalInputSource.CV_UPLOAD
                 && (originalFilename.isEmpty() || mediaType.isEmpty()
-                || parserVersion.isEmpty() || parsedAt.isEmpty())) {
+                || parserVersion.isEmpty() || extractorVersion.isEmpty() || parsedAt.isEmpty())) {
             throw new IllegalArgumentException("CV upload metadata must be complete");
         }
     }
 
     public static ProfessionalAssessmentInputMetadata manual() {
         return new ProfessionalAssessmentInputMetadata(ProfessionalInputSource.MANUAL,
-                Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
+                Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
     }
 
-    public static ProfessionalAssessmentInputMetadata cvUpload(
-            String filename, String mediaType, String parserVersion, Instant parsedAt) {
+    public static ProfessionalAssessmentInputMetadata cvUpload(String filename, String mediaType,
+            String parserVersion, String extractorVersion, Instant parsedAt) {
         return new ProfessionalAssessmentInputMetadata(ProfessionalInputSource.CV_UPLOAD,
-                Optional.of(filename), Optional.of(mediaType), Optional.of(parserVersion), Optional.of(parsedAt));
+                Optional.of(filename), Optional.of(mediaType), Optional.of(parserVersion),
+                Optional.of(extractorVersion), Optional.of(parsedAt));
     }
 }
