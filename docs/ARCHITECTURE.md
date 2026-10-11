@@ -438,10 +438,17 @@ then applies only structural safeguards: title shape and length, required respon
 skills, duplicate role/responsibility text and plausible experience bounds. It does not attempt
 semantic classification.
 
-Before the CV text reaches OpenAI, the adapter neutralises any `<cv-data>`/`</cv-data>` markers inside
-it, so the document cannot close its own data block, and sends at most
-`app.professional.cv.maximum-extraction-characters` (default 30,000, at least 1,000)
-characters. When the text is cut, the profile carries a review warning. Null or blank list items in
+Before the CV text reaches OpenAI, the adapter, in this order, neutralises any `<cv-data>`/`</cv-data>`
+markers inside it, so the document cannot close its own data block; removes contact details with
+`ProfessionalCvContactMasker`; and sends at most `app.professional.cv.maximum-extraction-characters`
+(default 30,000, at least 1,000) characters. The masker replaces email addresses with `[email]`, web
+links (http/https, `www.`, and linkedin.com/github.com paths) with `[link]`, phone numbers of 10 to 20
+digits with `[phone]`, and full UK postcodes in capitals with `[postcode]`. It never masks a digit run
+that the experience calculator would read as a date or date range, and it does not try to remove names
+or street addresses, so those may still be sent. Its patterns are length-bounded and anchored to token
+boundaries, so masking stays linear on any input the parser allows. The prompt tells the model to
+ignore the placeholders. Duty evidence and employment dates are checked against this exact masked,
+truncated text, and neither the raw nor the masked text is logged or persisted. When the text is cut, the profile carries a review warning. Null or blank list items in
 the structured response are dropped rather than failing extraction.
 
 The model returns current-role `dayToDayDuties`, each with word-for-word `evidence`, and lists

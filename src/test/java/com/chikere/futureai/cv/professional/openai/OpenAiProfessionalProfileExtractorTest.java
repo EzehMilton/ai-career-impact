@@ -113,6 +113,8 @@ class OpenAiProfessionalProfileExtractorTest {
                 + "listed technologies and its bullet points. Do not include achievements, metrics or career "
                 + "history, and do not copy the CV's personal profile or summary section.",
                 "Keep each uncertain field null or empty.",
+                "Placeholders such as [email], [phone], [link] and [postcode] replace removed contact details; "
+                + "ignore them.",
                 "employmentHistory lists every dated employment entry in the CV, including the current one. Copy "
                 + "start and end dates exactly as written. Set relevantToCurrentRole to true only when the entry "
                 + "is the same or a closely related profession to the current role. The current entry is always "
@@ -535,6 +537,62 @@ class OpenAiProfessionalProfileExtractorTest {
 
         assertThat(profile.yearsExperience()).isEmpty();
         assertThat(profile.warnings()).containsOnlyOnce(MISSING_YEARS_WARNING);
+    }
+
+    private static final String BRIAN_HEADER = """
+            Brian Cutts
+            LinkedIn | +44 7542 993 142 | cuttsbrians@gmail.com
+            linkedin.com/in/brian-cutts | Bath BA1 2HN
+            """;
+
+    @Test
+    void contactDetailsAreRemovedFromTheTextSentToOpenAi() {
+        var mocks = mockClient(minimalResponse());
+
+        new OpenAiProfessionalProfileExtractor(mocks.client(), OCTOBER_2026).extract(BRIAN_HEADER + CURRENT_ROLE_CV);
+
+        String user = capturedUser(mocks);
+        assertThat(user).contains("LinkedIn | [phone] | [email]", "[link] | Bath [postcode]", "Brian Cutts")
+                .doesNotContain("@", "7542", "993", "gmail", "linkedin.com", "BA1 2HN");
+        assertThat(user).contains("03/2021 – Present", "Review pull requests for the “payments” team every day");
+    }
+
+    @Test
+    void evidenceAndDatesStillVerifyAgainstTheMaskedText() {
+        var mocks = mockClient(response(List.of(
+                new Duty("Review pull requests", "Review pull requests for the “payments” team every day"),
+                new Duty("Call the team", "+44 7542 993 142"))));
+
+        var profile = new OpenAiProfessionalProfileExtractor(mocks.client(), OCTOBER_2026)
+                .extract(BRIAN_HEADER + CURRENT_ROLE_CV);
+
+        assertThat(profile.responsibilities()).containsExactly("Review pull requests");
+        assertThat(profile.warnings()).containsOnlyOnce(OpenAiProfessionalProfileExtractor.UNMATCHED_DUTY_WARNING);
+        assertThat(profile.yearsExperience()).hasValue(6);
+        assertThat(profile.experienceBasis()).containsExactly("Software Engineer at Company A (03/2021 – Present)");
+    }
+
+    @Test
+    void brianRealLayoutStillGivesFourYearsAfterMasking() {
+        String cv = BRIAN_HEADER + """
+                Software Engineer, Push Gaming, 08/2025 – Present
+                Software Developer, Sopra Banking Software, 04/2023 – 08/2025
+                Security Design Engineer, Buro Happold, 06/2021 – 04/2023
+                EOD Technician, US Navy, 03/2009 – 02/2016
+                """;
+        var mocks = mockClient(new OpenAiProfessionalProfileResponse("Software Engineer", "Push Gaming", "08/2025",
+                "Present", "Builds and maintains online casino game platforms for operator brands.", List.of(),
+                List.of(), List.of("Java"), List.of("Communication"), List.of(), List.of(), List.of(),
+                List.of(new Employment("Software Engineer", "Push Gaming", "08/2025", "Present", true),
+                        new Employment("Software Developer", "Sopra Banking Software", "04/2023", "08/2025", true),
+                        new Employment("Security Design Engineer", "Buro Happold", "06/2021", "04/2023", false),
+                        new Employment("EOD Technician", "US Navy", "03/2009", "02/2016", false)),
+                List.of()));
+
+        var profile = new OpenAiProfessionalProfileExtractor(mocks.client(), OCTOBER_2026).extract(cv);
+
+        assertThat(profile.yearsExperience()).hasValue(4);
+        assertThat(capturedUser(mocks)).contains("03/2009 – 02/2016").doesNotContain("cuttsbrians");
     }
 
     private record Mocks(ChatClient client, ChatClient.ChatClientRequestSpec request) {}

@@ -106,6 +106,16 @@ class HomeControllerTest {
     }
 
     @Test
+    void thePrivacyPageSaysContactDetailsAreRemovedBeforeCvTextIsSent() throws Exception {
+        String html = mvc.perform(get("/privacy")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString().replaceAll("\\s+", " ");
+
+        assertThat(html).contains("Before your CV text is sent to our AI provider, we remove email addresses, "
+                + "phone numbers, web links and postcodes. Other details in your CV, including your name, may "
+                + "still be sent.");
+    }
+
+    @Test
     void everyShellPageCarriesConsistentHeaderAndFooterNavigation() throws Exception {
         for (String path : new String[] {"/", "/methodology", "/privacy"}) {
             String html = mvc.perform(get(path)).andExpect(status().isOk())

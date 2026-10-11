@@ -27,6 +27,7 @@ public final class ProfessionalExperienceCalculator {
     private static final Pattern NAMED = Pattern.compile("(?i)([a-z]+)\\.?\\s+(\\d{4})");
     private static final Pattern YEAR = Pattern.compile("\\d{4}");
     private static final Pattern ONGOING = Pattern.compile("(?i)present|current|now|to\\s+date|ongoing");
+    private static final Pattern RANGE_SEPARATOR = Pattern.compile("(?i)\\s*(?:-|–|—|\\bto\\b)\\s*");
     private static final Map<String, Integer> MONTHS = months();
 
     private final Clock clock;
@@ -71,6 +72,29 @@ public final class ProfessionalExperienceCalculator {
         if (years > MAXIMUM_YEARS) return ProfessionalExperience.unknown();
         return new ProfessionalExperience(OptionalInt.of(years),
                 basis.stream().limit(ProfessionalProfile.MAXIMUM_EXPERIENCE_BASIS).toList());
+    }
+
+    /**
+     * Whether text is one date this calculator accepts, a Present-style end word, or a range of two
+     * such dates. Used to keep contact masking away from employment dates.
+     */
+    static boolean isDateOrDateRange(String text) {
+        String value = text == null ? "" : text.strip();
+        if (isDate(value)) return true;
+        // Try every separator, since a numeric date such as 03-2009 contains one itself.
+        Matcher separator = RANGE_SEPARATOR.matcher(value);
+        while (separator.find()) {
+            if (isDate(value.substring(0, separator.start()).strip())
+                    && isDate(value.substring(separator.end()).strip())) return true;
+        }
+        return false;
+    }
+
+    private static boolean isDate(String value) {
+        Matcher named = NAMED.matcher(value);
+        return NUMERIC.matcher(value).matches() || YEAR.matcher(value).matches()
+                || ONGOING.matcher(value.replaceAll("\\s+", " ")).matches()
+                || (named.matches() && MONTHS.containsKey(named.group(1).toLowerCase(Locale.ROOT)));
     }
 
     /** The current job always counts, whatever the model says about its relevance. */
