@@ -18,6 +18,9 @@ public final class ApplicationProfiles {
     /** Real external evidence providers. */
     public static final String LIVE_EVIDENCE = "live-evidence";
 
+    /** Development only: writes each professional Jev request and answer to local JSON files. */
+    public static final String JEV_CAPTURE = "jev-capture";
+
     private ApplicationProfiles() {
     }
 }

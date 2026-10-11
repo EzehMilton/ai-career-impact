@@ -69,6 +69,21 @@ class StartupConfigurationValidatorTest {
     }
 
     @Test
+    void jevCaptureCannotRunAlongsideProduction() {
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment("prod", "jev-capture")))
+                .isInstanceOf(ConfigurationProblemException.class)
+                .hasMessageContaining("'prod' and 'jev-capture' are contradictory");
+    }
+
+    @Test
+    void jevCaptureIsAllowedInDevelopment() {
+        assertThatCode(() -> StartupConfigurationValidator.validate(environment("jev-capture")))
+                .doesNotThrowAnyException();
+        assertThatCode(() -> StartupConfigurationValidator.validate(environment("local-fixture", "jev-capture")))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
     void askingForLivePaymentWhileFixturesOverrideItIsRefused() {
         // Silently simulating a payment for someone who asked for a real one is the worst available
         // outcome, so this is a startup failure rather than a warning.

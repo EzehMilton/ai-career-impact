@@ -39,6 +39,43 @@ Use the full lifecycle for deliberate broader validation. With a case selector i
 
 The full dataset currently makes 16 System One requests. The normal suite may start PostgreSQL/Testcontainers.
 
+### Capturing what the running application sends to Jev
+
+The harness above uses fictional cases. To see what a real assessment in the running application
+sent to Jev and what came back, for example after a CV upload, start the application with the
+development-only `jev-capture` profile added to the profiles you already use:
+
+```shell
+SPRING_PROFILES_ACTIVE=jev-capture TYPESAFE_API_KEY=<key> OPENAI_API_KEY=<key> ./mvnw spring-boot:run
+```
+
+`jev-capture` wraps whichever professional judgment provider is active. After each successful
+judgment it writes one pretty-printed JSON file to `target/jev-capture/`, named
+`{yyyyMMdd'T'HHmmss.SSS'Z'}-{8 hex characters}.json`. Set
+`app.professional.jev-capture.directory` to write elsewhere; `./mvnw clean` deletes the default
+directory. Each file contains:
+
+- `source`, first: `JEV` for real Jev answers or `LOCAL_FIXTURE` for fixture answers;
+- `capturedAt`, `schemaVersion` and `modelIdentifier` (the configured model alias, or `null`);
+- `state`: exactly the map `ProfessionalJevStateMapper` produces, which is the state Jev is given;
+- `questions`: for each question id, its `type`, `instructions` and either the five score `levels`
+  (lowest first) or, for the `information_sufficient` Noul, its `whenTrue` and `whenFalse` wording,
+  all taken from `ProfessionalJudgmentSchema`;
+- `answers`: for each dimension, `value`, `nearestLabel`, `confidence` and `probabilities`.
+
+The files are what the application gave the TypeSafe client and what it kept from the answer, not
+the raw HTTP exchange. The client also adds the configured model name (`spring.ai.typesafe.model`)
+to the request body, and the bearer key and JSON content headers to the request.
+
+Capture never changes a result. A failed judgment writes nothing; a failed write is ignored apart
+from one WARN log line naming only the exception type, never the path or content. With `local-fixture` the fixture provider is
+wrapped, so the files show the state and questions Jev would have been given alongside the fixture's
+answers.
+
+The files contain the assessment input, which can include details from an uploaded CV. Treat them as
+personal data: keep them local, do not commit them (`target/` is ignored), and delete them when done.
+The startup validator refuses to run `jev-capture` together with `prod`.
+
 ## What the first live comparison showed
 
 The routine software developer and senior software architect returned substantially different judgments despite related job titles. The recorded AI Exposure indicators were 9.471 and 4.810 respectively. The architect's higher contextual complexity, original judgment, human trust and accountability help explain the difference. These observations show expected sensitivity to described responsibilities; two fictional cases do not establish scientific or predictive accuracy.
