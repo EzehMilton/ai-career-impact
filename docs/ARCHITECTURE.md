@@ -447,6 +447,13 @@ reported zero years of experience when the CV has exactly one active dated range
 month-name or year-only start, ending Present/current/now) that began at least 12 months before the
 injected clock's date.
 
+The model returns current-role `dayToDayDuties`, each with word-for-word `evidence`, and lists
+one-off `achievements` separately. Java keeps a duty only when its evidence (at least 12 characters
+after normalising case, whitespace, quote and dash style, and a leading bullet) is an exact substring
+of the text actually sent to OpenAI. Unmatched duties are dropped with one generic warning. Verified
+duty texts become `responsibilities`. Achievements never reach Jev. If no duty survives, the existing
+validator rejects the profile and the user describes their work manually.
+
 Only PDF and DOCX are accepted. Filename, declared media type, file signature, configured size,
 and actual parseability are checked. Scanned/image-only PDFs fail safely; there is no OCR fallback.
 Encrypted/unreadable files, sparse career information, unavailable extraction, malformed structured
