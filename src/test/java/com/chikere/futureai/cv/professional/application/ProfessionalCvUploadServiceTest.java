@@ -75,7 +75,7 @@ class ProfessionalCvUploadServiceTest {
                 .isInstanceOf(ProfessionalProfileExtractionException.class)
                 .hasMessage("private provider detail");
 
-        ProfessionalProfile invalid = new ProfessionalProfile("", "Too short", List.of(),
+        ProfessionalProfile invalid = new ProfessionalProfile("", "", "", "", "Too short", List.of(),
                 List.of(), List.of(), List.of(), List.of(), List.of(), OptionalInt.empty(),
                 ProfessionalProfileCompleteness.PARTIAL, List.of());
         var malformed = new ProfessionalCvUploadService(parser, Optional.of(text -> invalid),
@@ -91,7 +91,7 @@ class ProfessionalCvUploadServiceTest {
     }
 
     private ProfessionalProfile profile() {
-        return new ProfessionalProfile("Software Architect",
+        return new ProfessionalProfile("Software Architect", "", "", "",
                 "Designs dependable software platforms and resolves complex technical trade-offs.",
                 List.of("Design platforms"), List.of("Java"), List.of("Communication"),
                 List.of(), List.of(), List.of(), OptionalInt.empty(),

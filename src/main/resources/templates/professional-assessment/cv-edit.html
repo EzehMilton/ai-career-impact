@@ -20,13 +20,30 @@
         <p class="field-error" th:if="${#fields.hasErrors('currentRole')}" th:errors="*{currentRole}"></p>
       </div>
       <div class="field">
+        <label for="currentEmployer">Employer <span class="optional">Optional</span></label>
+        <input id="currentEmployer" th:field="*{currentEmployer}" maxlength="120">
+        <p class="field-error" th:if="${#fields.hasErrors('currentEmployer')}" th:errors="*{currentEmployer}"></p>
+      </div>
+      <div class="field field-short">
+        <label for="currentRoleStart">Started <span class="optional">Optional</span></label>
+        <input id="currentRoleStart" th:field="*{currentRoleStart}" maxlength="40">
+        <p class="field-error" th:if="${#fields.hasErrors('currentRoleStart')}" th:errors="*{currentRoleStart}"></p>
+      </div>
+      <div class="field field-short">
+        <label for="currentRoleEnd">Ended (or Present) <span class="optional">Optional</span></label>
+        <input id="currentRoleEnd" th:field="*{currentRoleEnd}" maxlength="40">
+        <p class="field-error" th:if="${#fields.hasErrors('currentRoleEnd')}" th:errors="*{currentRoleEnd}"></p>
+      </div>
+      <div class="field">
         <label for="roleSummary">Role summary <span class="required">Required</span></label>
         <textarea id="roleSummary" th:field="*{roleSummary}" rows="5" minlength="40" maxlength="4000"></textarea>
         <p class="field-error" th:if="${#fields.hasErrors('roleSummary')}" th:errors="*{roleSummary}"></p>
       </div>
       <div class="field">
         <label for="responsibilities">Main responsibilities <span class="required">Required</span></label>
-        <textarea id="responsibilities" th:field="*{responsibilities}" rows="6" maxlength="4000"></textarea>
+        <p id="responsibilities-help" class="helper">CVs usually list achievements rather than everyday tasks. Add the main things you do in a typical week, even if your CV doesn't mention them, and remove one-offs or tasks from earlier jobs.</p>
+        <textarea id="responsibilities" th:field="*{responsibilities}" rows="6" maxlength="4000"
+                  aria-describedby="responsibilities-help"></textarea>
         <p class="field-error" th:if="${#fields.hasErrors('responsibilities')}" th:errors="*{responsibilities}"></p>
       </div>
       <div class="field">

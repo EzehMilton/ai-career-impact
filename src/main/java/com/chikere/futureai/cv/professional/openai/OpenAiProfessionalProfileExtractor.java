@@ -172,15 +172,17 @@ public final class OpenAiProfessionalProfileExtractor implements ProfessionalPro
         if (years.isEmpty() && !warnings.contains(ZERO_YEARS_WARNING)) warnings.add(MISSING_YEARS_WARNING);
         List<String> responsibilities = verifiedDuties(value.dayToDayDuties(), sentText, warnings);
         if (truncated) warnings.add(TRUNCATION_WARNING);
-        return new ProfessionalProfile(value.currentRole(), value.roleSummary(), responsibilities,
+        return new ProfessionalProfile(value.currentRole(), value.currentEmployer(), value.currentRoleStart(),
+                value.currentRoleEnd(), value.roleSummary(), responsibilities,
                 list(value.technicalSkills()), list(value.humanSkills()), list(value.leadershipResponsibilities()),
                 list(value.decisionMakingResponsibilities()), list(value.domainContext()), years,
                 ProfessionalProfileCompleteness.PARTIAL, warnings);
     }
 
     /**
-     * Keeps only duties whose evidence is found word for word in the text the model actually saw, and at
-     * most the first twelve of those. Achievements are never duties and are dropped here.
+     * Keeps the first twelve duties whose evidence is found word for word in the text the model actually
+     * saw. Duties after the twelfth are not checked, so they cannot cause a warning. Achievements are
+     * never duties and are dropped here.
      */
     private List<String> verifiedDuties(List<OpenAiProfessionalProfileResponse.Duty> duties, String sentText,
             List<String> warnings) {
@@ -189,6 +191,7 @@ public final class OpenAiProfessionalProfileExtractor implements ProfessionalPro
         var verified = new LinkedHashSet<String>();
         boolean rejected = false;
         for (var duty : duties) {
+            if (verified.size() == MAXIMUM_DUTIES) break;
             String evidence = duty == null || duty.evidence() == null ? "" : stripBullet(normalise(duty.evidence()));
             if (duty == null || duty.duty() == null || duty.duty().isBlank()
                     || evidence.length() < MINIMUM_EVIDENCE_CHARACTERS || !text.contains(evidence)) {
@@ -198,7 +201,7 @@ public final class OpenAiProfessionalProfileExtractor implements ProfessionalPro
             verified.add(duty.duty().strip());
         }
         if (rejected) warnings.add(UNMATCHED_DUTY_WARNING);
-        return verified.stream().limit(MAXIMUM_DUTIES).toList();
+        return List.copyOf(verified);
     }
 
     private static String normalise(String value) {

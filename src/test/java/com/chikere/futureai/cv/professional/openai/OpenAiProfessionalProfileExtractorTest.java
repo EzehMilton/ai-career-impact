@@ -438,6 +438,35 @@ class OpenAiProfessionalProfileExtractorTest {
     }
 
     @Test
+    void dutiesAfterTheTwelfthVerifiedDutyAreNotCheckedSoCannotCauseAWarning() {
+        var duties = new ArrayList<Duty>();
+        var cv = new StringBuilder("Software Engineer, Company A, 03/2021 - Present\n");
+        for (int i = 1; i <= 12; i++) {
+            duties.add(new Duty("Duty " + i, "Performs recurring task number " + i + " each week"));
+            cv.append("- Performs recurring task number ").append(i).append(" each week\n");
+        }
+        duties.add(new Duty("Duty 13", "This evidence is not anywhere in the CV"));
+        duties.add(new Duty("Duty 14", "Java"));
+        var mocks = mockClient(response(duties, 5));
+
+        var profile = new OpenAiProfessionalProfileExtractor(mocks.client(), OCTOBER_2026).extract(cv.toString());
+
+        assertThat(profile.responsibilities()).hasSize(12).startsWith("Duty 1").endsWith("Duty 12");
+        assertThat(profile.warnings()).doesNotContain(OpenAiProfessionalProfileExtractor.UNMATCHED_DUTY_WARNING);
+    }
+
+    @Test
+    void currentRoleEntryIsCarriedIntoTheProfile() {
+        var mocks = mockClient(minimalResponse(5));
+
+        var profile = new OpenAiProfessionalProfileExtractor(mocks.client(), OCTOBER_2026).extract(CURRENT_ROLE_CV);
+
+        assertThat(profile.currentEmployer()).isEqualTo("Company A");
+        assertThat(profile.currentRoleStart()).isEqualTo("03/2021");
+        assertThat(profile.currentRoleEnd()).isEqualTo("Present");
+    }
+
+    @Test
     void whenEveryDutyIsRejectedTheExistingValidatorRejectsTheProfile() {
         var mocks = mockClient(response(List.of(
                 new Duty("Answer tickets", "Answers support tickets daily"),

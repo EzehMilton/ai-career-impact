@@ -36,7 +36,7 @@ class ProfessionalCvUploadControllerTest {
     @Test
     void csrfIsRequiredAndSuccessfulUploadStartsDedicatedReviewFlow(CapturedOutput output) throws Exception {
         var file = pdf("../../software.pdf", ProfessionalCvTestDocuments.pdf("Synthetic content"));
-        var profile = new ProfessionalProfile("Software Architect",
+        var profile = new ProfessionalProfile("Software Architect", "", "", "",
                 "Designs dependable platforms and resolves complex technical trade-offs.",
                 List.of("Design platforms", "Guide technical decisions"),
                 List.of("Architecture"), List.of("Communication"), List.of(), List.of(), List.of(),

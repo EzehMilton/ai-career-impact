@@ -1,6 +1,7 @@
 package com.chikere.futureai.cv.professional.web;
 
 import com.chikere.futureai.assessment.web.BoundedTextList;
+import com.chikere.futureai.cv.professional.application.ProfessionalProfileValidator;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -11,6 +12,18 @@ public final class ProfessionalProfileEditForm {
     @NotBlank(message = "Enter your current or most recent role.")
     @Size(max = 120, message = "Keep the role under 120 characters.")
     private String currentRole = "";
+
+    @Size(max = ProfessionalProfileValidator.MAXIMUM_EMPLOYER_LENGTH,
+            message = "Keep the employer under 120 characters.")
+    private String currentEmployer = "";
+
+    @Size(max = ProfessionalProfileValidator.MAXIMUM_ROLE_DATE_LENGTH,
+            message = "Keep the start date under 40 characters.")
+    private String currentRoleStart = "";
+
+    @Size(max = ProfessionalProfileValidator.MAXIMUM_ROLE_DATE_LENGTH,
+            message = "Keep the end date under 40 characters.")
+    private String currentRoleEnd = "";
 
     @NotBlank(message = "Add a short summary of your work.")
     @Size(min = 40, max = 4000, message = "Use between 40 and 4,000 characters.")
@@ -40,6 +53,12 @@ public final class ProfessionalProfileEditForm {
 
     public String getCurrentRole() { return currentRole; }
     public void setCurrentRole(String value) { currentRole = value == null ? "" : value; }
+    public String getCurrentEmployer() { return currentEmployer; }
+    public void setCurrentEmployer(String value) { currentEmployer = value == null ? "" : value; }
+    public String getCurrentRoleStart() { return currentRoleStart; }
+    public void setCurrentRoleStart(String value) { currentRoleStart = value == null ? "" : value; }
+    public String getCurrentRoleEnd() { return currentRoleEnd; }
+    public void setCurrentRoleEnd(String value) { currentRoleEnd = value == null ? "" : value; }
     public String getRoleSummary() { return roleSummary; }
     public void setRoleSummary(String value) { roleSummary = value == null ? "" : value; }
     public String getResponsibilities() { return responsibilities; }

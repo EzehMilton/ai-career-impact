@@ -5,9 +5,17 @@ import java.util.List;
 import java.util.Objects;
 import java.util.OptionalInt;
 
-/** The small, reviewable set of professional facts understood from a CV. */
+/**
+ * The small, reviewable set of professional facts understood from a CV.
+ *
+ * <p>The employer and dates only tell the user which job was used. They are never sent to an
+ * assessment and never persisted.</p>
+ */
 public record ProfessionalProfile(
         String currentRole,
+        String currentEmployer,
+        String currentRoleStart,
+        String currentRoleEnd,
         String roleSummary,
         List<String> responsibilities,
         List<String> technicalSkills,
@@ -21,6 +29,9 @@ public record ProfessionalProfile(
 
     public ProfessionalProfile {
         currentRole = text(currentRole);
+        currentEmployer = text(currentEmployer);
+        currentRoleStart = text(currentRoleStart);
+        currentRoleEnd = text(currentRoleEnd);
         roleSummary = text(roleSummary);
         responsibilities = copy(responsibilities);
         technicalSkills = copy(technicalSkills);

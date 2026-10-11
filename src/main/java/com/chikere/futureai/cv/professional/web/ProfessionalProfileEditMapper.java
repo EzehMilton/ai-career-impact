@@ -13,6 +13,9 @@ final class ProfessionalProfileEditMapper {
     ProfessionalProfileEditForm toForm(ProfessionalProfile profile) {
         var form = new ProfessionalProfileEditForm();
         form.setCurrentRole(profile.currentRole());
+        form.setCurrentEmployer(profile.currentEmployer());
+        form.setCurrentRoleStart(profile.currentRoleStart());
+        form.setCurrentRoleEnd(profile.currentRoleEnd());
         form.setRoleSummary(profile.roleSummary());
         form.setResponsibilities(String.join("\n", profile.responsibilities()));
         form.setTechnicalSkills(String.join("\n", profile.technicalSkills()));
@@ -22,7 +25,8 @@ final class ProfessionalProfileEditMapper {
     }
 
     ProfessionalProfile update(ProfessionalProfile existing, ProfessionalProfileEditForm form) {
-        return new ProfessionalProfile(form.getCurrentRole(), form.getRoleSummary(), lines(form.getResponsibilities()),
+        return new ProfessionalProfile(form.getCurrentRole(), form.getCurrentEmployer(), form.getCurrentRoleStart(),
+                form.getCurrentRoleEnd(), form.getRoleSummary(), lines(form.getResponsibilities()),
                 lines(form.getTechnicalSkills()), lines(form.getHumanSkills()),
                 existing.leadershipResponsibilities(), existing.decisionMakingResponsibilities(),
                 existing.domainContext(), form.getYearsExperience() == null

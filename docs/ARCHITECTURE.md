@@ -454,6 +454,19 @@ of the text actually sent to OpenAI. Unmatched duties are dropped with one gener
 12 verified duty texts become `responsibilities`. Achievements never reach Jev. If no duty survives, the existing
 validator rejects the profile and the user describes their work manually.
 
+The extractor also returns the selected entry's employer and start/end dates as written in the CV.
+They exist only so the review page can say which job was used ("We used your role at {employer}
+({start} – {end}).", or the employer-only or dates-only form, or nothing when neither is known), and
+so the user can correct them on the edit page. `ProfessionalProfileValidator` strips them and silently
+clears an employer over 120 characters or a date over 40; they never reject a profile.
+`ProfessionalProfileAssessmentMapper` ignores them, so they never reach Jev or the narrative and are
+never persisted. The review and edit pages also tell the user that CVs usually list achievements,
+and ask them to add their typical weekly tasks and remove one-offs or tasks from earlier jobs.
+
+The reviewed profile lives only in the in-memory servlet session (Tomcat session persistence is off
+and there is no Spring Session store), so it is never serialised and does not survive a restart; a
+missing or unrecognised session profile redirects to the professional assessment start page.
+
 Only PDF and DOCX are accepted. Filename, declared media type, file signature, configured size,
 and actual parseability are checked. Scanned/image-only PDFs fail safely; there is no OCR fallback.
 Encrypted/unreadable files, sparse career information, unavailable extraction, malformed structured
