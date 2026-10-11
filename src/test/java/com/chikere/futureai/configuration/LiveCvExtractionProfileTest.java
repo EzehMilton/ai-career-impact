@@ -18,6 +18,7 @@ import com.chikere.futureai.payment.professional.application.ProfessionalPayment
 import com.chikere.futureai.payment.professional.fixture.LocalFixtureProfessionalPaymentGateway;
 import com.chikere.futureai.payment.professional.stripe.StripeProfessionalPaymentGateway;
 import org.junit.jupiter.api.Test;
+import org.mockito.Answers;
 import org.springaicommunity.typesafe.TypeSafeClient;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +45,8 @@ class LiveCvExtractionProfileTest {
     @Autowired ProfessionalEvidenceProvider evidenceProvider;
     @Autowired ProfessionalPaymentGateway paymentGateway;
 
-    @MockitoBean ChatClient.Builder openAiChatClientBuilder;
+    // The extractor is built at startup, so build() must already return a ChatClient mock then.
+    @MockitoBean(answers = Answers.RETURNS_MOCKS) ChatClient.Builder openAiChatClientBuilder;
 
     @Test
     void onlyCvExtractionIsLiveAndEveryDownstreamProviderRemainsFixtureBacked() {

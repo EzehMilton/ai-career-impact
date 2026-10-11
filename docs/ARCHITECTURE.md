@@ -438,6 +438,15 @@ then applies only structural safeguards: title shape and length, required respon
 skills, duplicate role/responsibility text and plausible experience bounds. It does not attempt
 semantic classification.
 
+Before the CV text reaches OpenAI, the adapter neutralises any `<cv-data>`/`</cv-data>` markers inside
+it, so the document cannot close its own data block, and sends at most
+`app.professional.cv.maximum-extraction-characters` (default 30,000, at least 1,000)
+characters. When the text is cut, the profile carries a review warning. Null or blank list items in
+the structured response are dropped rather than failing extraction. Java, not the model, rejects a
+reported zero years of experience when the CV has exactly one active dated range (numeric,
+month-name or year-only start, ending Present/current/now) that began at least 12 months before the
+injected clock's date.
+
 Only PDF and DOCX are accepted. Filename, declared media type, file signature, configured size,
 and actual parseability are checked. Scanned/image-only PDFs fail safely; there is no OCR fallback.
 Encrypted/unreadable files, sparse career information, unavailable extraction, malformed structured
