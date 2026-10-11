@@ -32,6 +32,11 @@ public final class OpenAiProfessionalProfileExtractor implements ProfessionalPro
     private static final Pattern DATA_MARKER = Pattern.compile("(?i)<\\s*/?\\s*cv-data\\s*>");
     static final String UNMATCHED_DUTY_WARNING =
             "Some duties were left out because they could not be matched to your CV.";
+    static final String ZERO_YEARS_WARNING =
+            "Years of experience was omitted because zero conflicted with the dated current role.";
+    static final String MISSING_YEARS_WARNING =
+            "We couldn't work out your years of experience from your CV. If you know it, please add it, as it "
+                    + "helps the assessment.";
     private static final int MINIMUM_EVIDENCE_CHARACTERS = 12;
     private static final int MAXIMUM_DUTIES = 12;
     public static final String SYSTEM_INSTRUCTIONS = """
@@ -51,7 +56,7 @@ public final class OpenAiProfessionalProfileExtractor implements ProfessionalPro
             If more than one entry appears current, dates conflict, or the current entry cannot be established,
             return null for currentRole, currentEmployer, currentRoleStart, currentRoleEnd and roleSummary, empty
             role-specific lists, and a concise warning. Do not resolve ambiguity by merging entries or guessing. Keep
-            each uncertain field null/empty and explain the uncertainty in warnings.
+            each uncertain field null or empty.
 
             currentEmployer, currentRoleStart and currentRoleEnd are written exactly as they appear in the CV for the
             selected entry. currentRoleEnd is "Present" when the role is ongoing. Use null for any of them that the
@@ -63,7 +68,11 @@ public final class OpenAiProfessionalProfileExtractor implements ProfessionalPro
             Every duty must include evidence: a short phrase copied word for word from the current-role entry
             that supports it. Do not paraphrase, summarise, translate or correct the evidence. If no supporting
             text exists, leave the duty out. Do not take duties from earlier roles, the profile summary or the
-            skills section. Return at most 12 duties.
+            skills section. Return at most 12 duties. Most CVs describe achievements. Only turn an achievement into
+            a duty when the text shows the task is ongoing in the current role (for example 'led deployments of 150
+            brands'). Do not turn a single event (for example 'onboarded a new team member', 'selected a
+            documentation tool') into a duty. Leave out social or welfare activities that are not part of the job
+            itself.
 
             Technical and human skills may come from an explicit CV skills/profile section or be clearly demonstrated
             by the current role. Do not import obsolete or unrelated skills solely because they appear in an old job.
@@ -72,14 +81,24 @@ public final class OpenAiProfessionalProfileExtractor implements ProfessionalPro
             yearsExperience means approximate years of relevant experience represented by the CV across clearly
             dated relevant employment, not years in the current role. Count overlapping periods once. Use the supplied
             current date for an end date stated as Present/current. Return a non-negative approximate whole number only
-            when relevance and dates support it; otherwise return null and add a warning. Never use zero as a
+            when relevance and dates support it; otherwise return null. Never use zero as a
             placeholder for uncertainty. Zero is valid only when the CV clearly establishes no completed relevant
             experience. A current role that began more than a year before the supplied current date is not zero.
+
+            roleSummary is one or two sentences, at least 40 characters, describing what the person does in the
+            current role in an ordinary working week. Base it on the current entry only: its title, any listed
+            technologies and its bullet points. Do not include achievements, metrics or career history, and do
+            not copy the CV's personal profile or summary section. Write it in the third person without 'I' or
+            the person's name (for example 'Designs and maintains…').
 
             Keep the role summary concise. Separate duties from skills and achievements. Separate named technical
             skills from human skills and leadership strengths. Put leadership and decision-making duties in their
             dedicated lists. Do not repeat the same task in more than one list. Keep every list item concise and
-            supported. Add warnings for ambiguity and material missing information.
+            supported.
+
+            Add a warning only for a specific, real problem in this CV: two or more entries that appear current,
+            conflicting or missing dates for the current entry, or no identifiable current entry. Do not add
+            general, speculative or precautionary warnings. If nothing is wrong, return an empty warnings list.
 
             This is information extraction only. Do not calculate AI exposure or any assessment measure. Do not
             predict job loss, make labour-market claims, score the person, replace Jev, or apply decision policy.
@@ -149,6 +168,8 @@ public final class OpenAiProfessionalProfileExtractor implements ProfessionalPro
             String sentText, boolean truncated) {
         var warnings = new ArrayList<>(list(value.warnings()));
         OptionalInt years = yearsExperience(value, cvText, warnings);
+        // The zero-years correction already explains its own omission.
+        if (years.isEmpty() && !warnings.contains(ZERO_YEARS_WARNING)) warnings.add(MISSING_YEARS_WARNING);
         List<String> responsibilities = verifiedDuties(value.dayToDayDuties(), sentText, warnings);
         if (truncated) warnings.add(TRUNCATION_WARNING);
         return new ProfessionalProfile(value.currentRole(), value.roleSummary(), responsibilities,
@@ -205,7 +226,7 @@ public final class OpenAiProfessionalProfileExtractor implements ProfessionalPro
         long elapsedMonths = ChronoUnit.MONTHS.between(employmentStart, now);
         if (elapsedMonths < 12 || matcher.find()) return OptionalInt.of(0);
 
-        warnings.add("Years of experience was omitted because zero conflicted with the dated current role.");
+        warnings.add(ZERO_YEARS_WARNING);
         return OptionalInt.empty();
     }
 

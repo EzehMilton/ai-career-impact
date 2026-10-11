@@ -94,7 +94,25 @@ class OpenAiProfessionalProfileExtractorTest {
                 "Separate duties from skills and achievements", "Do not calculate AI exposure", "replace Jev");
         assertThat(system.getValue().replaceAll("\\s+", " ")).contains("Every duty must include evidence: a short "
                 + "phrase copied word for word from the current-role entry that supports it. Do not paraphrase, "
-                + "summarise, translate or correct the evidence. If no supporting text exists, leave the duty out.");
+                + "summarise, translate or correct the evidence. If no supporting text exists, leave the duty out.",
+                "Most CVs describe achievements. Only turn an achievement into a duty when the text shows the task "
+                + "is ongoing in the current role (for example 'led deployments of 150 brands'). Do not turn a "
+                + "single event (for example 'onboarded a new team member', 'selected a documentation tool') into "
+                + "a duty. Leave out social or welfare activities that are not part of the job itself.",
+                "Add a warning only for a specific, real problem in this CV: two or more entries that appear "
+                + "current, conflicting or missing dates for the current entry, or no identifiable current entry. "
+                + "Do not add general, speculative or precautionary warnings. If nothing is wrong, return an "
+                + "empty warnings list.",
+                "roleSummary is one or two sentences, at least 40 characters, describing what the person does in "
+                + "the current role in an ordinary working week. Base it on the current entry only: its title, any "
+                + "listed technologies and its bullet points. Do not include achievements, metrics or career "
+                + "history, and do not copy the CV's personal profile or summary section.",
+                "Keep each uncertain field null or empty.", "otherwise return null. Never use zero",
+                "Write it in the third person without 'I' or the person's name (for example 'Designs and "
+                + "maintains…').");
+        assertThat(system.getValue().replaceAll("\\s+", " ")).doesNotContain(
+                "Add warnings for ambiguity and material missing information",
+                "explain the uncertainty in warnings", "return null and add a warning");
         ArgumentCaptor<String> user = ArgumentCaptor.forClass(String.class);
         verify(request).user(user.capture());
         assertThat(user.getValue()).contains("2026-10-01", "current responsibility A",
@@ -148,8 +166,8 @@ class OpenAiProfessionalProfileExtractorTest {
     }
 
     private static final Clock OCTOBER_2026 = Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC);
-    private static final String ZERO_YEARS_WARNING =
-            "Years of experience was omitted because zero conflicted with the dated current role.";
+    private static final String ZERO_YEARS_WARNING = OpenAiProfessionalProfileExtractor.ZERO_YEARS_WARNING;
+    private static final String MISSING_YEARS_WARNING = OpenAiProfessionalProfileExtractor.MISSING_YEARS_WARNING;
 
     @Test
     void nullAndBlankListItemsAreDroppedInsteadOfFailingTheExtraction() {
@@ -467,6 +485,36 @@ class OpenAiProfessionalProfileExtractorTest {
         assertThat(capturedUser(mocks)).doesNotContain("03/2021");
         assertThat(profile.yearsExperience()).isEmpty();
         assertThat(profile.warnings()).contains(ZERO_YEARS_WARNING);
+    }
+
+    @Test
+    void missingYearsAddsTheFixedWarningOnce() {
+        var mocks = mockClient(minimalResponse(null));
+
+        var profile = new OpenAiProfessionalProfileExtractor(mocks.client(), OCTOBER_2026).extract(CURRENT_ROLE_CV);
+
+        assertThat(profile.yearsExperience()).isEmpty();
+        assertThat(profile.warnings()).containsOnlyOnce("We couldn't work out your years of experience from your "
+                + "CV. If you know it, please add it, as it helps the assessment.");
+    }
+
+    @Test
+    void presentYearsAddsNoYearsWarning() {
+        var mocks = mockClient(minimalResponse(7));
+
+        var profile = new OpenAiProfessionalProfileExtractor(mocks.client(), OCTOBER_2026).extract(CURRENT_ROLE_CV);
+
+        assertThat(profile.warnings()).doesNotContain(MISSING_YEARS_WARNING, ZERO_YEARS_WARNING);
+    }
+
+    @Test
+    void zeroYearsCorrectionDoesNotAlsoAddTheMissingYearsWarning() {
+        var mocks = mockClient(minimalResponse(0));
+
+        var profile = new OpenAiProfessionalProfileExtractor(mocks.client(), OCTOBER_2026).extract(CURRENT_ROLE_CV);
+
+        assertThat(profile.yearsExperience()).isEmpty();
+        assertThat(profile.warnings()).containsOnlyOnce(ZERO_YEARS_WARNING).doesNotContain(MISSING_YEARS_WARNING);
     }
 
     private record Mocks(ChatClient client, ChatClient.ChatClientRequestSpec request) {}
