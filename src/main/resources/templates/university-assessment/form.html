@@ -1,96 +1,110 @@
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Assess your course')}"></head>
+<head th:replace="~{fragments/layout :: head('Assess your university course')}"></head>
 <body>
 <a class="skip-link" href="#main">Skip to main content</a>
 <div th:replace="~{fragments/layout :: devBanner}"></div>
 <header th:replace="~{fragments/layout :: siteHeader('university')}"></header>
 
-<main class="page-shell" id="main">
+<main class="page-shell university-assessment-page" id="main">
   <div class="page-header">
     <p class="eyebrow">University course assessment</p>
-    <h1>How well does this course position you for an AI-shaped labour market?</h1>
-    <p class="intro">This looks at the skills a course develops, not at whether AI will take a particular job. There are no right or wrong answers, and nothing here decides anything for you. The more you can say about what the course actually covers, the more useful the result.</p>
+    <h1>How could AI affect the value of your university course?</h1>
+    <p class="intro">Explore the skills your course could help you develop and how they may remain useful as AI changes the world of work. Tell us what the course covers so we can assess its content, not just its title.</p>
   </div>
 
-  <section class="alert alert-info" aria-labelledby="who-heading">
-    <h2 id="who-heading">Who this is for, and what you'll need</h2>
-    <p>
-      This is for anyone choosing a degree, holding an offer, or already studying one. You will need
-      a few minutes and the course details &mdash; a prospectus page or course listing is ideal.
-    </p>
-    <p>
-      <strong>This assesses the course, not you.</strong> It says nothing about your intelligence,
-      your ability or your worth, and it is not a measure of how employable you are. It describes
-      what the course appears to teach and how widely those capabilities tend to apply.
-    </p>
+  <section class="alert alert-info assessment-intro" aria-labelledby="before-heading">
+    <h2 id="before-heading">Before you begin</h2>
+    <p>This assessment is for anyone considering a degree, holding an offer or already studying. Have your course description or university prospectus handy. You can use it to complete the form below.</p>
+    <p>We assess <strong>what the course teaches</strong>, not your personal ability or future employability. You'll receive a free assessment, with an optional detailed report afterwards.</p>
   </section>
 
   <section class="panel work-form" aria-labelledby="form-heading">
-    <h2 id="form-heading">Tell us about the course</h2>
-    <p class="helper">You do not need any experience of employment. Course pages and prospectuses are a good place to copy details from.</p>
+    <h2 id="form-heading">Tell us about your course</h2>
+    <p class="helper">You don't need work experience. Use the course page or prospectus to describe the subjects, modules and skills the course covers. If you're unsure about a detail, check the official course listing rather than guessing.</p>
 
     <form th:action="@{/university-assessment}" th:object="${form}" method="post" novalidate>
       <div class="field">
         <label for="courseTitle">Course or degree title <span class="required">Required</span></label>
+        <p id="courseTitle-help" class="helper">Use the official course title where possible.</p>
         <input id="courseTitle" type="text" th:field="*{courseTitle}" maxlength="160"
-               aria-describedby="courseTitle-error" th:attr="aria-invalid=${#fields.hasErrors('courseTitle')}">
+               placeholder="For example: BSc Computer Science"
+               aria-describedby="courseTitle-help courseTitle-error" th:attr="aria-invalid=${#fields.hasErrors('courseTitle')}">
         <p id="courseTitle-error" class="field-error" th:if="${#fields.hasErrors('courseTitle')}" th:errors="*{courseTitle}"></p>
       </div>
 
       <div class="field">
         <label for="courseDescription">What does the course cover? <span class="required">Required</span></label>
-        <p id="courseDescription-help" class="helper">For example: the main subjects, how much is coursework or exams, whether there are labs, studio work, a placement or a final-year project.</p>
-        <textarea id="courseDescription" th:field="*{courseDescription}" rows="6" minlength="40" maxlength="4000"
+        <p id="courseDescription-help" class="helper">Describe what students learn and how they learn it. Include any practical projects, placements, laboratory work or other important activities.</p>
+        <textarea id="courseDescription" th:field="*{courseDescription}" rows="4" minlength="40" maxlength="4000"
+                  placeholder="For example: Students study programming, data analysis and software design. The course includes practical projects, group work and a final-year research project."
                   aria-describedby="courseDescription-help courseDescription-error" th:attr="aria-invalid=${#fields.hasErrors('courseDescription')}"></textarea>
         <p id="courseDescription-error" class="field-error" th:if="${#fields.hasErrors('courseDescription')}" th:errors="*{courseDescription}"></p>
       </div>
 
       <div class="field">
         <label for="keyModules">Key modules or topics <span class="required">Required</span></label>
-        <p id="keyModules-help" class="helper">Put one module on each line.</p>
-        <textarea id="keyModules" th:field="*{keyModules}" rows="5" maxlength="4000"
+        <p id="keyModules-help" class="helper">List the main modules or subjects, one per line. You can copy their names from the course page.</p>
+        <textarea id="keyModules" th:field="*{keyModules}" rows="4" maxlength="4000"
+                  placeholder="For example:
+Software Engineering
+Databases
+Artificial Intelligence
+Statistics"
                   aria-describedby="keyModules-help keyModules-error" th:attr="aria-invalid=${#fields.hasErrors('keyModules')}"></textarea>
         <p id="keyModules-error" class="field-error" th:if="${#fields.hasErrors('keyModules')}" th:errors="*{keyModules}"></p>
       </div>
 
       <div class="field">
-        <label for="skillsDeveloped">Skills you expect to develop <span class="required">Required</span></label>
-        <p id="skillsDeveloped-help" class="helper">Put one skill on each line.</p>
-        <textarea id="skillsDeveloped" th:field="*{skillsDeveloped}" rows="4" maxlength="2000"
+        <label for="skillsDeveloped">Skills the course develops <span class="required">Required</span></label>
+        <p id="skillsDeveloped-help" class="helper">Include practical and transferable skills, one per line. Look for learning outcomes on the course page if you need ideas.</p>
+        <textarea id="skillsDeveloped" th:field="*{skillsDeveloped}" rows="3" maxlength="2000"
+                  placeholder="For example:
+Critical thinking
+Research
+Teamwork
+Data analysis"
                   aria-describedby="skillsDeveloped-help skillsDeveloped-error" th:attr="aria-invalid=${#fields.hasErrors('skillsDeveloped')}"></textarea>
         <p id="skillsDeveloped-error" class="field-error" th:if="${#fields.hasErrors('skillsDeveloped')}" th:errors="*{skillsDeveloped}"></p>
       </div>
 
       <div class="field">
-        <label for="preferredCareerAreas">Career areas you are considering <span class="optional">Optional</span></label>
-        <p id="preferredCareerAreas-help" class="helper">Put one area on each line. This is used only for context; it will not be turned into a recommendation.</p>
+        <label for="preferredCareerAreas">Career areas you're considering <span class="optional">Optional</span></label>
+        <p id="preferredCareerAreas-help" class="helper">If you have career interests, list them one per line. They provide context for your assessment; this field does not generate a career recommendation.</p>
         <textarea id="preferredCareerAreas" th:field="*{preferredCareerAreas}" rows="3" maxlength="2000"
+                  placeholder="For example:
+Software development
+Cybersecurity
+Technology consulting"
                   aria-describedby="preferredCareerAreas-help preferredCareerAreas-error" th:attr="aria-invalid=${#fields.hasErrors('preferredCareerAreas')}"></textarea>
         <p id="preferredCareerAreas-error" class="field-error" th:if="${#fields.hasErrors('preferredCareerAreas')}" th:errors="*{preferredCareerAreas}"></p>
       </div>
 
       <div class="field">
         <label for="institution">University or college <span class="optional">Optional</span></label>
-        <p class="helper">This is recorded with your answers. The assessment does not rank institutions or use league tables.</p>
+        <p id="institution-help" class="helper">For reference only. We don't rank universities or use league tables in this assessment.</p>
         <input id="institution" type="text" th:field="*{institution}" maxlength="160"
-               aria-describedby="institution-error" th:attr="aria-invalid=${#fields.hasErrors('institution')}">
+               placeholder="For example: University of Manchester"
+               aria-describedby="institution-help institution-error" th:attr="aria-invalid=${#fields.hasErrors('institution')}">
         <p id="institution-error" class="field-error" th:if="${#fields.hasErrors('institution')}" th:errors="*{institution}"></p>
       </div>
 
       <div class="field field-short">
         <label for="country">Country <span class="optional">Optional</span></label>
         <input id="country" type="text" th:field="*{country}" maxlength="80"
+               placeholder="For example: United Kingdom"
                aria-describedby="country-error" th:attr="aria-invalid=${#fields.hasErrors('country')}">
         <p id="country-error" class="field-error" th:if="${#fields.hasErrors('country')}" th:errors="*{country}"></p>
       </div>
 
-      <button type="submit">Assess this course</button>
-      <p class="helper">The assessment is free. A fuller report is available afterwards if you want it.</p>
+      <div class="assessment-submit">
+        <button type="submit">Assess this course</button>
+        <p class="helper">Your assessment is free. You can choose whether to purchase a more detailed PDF report after seeing your results.</p>
+      </div>
     </form>
   </section>
 
-  <p class="page-action">
+  <p class="page-action university-back-link">
     <a class="button-link button-secondary" th:href="@{/}" href="/">Back to home</a>
   </p>
 </main>

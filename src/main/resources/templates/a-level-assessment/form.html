@@ -6,40 +6,29 @@
 <div th:replace="~{fragments/layout :: devBanner}"></div>
 <header th:replace="~{fragments/layout :: siteHeader('a-level')}"></header>
 
-<main class="page-shell" id="main">
+<main class="page-shell a-level-assessment-page" id="main">
   <div class="page-header">
-    <p class="eyebrow">A-level subject check</p>
-    <h1>Do your A-level choices keep strong options open?</h1>
-    <p class="intro">This looks at the mix of skills your subjects build together, and how many different directions they leave available. There are no good or bad subjects here, and nothing you enter decides anything. You do not need to know what you want to do yet.</p>
+    <p class="eyebrow">A-level subject assessment</p>
+    <h1>What opportunities could your A-level choices open up?</h1>
+    <p class="intro">Explore how your chosen subjects could support future university courses, careers and skills that may remain valuable as AI develops. You don't need to have your future planned out to get started.</p>
   </div>
 
-  <section class="alert alert-info" aria-labelledby="who-heading">
-    <h2 id="who-heading">Who this is for, and what you'll need</h2>
-    <p>
-      This is for sixth-form students choosing or reviewing subjects, and for parents looking at them
-      together. You only need the subjects themselves &mdash; everything else is optional.
-    </p>
-    <p>
-      <strong>No subject is universally good or bad.</strong> A combination that points firmly in one
-      direction is a perfectly sensible choice, not a mistake. Being completely undecided about
-      university or a career is also fine, and nothing here will push you towards either.
-    </p>
-    <p>
-      If a specific degree interests you, check that course's own published subject requirements.
-      Those are facts to look up, and we show them separately from the assessment rather than
-      guessing at them.
-    </p>
+  <section class="alert alert-info a-level-before" aria-labelledby="who-heading">
+    <h2 id="who-heading">Before you begin</h2>
+    <p>This assessment is for students choosing or reviewing their A-level subjects, including those exploring options with a parent or adviser.</p>
+    <p><strong>All you need is your subject list.</strong> Your interests, possible degree choices and career ideas are optional. You can leave those fields blank if you're unsure.</p>
+    <p class="helper">This assessment explores possible pathways; it doesn't judge your abilities or guarantee entry to a course. Always check a university's published entry and subject requirements before making decisions.</p>
   </section>
 
-  <section class="panel work-form" aria-labelledby="form-heading">
-    <h2 id="form-heading">Tell us about your subjects</h2>
-    <p class="helper">Most students take three or four A-levels. Only the subjects are required &mdash; everything else is optional.</p>
+  <section class="panel work-form a-level-form-panel" aria-labelledby="form-heading">
+    <h2 id="form-heading">Tell us about your A-level choices</h2>
+    <p class="helper">Start with your subjects. Add any other information you'd like us to consider, but don't worry if you haven't decided on a degree or career.</p>
 
     <form th:action="@{/a-level-assessment}" th:object="${form}" method="post" novalidate>
       <div class="field">
         <label for="selectedSubjects">Your A-level subjects <span class="required">Required</span></label>
-        <p id="selectedSubjects-help" class="helper">One per line, or separated by commas. Include subjects you are seriously considering if you have not started yet.</p>
-        <textarea id="selectedSubjects" th:field="*{selectedSubjects}" rows="4" maxlength="500"
+        <p id="selectedSubjects-help" class="helper">Enter each subject on a separate line, or separate them with commas. Include subjects you're seriously considering if you haven't started yet.</p>
+        <textarea id="selectedSubjects" th:field="*{selectedSubjects}" rows="3" maxlength="500"
                   placeholder="Mathematics&#10;Economics&#10;Geography"
                   aria-describedby="selectedSubjects-help selectedSubjects-error" th:attr="aria-invalid=${#fields.hasErrors('selectedSubjects')}"></textarea>
         <p id="selectedSubjects-error" class="field-error" th:if="${#fields.hasErrors('selectedSubjects')}" th:errors="*{selectedSubjects}"></p>
@@ -47,58 +36,66 @@
 
       <div class="field">
         <label for="predictedGrades">Predicted grades <span class="optional">Optional</span></label>
-        <p id="predictedGrades-help" class="helper">One per line as <code>Subject: Grade</code>. Leave this blank if you do not have predictions yet &mdash; grades do not affect your result.</p>
-        <textarea id="predictedGrades" th:field="*{predictedGrades}" rows="3" maxlength="500"
-                  placeholder="Mathematics: A&#10;Economics: B"
+        <p id="predictedGrades-help" class="helper">If you have predicted grades, enter each subject and grade on a separate line. These grades do not change your assessment ratings.</p>
+        <textarea id="predictedGrades" th:field="*{predictedGrades}" rows="2" maxlength="500"
+                  placeholder="Mathematics: A&#10;Economics: B&#10;Geography: A"
                   aria-describedby="predictedGrades-help predictedGrades-error" th:attr="aria-invalid=${#fields.hasErrors('predictedGrades')}"></textarea>
         <p id="predictedGrades-error" class="field-error" th:if="${#fields.hasErrors('predictedGrades')}" th:errors="*{predictedGrades}"></p>
       </div>
 
       <div class="field">
-        <label for="strengthsAndInterests">What do you enjoy or feel strongest at? <span class="optional">Optional</span></label>
-        <p id="strengthsAndInterests-help" class="helper">One per line. This can be a subject, a topic or a kind of work you like.</p>
+        <label for="strengthsAndInterests">What do you enjoy or feel confident doing? <span class="optional">Optional</span></label>
+        <p id="strengthsAndInterests-help" class="helper">Think about subjects, topics or activities you enjoy. Enter one example per line.</p>
         <textarea id="strengthsAndInterests" th:field="*{strengthsAndInterests}" rows="3" maxlength="1000"
+                  placeholder="Solving maths problems&#10;Understanding how businesses work&#10;Researching environmental issues"
                   aria-describedby="strengthsAndInterests-help strengthsAndInterests-error" th:attr="aria-invalid=${#fields.hasErrors('strengthsAndInterests')}"></textarea>
         <p id="strengthsAndInterests-error" class="field-error" th:if="${#fields.hasErrors('strengthsAndInterests')}" th:errors="*{strengthsAndInterests}"></p>
       </div>
 
       <div class="field">
-        <label for="preferredDegreeAreas">Degree areas you are considering <span class="optional">Optional</span></label>
-        <p id="preferredDegreeAreas-help" class="helper">One per line. It is completely fine to be undecided &mdash; leave this blank.</p>
-        <textarea id="preferredDegreeAreas" th:field="*{preferredDegreeAreas}" rows="3" maxlength="1000"
+        <label for="preferredDegreeAreas">University subjects or degree areas you're considering <span class="optional">Optional</span></label>
+        <p id="preferredDegreeAreas-help" class="helper">List any degree subjects that interest you, one per line. Leave this blank if you're still exploring.</p>
+        <textarea id="preferredDegreeAreas" th:field="*{preferredDegreeAreas}" rows="2" maxlength="1000"
+                  placeholder="Economics&#10;Geography&#10;Business management"
                   aria-describedby="preferredDegreeAreas-help preferredDegreeAreas-error" th:attr="aria-invalid=${#fields.hasErrors('preferredDegreeAreas')}"></textarea>
         <p id="preferredDegreeAreas-error" class="field-error" th:if="${#fields.hasErrors('preferredDegreeAreas')}" th:errors="*{preferredDegreeAreas}"></p>
       </div>
 
       <div class="field">
-        <label for="preferredCareerAreas">Career areas, if you have any in mind <span class="optional">Optional</span></label>
-        <p id="preferredCareerAreas-help" class="helper">One per line. Most people this age have no idea yet, and that is genuinely fine.</p>
-        <textarea id="preferredCareerAreas" th:field="*{preferredCareerAreas}" rows="3" maxlength="1000"
+        <label for="preferredCareerAreas">Careers you might be interested in <span class="optional">Optional</span></label>
+        <p id="preferredCareerAreas-help" class="helper">You can enter jobs or broad areas of work, one per line. It's fine if you have no career ideas yet.</p>
+        <textarea id="preferredCareerAreas" th:field="*{preferredCareerAreas}" rows="2" maxlength="1000"
+                  placeholder="Finance&#10;Environmental consulting&#10;Technology"
                   aria-describedby="preferredCareerAreas-help preferredCareerAreas-error" th:attr="aria-invalid=${#fields.hasErrors('preferredCareerAreas')}"></textarea>
         <p id="preferredCareerAreas-error" class="field-error" th:if="${#fields.hasErrors('preferredCareerAreas')}" th:errors="*{preferredCareerAreas}"></p>
       </div>
 
       <div class="field field-short">
         <label for="country">Country <span class="optional">Optional</span></label>
-        <input id="country" type="text" th:field="*{country}" maxlength="80"
-               aria-describedby="country-error" th:attr="aria-invalid=${#fields.hasErrors('country')}">
+        <p id="country-help" class="helper">Where you're studying or planning to study.</p>
+        <input id="country" type="text" th:field="*{country}" maxlength="80" placeholder="e.g. United Kingdom"
+               aria-describedby="country-help country-error" th:attr="aria-invalid=${#fields.hasErrors('country')}">
         <p id="country-error" class="field-error" th:if="${#fields.hasErrors('country')}" th:errors="*{country}"></p>
       </div>
 
       <div class="field">
-        <label for="additionalContext">Anything else worth knowing? <span class="optional">Optional</span></label>
-        <textarea id="additionalContext" th:field="*{additionalContext}" rows="3" maxlength="2000"
-                  aria-describedby="additionalContext-error" th:attr="aria-invalid=${#fields.hasErrors('additionalContext')}"></textarea>
+        <label for="additionalContext">Anything else you'd like us to know? <span class="optional">Optional</span></label>
+        <p id="additionalContext-help" class="helper">For example, subjects you're deciding between or anything that might help explain your choices.</p>
+        <textarea id="additionalContext" th:field="*{additionalContext}" rows="2" maxlength="2000"
+                  placeholder="I'm deciding between Geography and Computer Science."
+                  aria-describedby="additionalContext-help additionalContext-error" th:attr="aria-invalid=${#fields.hasErrors('additionalContext')}"></textarea>
         <p id="additionalContext-error" class="field-error" th:if="${#fields.hasErrors('additionalContext')}" th:errors="*{additionalContext}"></p>
       </div>
 
-      <button type="submit">Check my options</button>
-      <p class="helper">The check is free. A fuller report is available afterwards if you want it.</p>
+      <div class="a-level-submit">
+        <button type="submit">Check my A-level choices</button>
+        <p class="helper">Your assessment is free. A more detailed PDF report is available afterwards if you want it.</p>
+      </div>
     </form>
   </section>
 
-  <p class="page-action">
-    <a class="button-link button-secondary" th:href="@{/}" href="/">Back to home</a>
+  <p class="a-level-back-link">
+    <a th:href="@{/}" href="/">&#8592; Back to home</a>
   </p>
 </main>
 
