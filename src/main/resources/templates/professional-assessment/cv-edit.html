@@ -5,63 +5,103 @@
 <a class="skip-link" href="#main">Skip to main content</a>
 <div th:replace="~{fragments/layout :: devBanner}"></div>
 <header th:replace="~{fragments/layout :: siteHeader('professional')}"></header>
-<main class="page-shell" id="main">
-  <div class="page-header">
-    <p class="eyebrow">Professional assessment</p>
-    <h1>Edit what we understood</h1>
-    <p class="intro">Correct the concise profile below. Add one responsibility or skill per line.</p>
+
+<main class="page-shell cv-profile-page" id="main">
+  <div class="page-header cv-profile-header">
+    <p class="eyebrow">Professional assessment · CV review</p>
+    <h1>Edit your work profile</h1>
+    <p class="intro">Make sure this describes the work you do now, not just the achievements listed on your CV. Update anything that's missing or incorrect, then review your changes before continuing.</p>
   </div>
-  <section class="panel work-form">
+
+  <section class="panel work-form cv-edit-panel" aria-labelledby="edit-profile-heading">
+    <h2 id="edit-profile-heading">Your professional details</h2>
+    <p class="helper">We've filled in what we could from your CV. You can change any of these details. Put one responsibility or skill on each line.</p>
     <p class="field-error" role="alert" th:if="${profileError}" th:text="${profileError}"></p>
+
     <form th:action="@{/professional-assessment/cv/edit}" th:object="${profileForm}" method="post" novalidate>
-      <div class="field">
-        <label for="currentRole">Current or most recent role <span class="required">Required</span></label>
-        <input id="currentRole" th:field="*{currentRole}" maxlength="120">
-        <p class="field-error" th:if="${#fields.hasErrors('currentRole')}" th:errors="*{currentRole}"></p>
+      <fieldset class="cv-edit-group">
+        <legend>Role details</legend>
+        <div class="field">
+          <label for="currentRole">Current or most recent role <span class="required">Required</span></label>
+          <input id="currentRole" type="text" th:field="*{currentRole}" maxlength="120"
+                 aria-describedby="currentRole-error" th:attr="aria-invalid=${#fields.hasErrors('currentRole')}">
+          <p id="currentRole-error" class="field-error" th:if="${#fields.hasErrors('currentRole')}" th:errors="*{currentRole}"></p>
+        </div>
+        <div class="field">
+          <label for="currentEmployer">Employer <span class="optional">Optional</span></label>
+          <input id="currentEmployer" type="text" th:field="*{currentEmployer}" maxlength="120"
+                 aria-describedby="currentEmployer-error" th:attr="aria-invalid=${#fields.hasErrors('currentEmployer')}">
+          <p id="currentEmployer-error" class="field-error" th:if="${#fields.hasErrors('currentEmployer')}" th:errors="*{currentEmployer}"></p>
+        </div>
+        <div class="cv-date-grid">
+          <div class="field">
+            <label for="currentRoleStart">Role started <span class="optional">Optional</span></label>
+            <p id="currentRoleStart-help" class="helper">For example: 08/2025</p>
+            <input id="currentRoleStart" type="text" th:field="*{currentRoleStart}" maxlength="40"
+                   aria-describedby="currentRoleStart-help currentRoleStart-error" th:attr="aria-invalid=${#fields.hasErrors('currentRoleStart')}">
+            <p id="currentRoleStart-error" class="field-error" th:if="${#fields.hasErrors('currentRoleStart')}" th:errors="*{currentRoleStart}"></p>
+          </div>
+          <div class="field">
+            <label for="currentRoleEnd">Role ended <span class="optional">Optional</span></label>
+            <p id="currentRoleEnd-help" class="helper">Enter a date or Present if you're still in this role.</p>
+            <input id="currentRoleEnd" type="text" th:field="*{currentRoleEnd}" maxlength="40"
+                   aria-describedby="currentRoleEnd-help currentRoleEnd-error" th:attr="aria-invalid=${#fields.hasErrors('currentRoleEnd')}">
+            <p id="currentRoleEnd-error" class="field-error" th:if="${#fields.hasErrors('currentRoleEnd')}" th:errors="*{currentRoleEnd}"></p>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="cv-edit-group">
+        <legend>What you do</legend>
+        <div class="field">
+          <label for="roleSummary">Role summary <span class="required">Required</span></label>
+          <p id="roleSummary-help" class="helper">Describe your role in a few sentences, focusing on your typical work and decisions.</p>
+          <textarea id="roleSummary" th:field="*{roleSummary}" rows="4" minlength="40" maxlength="4000"
+                    aria-describedby="roleSummary-help roleSummary-error" th:attr="aria-invalid=${#fields.hasErrors('roleSummary')}"></textarea>
+          <p id="roleSummary-error" class="field-error" th:if="${#fields.hasErrors('roleSummary')}" th:errors="*{roleSummary}"></p>
+        </div>
+        <div class="field">
+          <label for="responsibilities">Main responsibilities <span class="required">Required</span></label>
+          <p id="responsibilities-help" class="helper">List the main things you do in a typical week, one per line. Add missing regular tasks and remove one-off achievements or work from previous roles.</p>
+          <textarea id="responsibilities" th:field="*{responsibilities}" rows="6" maxlength="4000"
+                    aria-describedby="responsibilities-help responsibilities-error" th:attr="aria-invalid=${#fields.hasErrors('responsibilities')}"></textarea>
+          <p id="responsibilities-error" class="field-error" th:if="${#fields.hasErrors('responsibilities')}" th:errors="*{responsibilities}"></p>
+        </div>
+      </fieldset>
+
+      <fieldset class="cv-edit-group">
+        <legend>Skills and strengths</legend>
+        <div class="field">
+          <label for="technicalSkills">Technical skills</label>
+          <p id="technicalSkills-help" class="helper">Include the tools, technologies or specialist skills you regularly use. Put one on each line.</p>
+          <textarea id="technicalSkills" th:field="*{technicalSkills}" rows="4" maxlength="2000"
+                    aria-describedby="technicalSkills-help skillPresent-error"></textarea>
+        </div>
+        <div class="field">
+          <label for="humanSkills">Human and leadership strengths</label>
+          <p id="humanSkills-help" class="helper">For example: teamwork, mentoring, decision-making or communication. Put one on each line.</p>
+          <textarea id="humanSkills" th:field="*{humanSkills}" rows="4" maxlength="2000"
+                    aria-describedby="humanSkills-help skillPresent-error"></textarea>
+          <p id="skillPresent-error" class="field-error" th:if="${#fields.hasErrors('skillPresent')}" th:errors="*{skillPresent}"></p>
+        </div>
+      </fieldset>
+
+      <fieldset class="cv-edit-group">
+        <legend>Experience</legend>
+        <div class="field field-short">
+          <label for="yearsExperience">Years of relevant experience <span class="optional">Optional</span></label>
+          <p id="yearsExperience-help" class="helper">Check the estimate against your relevant work experience. You can correct it if earlier roles should count.</p>
+          <input id="yearsExperience" type="number" th:field="*{yearsExperience}" min="0" max="70" inputmode="numeric"
+                 aria-describedby="yearsExperience-help yearsExperience-error" th:attr="aria-invalid=${#fields.hasErrors('yearsExperience')}">
+          <p id="yearsExperience-error" class="field-error" th:if="${#fields.hasErrors('yearsExperience')}" th:errors="*{yearsExperience}"></p>
+        </div>
+      </fieldset>
+
+      <div class="cv-edit-actions button-row">
+        <button type="submit">Save and review <span aria-hidden="true">&#8594;</span></button>
+        <a class="button-link button-secondary" th:href="@{/professional-assessment/cv/review}" href="/professional-assessment/cv/review">Cancel changes</a>
       </div>
-      <div class="field">
-        <label for="currentEmployer">Employer <span class="optional">Optional</span></label>
-        <input id="currentEmployer" th:field="*{currentEmployer}" maxlength="120">
-        <p class="field-error" th:if="${#fields.hasErrors('currentEmployer')}" th:errors="*{currentEmployer}"></p>
-      </div>
-      <div class="field field-short">
-        <label for="currentRoleStart">Started <span class="optional">Optional</span></label>
-        <input id="currentRoleStart" th:field="*{currentRoleStart}" maxlength="40">
-        <p class="field-error" th:if="${#fields.hasErrors('currentRoleStart')}" th:errors="*{currentRoleStart}"></p>
-      </div>
-      <div class="field field-short">
-        <label for="currentRoleEnd">Ended (or Present) <span class="optional">Optional</span></label>
-        <input id="currentRoleEnd" th:field="*{currentRoleEnd}" maxlength="40">
-        <p class="field-error" th:if="${#fields.hasErrors('currentRoleEnd')}" th:errors="*{currentRoleEnd}"></p>
-      </div>
-      <div class="field">
-        <label for="roleSummary">Role summary <span class="required">Required</span></label>
-        <textarea id="roleSummary" th:field="*{roleSummary}" rows="5" minlength="40" maxlength="4000"></textarea>
-        <p class="field-error" th:if="${#fields.hasErrors('roleSummary')}" th:errors="*{roleSummary}"></p>
-      </div>
-      <div class="field">
-        <label for="responsibilities">Main responsibilities <span class="required">Required</span></label>
-        <p id="responsibilities-help" class="helper">CVs usually list achievements rather than everyday tasks. Add the main things you do in a typical week, even if your CV doesn't mention them, and remove one-offs or tasks from earlier jobs.</p>
-        <textarea id="responsibilities" th:field="*{responsibilities}" rows="6" maxlength="4000"
-                  aria-describedby="responsibilities-help"></textarea>
-        <p class="field-error" th:if="${#fields.hasErrors('responsibilities')}" th:errors="*{responsibilities}"></p>
-      </div>
-      <div class="field">
-        <label for="technicalSkills">Technical skills</label>
-        <textarea id="technicalSkills" th:field="*{technicalSkills}" rows="4" maxlength="2000"></textarea>
-      </div>
-      <div class="field">
-        <label for="humanSkills">Human / leadership strengths</label>
-        <textarea id="humanSkills" th:field="*{humanSkills}" rows="4" maxlength="2000"></textarea>
-        <p class="field-error" th:if="${#fields.hasErrors('skillPresent')}" th:errors="*{skillPresent}"></p>
-      </div>
-      <div class="field field-short">
-        <label for="yearsExperience">Years of experience <span class="optional">Optional</span></label>
-        <input id="yearsExperience" type="number" th:field="*{yearsExperience}" min="0" max="70">
-        <p class="field-error" th:if="${#fields.hasErrors('yearsExperience')}" th:errors="*{yearsExperience}"></p>
-      </div>
-      <button type="submit">Save and review</button>
-      <a class="button-link button-secondary" th:href="@{/professional-assessment/cv/review}">Cancel</a>
+      <p class="helper">You'll return to the review page before confirming your assessment.</p>
     </form>
   </section>
 </main>

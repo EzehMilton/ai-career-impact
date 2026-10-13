@@ -509,4 +509,413 @@ dd { margin: 0; font-weight: 700; text-align: right; }
   text-underline-offset: .2em;
 }
 
+/* CV review and edit pages only. Append to the existing design-system stylesheet. */
+.cv-profile-page .cv-profile-header { max-width: 55rem; }
+.cv-profile-page .cv-profile-header h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 4.3vw, 3.7rem);
+  font-weight: 500;
+  letter-spacing: -.035em;
+}
+.cv-review-intro {
+  max-width: 55rem;
+  padding: 1rem 1.25rem;
+  margin: 0 0 1.5rem;
+  border-left: 3px solid var(--brand-accent);
+  background: var(--surface-sunken);
+  border-radius: var(--radius-sm);
+}
+.cv-review-intro p { margin: .3rem 0 0; color: var(--ink-muted); }
+.cv-review-panel, .cv-edit-panel { max-width: 66rem; }
+.cv-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.cv-section-head h2 { font-size: 1.5rem; }
+.cv-section-head .eyebrow { margin-bottom: .4rem; }
+.cv-review-section { border-top: 1px solid var(--rule); padding: 1.65rem 0 1.25rem; }
+.cv-review-section h3 { font-size: 1.15rem; margin-bottom: .75rem; }
+.cv-review-section h4 { font-size: .98rem; margin: 1.1rem 0 .45rem; }
+.cv-review-section p { max-width: 58rem; }
+.cv-role-name { font-size: 1.35rem; font-weight: 700; color: var(--ink-strong); margin-bottom: .25rem; }
+.cv-role-context { margin-bottom: 1.25rem; }
+.cv-check-note { border: 1px solid var(--border-strong); background: rgba(100,123,244,.07); border-radius: var(--radius-md); padding: 1rem 1.15rem; margin: .7rem 0 1rem; }
+.cv-check-note p { color: var(--ink-muted); margin: .4rem 0 0; }
+.cv-responsibility-list { padding-left: 1.35rem; margin: .8rem 0 0; }
+.cv-responsibility-list li { padding-left: .15rem; margin: .5rem 0; line-height: 1.5; }
+.cv-skill-tags { display: flex; flex-wrap: wrap; gap: .55rem; list-style: none; padding: 0; margin: .65rem 0 1.3rem; }
+.cv-skill-tags li { padding: .4rem .7rem; border: 1px solid var(--border-strong); border-radius: .55rem; background: rgba(100,123,244,.07); font-size: .9rem; line-height: 1.3; }
+.cv-human-tags li { background: rgba(164,119,245,.07); }
+.cv-experience-number { display: flex; align-items: baseline; gap: .5rem; margin: .6rem 0; }
+.cv-experience-number strong { font-size: 2.15rem; line-height: 1.1; color: var(--ink-strong); }
+.cv-experience-number span { color: var(--ink-muted); }
+.cv-experience-details { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1.25rem; margin-top: 1rem; }
+.cv-experience-details h4 { margin: 0 0 .45rem; }
+.cv-experience-details ul { margin: 0; padding-left: 1.25rem; color: var(--ink-muted); }
+.cv-experience-details li + li { margin-top: .35rem; }
+.cv-review-warnings { margin: 1rem 0; }
+.cv-review-confirm { border-top: 1px solid var(--rule); margin-top: 1rem; padding-top: 1.5rem; }
+.cv-review-confirm p { color: var(--ink-muted); max-width: 47rem; }
+.cv-alternative-link { margin: 1.3rem 0 0; font-size: .93rem; }
+.cv-edit-panel > .helper { max-width: 55rem; }
+.cv-edit-group { border: 0; border-top: 1px solid var(--rule); padding: 1.35rem 0 .35rem; margin: 1.3rem 0 0; min-width: 0; }
+.cv-edit-group legend { float: left; width: 100%; font-weight: 700; font-size: 1.12rem; margin-bottom: .5rem; }
+.cv-edit-group::after { content: ''; display: block; clear: both; }
+.cv-edit-group .field { clear: both; }
+.cv-edit-group textarea { min-height: 0; }
+.cv-date-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1rem; max-width: 44rem; }
+.cv-date-grid .field { min-width: 0; }
+.cv-edit-actions { margin-top: 1.5rem; }
+@media (max-width: 42rem) {
+  .cv-experience-details, .cv-date-grid { grid-template-columns: 1fr; }
+  .cv-review-panel, .cv-edit-panel { padding: 1.25rem; }
+  .cv-review-confirm .button-row { align-items: stretch; flex-direction: column; }
+  .cv-review-confirm .button-row form, .cv-review-confirm .button-row button,
+  .cv-review-confirm .button-row .button-link { width: 100%; }
+}
+
+/* Professional results page only; append to the existing product stylesheet. */
+.professional-results-page .results-page-header { margin-bottom: 2rem; }
+.professional-results-page .results-overview { border-color: #435370; background: linear-gradient(115deg, rgba(61,78,150,.18), rgba(89,59,137,.12) 72%), var(--surface-raised); }
+.professional-results-page .results-overview h2,
+.professional-results-page .results-section-heading h2 { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.6rem, 2.9vw, 2.25rem); letter-spacing: -.02em; }
+.professional-results-page .results-overview .narrative-summary { margin: .8rem 0 1.25rem; line-height: 1.65; }
+.professional-results-page .results-summary-details { max-width: 38rem; }
+.professional-results-page .results-small-note { color: var(--ink-subtle); font-size: .85rem; margin-top: .7rem; }
+.professional-results-page .results-section-heading { margin-bottom: 1.2rem; }
+.professional-results-page .results-section-heading .helper { max-width: 50rem; }
+.professional-results-page .results-measure-card { gap: .45rem; }
+.professional-results-page .results-measure-card h3 { font-size: 1.12rem; margin-bottom: 0; }
+.professional-results-page .results-band { color: var(--ink-strong); font-size: clamp(1.7rem, 3vw, 2.3rem); font-weight: 750; line-height: 1.1; margin: .3rem 0 .5rem; }
+.professional-results-page .results-measure-explanation { color: var(--ink-muted); margin-bottom: 1.1rem; }
+.professional-results-page .results-measure-metadata { margin-top: auto; }
+.professional-results-page .results-measure-metadata div { align-items: baseline; }
+.professional-results-page .results-measure-metadata dd { font-variant-numeric: tabular-nums; }
+.professional-results-page .results-guide { margin-top: 2rem; }
+.professional-results-page .results-guide p { color: var(--ink-muted); }
+.professional-results-page .results-guide p:last-child { margin-bottom: 0; }
+.professional-results-page .results-factor-grid { margin-top: 0; }
+.professional-results-page .results-factor-grid h3 { font-size: 1.15rem; }
+.professional-results-page .results-factor-grid .helper { margin-bottom: .8rem; }
+.professional-results-page .results-interpretation .panel p { line-height: 1.7; }
+.professional-results-page .results-upgrade { background: linear-gradient(145deg, rgba(89, 71, 145, .12), var(--surface-raised) 60%); }
+.professional-results-page .results-upgrade h2 { font-family: var(--font-display); font-size: clamp(1.5rem, 2.6vw, 2rem); font-weight: 500; }
+.professional-results-page .results-paid-tier { border-color: #435370; }
+.professional-results-page .results-upgrade-reassurance { font-size: .91rem; color: var(--ink-subtle); margin-top: 1rem; }
+.professional-results-page .results-upgrade .price-line { margin: 1.15rem 0 .75rem; }
+.professional-results-page .results-sample-link { margin-top: 1rem; }
+.professional-results-page .results-context p { color: var(--ink-muted); }
+.professional-results-page .results-bottom-nav { display: flex; flex-wrap: wrap; gap: .75rem; margin: 2rem 0 0; }
+@media (max-width: 42rem) {
+  .professional-results-page .results-band { font-size: 1.85rem; }
+  .professional-results-page .results-bottom-nav { flex-direction: column; }
+  .professional-results-page .results-bottom-nav a { width: 100%; }
+}
+
+
+/* Paid Professional report: append after the application design system. */
+
+.paid-report-refined .paid-report-header {
+  max-width: 48rem;
+}
+
+.paid-report-refined .paid-report-header h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 4.4vw, 3.8rem);
+  font-weight: 500;
+  letter-spacing: -.035em;
+  line-height: 1.12;
+}
+
+.paid-report-refined .paid-report-header .intro {
+  line-height: 1.6;
+}
+
+.paid-report-refined .paid-report-header-actions {
+  margin-top: 1.5rem;
+}
+
+/* Overall assessment */
+
+.paid-report-refined .paid-overview {
+  margin-top: 1.5rem;
+}
+
+.paid-report-refined .paid-overview h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.65rem, 2.5vw, 2.1rem);
+  font-weight: 500;
+}
+
+.paid-report-refined .paid-overview .narrative-summary {
+  margin: 1rem 0 1.25rem;
+}
+
+/* Rating summary */
+
+.paid-report-refined .paid-rating-overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .75rem;
+  margin: 1.5rem 0;
+}
+
+.paid-report-refined .paid-rating-overview-item {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, .025);
+}
+
+.paid-report-refined .paid-rating-overview-name {
+  color: var(--ink-muted);
+  font-size: .82rem;
+}
+
+.paid-report-refined .paid-rating-overview-item strong {
+  color: var(--ink-strong);
+  font-size: 1.2rem;
+}
+
+/* Expandable details */
+
+.paid-report-refined details {
+  margin-top: 1rem;
+}
+
+.paid-report-refined details > summary {
+  color: var(--brand-accent);
+  cursor: pointer;
+  font-weight: 650;
+  padding: .4rem 0;
+}
+
+.paid-report-refined details > summary:hover {
+  color: var(--ink-strong);
+}
+
+.paid-report-refined details[open] > summary {
+  margin-bottom: .8rem;
+}
+
+.paid-report-refined .paid-disclaimer {
+  margin-top: 1rem;
+  color: var(--ink-muted);
+}
+
+/* Section headings */
+
+.paid-report-refined .paid-section-heading {
+  max-width: 53rem;
+  margin-bottom: 1rem;
+}
+
+/* Detailed assessment measures */
+
+.paid-report-refined .paid-measure-card .paid-measure-band {
+  color: var(--ink-strong);
+  font-size: clamp(1.6rem, 2.5vw, 2.1rem);
+  font-weight: 750;
+  line-height: 1.2;
+  margin: .3rem 0 .7rem;
+}
+
+.paid-report-refined .paid-measure-explanation {
+  color: var(--ink-muted);
+}
+
+.paid-report-refined .paid-measure-card .measure-details {
+  margin: .75rem 0 1rem;
+}
+
+.paid-report-refined .paid-measure-detail {
+  padding-top: .9rem;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-muted);
+}
+
+/* How to interpret ratings */
+
+.paid-report-refined .paid-scale-details {
+  margin: 1.25rem 0 0;
+}
+
+.paid-report-refined .paid-scale-details p {
+  max-width: 56rem;
+  color: var(--ink-muted);
+}
+
+/* Assessment factors */
+
+.paid-report-refined .paid-factor-grid {
+  margin-top: var(--space-5);
+}
+
+.paid-report-refined .paid-factor-grid .helper {
+  margin-bottom: 1rem;
+}
+
+/* Personalised explanation */
+
+.paid-report-refined .paid-narrative-panel {
+  max-width: 100%;
+}
+
+.paid-report-refined .paid-narrative-panel h3 {
+  margin-top: 1.4rem;
+}
+
+.paid-report-refined .paid-narrative-panel h3:first-child {
+  margin-top: 0;
+}
+
+.paid-report-refined .paid-narrative-panel > p {
+  max-width: 63rem;
+}
+
+/* Numbered practical recommendations */
+
+.paid-report-refined .paid-action-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: paid-action;
+}
+
+.paid-report-refined .paid-action-list li {
+  display: grid;
+  grid-template-columns: 2.2rem 1fr;
+  align-items: start;
+  gap: 1rem;
+  counter-increment: paid-action;
+  padding: .85rem 0;
+}
+
+.paid-report-refined .paid-action-list li + li {
+  border-top: 1px solid var(--rule);
+}
+
+.paid-report-refined .paid-action-list li::before {
+  content: counter(paid-action, decimal-leading-zero);
+  display: grid;
+  place-items: center;
+  background: rgba(116, 130, 245, .13);
+  border: 1px solid var(--border-strong);
+  color: var(--brand-accent);
+  border-radius: .55rem;
+  height: 2.2rem;
+  font: 700 .8rem var(--font-mono);
+}
+
+/* Skill development: three columns on desktop */
+
+.paid-report-refined .paid-skill-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.paid-report-refined .paid-skill-card {
+  min-width: 0;
+}
+
+/* Work-focus guidance */
+
+.paid-report-refined .paid-work-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.paid-report-refined .paid-work-card {
+  min-width: 0;
+}
+
+.paid-report-refined .paid-work-card ul {
+  padding-left: 1.25rem;
+}
+
+/* External career evidence */
+
+.paid-report-refined .paid-evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.paid-report-refined .paid-evidence-card {
+  min-width: 0;
+}
+
+.paid-report-refined .paid-evidence-source {
+  border-top: 1px solid var(--rule);
+  padding-top: .4rem;
+}
+
+.paid-report-refined .paid-evidence-source .evidence-meta div {
+  flex-wrap: wrap;
+}
+
+.paid-report-refined .paid-evidence-source .evidence-meta dd {
+  overflow-wrap: anywhere;
+}
+
+/* Occupation classification */
+
+.paid-report-refined .paid-classification {
+  padding-top: 1rem;
+}
+
+.paid-report-refined .paid-classification h3 {
+  margin-top: 1rem;
+}
+
+/* Technical methodology */
+
+.paid-report-refined .paid-technical-details {
+  border-top: 1px solid var(--rule);
+  padding-top: .5rem;
+  margin-bottom: 1rem;
+}
+
+/* Bottom navigation */
+
+.paid-report-refined .paid-report-bottom-actions {
+  align-items: center;
+}
+
+/* Tablet layouts */
+
+@media (max-width: 60rem) {
+  .paid-report-refined .paid-rating-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .paid-report-refined .paid-skill-grid,
+  .paid-report-refined .paid-work-grid,
+  .paid-report-refined .paid-evidence-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Mobile layouts */
+
+@media (max-width: 42rem) {
+  .paid-report-refined .paid-rating-overview,
+  .paid-report-refined .paid-skill-grid,
+  .paid-report-refined .paid-work-grid,
+  .paid-report-refined .paid-evidence-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .paid-report-refined .paid-report-bottom-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .paid-report-refined .paid-report-bottom-actions a {
+    width: 100%;
+  }
+}
 

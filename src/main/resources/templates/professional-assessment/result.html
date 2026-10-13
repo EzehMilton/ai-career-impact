@@ -6,9 +6,10 @@
 <div th:replace="~{fragments/layout :: devBanner}"></div>
 <header th:replace="~{fragments/layout :: siteHeader('professional')}"></header>
 
-<main class="page-shell" id="main">
+<main class="page-shell professional-results-page" id="main">
   <meta name="robots" content="noindex,nofollow">
-  <div class="page-header">
+
+  <div class="page-header results-page-header">
     <p class="eyebrow">Free professional assessment</p>
     <h1 th:text="${report.headline}">Your professional assessment</h1>
     <p class="intro">For <strong th:text="${report.profession}">your role</strong></p>
@@ -19,72 +20,83 @@
     <p>This assessment uses local fixture data and is not a live AI assessment.</p>
   </aside>
 
-  <!--/* 1. The headline result */-->
-  <section class="panel" aria-labelledby="summary-heading">
-    <h2 id="summary-heading">What this broadly suggests</h2>
+  <!-- Overview: retain all summary values, but prioritize what they mean. -->
+  <section class="panel results-overview" aria-labelledby="summary-heading">
+    <p class="eyebrow">Your results at a glance</p>
+    <h2 id="summary-heading">What your assessment suggests</h2>
     <p class="narrative-summary" th:text="${report.interpretation}">Overall interpretation</p>
-    <dl class="summary-list">
-      <div><dt>Status</dt><dd th:text="${report.status}">Ready</dd></div>
+    <dl class="summary-list results-summary-details">
+      <div><dt>Assessment status</dt><dd th:text="${report.status}">Ready</dd></div>
       <div><dt>Assessment confidence</dt><dd th:text="${report.confidence}">High</dd></div>
     </dl>
+    <p class="results-small-note">Confidence describes the assessment's supporting information, not certainty about your future.</p>
     <p class="notice" th:if="${report.moreInformationRequired}">More information is needed before numeric measures can be provided.</p>
   </section>
 
-  <!--/* 2. What the measures mean */-->
-  <section class="panel results-section" th:unless="${report.moreInformationRequired}" aria-labelledby="indicator-heading">
-    <h2 id="indicator-heading">How to read these numbers</h2>
-    <p>
-      Each number below runs from 0 to 10 and is an <strong>indicator</strong> describing the
-      characteristics of the work you described. None of them is a probability, and none is a
-      prediction about you.
-    </p>
-    <p th:text="${report.jobLossDisclaimer}">AI Exposure is not a probability of job loss.</p>
-  </section>
-
+  <!-- Core indicators: prominently show the band, preserving numerical values and per-measure confidence. -->
   <section class="results-section" th:unless="${report.moreInformationRequired}" aria-labelledby="measures-heading">
-    <h2 id="measures-heading">The four measures</h2>
+    <div class="results-section-heading">
+      <p class="eyebrow">Your assessment ratings</p>
+      <h2 id="measures-heading">Four ways AI could affect your work</h2>
+      <p class="helper">Each rating describes a different characteristic of your work. High isn't always good or bad; its meaning depends on the measure.</p>
+    </div>
     <div class="measure-grid">
-      <article class="panel measure-card" th:each="measure : ${report.measures}">
+      <article class="panel measure-card results-measure-card" th:each="measure : ${report.measures}">
         <h3 th:text="${measure.name}">Measure</h3>
-        <p class="measure-value"><strong th:text="${measure.indicator}">0.00</strong><span> / 10</span></p>
-        <dl class="measure-details">
-          <div><dt>Band</dt><dd th:text="${measure.band}">Moderate</dd></div>
+        <p class="results-band" th:text="${measure.band}">Moderate</p>
+        <p class="results-measure-explanation" th:text="${measure.conciseExplanation}">Concise explanation</p>
+        <dl class="measure-details results-measure-metadata">
+          <div><dt>Indicator</dt><dd><span th:text="${measure.indicator}">0.00</span> / 10</dd></div>
           <div><dt>Confidence</dt><dd th:text="${measure.confidence}">80%</dd></div>
         </dl>
-        <p th:text="${measure.conciseExplanation}">Concise explanation</p>
       </article>
     </div>
   </section>
 
-  <!--/* 3. Why you got this result */-->
-  <section class="factor-grid" th:unless="${report.moreInformationRequired}" aria-label="Factors behind the assessment">
-    <div class="panel">
-      <h2>What increases AI exposure</h2>
-      <ul th:if="${!report.exposureDrivers.isEmpty()}"><li th:each="factor : ${report.exposureDrivers}" th:text="${factor}">Factor</li></ul>
-      <p th:if="${report.exposureDrivers.isEmpty()}">No strong exposure drivers were identified.</p>
+  <!-- Explain the scale after the visitor has seen the ratings. -->
+  <section class="panel results-guide" th:unless="${report.moreInformationRequired}" aria-labelledby="indicator-heading">
+    <h2 id="indicator-heading">Understanding your ratings</h2>
+    <p>Each indicator runs from 0 to 10 and reflects a characteristic of the work you described. It is not a probability or a prediction about you.</p>
+    <p th:text="${report.jobLossDisclaimer}">AI Exposure is not a probability of job loss.</p>
+  </section>
+
+  <section class="results-section" th:unless="${report.moreInformationRequired}" aria-labelledby="factors-heading">
+    <div class="results-section-heading">
+      <h2 id="factors-heading">Why you received these ratings</h2>
+      <p class="helper">These are the main factors identified from your assessment information.</p>
     </div>
-    <div class="panel">
-      <h2>What preserves human value</h2>
-      <ul th:if="${!report.protectiveFactors.isEmpty()}"><li th:each="factor : ${report.protectiveFactors}" th:text="${factor}">Factor</li></ul>
-      <p th:if="${report.protectiveFactors.isEmpty()}">No strong protective factors were identified.</p>
+    <div class="factor-grid results-factor-grid">
+      <div class="panel">
+        <h3>What increases AI exposure</h3>
+        <p class="helper">Parts of your work that AI may increasingly be able to support or perform.</p>
+        <ul th:if="${!report.exposureDrivers.isEmpty()}"><li th:each="factor : ${report.exposureDrivers}" th:text="${factor}">Factor</li></ul>
+        <p th:if="${report.exposureDrivers.isEmpty()}">No strong exposure drivers were identified.</p>
+      </div>
+      <div class="panel">
+        <h3>Where human skills remain important</h3>
+        <p class="helper">Characteristics of your work that support a meaningful human contribution.</p>
+        <ul th:if="${!report.protectiveFactors.isEmpty()}"><li th:each="factor : ${report.protectiveFactors}" th:text="${factor}">Factor</li></ul>
+        <p th:if="${report.protectiveFactors.isEmpty()}">No strong protective factors were identified.</p>
+      </div>
     </div>
   </section>
 
-  <section class="narrative-section" aria-labelledby="meaning-heading">
-    <h2 id="meaning-heading">Short interpretation</h2>
+  <section class="narrative-section results-interpretation" aria-labelledby="meaning-heading">
+    <h2 id="meaning-heading">What this means for your work</h2>
     <div class="panel" th:if="${report.narrative.available}"><p th:text="${report.narrative.whatThisMeans}">What this means</p></div>
     <div class="panel narrative-unavailable" th:unless="${report.narrative.available}">
-      <p>Your deterministic assessment is complete, but its personalised explanation is currently unavailable.</p>
+      <p>Your assessment is complete, but its personalised explanation is currently unavailable.</p>
     </div>
   </section>
 
-  <!--/* 4 and 5. What next, and what the full report adds */-->
-  <section class="panel unlock-panel" aria-labelledby="unlock-heading">
-    <h2 id="unlock-heading">Unlock the full personalised report</h2>
-    <p class="helper">What you already have, and what the full report adds.</p>
+  <!-- All existing entitlement states and checkout routes are deliberately preserved. -->
+  <section class="panel unlock-panel results-upgrade" aria-labelledby="unlock-heading">
+    <p class="eyebrow">Optional detailed report</p>
+    <h2 id="unlock-heading">Go further with your personalised report</h2>
+    <p class="helper">Go beyond your ratings with more detailed explanations and practical guidance.</p>
     <div class="tier-grid">
       <div class="tier tier-included">
-        <h3>Free assessment &mdash; included</h3>
+        <h3>Free assessment — included</h3>
         <ul>
           <li>Your core assessment and all four measures</li>
           <li>What each measure means</li>
@@ -92,8 +104,8 @@
           <li>A concise interpretation</li>
         </ul>
       </div>
-      <div class="tier">
-        <h3>Full report</h3>
+      <div class="tier results-paid-tier">
+        <h3>Detailed report</h3>
         <ul>
           <li>A deeper personalised explanation of each measure</li>
           <li>Practical next steps</li>
@@ -101,37 +113,33 @@
           <li>External career context, where available</li>
           <li>A downloadable PDF</li>
         </ul>
+        <!-- Only enable a sample link after a genuine, anonymised example PDF exists at this path. -->
+        <!-- <p class="results-sample-link"><a th:href="@{/samples/sample-report.pdf}" href="/samples/sample-report.pdf" target="_blank" rel="noopener noreferrer">View sample report ↗</a></p> -->
       </div>
     </div>
-    <p class="helper">
-      Both tiers use the same assessment. The full report adds depth and explanation; it does not
-      change or re-run your result.
-    </p>
+    <p class="results-upgrade-reassurance">Your assessment results stay the same. The detailed report adds explanation and guidance; it does not change or re-run the assessment.</p>
     <p class="price-line" th:if="${purchase.displayPrice != null}">Price: <span th:text="${purchase.displayPrice}">Configured price</span></p>
-    <p class="page-action">
-      <a class="button-link" th:if="${purchase.active}" th:href="@{/professional-assessment/{id}/report(id=${assessmentId})}">Open your purchased report</a>
+    <p class="page-action" th:if="${purchase.active}">
+      <a class="button-link" th:href="@{/professional-assessment/{id}/report(id=${assessmentId})}">Open your purchased report</a>
     </p>
     <p class="notice" th:if="${purchase.pending}">Payment confirmation pending. Your full report will be available after payment is verified.</p>
     <p class="notice" th:if="${purchase.denied}">Paid report access is not currently active.</p>
     <form th:if="${purchase.checkoutAvailable}" method="post" th:action="@{/professional-assessment/{id}/checkout(id=${assessmentId})}">
-      <button type="submit">Unlock my full report</button>
+      <button type="submit">Get my detailed report</button>
     </form>
     <p class="helper" th:if="${purchase.noEntitlement and !purchase.checkoutAvailable}">Paid report checkout is not currently available.</p>
   </section>
 
-  <section class="panel report-caveat" aria-labelledby="caveat-heading">
-    <h2 id="caveat-heading">Important context</h2>
+  <section class="panel report-caveat results-context" aria-labelledby="caveat-heading">
+    <h2 id="caveat-heading">About your assessment</h2>
     <p th:text="${report.methodologyCaveat}">Methodology caveat.</p>
-    <p>
-      Keep your result link safe &mdash; it is the only way back to this page.
-      <a th:href="@{/methodology}" href="/methodology">Read how this works</a>.
-    </p>
+    <p>Save your result link to return to this page. Anyone with access to the link may be able to view your results, so keep it private. <a th:href="@{/methodology}" href="/methodology">Read how this works</a>.</p>
   </section>
 
-  <p class="page-action">
-    <a th:href="@{/professional-assessment}" href="/professional-assessment">Assess another role</a>
+  <nav class="results-bottom-nav" aria-label="Other options">
+    <a class="button-link button-secondary" th:href="@{/professional-assessment}" href="/professional-assessment">Assess another role</a>
     <a class="button-link button-secondary" th:href="@{/}" href="/">Back to home</a>
-  </p>
+  </nav>
 </main>
 
 <footer th:replace="~{fragments/layout :: siteFooter}"></footer>
