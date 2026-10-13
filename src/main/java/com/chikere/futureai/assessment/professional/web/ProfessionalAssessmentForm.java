@@ -31,6 +31,8 @@ public class ProfessionalAssessmentForm {
     @Max(value = 70, message = "Enter 70 years or fewer.")
     private Integer yearsOfExperience;
 
+    private String submissionToken = "";
+
     public String getProfession() {
         return profession;
     }
@@ -69,5 +71,13 @@ public class ProfessionalAssessmentForm {
 
     public void setYearsOfExperience(Integer yearsOfExperience) {
         this.yearsOfExperience = yearsOfExperience;
+    }
+
+    public String getSubmissionToken() {
+        return submissionToken;
+    }
+
+    public void setSubmissionToken(String submissionToken) {
+        this.submissionToken = submissionToken;
     }
 }

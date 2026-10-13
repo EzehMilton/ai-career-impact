@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: headAutoRefresh('Assessment in progress')}"></head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('professional')}"></header>
+
+<main class="page-shell" id="main">
+  <div class="page-header">
+    <p class="eyebrow">Professional assessment</p>
+    <h1>Your assessment is being prepared</h1>
+    <p class="intro">This usually takes 20 to 30 seconds. This page will refresh automatically and take you to your result.</p>
+  </div>
+
+  <div class="panel">
+    <p>Please wait and do not close this tab or press the back button.</p>
+  </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
+</body>
+</html>

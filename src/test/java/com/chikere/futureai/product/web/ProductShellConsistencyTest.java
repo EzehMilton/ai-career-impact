@@ -29,7 +29,7 @@ class ProductShellConsistencyTest {
         for (Map.Entry<Path, String> page : pages().entrySet()) {
             String html = page.getValue();
             assertThat(html).as("%s shell", page.getKey())
-                    .contains("fragments/layout :: head(", "fragments/layout :: siteHeader(",
+                    .contains("fragments/layout :: head", "fragments/layout :: siteHeader(",
                             "fragments/layout :: siteFooter", "class=\"skip-link\"", "id=\"main\"");
             assertThat(html.split("<h1", -1)).as("%s has one h1", page.getKey()).hasSize(2);
         }

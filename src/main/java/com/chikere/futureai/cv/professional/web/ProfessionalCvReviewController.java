@@ -2,6 +2,8 @@ package com.chikere.futureai.cv.professional.web;
 
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentInputMetadata;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentUseCase;
+import com.chikere.futureai.assessment.professional.web.SubmissionTokenGuard;
+import com.chikere.futureai.assessment.professional.web.TokenStatus;
 import com.chikere.futureai.cv.professional.application.*;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -14,6 +16,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public final class ProfessionalCvReviewController {
@@ -25,14 +28,16 @@ public final class ProfessionalCvReviewController {
     private final ProfessionalProfileValidator validator;
     private final ProfessionalProfileAssessmentMapper assessmentMapper;
     private final ProfessionalAssessmentUseCase workflow;
+    private final SubmissionTokenGuard tokenGuard;
 
     public ProfessionalCvReviewController(ProfessionalProfileEditMapper editMapper,
             ProfessionalProfileValidator validator, ProfessionalProfileAssessmentMapper assessmentMapper,
-            ProfessionalAssessmentUseCase workflow) {
+            ProfessionalAssessmentUseCase workflow, SubmissionTokenGuard tokenGuard) {
         this.editMapper = editMapper;
         this.validator = validator;
         this.assessmentMapper = assessmentMapper;
         this.workflow = workflow;
+        this.tokenGuard = tokenGuard;
     }
 
     @GetMapping("/professional-assessment/cv/review")
@@ -40,6 +45,7 @@ public final class ProfessionalCvReviewController {
         ProfessionalProfile profile = profile(session);
         if (profile == null) return "redirect:/professional-assessment";
         model.addAttribute("profile", profile);
+        model.addAttribute("confirmToken", tokenGuard.issueToken(session));
         return REVIEW_VIEW;
     }
 
@@ -68,14 +74,28 @@ public final class ProfessionalCvReviewController {
     }
 
     @PostMapping("/professional-assessment/cv/confirm")
-    public String confirm(HttpSession session, HttpServletResponse response) {
+    public String confirm(
+            @RequestParam(required = false, defaultValue = "") String confirmToken,
+            HttpSession session, HttpServletResponse response) {
+        TokenStatus before = tokenGuard.claimToken(session, confirmToken);
+        if (before instanceof TokenStatus.Completed c) {
+            return "redirect:/professional-assessment/" + c.assessmentId();
+        }
+        if (before instanceof TokenStatus.InProgress) {
+            return "redirect:/professional-assessment/await?token=" + confirmToken;
+        }
+
         ProfessionalProfile profile = profile(session);
         Object metadataValue = session.getAttribute(ProfessionalCvSession.INPUT_METADATA);
         if (profile == null || !(metadataValue instanceof ProfessionalAssessmentInputMetadata metadata)) {
             return "redirect:/professional-assessment";
         }
+
         try {
             var id = workflow.submit(assessmentMapper.toState(validator.validate(profile)), metadata);
+            if (before instanceof TokenStatus.Registered) {
+                tokenGuard.completeToken(session, confirmToken, id);
+            }
             clear(session);
             LOGGER.info("Professional profile confirmed outcome=SUCCESS");
             return "redirect:/professional-assessment/" + id;
@@ -83,6 +103,9 @@ public final class ProfessionalCvReviewController {
         catch (RuntimeException exception) {
             LOGGER.error("Professional profile confirmation failed failureType={}",
                     exception.getClass().getSimpleName());
+            if (before instanceof TokenStatus.Registered) {
+                tokenGuard.freeToken(session, confirmToken);
+            }
             response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
             return "professional-assessment/error";
         }

@@ -194,7 +194,7 @@ summary:focus-visible {
 
 /* ---------- alerts ---------- */
 .alert { border-radius: var(--radius-md); padding: var(--space-3) 1.3rem; margin: 0 0 var(--space-4); }
-.alert strong { display: block; }
+.alert > strong { display: block; }
 .alert p { margin: var(--space-1) 0 0; }
 .alert-dev { border: 2px solid var(--warn-border); background: var(--warn-surface); color: var(--warn-ink); }
 .alert-info { background: var(--surface-sunken); border: 1px solid var(--border); border-left: 4px solid var(--brand-accent); border-radius: var(--radius-md); }
@@ -223,9 +223,7 @@ textarea { resize: vertical; min-height: 6rem; }
 /* Errors carry a text marker as well as colour, so colour is never the only signal. */
 .field-error { color: var(--danger); font-weight: 650; margin: var(--space-1) 0 0; }
 .field-error::before { content: "Error: "; font-weight: 800; }
-.input-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
-.input-options > div, .cv-upload { border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3); }
-.cv-upload input[type="file"] { margin-bottom: .8rem; }
+.cv-upload-form input[type="file"] { margin-bottom: .8rem; }
 
 /* ---------- buttons ---------- */
 button, .button-link, .page-action a {
@@ -382,7 +380,7 @@ dd { margin: 0; font-weight: 700; text-align: right; }
 /* ---------- responsive ---------- */
 @media (max-width: 42rem) {
   .page-shell { padding-top: 1.6rem; }
-  .measure-grid, .factor-grid, .input-options, .card-grid-2, .tier-grid { grid-template-columns: 1fr; }
+  .measure-grid, .factor-grid, .card-grid-2, .tier-grid { grid-template-columns: 1fr; }
   .panel { border-radius: var(--radius-md); }
   .site-header-inner { align-items: flex-start; flex-direction: column; gap: .55rem; padding: .8rem 0; }
   .site-nav { margin-left: 0; width: 100%; gap: .25rem; padding: .15rem 0 0; }

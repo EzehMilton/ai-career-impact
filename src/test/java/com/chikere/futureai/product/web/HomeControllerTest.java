@@ -29,7 +29,7 @@ class HomeControllerTest {
 
         assertThat(html).contains("AI Career &amp; Future Assessment",
                 "Understand how AI may affect your work, course, or subject choices.",
-                "clear explanations and practical next steps");
+                "plain-English explanations and practical next steps");
         assertThat(html).contains("<title>Understand how AI may affect your choices | AI Career Impact</title>");
     }
 
