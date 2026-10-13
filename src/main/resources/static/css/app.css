@@ -416,3 +416,97 @@ dd { margin: 0; font-weight: 700; text-align: right; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+
+/* Optional additions to the existing application stylesheet. */
+.professional-assessment-page .input-choice-intro { margin-bottom: 1.25rem; }
+.professional-assessment-page .professional-entry-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.professional-assessment-page .professional-entry-option .button-link {
+  margin-top: auto;
+}
+.professional-assessment-page .input-options { align-items: stretch; }
+.professional-assessment-page .cv-upload { margin: 0; }
+.professional-assessment-page .cv-upload button { margin-top: .5rem; }
+.professional-assessment-page .professional-before strong { display: inline; }
+.professional-assessment-page .professional-return-link .button-link {
+  background: transparent;
+  box-shadow: none;
+}
+.professional-assessment-page .professional-return-link .button-link:hover {
+  background: rgba(132, 149, 255, .1);
+}
+@media (max-width: 42rem) {
+  .professional-assessment-page .professional-entry-option .button-link { width: 100%; }
+}
+
+/* University assessment page only — append to the existing shared stylesheet. */
+.university-assessment-page .assessment-intro p + p {
+  margin-top: .7rem;
+}
+
+.university-assessment-page .assessment-intro strong {
+  display: inline;
+}
+
+.university-assessment-page .assessment-submit {
+  margin-top: 1.5rem;
+}
+
+.university-assessment-page .assessment-submit .helper {
+  margin-top: .8rem;
+  max-width: 42rem;
+}
+
+.university-assessment-page .university-back-link .button-secondary {
+  background: transparent;
+  border-color: var(--border-strong);
+  box-shadow: none;
+}
+
+/* A-level assessment only: add to your existing application stylesheet. */
+.a-level-assessment-page .a-level-before {
+  margin-bottom: var(--space-4);
+}
+
+.a-level-assessment-page .a-level-before .helper {
+  margin-top: var(--space-2);
+}
+
+.a-level-assessment-page .a-level-form-panel {
+  margin-top: var(--space-4);
+}
+
+.a-level-assessment-page textarea::placeholder,
+.a-level-assessment-page input::placeholder {
+  color: var(--ink-subtle);
+  opacity: .8;
+}
+
+.a-level-assessment-page .a-level-submit {
+  margin-top: var(--space-5);
+}
+
+.a-level-assessment-page .a-level-submit .helper {
+  margin-top: var(--space-2);
+}
+
+.a-level-assessment-page .a-level-back-link {
+  margin-top: var(--space-4);
+}
+
+.a-level-assessment-page .a-level-back-link a {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.a-level-assessment-page .a-level-back-link a:hover {
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+
+
