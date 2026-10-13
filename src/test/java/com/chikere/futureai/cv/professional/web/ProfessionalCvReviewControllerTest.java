@@ -3,6 +3,7 @@ package com.chikere.futureai.cv.professional.web;
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentInputMetadata;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentUseCase;
+import com.chikere.futureai.assessment.professional.web.SubmissionTokenGuard;
 import com.chikere.futureai.cv.professional.application.*;
 import com.chikere.futureai.security.WebSecurityConfiguration;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.OptionalInt;
 import java.util.UUID;
+import java.util.concurrent.*;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,7 +33,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(ProfessionalCvReviewController.class)
 @Import({WebSecurityConfiguration.class, ProfessionalProfileEditMapper.class,
-        ProfessionalProfileValidator.class, ProfessionalProfileAssessmentMapper.class})
+        ProfessionalProfileValidator.class, ProfessionalProfileAssessmentMapper.class,
+        SubmissionTokenGuard.class})
 class ProfessionalCvReviewControllerTest {
     @Autowired MockMvc mvc;
     @MockitoBean ProfessionalAssessmentUseCase workflow;
@@ -338,5 +342,97 @@ class ProfessionalCvReviewControllerTest {
         session.setAttribute(ProfessionalCvSession.INPUT_METADATA, ProfessionalAssessmentInputMetadata.cvUpload(
                 "cv.pdf", "application/pdf", ProfessionalCvVersions.PARSER_V2, "professional-cv-extractor-v2", Instant.EPOCH));
         return session;
+    }
+
+    @Test
+    void doubleConfirmWithSameTokenCreatesOneAssessmentAndBothRedirectToIt() throws Exception {
+        var session = session();
+        UUID id = UUID.randomUUID();
+        when(workflow.submit(any(), any())).thenReturn(id);
+
+        String reviewHtml = mvc.perform(get("/professional-assessment/cv/review").session(session))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String token = extractConfirmToken(reviewHtml);
+
+        mvc.perform(post("/professional-assessment/cv/confirm").session(session).with(csrf())
+                        .param("confirmToken", token))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/professional-assessment/" + id));
+
+        mvc.perform(post("/professional-assessment/cv/confirm").session(session).with(csrf())
+                        .param("confirmToken", token))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/professional-assessment/" + id));
+
+        verify(workflow, times(1)).submit(any(), any());
+    }
+
+    @Test
+    void concurrentConfirmsWithSameTokenRunWorkflowOnceAndSecondGetsPreparedPage() throws Exception {
+        var insideWorkflow = new CountDownLatch(1);
+        var releaseWorkflow = new CountDownLatch(1);
+        UUID id = UUID.randomUUID();
+        when(workflow.submit(any(), any())).thenAnswer(inv -> {
+            insideWorkflow.countDown();
+            releaseWorkflow.await();
+            return id;
+        });
+
+        var session = session();
+        String reviewHtml = mvc.perform(get("/professional-assessment/cv/review").session(session))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String token = extractConfirmToken(reviewHtml);
+
+        var executor = Executors.newSingleThreadExecutor();
+        Future<org.springframework.test.web.servlet.MvcResult> firstResult = executor.submit(() ->
+                mvc.perform(post("/professional-assessment/cv/confirm").session(session).with(csrf())
+                        .param("confirmToken", token)).andReturn());
+
+        assertThat(insideWorkflow.await(5, TimeUnit.SECONDS)).isTrue();
+
+        mvc.perform(post("/professional-assessment/cv/confirm").session(session).with(csrf())
+                        .param("confirmToken", token))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/professional-assessment/await?token=" + token));
+
+        releaseWorkflow.countDown();
+        var first = firstResult.get(5, TimeUnit.SECONDS);
+        assertThat(first.getResponse().getStatus()).isEqualTo(302);
+        assertThat(first.getResponse().getRedirectedUrl()).isEqualTo("/professional-assessment/" + id);
+        executor.shutdown();
+        verify(workflow, times(1)).submit(any(), any());
+    }
+
+    @Test
+    void failedConfirmFreesTokenForRetry() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(workflow.submit(any(), any()))
+                .thenThrow(new IllegalStateException("provider down"))
+                .thenReturn(id);
+
+        var session = session();
+        String reviewHtml = mvc.perform(get("/professional-assessment/cv/review").session(session))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String token = extractConfirmToken(reviewHtml);
+
+        mvc.perform(post("/professional-assessment/cv/confirm").session(session).with(csrf())
+                        .param("confirmToken", token))
+                .andExpect(status().isServiceUnavailable());
+
+        // token was freed on failure — retry succeeds
+        mvc.perform(post("/professional-assessment/cv/confirm").session(session).with(csrf())
+                        .param("confirmToken", token))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/professional-assessment/" + id));
+
+        verify(workflow, times(2)).submit(any(), any());
+    }
+
+    private static String extractConfirmToken(String html) {
+        var m = Pattern.compile("name=\"confirmToken\"[^>]*value=\"([^\"]+)\"").matcher(html);
+        if (m.find()) return m.group(1);
+        m = Pattern.compile("value=\"([^\"]+)\"[^>]*name=\"confirmToken\"").matcher(html);
+        if (m.find()) return m.group(1);
+        throw new AssertionError("confirm token not found in form HTML");
     }
 }

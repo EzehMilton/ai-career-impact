@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.UUID;
 
@@ -29,31 +30,37 @@ public final class ProfessionalAssessmentController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProfessionalAssessmentController.class);
     private static final String FORM_VIEW = "professional-assessment/form";
+    private static final String IN_PROGRESS_VIEW = "professional-assessment/in-progress";
 
     private final ProfessionalAssessmentUseCase workflow;
     private final ProfessionalReportQuery reportService;
     private final ProfessionalAssessmentFormMapper formMapper;
     private final ProfessionalReportViewMapper reportViewMapper;
     private final ProfessionalReportPurchaseUseCase purchaseService;
+    private final SubmissionTokenGuard tokenGuard;
 
     public ProfessionalAssessmentController(
             ProfessionalAssessmentUseCase workflow,
             ProfessionalReportQuery reportService,
             ProfessionalAssessmentFormMapper formMapper,
             ProfessionalReportViewMapper reportViewMapper,
-            ProfessionalReportPurchaseUseCase purchaseService) {
+            ProfessionalReportPurchaseUseCase purchaseService,
+            SubmissionTokenGuard tokenGuard) {
         this.workflow = workflow;
         this.reportService = reportService;
         this.formMapper = formMapper;
         this.reportViewMapper = reportViewMapper;
         this.purchaseService = purchaseService;
+        this.tokenGuard = tokenGuard;
     }
 
     @GetMapping("/professional-assessment")
     public String showForm(Model model, HttpSession session) {
         session.removeAttribute(ProfessionalCvSession.INPUT_METADATA);
         session.removeAttribute(ProfessionalCvSession.PROFILE);
-        model.addAttribute("form", new ProfessionalAssessmentForm());
+        var form = new ProfessionalAssessmentForm();
+        form.setSubmissionToken(tokenGuard.issueToken(session));
+        model.addAttribute("form", form);
         return FORM_VIEW;
     }
 
@@ -67,18 +74,48 @@ public final class ProfessionalAssessmentController {
         if (bindingResult.hasErrors()) {
             return FORM_VIEW;
         }
+
+        String token = form.getSubmissionToken();
+        TokenStatus before = tokenGuard.claimToken(session, token);
+
+        if (before instanceof TokenStatus.Completed c) {
+            return "redirect:/professional-assessment/" + c.assessmentId();
+        }
+        if (before instanceof TokenStatus.InProgress) {
+            return "redirect:/professional-assessment/await?token=" + token;
+        }
+
+        // before is Registered (now claimed as InProgress) or null (unknown token — no idempotency)
         try {
             ProfessionalAssessmentState state = formMapper.toState(form);
             UUID id = workflow.submit(state, ProfessionalAssessmentInputMetadata.manual());
+            if (before instanceof TokenStatus.Registered) {
+                tokenGuard.completeToken(session, token, id);
+            }
             session.removeAttribute(ProfessionalCvSession.INPUT_METADATA);
             session.removeAttribute(ProfessionalCvSession.PROFILE);
             return "redirect:/professional-assessment/" + id;
         }
         catch (RuntimeException exception) {
             LOGGER.error("Professional assessment could not be completed", exception);
+            if (before instanceof TokenStatus.Registered) {
+                tokenGuard.freeToken(session, token);
+            }
             response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
             return "professional-assessment/error";
         }
+    }
+
+    @GetMapping("/professional-assessment/await")
+    public String awaitAssessment(@RequestParam String token, HttpSession session) {
+        TokenStatus status = tokenGuard.statusOf(session, token);
+        if (status instanceof TokenStatus.Completed c) {
+            return "redirect:/professional-assessment/" + c.assessmentId();
+        }
+        if (status instanceof TokenStatus.InProgress) {
+            return IN_PROGRESS_VIEW;
+        }
+        return "redirect:/professional-assessment";
     }
 
     @GetMapping("/professional-assessment/{assessmentId}")

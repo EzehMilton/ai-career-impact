@@ -13,6 +13,13 @@
   <title th:text="${pageTitle} + ' | AI Career Impact'">AI Career Impact</title>
   <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
 </head>
+<head th:fragment="headAutoRefresh(pageTitle)">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="5">
+  <title th:text="${pageTitle} + ' | AI Career Impact'">AI Career Impact</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+</head>
 <body>
 
 <!--/*

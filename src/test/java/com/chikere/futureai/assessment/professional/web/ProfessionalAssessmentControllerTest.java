@@ -22,6 +22,8 @@ import org.springframework.mock.web.MockHttpSession;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -31,7 +33,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ProfessionalAssessmentController.class)
-@Import({WebSecurityConfiguration.class, ProfessionalAssessmentFormMapper.class, ProfessionalReportViewMapper.class})
+@Import({WebSecurityConfiguration.class, ProfessionalAssessmentFormMapper.class, ProfessionalReportViewMapper.class,
+        SubmissionTokenGuard.class})
 class ProfessionalAssessmentControllerTest {
     private static final UUID ID = UUID.fromString("30eff44e-eaa0-4d2e-a853-90983b1c150a");
     @Autowired MockMvc mvc;
@@ -178,6 +181,147 @@ class ProfessionalAssessmentControllerTest {
                 "professional-evidence-v1", com.chikere.futureai.evidence.professional.application.EvidenceSource.LOCAL_FIXTURE,
                 "secret-provider", com.chikere.futureai.evidence.professional.application.EvidenceStatus.AVAILABLE,
                 time, List.of(item));
+    }
+
+    @Test
+    void concurrentPostsWithSameTokenRunWorkflowOnceAndSecondGetsPreparedPage() throws Exception {
+        var insideWorkflow = new CountDownLatch(1);
+        var releaseWorkflow = new CountDownLatch(1);
+        when(workflow.submit(any(), any())).thenAnswer(inv -> {
+            insideWorkflow.countDown();
+            releaseWorkflow.await();
+            return ID;
+        });
+
+        var session = new MockHttpSession();
+        String formHtml = mvc.perform(get("/professional-assessment").session(session))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String token = extractSubmissionToken(formHtml);
+
+        var executor = Executors.newSingleThreadExecutor();
+        Future<org.springframework.test.web.servlet.MvcResult> firstResult = executor.submit(() ->
+                mvc.perform(validPost().session(session).with(csrf()).param("submissionToken", token))
+                        .andReturn());
+
+        assertThat(insideWorkflow.await(5, TimeUnit.SECONDS)).isTrue();
+
+        // second POST arrives while first is inside workflow
+        mvc.perform(validPost().session(session).with(csrf()).param("submissionToken", token))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/professional-assessment/await?token=" + token));
+
+        releaseWorkflow.countDown();
+        var first = firstResult.get(5, TimeUnit.SECONDS);
+        assertThat(first.getResponse().getStatus()).isEqualTo(302);
+        assertThat(first.getResponse().getRedirectedUrl()).isEqualTo("/professional-assessment/" + ID);
+        executor.shutdown();
+
+        // await endpoint redirects to result once token is COMPLETED
+        mvc.perform(get("/professional-assessment/await").session(session).param("token", token))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/professional-assessment/" + ID));
+
+        verify(workflow, times(1)).submit(any(), any());
+    }
+
+    @Test
+    void awaitEndpointShowsPreparedPageWhileInProgressAndRedirectsWhenComplete() throws Exception {
+        var insideWorkflow = new CountDownLatch(1);
+        var releaseWorkflow = new CountDownLatch(1);
+        when(workflow.submit(any(), any())).thenAnswer(inv -> {
+            insideWorkflow.countDown();
+            releaseWorkflow.await();
+            return ID;
+        });
+
+        var session = new MockHttpSession();
+        String formHtml = mvc.perform(get("/professional-assessment").session(session))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String token = extractSubmissionToken(formHtml);
+
+        var executor = Executors.newSingleThreadExecutor();
+        Future<org.springframework.test.web.servlet.MvcResult> postResult = executor.submit(() ->
+                mvc.perform(validPost().session(session).with(csrf()).param("submissionToken", token)).andReturn());
+
+        assertThat(insideWorkflow.await(5, TimeUnit.SECONDS)).isTrue();
+
+        // Token is IN_PROGRESS while workflow is running
+        String html = mvc.perform(get("/professional-assessment/await").session(session).param("token", token))
+                .andExpect(status().isOk())
+                .andExpect(view().name("professional-assessment/in-progress"))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(html).contains("being prepared", "refresh");
+
+        releaseWorkflow.countDown();
+        postResult.get(5, TimeUnit.SECONDS);
+
+        // Token is COMPLETED after workflow finishes
+        mvc.perform(get("/professional-assessment/await").session(session).param("token", token))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/professional-assessment/" + ID));
+        executor.shutdown();
+    }
+
+    @Test
+    void failedAssessmentFreesTokenForRetry() throws Exception {
+        when(workflow.submit(any(), any()))
+                .thenThrow(new IllegalStateException("provider down"))
+                .thenReturn(ID);
+
+        var session = new MockHttpSession();
+        String formHtml = mvc.perform(get("/professional-assessment").session(session))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String token = extractSubmissionToken(formHtml);
+
+        mvc.perform(validPost().session(session).with(csrf()).param("submissionToken", token))
+                .andExpect(status().isServiceUnavailable());
+
+        // token was removed on failure — retry succeeds
+        mvc.perform(validPost().session(session).with(csrf()).param("submissionToken", token))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/professional-assessment/" + ID));
+
+        verify(workflow, times(2)).submit(any(), any());
+    }
+
+    @Test
+    void unknownTokenProceedsNormally() throws Exception {
+        when(workflow.submit(any(), any())).thenReturn(ID);
+        // POST with a token that was never registered in session (no prior GET)
+        mvc.perform(validPost().with(csrf()).param("submissionToken", "not-a-registered-token"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/professional-assessment/" + ID));
+        verify(workflow).submit(any(), any());
+    }
+
+    @Test
+    void doublePostWithSameTokenCreatesOneAssessmentAndBothRedirectToIt() throws Exception {
+        when(workflow.submit(any(), any())).thenReturn(ID);
+        var session = new MockHttpSession();
+
+        String formHtml = mvc.perform(get("/professional-assessment").session(session))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String token = extractSubmissionToken(formHtml);
+
+        mvc.perform(validPost().session(session).with(csrf()).param("submissionToken", token))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/professional-assessment/" + ID));
+
+        mvc.perform(validPost().session(session).with(csrf()).param("submissionToken", token))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/professional-assessment/" + ID));
+
+        verify(workflow, times(1)).submit(any(), any());
+    }
+
+    private static String extractSubmissionToken(String html) {
+        var m = Pattern.compile("name=\"submissionToken\"[^>]*value=\"([^\"]+)\"").matcher(html);
+        if (m.find()) return m.group(1);
+        m = Pattern.compile("value=\"([^\"]+)\"[^>]*name=\"submissionToken\"").matcher(html);
+        if (m.find()) return m.group(1);
+        throw new AssertionError("submission token not found in form HTML");
     }
 
     private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder validPost() {

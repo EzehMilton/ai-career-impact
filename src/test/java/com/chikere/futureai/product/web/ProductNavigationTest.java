@@ -96,8 +96,8 @@ class ProductNavigationTest {
     void theProfessionalJourneyStillOffersBothManualEntryAndCvUpload() throws Exception {
         String form = get("/professional-assessment").body();
 
-        assertThat(form).contains("Upload my CV", "/professional-assessment/cv",
-                "multipart/form-data", "Uploading a CV is optional");
+        assertThat(form).contains("Have a CV?", "/professional-assessment/cv",
+                "multipart/form-data", "Analyse my CV", "Tell us about your work");
     }
 
     @Test

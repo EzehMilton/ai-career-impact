@@ -48,6 +48,7 @@
 
     <div class="button-row">
       <form th:action="@{/professional-assessment/cv/confirm}" method="post">
+        <input type="hidden" name="confirmToken" th:value="${confirmToken}" value="">
         <button type="submit">Continue with this profile</button>
       </form>
       <a class="button-link button-secondary" th:href="@{/professional-assessment/cv/edit}">Edit what we understood</a>
