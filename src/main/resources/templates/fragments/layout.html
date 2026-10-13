@@ -67,13 +67,19 @@
 
 <footer class="site-footer" th:fragment="siteFooter">
   <div class="site-footer-inner">
-    <p class="site-footer-note">These assessments describe characteristics of the work, course or choices you tell us about. They do not predict your personal outcome.</p>
     <nav class="site-footer-nav" aria-label="Footer">
-      <a th:href="@{/methodology}" href="/methodology">How this works</a>
-      <a th:href="@{/privacy}" href="/privacy">Privacy</a>
+      <a th:href="@{/methodology}" href="/methodology">
+        How this works
+      </a>
+      <a th:href="@{/privacy}" href="/privacy">
+        Privacy
+      </a>
     </nav>
+
     <p class="site-footer-meta">
-      <span th:text="'© ' + ${currentYear} + ' AI Career Impact'">© AI Career Impact</span>
+      <span th:text="'© ' + ${currentYear} + ' AI Career Impact'">
+        © AI Career Impact
+      </span>
     </p>
   </div>
 </footer>
