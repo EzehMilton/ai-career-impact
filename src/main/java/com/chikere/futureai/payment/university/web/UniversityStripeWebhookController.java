@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
  * university product metadata are ignored rather than treated as errors.</p>
  */
 @RestController
-@Profile("live-payment & !local-fixture")
+@Profile({"prod", "dev-no-jev"})
 public final class UniversityStripeWebhookController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UniversityStripeWebhookController.class);

@@ -40,8 +40,8 @@ class ProfessionalCvReviewControllerTest {
         String html = mvc.perform(get("/professional-assessment/cv/review").session(session()))
                 .andExpect(status().isOk()).andExpect(view().name("professional-assessment/cv-review"))
                 .andReturn().getResponse().getContentAsString();
-        assertThat(html).contains("We analysed your CV", "Software Architect", "Design platforms",
-                "Continue with this profile", "Edit what we understood")
+        assertThat(html).contains("We've used your CV", "Software Architect", "Design platforms",
+                "Confirm and assess my work", "Edit my profile")
                 .doesNotContain("PRIVATE RAW CV");
     }
 
@@ -50,7 +50,7 @@ class ProfessionalCvReviewControllerTest {
         var session = session();
         mvc.perform(get("/professional-assessment/cv/edit").session(session))
                 .andExpect(status().isOk()).andExpect(content().string(
-                        org.hamcrest.Matchers.containsString("Edit what we understood")));
+                        org.hamcrest.Matchers.containsString("Edit your work profile")));
 
         mvc.perform(post("/professional-assessment/cv/edit").session(session).with(csrf())
                         .param("currentRole", "Principal Architect")
@@ -94,8 +94,11 @@ class ProfessionalCvReviewControllerTest {
         verifyNoInteractions(workflow);
     }
 
-    private static final String GUIDANCE = "CVs usually list achievements rather than everyday tasks. Add the main things you do in a "
-                + "typical week, even if your CV doesn't mention them, and remove one-offs or tasks from earlier jobs.";
+    private static final String REVIEW_GUIDANCE = "CVs often highlight achievements rather than everyday work. "
+                + "Add regular activities that are missing, and remove one-off projects or tasks from earlier jobs "
+                + "if they are no longer part of your role.";
+    private static final String EDIT_GUIDANCE = "List the main things you do in a typical week, one per line. "
+                + "Add missing regular tasks and remove one-off achievements or work from previous roles.";
 
     @ParameterizedTest
     @CsvSource(nullValues = "NONE", value = {
@@ -134,9 +137,9 @@ class ProfessionalCvReviewControllerTest {
                 .andReturn().getResponse().getContentAsString();
         String edit = mvc.perform(get("/professional-assessment/cv/edit").session(session()))
                 .andReturn().getResponse().getContentAsString();
-        assertThat(review).containsOnlyOnce(GUIDANCE);
-        assertThat(review.indexOf(GUIDANCE)).isGreaterThan(review.indexOf("Design platforms"));
-        assertThat(edit).containsOnlyOnce(GUIDANCE);
+        assertThat(review).containsOnlyOnce(REVIEW_GUIDANCE);
+        assertThat(review.indexOf("Design platforms")).isGreaterThan(review.indexOf(REVIEW_GUIDANCE));
+        assertThat(edit).containsOnlyOnce(EDIT_GUIDANCE);
     }
 
     @Test
@@ -144,7 +147,7 @@ class ProfessionalCvReviewControllerTest {
         var session = session(profile("Northbridge Digital", "March 2019", "Present"));
         String form = mvc.perform(get("/professional-assessment/cv/edit").session(session))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        assertThat(form).contains("Employer", "Started", "Ended (or Present)",
+        assertThat(form).contains("Employer", "Role started", "Role ended",
                 "value=\"Northbridge Digital\"", "value=\"March 2019\"", "value=\"Present\"");
 
         mvc.perform(editRequest(session).param("currentEmployer", " Harbour Lane ")
@@ -196,10 +199,10 @@ class ProfessionalCvReviewControllerTest {
                         "Developer at <b>Sopra</b> & Co (04/2023 – 08/2025)")))))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
 
-        assertThat(html).contains("Based on: Software Engineer at Push Gaming (08/2025 – Present)",
-                "Based on: Developer at &lt;b&gt;Sopra&lt;/b&gt; &amp; Co (04/2023 – 08/2025)")
+        assertThat(html).contains("Software Engineer at Push Gaming (08/2025 – Present)",
+                "Developer at &lt;b&gt;Sopra&lt;/b&gt; &amp; Co (04/2023 – 08/2025)")
                 .doesNotContain("<b>Sopra</b>");
-        assertThat(html.indexOf("Based on:")).isGreaterThan(html.indexOf("Years of experience"));
+        assertThat(html.indexOf("Software Engineer at Push Gaming")).isGreaterThan(html.indexOf("Experience included"));
     }
 
     @Test
@@ -207,7 +210,7 @@ class ProfessionalCvReviewControllerTest {
         String html = mvc.perform(get("/professional-assessment/cv/review").session(session(profile(List.of()))))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
 
-        assertThat(html).contains("Years of experience").doesNotContain("Based on:");
+        assertThat(html).contains("Relevant experience identified").doesNotContain("Experience included");
     }
 
     @Test
@@ -221,7 +224,7 @@ class ProfessionalCvReviewControllerTest {
         assertThat(profile.yearsExperience()).hasValue(15);
         assertThat(profile.experienceBasis()).isEmpty();
         assertThat(mvc.perform(get("/professional-assessment/cv/review").session(session))
-                .andReturn().getResponse().getContentAsString()).doesNotContain("Based on:");
+                .andReturn().getResponse().getContentAsString()).doesNotContain("Experience included");
     }
 
     @Test
@@ -260,7 +263,7 @@ class ProfessionalCvReviewControllerTest {
                 basis, excluded, ProfessionalProfileCompleteness.COMPLETE, List.of());
     }
 
-    private static final String COUNT_HINT = "If any of these should count, change your years of experience.";
+    private static final String COUNT_HINT = "If any of the excluded experience should count, you can change your years of experience when editing your profile.";
 
     @Test
     void reviewPageListsJobsThatWereNotCountedAndEscapesThem() throws Exception {
@@ -270,12 +273,12 @@ class ProfessionalCvReviewControllerTest {
                                 "Designer at <i>Buro</i> & Partners (06/2021 – 04/2023)")))))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
 
-        assertThat(html).contains("Not counted: EOD Technician at US Navy (03/2009 – 02/2016)",
-                "Not counted: Designer at &lt;i&gt;Buro&lt;/i&gt; &amp; Partners (06/2021 – 04/2023)")
+        assertThat(html).contains("EOD Technician at US Navy (03/2009 – 02/2016)",
+                "Designer at &lt;i&gt;Buro&lt;/i&gt; &amp; Partners (06/2021 – 04/2023)")
                 .doesNotContain("<i>Buro</i>");
         assertThat(html).containsOnlyOnce(COUNT_HINT);
-        assertThat(html.indexOf("Not counted:")).isGreaterThan(html.indexOf("Based on:"));
-        assertThat(html.indexOf(COUNT_HINT)).isGreaterThan(html.lastIndexOf("Not counted:"));
+        assertThat(html.indexOf("Experience not included")).isGreaterThan(html.indexOf("Experience included"));
+        assertThat(html.indexOf(COUNT_HINT)).isGreaterThan(html.indexOf("Experience not included"));
     }
 
     @Test
@@ -284,7 +287,7 @@ class ProfessionalCvReviewControllerTest {
                         List.of("Software Engineer at Push Gaming (08/2025 – Present)")))))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
 
-        assertThat(html).contains("Based on:").doesNotContain("Not counted:", COUNT_HINT);
+        assertThat(html).contains("Experience included").doesNotContain("Experience not included", COUNT_HINT);
     }
 
     @Test
@@ -298,7 +301,7 @@ class ProfessionalCvReviewControllerTest {
         assertThat(profile.experienceBasis()).isEmpty();
         assertThat(profile.experienceExcluded()).isEmpty();
         assertThat(mvc.perform(get("/professional-assessment/cv/review").session(session))
-                .andReturn().getResponse().getContentAsString()).doesNotContain("Not counted:", COUNT_HINT);
+                .andReturn().getResponse().getContentAsString()).doesNotContain("Experience not included", COUNT_HINT);
     }
 
     @Test

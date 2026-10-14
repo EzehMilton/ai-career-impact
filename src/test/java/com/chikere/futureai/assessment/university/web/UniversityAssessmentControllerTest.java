@@ -79,8 +79,8 @@ class UniversityAssessmentControllerTest {
                 .andReturn().getResponse().getContentAsString();
 
         assertThat(html).contains("What does the course cover?", "Key modules or topics",
-                "Skills you expect to develop", "Career areas you are considering",
-                "There are no right or wrong answers");
+                "Skills the course develops", "Career areas you're considering",
+                "does not generate a career recommendation");
         assertThat(html).doesNotContain("Years of experience", "job title", "your work",
                 "AI Exposure", "future-proof");
         verifyNoInteractions(workflow, reportService);
@@ -124,10 +124,10 @@ class UniversityAssessmentControllerTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("noindex,nofollow")))
                 .andReturn().getResponse().getContentAsString();
 
-        assertThat(html).contains("Free course assessment", "Computer Science", "Future Readiness",
+        assertThat(html).contains("Free university course assessment", "Computer Science", "Future Readiness",
                 "AI Complementarity", "Human Differentiation", "Skill Transferability",
-                "Career Adaptability", "What this assessment suggests", "What Future Readiness means",
-                "not a guarantee of employment", "Unlock the full course report",
+                "Career Adaptability", "Your results at a glance", "What Future Readiness means",
+                "not a guarantee of employment", "Explore your course in more detail",
                 "&lt;script&gt;meaning&lt;/script&gt;");
         assertThat(html).doesNotContain("Premium readiness detail", "Premium action one",
                 "Skills worth developing alongside the course", "Illustrative evidence title",

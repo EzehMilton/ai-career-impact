@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Profile;
 import java.time.Clock;
 
 @Configuration(proxyBeanMethods = false)
-@Profile("!local-fixture | live-cv-extraction")
+@Profile({"prod", "dev-no-jev"})
 public class OpenAiProfessionalProfileConfiguration {
     @Bean
     @ConditionalOnProperty(prefix = "spring.ai.model", name = "chat", havingValue = "openai")

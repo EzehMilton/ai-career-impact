@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.beans.factory.annotation.Value;
 
 @Configuration(proxyBeanMethods = false)
-@Profile("local-fixture")
+@Profile({"dev", "dev-no-jev"})
 public class LocalFixtureProfessionalConfiguration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LocalFixtureProfessionalConfiguration.class);

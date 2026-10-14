@@ -55,7 +55,10 @@ class ProductShellConsistencyTest {
     void onlyThePaidReportPagesOfferThePdfDownload() throws IOException {
         for (Map.Entry<Path, String> page : pages().entrySet()) {
             boolean paidReport = page.getKey().getFileName().toString().equals("paid-report.html");
-            assertThat(page.getValue().contains("report.pdf"))
+            // Strip parser comments (<!--/* ... */-->) — they are never sent to the browser,
+            // so a sample link placeholder inside one is not a real download offer.
+            String live = page.getValue().replaceAll("(?s)<!--/\\*.*?\\*/-->", "");
+            assertThat(live.contains("report.pdf"))
                     .as("%s offers a PDF download", page.getKey()).isEqualTo(paidReport);
         }
     }

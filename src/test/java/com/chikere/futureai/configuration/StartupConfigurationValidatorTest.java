@@ -21,138 +21,51 @@ class StartupConfigurationValidatorTest {
             "app.professional.report.stripe-price-id", "app.university.report.stripe-price-id",
             "app.a-level.report.stripe-price-id"};
 
+    private static final String[] EVIDENCE = {
+            "app.professional.evidence.classified-profession",
+            "app.professional.evidence.canonical-occupation",
+            "app.professional.evidence.soc2020-code"};
+
+    // ── dev ─────────────────────────────────────────────────────────────────────────────────────
+
     @Test
-    void localFixtureNeedsNoProductionConfigurationAtAll() {
-        // The whole point of the fixture profile is that a developer can run the product with
-        // nothing but a database. If this test ever needs a secret added to it, something has gone
-        // wrong in the main code.
-        assertThatCode(() -> StartupConfigurationValidator.validate(environment("local-fixture")))
+    void devNeedsNoProductionConfigurationAtAll() {
+        assertThatCode(() -> StartupConfigurationValidator.validate(environment("dev")))
                 .doesNotThrowAnyException();
     }
 
     @Test
-    void liveCvExtractionRequiresOnlyTheOpenAiKey() {
-        assertThatThrownBy(() -> StartupConfigurationValidator.validate(
-                environment("local-fixture", "live-cv-extraction")))
-                .isInstanceOf(ConfigurationProblemException.class)
-                .hasMessageContaining("Missing required configuration: OPENAI_API_KEY")
-                .hasMessageNotContaining("TYPESAFE_API_KEY")
-                .hasMessageNotContaining("stripe")
-                .hasMessageNotContaining("evidence");
+    void devDoesNotRequireOpenAiKey() {
+        assertThatCode(() -> StartupConfigurationValidator.validate(environment("dev")))
+                .doesNotThrowAnyException();
+    }
 
-        assertThatCode(() -> StartupConfigurationValidator.validate(
-                environment("local-fixture", "live-cv-extraction")
-                        .withProperty("OPENAI_API_KEY", "test-only-key")))
+    // ── dev-no-jev ───────────────────────────────────────────────────────────────────────────────
+
+    @Test
+    void devNoJevRequiresOpenAiKeyButNotTypeSafeKey() {
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment("dev-no-jev")))
+                .isInstanceOf(ConfigurationProblemException.class)
+                .hasMessageContaining("OPENAI_API_KEY")
+                .hasMessageNotContaining("TYPESAFE_API_KEY");
+    }
+
+    @Test
+    void devNoJevDoesNotRequireEvidenceVariables() {
+        MockEnvironment env = environment("dev-no-jev")
+                .withProperty("OPENAI_API_KEY", "test-only-key");
+        for (String s : STRIPE) env.withProperty(s, "configured");
+
+        assertThatCode(() -> StartupConfigurationValidator.validate(env))
                 .doesNotThrowAnyException();
     }
 
     @Test
-    void liveCvExtractionCannotAccidentallyBecomeAStandaloneOrProductionMode() {
-        assertThatThrownBy(() -> StartupConfigurationValidator.validate(
-                environment("live-cv-extraction").withProperty("OPENAI_API_KEY", "test-only-key")))
-                .isInstanceOf(ConfigurationProblemException.class)
-                .hasMessageContaining("must be combined with 'local-fixture'");
-    }
+    void devNoJevNamesAllMissingStripeSettingsAtOnce() {
+        MockEnvironment env = environment("dev-no-jev")
+                .withProperty("OPENAI_API_KEY", "test-only-key");
 
-    @Test
-    void anOrdinaryDevelopmentContextWithNoProfileHasNoProductionValidation() {
-        assertThatCode(() -> StartupConfigurationValidator.validate(environment()))
-                .doesNotThrowAnyException();
-    }
-
-    @Test
-    void productionAndFixturesTogetherIsRefused() {
-        assertThatThrownBy(() -> StartupConfigurationValidator.validate(
-                environment("prod", "local-fixture")))
-                .isInstanceOf(ConfigurationProblemException.class)
-                .hasMessageContaining("'prod' and 'local-fixture' are contradictory");
-    }
-
-    @Test
-    void jevCaptureCannotRunAlongsideProduction() {
-        assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment("prod", "jev-capture")))
-                .isInstanceOf(ConfigurationProblemException.class)
-                .hasMessageContaining("'prod' and 'jev-capture' are contradictory");
-    }
-
-    @Test
-    void jevCaptureIsAllowedInDevelopment() {
-        assertThatCode(() -> StartupConfigurationValidator.validate(environment("jev-capture")))
-                .doesNotThrowAnyException();
-        assertThatCode(() -> StartupConfigurationValidator.validate(environment("local-fixture", "jev-capture")))
-                .doesNotThrowAnyException();
-    }
-
-    @Test
-    void askingForLivePaymentWhileFixturesOverrideItIsRefused() {
-        // Silently simulating a payment for someone who asked for a real one is the worst available
-        // outcome, so this is a startup failure rather than a warning.
-        assertThatThrownBy(() -> StartupConfigurationValidator.validate(
-                environment("local-fixture", "live-payment")))
-                .isInstanceOf(ConfigurationProblemException.class)
-                .hasMessageContaining("no real payment would be taken");
-    }
-
-    @Test
-    void askingForLiveEvidenceWhileFixturesOverrideItIsRefused() {
-        assertThatThrownBy(() -> StartupConfigurationValidator.validate(
-                environment("local-fixture", "live-evidence")))
-                .isInstanceOf(ConfigurationProblemException.class)
-                .hasMessageContaining("no real evidence would be used");
-    }
-
-    @Test
-    void productionWithoutAPublicBaseUrlIsRefused() {
-        MockEnvironment environment = environment("prod");
-
-        assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment))
-                .isInstanceOf(ConfigurationProblemException.class)
-                .hasMessageContaining("Missing required configuration: app.public-base-url");
-    }
-
-    @Test
-    void productionRefusesAnInsecurePublicBaseUrlAndSaysWhy() {
-        MockEnvironment environment = environment("prod")
-                .withProperty("app.public-base-url", "http://example.com");
-
-        assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment))
-                .isInstanceOf(ConfigurationProblemException.class)
-                .hasMessageContaining("must use https in production")
-                .hasMessageContaining("app.public-base-url-allow-http");
-    }
-
-    @Test
-    void productionAcceptsPlainHttpOnlyWhenTheOperatorSaysSoDeliberately() {
-        // TLS terminating at a load balancer is a real deployment, so there is an escape hatch —
-        // but it has to be asked for, rather than being what happens when nobody thought about it.
-        MockEnvironment environment = productionEnvironment()
-                .withProperty("app.public-base-url", "http://internal.example")
-                .withProperty("app.public-base-url-allow-http", "true");
-
-        assertThatCode(() -> StartupConfigurationValidator.validate(environment))
-                .doesNotThrowAnyException();
-    }
-
-    @Test
-    void productionWithAnHttpsBaseUrlStarts() {
-        assertThatCode(() -> StartupConfigurationValidator.validate(productionEnvironment()
-                .withProperty("app.public-base-url", "https://example.com")))
-                .doesNotThrowAnyException();
-    }
-
-    @Test
-    void productionNamesBothMissingAiKeysWithoutRevealingValues() {
-        assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment("prod")
-                .withProperty("app.public-base-url", "https://example.com")))
-                .isInstanceOf(ConfigurationProblemException.class)
-                .hasMessageContaining("TYPESAFE_API_KEY")
-                .hasMessageContaining("OPENAI_API_KEY");
-    }
-
-    @Test
-    void livePaymentNamesEveryMissingStripeSettingAtOnce() {
-        // One restart should tell an operator everything that is wrong, not just the first thing.
-        assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment("live-payment")))
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(env))
                 .isInstanceOf(ConfigurationProblemException.class)
                 .satisfies(failure -> {
                     for (String setting : STRIPE) {
@@ -162,28 +75,133 @@ class StartupConfigurationValidatorTest {
     }
 
     @Test
-    void livePaymentWithEveryStripeSettingStarts() {
-        MockEnvironment environment = environment("live-payment");
-        for (String setting : STRIPE) {
-            environment.withProperty(setting, "configured");
-        }
+    void devNoJevMessagesIdentifyTheProfile() {
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment("dev-no-jev")))
+                .isInstanceOf(ConfigurationProblemException.class)
+                .hasMessageContaining("dev-no-jev");
+    }
 
-        assertThatCode(() -> StartupConfigurationValidator.validate(environment))
+    // ── prod ────────────────────────────────────────────────────────────────────────────────────
+
+    @Test
+    void prodNamesAllMissingAiKeysWithoutRevealingValues() {
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment("prod")
+                .withProperty("app.public-base-url", "https://example.com")))
+                .isInstanceOf(ConfigurationProblemException.class)
+                .hasMessageContaining("TYPESAFE_API_KEY")
+                .hasMessageContaining("OPENAI_API_KEY");
+    }
+
+    @Test
+    void prodWithoutAPublicBaseUrlIsRefused() {
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment("prod")))
+                .isInstanceOf(ConfigurationProblemException.class)
+                .hasMessageContaining("Missing required configuration: app.public-base-url");
+    }
+
+    @Test
+    void prodRefusesAnInsecurePublicBaseUrlAndSaysWhy() {
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(
+                environment("prod").withProperty("app.public-base-url", "http://example.com")))
+                .isInstanceOf(ConfigurationProblemException.class)
+                .hasMessageContaining("must use https in production")
+                .hasMessageContaining("app.public-base-url-allow-http");
+    }
+
+    @Test
+    void prodAcceptsPlainHttpOnlyWhenTheOperatorSaysSoDeliberately() {
+        assertThatCode(() -> StartupConfigurationValidator.validate(
+                prodEnvironment()
+                        .withProperty("app.public-base-url", "http://internal.example")
+                        .withProperty("app.public-base-url-allow-http", "true")))
                 .doesNotThrowAnyException();
     }
 
     @Test
-    void liveEvidenceRequiresItsOccupationMappingButNothingFromStripe() {
-        assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment("live-evidence")))
-                .isInstanceOf(ConfigurationProblemException.class)
-                .hasMessageContaining("app.professional.evidence.classified-profession")
-                .hasMessageContaining("app.professional.evidence.soc2020-code")
-                .hasMessageNotContaining("stripe");
+    void prodWithAnHttpsBaseUrlAndAllSettingsStarts() {
+        assertThatCode(() -> StartupConfigurationValidator.validate(
+                prodEnvironment().withProperty("app.public-base-url", "https://example.com")))
+                .doesNotThrowAnyException();
     }
 
     @Test
+    void prodNamesAllMissingStripeSettingsAtOnce() {
+        MockEnvironment env = environment("prod")
+                .withProperty("TYPESAFE_API_KEY", "test-only-jev-key")
+                .withProperty("OPENAI_API_KEY", "test-only-openai-key")
+                .withProperty("app.public-base-url", "https://example.com");
+        for (String s : EVIDENCE) env.withProperty(s, "configured");
+
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(env))
+                .isInstanceOf(ConfigurationProblemException.class)
+                .satisfies(failure -> {
+                    for (String setting : STRIPE) {
+                        assertThat(failure).hasMessageContaining("Missing required configuration: " + setting);
+                    }
+                });
+    }
+
+    @Test
+    void prodNamesAllMissingEvidenceSettingsAtOnce() {
+        MockEnvironment env = environment("prod")
+                .withProperty("TYPESAFE_API_KEY", "test-only-jev-key")
+                .withProperty("OPENAI_API_KEY", "test-only-openai-key")
+                .withProperty("app.public-base-url", "https://example.com");
+        for (String s : STRIPE) env.withProperty(s, "configured");
+
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(env))
+                .isInstanceOf(ConfigurationProblemException.class)
+                .satisfies(failure -> {
+                    for (String setting : EVIDENCE) {
+                        assertThat(failure).hasMessageContaining("Missing required configuration: " + setting);
+                    }
+                });
+    }
+
+    @Test
+    void prodMessagesIdentifyTheProfile() {
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment("prod")))
+                .isInstanceOf(ConfigurationProblemException.class)
+                .hasMessageContaining("prod");
+    }
+
+    // ── profile exclusivity ──────────────────────────────────────────────────────────────────────
+
+    @Test
+    void devAndProdTogetherIsRefused() {
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(
+                environment("dev", "prod")))
+                .isInstanceOf(ConfigurationProblemException.class)
+                .hasMessageContaining("'dev' and 'prod' are contradictory");
+    }
+
+    @Test
+    void devAndDevNoJevTogetherIsRefused() {
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(
+                environment("dev", "dev-no-jev")))
+                .isInstanceOf(ConfigurationProblemException.class)
+                .hasMessageContaining("'dev' and 'dev-no-jev' are contradictory");
+    }
+
+    @Test
+    void devNoJevAndProdTogetherIsRefused() {
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(
+                environment("dev-no-jev", "prod")))
+                .isInstanceOf(ConfigurationProblemException.class)
+                .hasMessageContaining("'dev-no-jev' and 'prod' are contradictory");
+    }
+
+    @Test
+    void noProfileActiveIsPermittedForLocalDevelopmentWithoutSpringProfilesActive() {
+        assertThatCode(() -> StartupConfigurationValidator.validate(environment()))
+                .doesNotThrowAnyException();
+    }
+
+    // ── safety ──────────────────────────────────────────────────────────────────────────────────
+
+    @Test
     void noFailureMessageEverRepeatsAConfiguredValue() {
-        MockEnvironment environment = environment("prod", "live-payment")
+        MockEnvironment environment = environment("prod")
                 .withProperty("app.public-base-url", "http://not-secret-but-still-not-echoed.example")
                 .withProperty("app.stripe.secret-key", "sk_live_pretend_secret_value");
 
@@ -193,15 +211,20 @@ class StartupConfigurationValidatorTest {
                 .hasMessageNotContaining("not-secret-but-still-not-echoed");
     }
 
+    // ── helpers ──────────────────────────────────────────────────────────────────────────────────
+
     private MockEnvironment environment(String... profiles) {
         MockEnvironment environment = new MockEnvironment();
         environment.setActiveProfiles(profiles);
         return environment;
     }
 
-    private MockEnvironment productionEnvironment() {
-        return environment("prod")
+    private MockEnvironment prodEnvironment() {
+        MockEnvironment env = environment("prod")
                 .withProperty("TYPESAFE_API_KEY", "test-only-jev-key")
                 .withProperty("OPENAI_API_KEY", "test-only-openai-key");
+        for (String s : STRIPE) env.withProperty(s, "configured");
+        for (String s : EVIDENCE) env.withProperty(s, "configured");
+        return env;
     }
 }

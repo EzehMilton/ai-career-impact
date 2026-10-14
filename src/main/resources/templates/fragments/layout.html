@@ -46,7 +46,7 @@
 
 <!--/*
   Global development-mode banner. `developmentMode` is supplied by DevelopmentModeAdvice and is
-  false in every profile except local-fixture, so this renders nothing in normal operation.
+  false in every profile except dev, so this renders nothing in normal operation.
 */-->
 <div th:fragment="devBanner" th:if="${developmentMode}">
   <div class="dev-banner" role="status">

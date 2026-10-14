@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Profile;
 import java.time.Clock;
 
 @Configuration(proxyBeanMethods = false)
-@Profile("local-fixture")
+@Profile("dev")
 public class LocalFixtureUniversityPaymentConfiguration {
 
     @Bean

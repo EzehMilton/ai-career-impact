@@ -53,7 +53,7 @@ class DevelopmentModeShellTest {
         String html = mvc.perform(get("/")).andReturn().getResponse().getContentAsString();
 
         assertThat(html).contains("Development shortcuts", "class=\"panel dev-section results-section\"");
-        assertThat(html).contains("only under the <code>local-fixture</code> profile");
+        assertThat(html).contains("only under the <code>dev</code> profile");
         // No database internals or ready-made assessment identifiers are ever exposed.
         assertThat(html).doesNotContainPattern("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
         assertThat(html).doesNotContain("jdbc:", "postgres", "schema", "sk_test", "whsec_");

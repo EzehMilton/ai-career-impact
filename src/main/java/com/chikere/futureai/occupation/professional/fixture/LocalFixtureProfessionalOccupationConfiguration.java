@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 @Configuration(proxyBeanMethods = false)
-@Profile("local-fixture")
+@Profile({"dev", "dev-no-jev"})
 public class LocalFixtureProfessionalOccupationConfiguration {
     @Bean
     LocalFixtureProfessionalOccupationClassifier localFixtureProfessionalOccupationClassifier(

@@ -7,10 +7,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * The guarantee that development chrome is a property of the running profile and nothing else.
- *
- * <p>This is checked here rather than by starting the application without the fixture profile,
- * because the non-fixture profiles deliberately require real provider credentials and therefore
- * cannot be started offline — there is no fixture fallback by design.</p>
  */
 class ProductShellConfigurationTest {
 
@@ -18,8 +14,8 @@ class ProductShellConfigurationTest {
             .withUserConfiguration(ProductShellConfiguration.class);
 
     @Test
-    void theFixtureProfileDescribesTheFixturesInUse() {
-        runner.withPropertyValues("spring.profiles.active=local-fixture",
+    void theDevProfileDescribesTheFixturesInUse() {
+        runner.withPropertyValues("spring.profiles.active=dev",
                         "app.professional.fixture-id=senior_software_architect",
                         "app.university.fixture-id=computer_science",
                         "app.a-level.fixture-id=maths_economics_geography")
@@ -33,29 +29,27 @@ class ProductShellConfigurationTest {
     }
 
     @Test
-    void anyOtherProfileHasNoDevelopmentModeAtAll() {
-        for (String profiles : new String[] {"", "live-evidence", "live-payment",
-                "live-evidence,live-payment"}) {
-            runner.withPropertyValues("spring.profiles.active=" + profiles).run(context -> {
+    void prodAndDevNoJevHaveNoDevelopmentModeAtAll() {
+        for (String profile : new String[]{"prod", "dev-no-jev"}) {
+            runner.withPropertyValues("spring.profiles.active=" + profile).run(context -> {
                 DevelopmentModeStatus status = context.getBean(DevelopmentModeStatus.class);
-                assertThat(status.active()).as("profiles=%s", profiles).isFalse();
-                assertThat(status.fixtureSummary()).as("profiles=%s", profiles).isEmpty();
+                assertThat(status.active()).as("profile=%s", profile).isFalse();
+                assertThat(status.fixtureSummary()).as("profile=%s", profile).isEmpty();
             });
         }
     }
 
     @Test
     void developmentModeCannotBeTurnedOnByAProperty() {
-        // Nothing outside the profile may enable it: not a request, a header, or a stray property.
-        runner.withPropertyValues("spring.profiles.active=live-payment",
+        runner.withPropertyValues("spring.profiles.active=prod",
                         "app.development-mode=true", "developmentMode=true",
                         "app.professional.fixture-id=senior_software_architect")
                 .run(context -> assertThat(context.getBean(DevelopmentModeStatus.class).active()).isFalse());
     }
 
     @Test
-    void theFixtureProfileStillReportsDevelopmentModeWhenNoFixtureIdIsConfigured() {
-        runner.withPropertyValues("spring.profiles.active=local-fixture").run(context -> {
+    void theDevProfileStillReportsDevelopmentModeWhenNoFixtureIdIsConfigured() {
+        runner.withPropertyValues("spring.profiles.active=dev").run(context -> {
             DevelopmentModeStatus status = context.getBean(DevelopmentModeStatus.class);
             assertThat(status.active()).isTrue();
         });

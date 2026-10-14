@@ -112,6 +112,7 @@
           <li>Recommended next steps</li>
           <li>Downloadable PDF report</li>
         </ul>
+        <!--/* Enable only after a genuine, anonymised example PDF exists at this path.
         <br>
         <p class="sample-report-link">
           <a th:href="@{/samples/sample-report.pdf}"
@@ -122,6 +123,7 @@
             <span aria-hidden="true">&#8599;</span>
           </a>
         </p>
+        */-->
       </article>
     </div>
     <p class="same-assessment-note">Your assessment ratings stay the same. The optional report provides more detailed explanations and practical recommendations based on your results.</p>
@@ -137,11 +139,11 @@
     </div>
   </section>
 
-  <!--/* Development-only shortcuts. Rendered only under the local-fixture profile. */-->
+  <!--/* Development-only shortcuts. Rendered only under the dev profile. */-->
   <section class="panel dev-section results-section" th:if="${developmentMode}" aria-labelledby="dev-heading">
     <p class="eyebrow">Development only</p>
     <h2 id="dev-heading">Development shortcuts</h2>
-    <p>This section appears only under the <code>local-fixture</code> profile. Assessments use configured fixture data and payments are simulated locally.</p>
+    <p>This section appears only under the <code>dev</code> profile. Assessments use configured fixture data and payments are simulated locally.</p>
     <p th:if="${developmentFixtures != null}">Active fixtures &mdash; <span th:text="${developmentFixtures}">fixtures</span></p>
     <nav class="site-footer-nav" aria-label="Development shortcuts">
       <a th:href="@{/professional-assessment}" href="/professional-assessment">Professional form</a>

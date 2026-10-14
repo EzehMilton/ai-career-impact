@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(LocalProfessionalCheckoutController.class)
-@ActiveProfiles("local-fixture")
+@ActiveProfiles("dev")
 @Import(WebSecurityConfiguration.class)
 class LocalProfessionalCheckoutControllerTest {
     @Autowired MockMvc mvc;

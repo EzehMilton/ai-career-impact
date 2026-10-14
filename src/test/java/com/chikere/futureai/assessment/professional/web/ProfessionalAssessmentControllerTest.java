@@ -48,7 +48,7 @@ class ProfessionalAssessmentControllerTest {
     @Test
     void formIsPublicAndValidationOrCsrfFailureNeverCallsWorkflow() throws Exception {
         mvc.perform(get("/professional-assessment")).andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("What do you actually do?")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("what you actually do")));
         mvc.perform(validPost()).andExpect(status().isForbidden());
         mvc.perform(post("/professional-assessment").with(csrf()).param("profession", " "))
                 .andExpect(status().isOk()).andExpect(view().name("professional-assessment/form"));
@@ -102,8 +102,9 @@ class ProfessionalAssessmentControllerTest {
                 .andReturn().getResponse().getContentAsString();
         assertThat(html).contains("Free professional assessment", "Software Architect", "AI Exposure",
                 "Human Advantage", "AI Complementarity", "Role Adaptability", "What increases AI exposure",
-                "What preserves human value", "Short interpretation", "not a probability that you will lose your job",
-                "Unlock the full personalised report", "Paid report checkout is not currently available",
+                "Where human skills remain important", "A useful saved summary",
+                "not a probability that you will lose your job",
+                "Go further with your personalised report", "Paid report checkout is not currently available",
                 "&lt;script&gt;meaning&lt;/script&gt;");
         assertThat(html).doesNotContain("Why AI may affect your work", "What to focus on next",
                 "Skill-development priorities", "Illustrative evidence title", "Premium action one",
@@ -117,7 +118,7 @@ class ProfessionalAssessmentControllerTest {
                 ProfessionalReportTier.FREE, false, false)));
         String html = mvc.perform(get("/professional-assessment/" + ID)).andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        assertThat(html).contains("AI Exposure", "deterministic assessment is complete",
+        assertThat(html).contains("AI Exposure", "personalised explanation is currently unavailable",
                 "Paid report checkout is not currently available");
     }
 

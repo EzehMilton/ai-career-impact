@@ -9,7 +9,7 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import java.time.Clock;
 
 @Configuration(proxyBeanMethods = false)
-@Profile("live-evidence & !local-fixture")
+@Profile("prod")
 public class NomisProfessionalEvidenceConfiguration {
     @Bean
     NomisApiClient nomisApiClient(RestClient.Builder builder) {

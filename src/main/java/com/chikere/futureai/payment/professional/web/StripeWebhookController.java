@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@Profile("live-payment & !local-fixture")
+@Profile({"prod", "dev-no-jev"})
 public final class StripeWebhookController {
     private static final Logger LOGGER = LoggerFactory.getLogger(StripeWebhookController.class);
     private final ProfessionalReportPurchaseUseCase purchaseService;

@@ -55,11 +55,11 @@ class ALevelPaidReportControllerTest {
                 .andExpect(status().isOk()).andExpect(view().name("a-level-assessment/paid-report"))
                 .andReturn().getResponse().getContentAsString();
 
-        assertThat(html).contains("Full A-level report", "Mathematics, Economics, Geography",
+        assertThat(html).contains("Your detailed A-level report", "Mathematics, Economics, Geography",
                 "Future Optionality", "Saved optionality detail", "Premium action one",
-                "Skills worth developing alongside your subjects", "Degree and career areas you mentioned",
+                "Skills worth developing alongside your subjects", "Degree and career interests you mentioned",
                 "Download PDF", "a-level-report-v1",
-                "None of these is a suggestion to change your A-levels");
+                "not advice to change your A-levels");
         assertThat(html).doesNotContain("future-proof", "wrong subject", "You should become",
                 "Role Adaptability", "Human Differentiation");
         // Other journeys' names appear only once each, inside the cross-journey caveat.

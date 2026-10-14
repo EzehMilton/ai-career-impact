@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ALevelStripeWebhookController.class)
-@ActiveProfiles("live-payment")
+@ActiveProfiles("dev-no-jev")
 @Import(WebSecurityConfiguration.class)
 class ALevelStripeWebhookControllerTest {
 

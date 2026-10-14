@@ -20,7 +20,7 @@
     <p>This assessment uses local fixture data and is not a live AI assessment.</p>
   </aside>
 
-  <!-- Overview: retain all summary values, but prioritize what they mean. -->
+  <!--/* Overview: retain all summary values, but prioritize what they mean. */-->
   <section class="panel results-overview" aria-labelledby="summary-heading">
     <p class="eyebrow">Your results at a glance</p>
     <h2 id="summary-heading">What your assessment suggests</h2>
@@ -33,7 +33,7 @@
     <p class="notice" th:if="${report.moreInformationRequired}">More information is needed before numeric measures can be provided.</p>
   </section>
 
-  <!-- Core indicators: prominently show the band, preserving numerical values and per-measure confidence. -->
+  <!--/* Core indicators: prominently show the band, preserving numerical values and per-measure confidence. */-->
   <section class="results-section" th:unless="${report.moreInformationRequired}" aria-labelledby="measures-heading">
     <div class="results-section-heading">
       <p class="eyebrow">Your assessment ratings</p>
@@ -53,7 +53,7 @@
     </div>
   </section>
 
-  <!-- Explain the scale after the visitor has seen the ratings. -->
+  <!--/* Explain the scale after the visitor has seen the ratings. */-->
   <section class="panel results-guide" th:unless="${report.moreInformationRequired}" aria-labelledby="indicator-heading">
     <h2 id="indicator-heading">Understanding your ratings</h2>
     <p>Each indicator runs from 0 to 10 and reflects a characteristic of the work you described. It is not a probability or a prediction about you.</p>
@@ -89,7 +89,7 @@
     </div>
   </section>
 
-  <!-- All existing entitlement states and checkout routes are deliberately preserved. -->
+  <!--/* All existing entitlement states and checkout routes are deliberately preserved. */-->
   <section class="panel unlock-panel results-upgrade" aria-labelledby="unlock-heading">
     <p class="eyebrow">Optional detailed report</p>
     <h2 id="unlock-heading">Go further with your personalised report</h2>
@@ -113,8 +113,9 @@
           <li>External career context, where available</li>
           <li>A downloadable PDF</li>
         </ul>
-        <!-- Only enable a sample link after a genuine, anonymised example PDF exists at this path. -->
-        <!-- <p class="results-sample-link"><a th:href="@{/samples/sample-report.pdf}" href="/samples/sample-report.pdf" target="_blank" rel="noopener noreferrer">View sample report ↗</a></p> -->
+        <!--/* Only enable a sample link after a genuine, anonymised example PDF exists at this path.
+        <p class="results-sample-link"><a th:href="@{/samples/sample-report.pdf}" href="/samples/sample-report.pdf" target="_blank" rel="noopener noreferrer">View sample report ↗</a></p>
+        */-->
       </div>
     </div>
     <p class="results-upgrade-reassurance">Your assessment results stay the same. The detailed report adds explanation and guidance; it does not change or re-run the assessment.</p>
