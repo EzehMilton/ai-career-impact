@@ -28,8 +28,8 @@ class HomeControllerTest {
                 .andExpect(view().name("home")).andReturn().getResponse().getContentAsString();
 
         assertThat(html).contains("AI Career &amp; Future Assessment",
-                "Understand how AI may affect your work, course, or subject choices.",
-                "clear explanations and practical next steps");
+                "How will AI affect your career and education?",
+                "clear assessments and practical guidance");
         assertThat(html).contains("<title>Understand how AI may affect your choices | AI Career Impact</title>");
     }
 
@@ -39,13 +39,13 @@ class HomeControllerTest {
 
         assertThat(html).contains("Choose the question that matters to you.");
         // Each distinct journey carries its question, description and route-specific action.
-        assertThat(html).contains("Professional", "How will AI affect the work I currently do?",
-                "where human strengths remain", "Assess my work");
+        assertThat(html).contains("Professional", "How could AI affect my current job or tasks?",
+                "skills may become more valuable", "Assess my job");
         assertThat(html).contains("University",
-                "How well does this course position me for an AI-shaped labour market?",
-                "transferable, human and AI-complementary capabilities", "Assess a course");
-        assertThat(html).contains("A-level", "Do these choices preserve strong future options?",
-                "future study pathways, transferable skills and adaptability", "Assess my choices");
+                "Is my university course preparing me for an AI-driven future?",
+                "changing job market", "Assess a course");
+        assertThat(html).contains("A-level", "Which opportunities could my A-level choices open up?",
+                "university options, future careers", "Assess my choices");
 
         assertThat(html).contains("href=\"/professional-assessment\"");
         assertThat(html).contains("href=\"/university-assessment\"");
@@ -59,9 +59,9 @@ class HomeControllerTest {
     void theHomePageIsHonestAboutFreePaidAndWhatAScoreIsNot() throws Exception {
         String html = mvc.perform(get("/")).andReturn().getResponse().getContentAsString();
 
-        assertThat(html).contains("Free assessment", "Deeper report", "£4.99", "Downloadable PDF");
-        assertThat(html).contains("The paid report uses the same assessment. Payment adds depth and explanation; it does not change or re-run your result.");
-        assertThat(html).contains("These assessments describe characteristics of the work, course or choices you tell us about. They do not predict your personal outcome.");
+        assertThat(html).contains("Free assessment", "Detailed report", "£2.99", "Downloadable PDF");
+        assertThat(html).contains("Your assessment ratings stay the same. The optional report provides more detailed explanations and practical recommendations based on your results.");
+        assertThat(html).contains("cannot predict your individual future or guarantee particular outcomes");
         // None of the hype the product deliberately avoids.
         assertThat(html).doesNotContain("AI-proof", "Beat AI", "future-proof", "Future-proof",
                 "risk score", "will take your job", "guaranteed");
@@ -99,9 +99,9 @@ class HomeControllerTest {
                 .andExpect(view().name("privacy")).andReturn().getResponse().getContentAsString();
 
         assertThat(html).contains("This is a product information notice, not a legal privacy policy");
-        assertThat(html).contains("the file itself and the extracted text are not kept");
-        assertThat(html).contains("Card details are entered on Stripe's own hosted checkout page");
-        assertThat(html).contains("There are no accounts yet");
+        assertThat(html).contains("The original CV file and its raw extracted text are not retained");
+        assertThat(html).contains("Card details are entered on Stripe's hosted checkout page");
+        assertThat(html).contains("There are currently no user accounts");
         assertThat(html).doesNotContain("we comply with", "GDPR-compliant", "legally binding");
     }
 
@@ -110,9 +110,9 @@ class HomeControllerTest {
         String html = mvc.perform(get("/privacy")).andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString().replaceAll("\\s+", " ");
 
-        assertThat(html).contains("Before your CV text is sent to our AI provider, we remove email addresses, "
-                + "phone numbers, web links and postcodes. Other details in your CV, including your name, may "
-                + "still be sent.");
+        assertThat(html).contains("the application removes email addresses, "
+                + "phone numbers, web links and postcodes");
+        assertThat(html).contains("including your name, may remain");
     }
 
     @Test

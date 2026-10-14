@@ -34,11 +34,11 @@ class ProfessionalPaidReportControllerTest {
                 .andExpect(status().isOk()).andExpect(view().name("professional-assessment/paid-report"))
                 .andReturn().getResponse().getContentAsString();
 
-        assertThat(html).contains("DEVELOPMENT MODE — LOCALLY PURCHASED REPORT", "Personalised explanation",
+        assertThat(html).contains("DEVELOPMENT MODE — LOCALLY PURCHASED REPORT",
                 "Detailed exposure", "What to focus on next", "Action one", "Skill-development priorities",
-                "AI-tool fluency", "Work-focus guidance", "does not assign task-level scores",
+                "AI-tool fluency", "Guidance for your day-to-day work", "does not assign task-level scores",
                 "External career context", "Local fixture evidence", "Occupation classification", "2133",
-                "Methodology and limitations", "professional-report-v1", "Download PDF",
+                "About your assessment", "professional-report-v1", "Download PDF",
                 "/professional-assessment/" + source.assessment().id() + "/report.pdf")
                 .doesNotContain("provider exception");
         verify(purchaseService).findPurchasedReport(source.assessment().id());

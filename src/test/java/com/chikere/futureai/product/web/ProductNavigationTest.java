@@ -34,9 +34,9 @@ class ProductNavigationTest {
     private record Journey(String path, String framing, String navLabel) { }
 
     private static final List<Journey> JOURNEYS = List.of(
-            new Journey("/professional-assessment", "How will AI affect the work I currently do?", "Professional"),
-            new Journey("/university-assessment", "How well does this course position me for an AI-shaped labour market?", "University"),
-            new Journey("/a-level-assessment", "Do these choices preserve strong future options?", "A-level"));
+            new Journey("/professional-assessment", "How could AI affect my current job or tasks?", "Professional"),
+            new Journey("/university-assessment", "Is my university course preparing me for an AI-driven future?", "University"),
+            new Journey("/a-level-assessment", "Which opportunities could my A-level choices open up?", "A-level"));
 
     @MockitoBean ProfessionalJudgmentProvider professionalJudgmentProvider;
     @MockitoBean ProfessionalNarrativeGenerator professionalNarrativeGenerator;
@@ -97,7 +97,7 @@ class ProductNavigationTest {
         String form = get("/professional-assessment").body();
 
         assertThat(form).contains("Upload my CV", "/professional-assessment/cv",
-                "multipart/form-data", "Uploading a CV is optional");
+                "multipart/form-data", "Extract details from my CV");
     }
 
     @Test
@@ -127,7 +127,7 @@ class ProductNavigationTest {
                 "chain of thought", "postgres", "Flyway");
 
         String privacy = get("/privacy").body();
-        assertThat(privacy).contains("not kept");
+        assertThat(privacy).contains("not retained");
         assertThat(privacy).doesNotContain("jdbc:", "postgres", "sk_", "secret");
     }
 

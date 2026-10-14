@@ -41,7 +41,17 @@ import static org.assertj.core.api.Assertions.assertThat;
         "app.public-base-url=https://ai-career-impact.example",
         "TYPESAFE_API_KEY=test-only-jev-key",
         "OPENAI_API_KEY=test-only-openai-key",
-        "spring.ai.model.chat=none"})
+        "spring.ai.model.chat=none",
+        "app.stripe.secret-key=sk_test_not_called",
+        "app.stripe.webhook-secret=whsec_not_called",
+        "app.stripe.university-webhook-secret=whsec_not_called",
+        "app.stripe.a-level-webhook-secret=whsec_not_called",
+        "app.professional.report.stripe-price-id=price_not_called",
+        "app.university.report.stripe-price-id=price_not_called",
+        "app.a-level.report.stripe-price-id=price_not_called",
+        "app.professional.evidence.classified-profession=Software Developer",
+        "app.professional.evidence.canonical-occupation=Programmers and software development professionals",
+        "app.professional.evidence.soc2020-code=2134"})
 class ProductionShapeTest {
 
     @MockitoBean ProfessionalJudgmentProvider professionalJudgmentProvider;

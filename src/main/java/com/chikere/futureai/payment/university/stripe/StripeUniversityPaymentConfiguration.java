@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 @Configuration(proxyBeanMethods = false)
-@Profile("live-payment & !local-fixture")
+@Profile({"prod", "dev-no-jev"})
 public class StripeUniversityPaymentConfiguration {
 
     @Bean

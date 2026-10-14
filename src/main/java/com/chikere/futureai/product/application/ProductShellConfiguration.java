@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Profile;
 public class ProductShellConfiguration {
 
     @Bean
-    @Profile("local-fixture")
+    @Profile("dev")
     DevelopmentModeStatus localFixtureDevelopmentModeStatus(
             @Value("${app.professional.fixture-id:}") String professionalFixtureId,
             @Value("${app.university.fixture-id:}") String universityFixtureId,
@@ -27,7 +27,7 @@ public class ProductShellConfiguration {
     }
 
     @Bean
-    @Profile("!local-fixture")
+    @Profile({"prod", "dev-no-jev"})
     DevelopmentModeStatus productionDevelopmentModeStatus() {
         return DevelopmentModeStatus.inactive();
     }

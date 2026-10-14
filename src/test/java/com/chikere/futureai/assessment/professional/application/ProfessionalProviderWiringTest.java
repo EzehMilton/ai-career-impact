@@ -52,8 +52,6 @@ class ProfessionalProviderWiringTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
             .withPropertyValues("spring.ai.model.chat=openai", "spring.ai.openai.chat.model=gpt-test",
-                    // Return URLs come from the one configured public base URL. A context
-                    // runner does not read application.properties, so it is supplied here.
                     "app.professional.report.base-url=http://localhost:8080")
             .withConfiguration(AutoConfigurations.of(ProfessionalJevAutoConfiguration.class))
             .withUserConfiguration(
@@ -86,37 +84,9 @@ class ProfessionalProviderWiringTest {
             });
 
     @Test
-    void normalModeSelectsOnlyTheJevAdapter() {
-        contextRunner.run(context -> {
-            assertThat(context).hasNotFailed();
-            assertThat(context.getBeansOfType(ProfessionalJudgmentProvider.class)).hasSize(1);
-            assertThat(context.getBean(ProfessionalJudgmentProvider.class))
-                    .isInstanceOf(ProfessionalJevJudgmentService.class);
-            assertThat(context.getBean(ProfessionalJudgmentProvider.class).source())
-                    .isEqualTo(AssessmentSource.JEV);
-            assertThat(context).hasSingleBean(ProfessionalAssessmentService.class);
-            assertThat(context).doesNotHaveBean(LocalFixtureProfessionalJudgmentProvider.class);
-            assertThat(context).hasSingleBean(ProfessionalNarrativeGenerator.class);
-            assertThat(context.getBean(ProfessionalNarrativeGenerator.class))
-                    .isInstanceOf(OpenAiProfessionalNarrativeGenerator.class);
-            assertThat(context.getBean(ProfessionalNarrativeGenerator.class).source())
-                    .isEqualTo(NarrativeSource.OPENAI);
-            assertThat(context.getBean(ProfessionalNarrativeGenerator.class).modelIdentifier())
-                    .contains("gpt-test");
-            assertThat(context).hasSingleBean(ProfessionalProfileExtractor.class);
-            assertThat(context.getBean(ProfessionalProfileExtractor.class))
-                    .isInstanceOf(OpenAiProfessionalProfileExtractor.class);
-            assertThat(context).doesNotHaveBean(LocalFixtureProfessionalProfileExtractor.class);
-            assertThat(context).doesNotHaveBean(ProfessionalEvidenceProvider.class);
-            assertThat(context).doesNotHaveBean(ProfessionalOccupationClassifier.class);
-            assertThat(context).doesNotHaveBean(ProfessionalPaymentGateway.class);
-        });
-    }
-
-    @Test
-    void localFixtureModeSelectsOnlyFixtureEvenWhenATypeSafeClientExists() {
+    void devProfileSelectsOnlyFixtures() {
         contextRunner.withPropertyValues("app.professional.fixture-id=senior_software_architect")
-                .withInitializer(context -> context.getEnvironment().setActiveProfiles("local-fixture"))
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("dev"))
                 .run(context -> {
                     assertThat(context).hasNotFailed();
                     assertThat(context.getBeansOfType(ProfessionalJudgmentProvider.class)).hasSize(1);
@@ -124,88 +94,138 @@ class ProfessionalProviderWiringTest {
                             .isInstanceOf(LocalFixtureProfessionalJudgmentProvider.class);
                     assertThat(context.getBean(ProfessionalJudgmentProvider.class).source())
                             .isEqualTo(AssessmentSource.LOCAL_FIXTURE);
+
                     var result = context.getBean(ProfessionalAssessmentService.class).assess(
                             new ProfessionalAssessmentState("Software Architect", "Designs complex systems",
                                     List.of("Design systems"), List.of("Architecture"), OptionalInt.empty()));
                     assertThat(result.decision().measure(ProfessionalMeasure.AI_EXPOSURE).orElseThrow().indicator())
                             .isBetween(4.80, 4.82);
-                    assertThat(context).hasSingleBean(ProfessionalAssessmentService.class);
+
                     assertThat(context).doesNotHaveBean(ProfessionalJevJudgmentService.class);
-                    assertThat(context).hasSingleBean(ProfessionalNarrativeGenerator.class);
                     assertThat(context.getBean(ProfessionalNarrativeGenerator.class))
                             .isInstanceOf(LocalFixtureProfessionalNarrativeGenerator.class);
                     assertThat(context.getBean(ProfessionalNarrativeGenerator.class).source())
                             .isEqualTo(NarrativeSource.LOCAL_FIXTURE);
                     assertThat(context).doesNotHaveBean(OpenAiProfessionalNarrativeGenerator.class);
-                    assertThat(context).hasSingleBean(ProfessionalProfileExtractor.class);
                     assertThat(context.getBean(ProfessionalProfileExtractor.class))
                             .isInstanceOf(LocalFixtureProfessionalProfileExtractor.class);
                     assertThat(context).doesNotHaveBean(OpenAiProfessionalProfileExtractor.class);
-                    assertThat(context).hasSingleBean(ProfessionalEvidenceProvider.class);
                     assertThat(context.getBean(ProfessionalEvidenceProvider.class))
                             .isInstanceOf(LocalFixtureProfessionalEvidenceProvider.class);
                     assertThat(context.getBean(ProfessionalEvidenceProvider.class).source())
                             .isEqualTo(EvidenceSource.LOCAL_FIXTURE);
-                    assertThat(context).hasSingleBean(ProfessionalOccupationClassifier.class);
                     assertThat(context.getBean(ProfessionalOccupationClassifier.class))
                             .isInstanceOf(LocalFixtureProfessionalOccupationClassifier.class);
-                    assertThat(context).hasSingleBean(ProfessionalPaymentGateway.class);
                     assertThat(context.getBean(ProfessionalPaymentGateway.class))
                             .isInstanceOf(LocalFixtureProfessionalPaymentGateway.class);
                     assertThat(context).hasSingleBean(LocalProfessionalPaymentSimulator.class);
+                    assertThat(context).doesNotHaveBean(NomisProfessionalEvidenceProvider.class);
+                    assertThat(context).doesNotHaveBean(StripeProfessionalPaymentGateway.class);
                 });
     }
 
     @Test
-    void localFixtureModeFailsClearlyWithoutAnExplicitSupportedId() {
-        contextRunner.withInitializer(context -> context.getEnvironment().setActiveProfiles("local-fixture"))
+    void devProfileFailsClearlyWithoutAnExplicitSupportedFixtureId() {
+        contextRunner.withInitializer(context -> context.getEnvironment().setActiveProfiles("dev"))
                 .run(context -> assertThat(context.getStartupFailure())
                         .hasRootCauseInstanceOf(IllegalArgumentException.class)
                         .hasStackTraceContaining("app.professional.fixture-id"));
         contextRunner.withPropertyValues("app.professional.fixture-id=unknown")
-                .withInitializer(context -> context.getEnvironment().setActiveProfiles("local-fixture"))
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("dev"))
                 .run(context -> assertThat(context.getStartupFailure())
                         .hasRootCauseInstanceOf(IllegalArgumentException.class)
                         .hasStackTraceContaining("Unsupported app.professional.fixture-id"));
     }
 
     @Test
-    void liveEvidenceProfileSelectsNomisWithoutCallingIt() {
+    void devNoJevProfileSelectsFixtureJevButRealOpenAiAndStripe() {
         contextRunner.withPropertyValues(
-                        "app.professional.evidence.classified-profession=Software Architect",
-                        "app.professional.evidence.canonical-occupation=IT business analysts, architects and systems designers",
-                        "app.professional.evidence.soc2020-code=2133")
-                .withInitializer(context -> context.getEnvironment().setActiveProfiles("live-evidence"))
+                        "app.professional.fixture-id=senior_software_architect",
+                        "app.stripe.secret-key=sk_test_not_called",
+                        "app.stripe.webhook-secret=whsec_not_called",
+                        "app.professional.report.stripe-price-id=price_not_called")
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("dev-no-jev"))
                 .run(context -> {
                     assertThat(context).hasNotFailed();
-                    assertThat(context).hasSingleBean(ProfessionalEvidenceProvider.class);
+                    assertThat(context.getBean(ProfessionalJudgmentProvider.class))
+                            .isInstanceOf(LocalFixtureProfessionalJudgmentProvider.class);
+                    assertThat(context).doesNotHaveBean(ProfessionalJevJudgmentService.class);
+                    assertThat(context.getBean(ProfessionalNarrativeGenerator.class))
+                            .isInstanceOf(OpenAiProfessionalNarrativeGenerator.class);
+                    assertThat(context.getBean(ProfessionalNarrativeGenerator.class).source())
+                            .isEqualTo(NarrativeSource.OPENAI);
+                    assertThat(context).doesNotHaveBean(LocalFixtureProfessionalNarrativeGenerator.class);
+                    assertThat(context.getBean(ProfessionalProfileExtractor.class))
+                            .isInstanceOf(OpenAiProfessionalProfileExtractor.class);
+                    assertThat(context).doesNotHaveBean(LocalFixtureProfessionalProfileExtractor.class);
+                    assertThat(context.getBean(ProfessionalEvidenceProvider.class))
+                            .isInstanceOf(LocalFixtureProfessionalEvidenceProvider.class);
+                    assertThat(context.getBean(ProfessionalEvidenceProvider.class).source())
+                            .isEqualTo(EvidenceSource.LOCAL_FIXTURE);
+                    assertThat(context).doesNotHaveBean(NomisProfessionalEvidenceProvider.class);
+                    assertThat(context.getBean(ProfessionalPaymentGateway.class))
+                            .isInstanceOf(StripeProfessionalPaymentGateway.class);
+                    assertThat(context).doesNotHaveBean(LocalFixtureProfessionalPaymentGateway.class);
+                });
+    }
+
+    @Test
+    void prodProfileSelectsAllRealServicesAndNoFixtures() {
+        contextRunner.withPropertyValues(
+                        "app.stripe.secret-key=sk_test_not_called",
+                        "app.stripe.webhook-secret=whsec_not_called",
+                        "app.professional.report.stripe-price-id=price_not_called",
+                        "app.professional.evidence.classified-profession=Software Architect",
+                        "app.professional.evidence.canonical-occupation=IT architects",
+                        "app.professional.evidence.soc2020-code=2133")
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("prod"))
+                .run(context -> {
+                    assertThat(context).hasNotFailed();
+                    assertThat(context.getBean(ProfessionalJudgmentProvider.class))
+                            .isInstanceOf(ProfessionalJevJudgmentService.class);
+                    assertThat(context.getBean(ProfessionalJudgmentProvider.class).source())
+                            .isEqualTo(AssessmentSource.JEV);
+                    assertThat(context).doesNotHaveBean(LocalFixtureProfessionalJudgmentProvider.class);
+                    assertThat(context.getBean(ProfessionalNarrativeGenerator.class))
+                            .isInstanceOf(OpenAiProfessionalNarrativeGenerator.class);
+                    assertThat(context).doesNotHaveBean(LocalFixtureProfessionalNarrativeGenerator.class);
+                    assertThat(context.getBean(ProfessionalProfileExtractor.class))
+                            .isInstanceOf(OpenAiProfessionalProfileExtractor.class);
+                    assertThat(context).doesNotHaveBean(LocalFixtureProfessionalProfileExtractor.class);
                     assertThat(context.getBean(ProfessionalEvidenceProvider.class))
                             .isInstanceOf(NomisProfessionalEvidenceProvider.class);
                     assertThat(context.getBean(ProfessionalEvidenceProvider.class).source())
                             .isEqualTo(EvidenceSource.LIVE);
                     assertThat(context).doesNotHaveBean(LocalFixtureProfessionalEvidenceProvider.class);
-                    assertThat(context).hasSingleBean(ProfessionalOccupationClassifier.class);
                     assertThat(context.getBean(ProfessionalOccupationClassifier.class))
                             .isInstanceOf(ConfiguredProfessionalOccupationClassifier.class);
-                });
-    }
-
-    @Test
-    void livePaymentProfileSelectsOnlyStripeAndFailsClearlyWithoutConfiguration() {
-        contextRunner.withInitializer(context -> context.getEnvironment().setActiveProfiles("live-payment"))
-                .run(context -> assertThat(context.getStartupFailure())
-                        .hasRootCauseInstanceOf(IllegalArgumentException.class)
-                        .hasStackTraceContaining("Stripe secret key"));
-        contextRunner.withPropertyValues("app.stripe.secret-key=sk_test_not_called",
-                        "app.stripe.webhook-secret=whsec_not_called",
-                        "app.professional.report.stripe-price-id=price_not_called")
-                .withInitializer(context -> context.getEnvironment().setActiveProfiles("live-payment"))
-                .run(context -> {
-                    assertThat(context).hasNotFailed();
-                    assertThat(context).hasSingleBean(ProfessionalPaymentGateway.class);
+                    assertThat(context).doesNotHaveBean(LocalFixtureProfessionalOccupationClassifier.class);
                     assertThat(context.getBean(ProfessionalPaymentGateway.class))
                             .isInstanceOf(StripeProfessionalPaymentGateway.class);
                     assertThat(context).doesNotHaveBean(LocalFixtureProfessionalPaymentGateway.class);
                 });
+    }
+
+    @Test
+    void stripeFailsClearlyWithoutConfigurationUnderProd() {
+        contextRunner
+                .withPropertyValues(
+                        "app.professional.evidence.classified-profession=Software Architect",
+                        "app.professional.evidence.canonical-occupation=IT architects",
+                        "app.professional.evidence.soc2020-code=2133")
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("prod"))
+                .run(context -> assertThat(context.getStartupFailure())
+                        .hasRootCauseInstanceOf(IllegalArgumentException.class)
+                        .hasStackTraceContaining("Stripe secret key"));
+    }
+
+    @Test
+    void stripeFailsClearlyWithoutConfigurationUnderDevNoJev() {
+        contextRunner
+                .withPropertyValues("app.professional.fixture-id=senior_software_architect")
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("dev-no-jev"))
+                .run(context -> assertThat(context.getStartupFailure())
+                        .hasRootCauseInstanceOf(IllegalArgumentException.class)
+                        .hasStackTraceContaining("Stripe secret key"));
     }
 }

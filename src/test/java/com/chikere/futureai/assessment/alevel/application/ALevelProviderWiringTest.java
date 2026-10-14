@@ -43,8 +43,6 @@ class ALevelProviderWiringTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
             .withPropertyValues("spring.ai.model.chat=openai", "spring.ai.openai.chat.model=gpt-test",
-                    // Return URLs come from the one configured public base URL. A context
-                    // runner does not read application.properties, so it is supplied here.
                     "app.a-level.report.base-url=http://localhost:8080")
             .withConfiguration(AutoConfigurations.of(ALevelJevAutoConfiguration.class))
             .withUserConfiguration(
@@ -68,29 +66,9 @@ class ALevelProviderWiringTest {
             });
 
     @Test
-    void normalModeSelectsOnlyTheJevAdapterAndNoPaymentOrEvidenceProvider() {
-        contextRunner.run(context -> {
-            assertThat(context).hasNotFailed();
-            assertThat(context.getBeansOfType(ALevelJudgmentProvider.class)).hasSize(1);
-            assertThat(context.getBean(ALevelJudgmentProvider.class))
-                    .isInstanceOf(ALevelJevJudgmentService.class);
-            assertThat(context.getBean(ALevelJudgmentProvider.class).source())
-                    .isEqualTo(AssessmentSource.JEV);
-            assertThat(context).doesNotHaveBean(LocalFixtureALevelJudgmentProvider.class);
-            assertThat(context).hasSingleBean(ALevelNarrativeGenerator.class);
-            assertThat(context.getBean(ALevelNarrativeGenerator.class))
-                    .isInstanceOf(OpenAiALevelNarrativeGenerator.class);
-            assertThat(context.getBean(ALevelNarrativeGenerator.class).modelIdentifier())
-                    .contains("gpt-test");
-            assertThat(context).doesNotHaveBean(ALevelEvidenceProvider.class);
-            assertThat(context).doesNotHaveBean(ALevelPaymentGateway.class);
-        });
-    }
-
-    @Test
-    void localFixtureModeSelectsOnlyFixturesEvenWhenATypeSafeClientExists() {
+    void devProfileSelectsOnlyFixtures() {
         contextRunner.withPropertyValues("app.a-level.fixture-id=maths_economics_geography")
-                .withInitializer(context -> context.getEnvironment().setActiveProfiles("local-fixture"))
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("dev"))
                 .run(context -> {
                     assertThat(context).hasNotFailed();
                     assertThat(context.getBeansOfType(ALevelJudgmentProvider.class)).hasSize(1);
@@ -124,37 +102,71 @@ class ALevelProviderWiringTest {
     }
 
     @Test
-    void localFixtureModeFailsClearlyWithoutAnExplicitSupportedId() {
-        contextRunner.withInitializer(context -> context.getEnvironment().setActiveProfiles("local-fixture"))
+    void devProfileFailsClearlyWithoutAnExplicitSupportedFixtureId() {
+        contextRunner.withInitializer(context -> context.getEnvironment().setActiveProfiles("dev"))
                 .run(context -> assertThat(context.getStartupFailure())
                         .hasRootCauseInstanceOf(IllegalArgumentException.class)
                         .hasStackTraceContaining("app.a-level.fixture-id"));
         contextRunner.withPropertyValues("app.a-level.fixture-id=unknown")
-                .withInitializer(context -> context.getEnvironment().setActiveProfiles("local-fixture"))
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("dev"))
                 .run(context -> assertThat(context.getStartupFailure())
                         .hasRootCauseInstanceOf(IllegalArgumentException.class)
                         .hasStackTraceContaining("Unsupported app.a-level.fixture-id"));
     }
 
     @Test
-    void livePaymentProfileSelectsOnlyStripeAndFailsClearlyWithoutItsOwnConfiguration() {
-        contextRunner.withInitializer(context -> context.getEnvironment().setActiveProfiles("live-payment"))
+    void devNoJevAndProdActivateStripeAndFailClearlyWithoutItsConfiguration() {
+        // dev-no-jev also requires a fixture-id because it activates the fixture Jev provider
+        contextRunner
+                .withPropertyValues("app.a-level.fixture-id=maths_economics_geography")
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("dev-no-jev"))
                 .run(context -> assertThat(context.getStartupFailure())
+                        .as("dev-no-jev should fail without Stripe key")
+                        .hasRootCauseInstanceOf(IllegalArgumentException.class)
+                        .hasStackTraceContaining("Stripe secret key"));
+        contextRunner
+                .withPropertyValues("app.a-level.fixture-id=maths_economics_geography",
+                        "app.stripe.secret-key=sk_test_not_called",
+                        "app.stripe.a-level-webhook-secret=whsec_not_called")
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("dev-no-jev"))
+                .run(context -> assertThat(context.getStartupFailure())
+                        .as("dev-no-jev should fail without price ID")
+                        .hasRootCauseInstanceOf(IllegalArgumentException.class)
+                        .hasStackTraceContaining("Stripe A-level price ID"));
+        contextRunner
+                .withPropertyValues("app.a-level.fixture-id=maths_economics_geography",
+                        "app.stripe.secret-key=sk_test_not_called",
+                        "app.stripe.a-level-webhook-secret=whsec_not_called",
+                        "app.a-level.report.stripe-price-id=price_a_level_not_called")
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("dev-no-jev"))
+                .run(context -> {
+                    assertThat(context).hasNotFailed();
+                    assertThat(context.getBean(ALevelPaymentGateway.class))
+                            .isInstanceOf(StripeALevelPaymentGateway.class);
+                    assertThat(context.getBean(ALevelPaymentGateway.class).priceConfigurationKey())
+                            .isEqualTo("price_a_level_not_called");
+                    assertThat(context).doesNotHaveBean(LocalFixtureALevelPaymentGateway.class);
+                });
+
+        // prod does not use a fixture-id
+        contextRunner.withInitializer(context -> context.getEnvironment().setActiveProfiles("prod"))
+                .run(context -> assertThat(context.getStartupFailure())
+                        .as("prod should fail without Stripe key")
                         .hasRootCauseInstanceOf(IllegalArgumentException.class)
                         .hasStackTraceContaining("Stripe secret key"));
         contextRunner.withPropertyValues("app.stripe.secret-key=sk_test_not_called",
                         "app.stripe.a-level-webhook-secret=whsec_not_called")
-                .withInitializer(context -> context.getEnvironment().setActiveProfiles("live-payment"))
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("prod"))
                 .run(context -> assertThat(context.getStartupFailure())
+                        .as("prod should fail without price ID")
                         .hasRootCauseInstanceOf(IllegalArgumentException.class)
                         .hasStackTraceContaining("Stripe A-level price ID"));
         contextRunner.withPropertyValues("app.stripe.secret-key=sk_test_not_called",
                         "app.stripe.a-level-webhook-secret=whsec_not_called",
                         "app.a-level.report.stripe-price-id=price_a_level_not_called")
-                .withInitializer(context -> context.getEnvironment().setActiveProfiles("live-payment"))
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("prod"))
                 .run(context -> {
                     assertThat(context).hasNotFailed();
-                    assertThat(context).hasSingleBean(ALevelPaymentGateway.class);
                     assertThat(context.getBean(ALevelPaymentGateway.class))
                             .isInstanceOf(StripeALevelPaymentGateway.class);
                     assertThat(context.getBean(ALevelPaymentGateway.class).priceConfigurationKey())

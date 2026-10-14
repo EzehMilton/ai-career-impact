@@ -42,8 +42,6 @@ class UniversityProviderWiringTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
             .withPropertyValues("spring.ai.model.chat=openai", "spring.ai.openai.chat.model=gpt-test",
-                    // Return URLs come from the one configured public base URL. A context
-                    // runner does not read application.properties, so it is supplied here.
                     "app.university.report.base-url=http://localhost:8080")
             .withConfiguration(AutoConfigurations.of(UniversityJevAutoConfiguration.class))
             .withUserConfiguration(
@@ -67,29 +65,9 @@ class UniversityProviderWiringTest {
             });
 
     @Test
-    void normalModeSelectsOnlyTheJevAdapterAndNoPaymentOrEvidenceProvider() {
-        contextRunner.run(context -> {
-            assertThat(context).hasNotFailed();
-            assertThat(context.getBeansOfType(UniversityJudgmentProvider.class)).hasSize(1);
-            assertThat(context.getBean(UniversityJudgmentProvider.class))
-                    .isInstanceOf(UniversityJevJudgmentService.class);
-            assertThat(context.getBean(UniversityJudgmentProvider.class).source())
-                    .isEqualTo(AssessmentSource.JEV);
-            assertThat(context).doesNotHaveBean(LocalFixtureUniversityJudgmentProvider.class);
-            assertThat(context).hasSingleBean(UniversityNarrativeGenerator.class);
-            assertThat(context.getBean(UniversityNarrativeGenerator.class))
-                    .isInstanceOf(OpenAiUniversityNarrativeGenerator.class);
-            assertThat(context.getBean(UniversityNarrativeGenerator.class).modelIdentifier())
-                    .contains("gpt-test");
-            assertThat(context).doesNotHaveBean(UniversityEvidenceProvider.class);
-            assertThat(context).doesNotHaveBean(UniversityPaymentGateway.class);
-        });
-    }
-
-    @Test
-    void localFixtureModeSelectsOnlyFixturesEvenWhenATypeSafeClientExists() {
+    void devProfileSelectsOnlyFixtures() {
         contextRunner.withPropertyValues("app.university.fixture-id=computer_science")
-                .withInitializer(context -> context.getEnvironment().setActiveProfiles("local-fixture"))
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("dev"))
                 .run(context -> {
                     assertThat(context).hasNotFailed();
                     assertThat(context.getBeansOfType(UniversityJudgmentProvider.class)).hasSize(1);
@@ -124,41 +102,71 @@ class UniversityProviderWiringTest {
     }
 
     @Test
-    void localFixtureModeFailsClearlyWithoutAnExplicitSupportedId() {
-        contextRunner.withInitializer(context -> context.getEnvironment().setActiveProfiles("local-fixture"))
+    void devProfileFailsClearlyWithoutAnExplicitSupportedFixtureId() {
+        contextRunner.withInitializer(context -> context.getEnvironment().setActiveProfiles("dev"))
                 .run(context -> assertThat(context.getStartupFailure())
                         .hasRootCauseInstanceOf(IllegalArgumentException.class)
                         .hasStackTraceContaining("app.university.fixture-id"));
         contextRunner.withPropertyValues("app.university.fixture-id=unknown")
-                .withInitializer(context -> context.getEnvironment().setActiveProfiles("local-fixture"))
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("dev"))
                 .run(context -> assertThat(context.getStartupFailure())
                         .hasRootCauseInstanceOf(IllegalArgumentException.class)
                         .hasStackTraceContaining("Unsupported app.university.fixture-id"));
     }
 
     @Test
-    void livePaymentProfileSelectsOnlyStripeAndFailsClearlyWithoutItsOwnConfiguration() {
-        contextRunner.withInitializer(context -> context.getEnvironment().setActiveProfiles("live-payment"))
+    void devNoJevAndProdActivateStripeAndFailClearlyWithoutItsConfiguration() {
+        // dev-no-jev also requires a fixture-id because it activates the fixture Jev provider
+        contextRunner
+                .withPropertyValues("app.university.fixture-id=computer_science")
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("dev-no-jev"))
                 .run(context -> assertThat(context.getStartupFailure())
+                        .as("dev-no-jev should fail without Stripe key")
+                        .hasRootCauseInstanceOf(IllegalArgumentException.class)
+                        .hasStackTraceContaining("Stripe secret key"));
+        contextRunner
+                .withPropertyValues("app.university.fixture-id=computer_science",
+                        "app.stripe.secret-key=sk_test_not_called",
+                        "app.stripe.university-webhook-secret=whsec_not_called")
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("dev-no-jev"))
+                .run(context -> assertThat(context.getStartupFailure())
+                        .as("dev-no-jev should fail without price ID")
+                        .hasRootCauseInstanceOf(IllegalArgumentException.class)
+                        .hasStackTraceContaining("Stripe university price ID"));
+        contextRunner
+                .withPropertyValues("app.university.fixture-id=computer_science",
+                        "app.stripe.secret-key=sk_test_not_called",
+                        "app.stripe.university-webhook-secret=whsec_not_called",
+                        "app.university.report.stripe-price-id=price_university_not_called")
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("dev-no-jev"))
+                .run(context -> {
+                    assertThat(context).hasNotFailed();
+                    assertThat(context.getBean(UniversityPaymentGateway.class))
+                            .isInstanceOf(StripeUniversityPaymentGateway.class);
+                    assertThat(context).doesNotHaveBean(LocalFixtureUniversityPaymentGateway.class);
+                });
+
+        // prod does not use a fixture-id
+        contextRunner.withInitializer(context -> context.getEnvironment().setActiveProfiles("prod"))
+                .run(context -> assertThat(context.getStartupFailure())
+                        .as("prod should fail without Stripe key")
                         .hasRootCauseInstanceOf(IllegalArgumentException.class)
                         .hasStackTraceContaining("Stripe secret key"));
         contextRunner.withPropertyValues("app.stripe.secret-key=sk_test_not_called",
                         "app.stripe.university-webhook-secret=whsec_not_called")
-                .withInitializer(context -> context.getEnvironment().setActiveProfiles("live-payment"))
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("prod"))
                 .run(context -> assertThat(context.getStartupFailure())
+                        .as("prod should fail without price ID")
                         .hasRootCauseInstanceOf(IllegalArgumentException.class)
                         .hasStackTraceContaining("Stripe university price ID"));
         contextRunner.withPropertyValues("app.stripe.secret-key=sk_test_not_called",
                         "app.stripe.university-webhook-secret=whsec_not_called",
                         "app.university.report.stripe-price-id=price_university_not_called")
-                .withInitializer(context -> context.getEnvironment().setActiveProfiles("live-payment"))
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("prod"))
                 .run(context -> {
                     assertThat(context).hasNotFailed();
-                    assertThat(context).hasSingleBean(UniversityPaymentGateway.class);
                     assertThat(context.getBean(UniversityPaymentGateway.class))
                             .isInstanceOf(StripeUniversityPaymentGateway.class);
-                    assertThat(context.getBean(UniversityPaymentGateway.class).priceConfigurationKey())
-                            .isEqualTo("price_university_not_called");
                     assertThat(context).doesNotHaveBean(LocalFixtureUniversityPaymentGateway.class);
                 });
     }

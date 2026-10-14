@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Profile;
 
 @AutoConfiguration(after = TypeSafeAutoConfiguration.class)
 @ConditionalOnClass(TypeSafeClient.class)
-@Profile("!local-fixture")
+@Profile("prod")
 public class UniversityJevAutoConfiguration {
 
     @Bean

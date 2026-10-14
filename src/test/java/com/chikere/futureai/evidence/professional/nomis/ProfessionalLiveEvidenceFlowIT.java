@@ -50,7 +50,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /** Explicit live report flow using the verified 18A Jev snapshot; no new Jev or Stripe call. */
 @Import(TestcontainersConfiguration.class)
-@ActiveProfiles({"prod", "live-evidence"})
+@ActiveProfiles("prod")
 @SpringBootTest(properties = {
         "app.public-base-url=https://ai-career-impact.example",
         "spring.docker.compose.enabled=false",
@@ -63,7 +63,14 @@ import static org.assertj.core.api.Assertions.assertThat;
         "app.professional.evidence.classified-profession=Software Developer",
         "app.professional.evidence.canonical-occupation=Programmers and software development professionals",
         "app.professional.evidence.soc2020-code=2134",
-        "app.professional.evidence.geography=United Kingdom"})
+        "app.professional.evidence.geography=United Kingdom",
+        "app.stripe.secret-key=${STRIPE_SECRET_KEY:sk_test_not_called}",
+        "app.stripe.webhook-secret=${STRIPE_WEBHOOK_SECRET:whsec_not_called}",
+        "app.stripe.university-webhook-secret=${UNIVERSITY_STRIPE_WEBHOOK_SECRET:whsec_not_called}",
+        "app.stripe.a-level-webhook-secret=${A_LEVEL_STRIPE_WEBHOOK_SECRET:whsec_not_called}",
+        "app.professional.report.stripe-price-id=${PROFESSIONAL_STRIPE_PRICE_ID:price_not_called}",
+        "app.university.report.stripe-price-id=${UNIVERSITY_STRIPE_PRICE_ID:price_not_called}",
+        "app.a-level.report.stripe-price-id=${A_LEVEL_STRIPE_PRICE_ID:price_not_called}"})
 @EnabledIfEnvironmentVariable(named = "OPENAI_API_KEY", matches = ".+")
 @EnabledIfSystemProperty(named = "evidence.live.evaluation.enabled", matches = "true")
 class ProfessionalLiveEvidenceFlowIT {

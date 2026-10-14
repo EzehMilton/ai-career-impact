@@ -9,26 +9,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static com.chikere.futureai.configuration.ApplicationProfiles.JEV_CAPTURE;
-import static com.chikere.futureai.configuration.ApplicationProfiles.LIVE_EVIDENCE;
-import static com.chikere.futureai.configuration.ApplicationProfiles.LIVE_CV_EXTRACTION;
-import static com.chikere.futureai.configuration.ApplicationProfiles.LIVE_PAYMENT;
-import static com.chikere.futureai.configuration.ApplicationProfiles.LOCAL_FIXTURE;
+import static com.chikere.futureai.configuration.ApplicationProfiles.DEV;
+import static com.chikere.futureai.configuration.ApplicationProfiles.DEV_NO_JEV;
 import static com.chikere.futureai.configuration.ApplicationProfiles.PROD;
 
 /**
  * Refuses to start an application that is configured in a way it cannot honour.
  *
- * <p>The alternative is discovering the problem when the first customer tries to pay, which is both
- * later and more expensive. Two kinds of problem are caught:</p>
+ * <p>Two kinds of problem are caught:</p>
  *
  * <ul>
- *   <li><strong>Contradictory profiles.</strong> Asking for production and fixtures at once, or for
- *       live payment alongside the simulator that overrides it, is a request the application cannot
- *       satisfy as asked. Rather than silently picking one, it stops.</li>
+ *   <li><strong>Contradictory profiles.</strong> The application supports exactly one of
+ *       {@code dev}, {@code dev-no-jev}, or {@code prod}. Combining any two is refused at
+ *       startup rather than silently picking a winner.</li>
  *   <li><strong>Missing configuration for an enabled capability.</strong> Checks are scoped to what
- *       is actually switched on: fixtures need no Stripe keys, and an application without live
- *       payment needs no price ids.</li>
+ *       is actually switched on: {@code dev} needs no external-service credentials; {@code prod}
+ *       needs all of them and is refused if any are absent.</li>
  * </ul>
  *
  * <p>No message ever contains a configuration value. Startup failures are pasted into tickets.</p>
@@ -47,7 +43,7 @@ public class StartupConfigurationValidator {
             "app.university.report.stripe-price-id",
             "app.a-level.report.stripe-price-id");
 
-    private static final List<String> LIVE_EVIDENCE_SETTINGS = List.of(
+    private static final List<String> EVIDENCE_SETTINGS = List.of(
             "app.professional.evidence.classified-profession",
             "app.professional.evidence.canonical-occupation",
             "app.professional.evidence.soc2020-code");
@@ -72,25 +68,17 @@ public class StartupConfigurationValidator {
 
     private static List<String> conflictingProfiles(Set<String> active) {
         List<String> conflicts = new ArrayList<>();
-        if (active.contains(PROD) && active.contains(LOCAL_FIXTURE)) {
-            conflicts.add("Profiles 'prod' and 'local-fixture' are contradictory: production must "
-                    + "never serve fixture results.");
+        if (active.contains(DEV) && active.contains(PROD)) {
+            conflicts.add("Profiles 'dev' and 'prod' are contradictory: production must never "
+                    + "serve fixture results.");
         }
-        if (active.contains(LOCAL_FIXTURE) && active.contains(LIVE_PAYMENT)) {
-            conflicts.add("Profiles 'local-fixture' and 'live-payment' are contradictory: the "
-                    + "fixture simulator overrides Stripe, so no real payment would be taken.");
+        if (active.contains(DEV) && active.contains(DEV_NO_JEV)) {
+            conflicts.add("Profiles 'dev' and 'dev-no-jev' are contradictory: choose exactly one "
+                    + "development profile.");
         }
-        if (active.contains(LOCAL_FIXTURE) && active.contains(LIVE_EVIDENCE)) {
-            conflicts.add("Profiles 'local-fixture' and 'live-evidence' are contradictory: the "
-                    + "fixture provider overrides the live one, so no real evidence would be used.");
-        }
-        if (active.contains(PROD) && active.contains(JEV_CAPTURE)) {
-            conflicts.add("Profiles 'prod' and 'jev-capture' are contradictory: capture writes "
-                    + "assessment input to local files and is for development only.");
-        }
-        if (active.contains(LIVE_CV_EXTRACTION) && !active.contains(LOCAL_FIXTURE)) {
-            conflicts.add("Profile 'live-cv-extraction' is a local development overlay and must "
-                    + "be combined with 'local-fixture'.");
+        if (active.contains(DEV_NO_JEV) && active.contains(PROD)) {
+            conflicts.add("Profiles 'dev-no-jev' and 'prod' are contradictory: choose exactly one "
+                    + "profile.");
         }
         return conflicts;
     }
@@ -98,36 +86,30 @@ public class StartupConfigurationValidator {
     private static List<String> missingSettings(Set<String> active, Environment environment) {
         List<String> problems = new ArrayList<>();
         if (active.contains(PROD)) {
-            problems.addAll(productionSettings(environment));
+            problems.addAll(prodSettings(environment));
         }
-        if (active.contains(LIVE_PAYMENT) && !active.contains(LOCAL_FIXTURE)) {
-            problems.addAll(missing(environment, STRIPE_SETTINGS));
-        }
-        if (active.contains(LIVE_EVIDENCE) && !active.contains(LOCAL_FIXTURE)) {
-            problems.addAll(missing(environment, LIVE_EVIDENCE_SETTINGS));
-        }
-        if (active.contains(LIVE_CV_EXTRACTION)
-                && environment.getProperty("OPENAI_API_KEY", "").isBlank()) {
-            problems.add("Missing required configuration: OPENAI_API_KEY "
-                    + "(required by profile 'live-cv-extraction')");
+        if (active.contains(DEV_NO_JEV)) {
+            problems.addAll(devNoJevSettings(environment));
         }
         return problems;
     }
 
-    private static List<String> productionSettings(Environment environment) {
-        // The datasource is deliberately not checked here. Spring Boot already refuses to start
-        // without one, with a clearer message than this could give, and a DataSource can legitimately
-        // be supplied other than through spring.datasource.url.
+    private static List<String> prodSettings(Environment environment) {
         List<String> problems = new ArrayList<>();
         if (environment.getProperty("TYPESAFE_API_KEY", "").isBlank()) {
-            problems.add("Missing required configuration: TYPESAFE_API_KEY");
+            problems.add("Missing required configuration: TYPESAFE_API_KEY "
+                    + "(required by profile 'prod': real Jev / TypeSafe judgments)");
         }
         if (environment.getProperty("OPENAI_API_KEY", "").isBlank()) {
-            problems.add("Missing required configuration: OPENAI_API_KEY");
+            problems.add("Missing required configuration: OPENAI_API_KEY "
+                    + "(required by profile 'prod': real OpenAI narrative and CV extraction)");
         }
+        problems.addAll(missing(environment, STRIPE_SETTINGS, PROD));
+        problems.addAll(missing(environment, EVIDENCE_SETTINGS, PROD));
         String configured = environment.getProperty("app.public-base-url", "");
         if (configured.isBlank()) {
-            problems.add("Missing required configuration: app.public-base-url");
+            problems.add("Missing required configuration: app.public-base-url "
+                    + "(required by profile 'prod': payment return links are built from it)");
             return problems;
         }
         try {
@@ -139,17 +121,28 @@ public class StartupConfigurationValidator {
                         + "links are built from it. Set app.public-base-url-allow-http=true only "
                         + "if TLS genuinely terminates elsewhere and that is a deliberate choice.");
             }
-        }
-        catch (ConfigurationProblemException invalid) {
+        } catch (ConfigurationProblemException invalid) {
             problems.add(invalid.getMessage());
         }
         return problems;
     }
 
-    private static List<String> missing(Environment environment, List<String> settings) {
+    private static List<String> devNoJevSettings(Environment environment) {
+        List<String> problems = new ArrayList<>();
+        if (environment.getProperty("OPENAI_API_KEY", "").isBlank()) {
+            problems.add("Missing required configuration: OPENAI_API_KEY "
+                    + "(required by profile 'dev-no-jev': real OpenAI narrative and CV extraction)");
+        }
+        problems.addAll(missing(environment, STRIPE_SETTINGS, DEV_NO_JEV));
+        return problems;
+    }
+
+    private static List<String> missing(Environment environment, List<String> settings,
+            String profile) {
         return settings.stream()
                 .filter(setting -> environment.getProperty(setting, "").isBlank())
-                .map(setting -> "Missing required configuration: " + setting)
+                .map(setting -> "Missing required configuration: " + setting
+                        + " (required by profile '" + profile + "')")
                 .toList();
     }
 }

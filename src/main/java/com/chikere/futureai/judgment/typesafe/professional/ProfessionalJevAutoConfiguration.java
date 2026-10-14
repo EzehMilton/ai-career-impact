@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 @AutoConfiguration(after = TypeSafeAutoConfiguration.class)
 @ConditionalOnClass(TypeSafeClient.class)
-@Profile("!local-fixture")
+@Profile("prod")
 public class ProfessionalJevAutoConfiguration {
 
     @Bean

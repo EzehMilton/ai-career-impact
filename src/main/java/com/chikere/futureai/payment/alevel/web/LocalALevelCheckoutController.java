@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.UUID;
 
-/** Explicit, clearly development-only local confirmation. It exists only under local-fixture. */
+/** Explicit, clearly development-only local confirmation. It exists only under the dev profile. */
 @Controller
-@Profile("local-fixture")
+@Profile("dev")
 public final class LocalALevelCheckoutController {
 
     private final ALevelReportPurchaseUseCase purchaseService;

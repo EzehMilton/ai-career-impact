@@ -14,8 +14,10 @@ class ProfessionalJevCaptureConfigurationTest {
                     () -> new LocalFixtureProfessionalJudgmentProvider("electrician"));
 
     @Test
-    void wrapsTheJudgmentProviderOnlyUnderTheJevCaptureProfile() {
-        contextRunner.withInitializer(context -> context.getEnvironment().setActiveProfiles("jev-capture"))
+    void wrapsTheJudgmentProviderWhenPropertyIsEnabledUnderDevProfile() {
+        contextRunner
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("dev"))
+                .withPropertyValues("app.dev.capture-jev=true")
                 .run(context -> {
                     assertThat(context).hasSingleBean(ProfessionalJudgmentProvider.class);
                     var provider = context.getBean(ProfessionalJudgmentProvider.class);
@@ -26,8 +28,19 @@ class ProfessionalJevCaptureConfigurationTest {
     }
 
     @Test
-    void leavesTheJudgmentProviderAloneWithoutTheProfile() {
-        contextRunner.run(context -> assertThat(context.getBean(ProfessionalJudgmentProvider.class))
-                .isInstanceOf(LocalFixtureProfessionalJudgmentProvider.class));
+    void doesNotWrapWithoutTheProperty() {
+        contextRunner
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("dev"))
+                .run(context -> assertThat(context.getBean(ProfessionalJudgmentProvider.class))
+                        .isInstanceOf(LocalFixtureProfessionalJudgmentProvider.class));
+    }
+
+    @Test
+    void doesNotWrapUnderProdEvenIfPropertyIsSet() {
+        contextRunner
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("prod"))
+                .withPropertyValues("app.dev.capture-jev=true")
+                .run(context -> assertThat(context.getBean(ProfessionalJudgmentProvider.class))
+                        .isInstanceOf(LocalFixtureProfessionalJudgmentProvider.class));
     }
 }

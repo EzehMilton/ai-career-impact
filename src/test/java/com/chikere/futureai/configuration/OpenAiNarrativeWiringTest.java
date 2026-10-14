@@ -29,6 +29,7 @@ class OpenAiNarrativeWiringTest {
     @Test
     void registersAllNarrativesWhenChatIsOpenAiEvenIfBuilderIsAutoConfiguredLater() {
         runner.withPropertyValues("spring.ai.model.chat=openai")
+                .withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles("dev-no-jev"))
                 .run(context -> {
                     assertThat(context).hasSingleBean(OpenAiProfessionalNarrativeGenerator.class);
                     assertThat(context).hasSingleBean(OpenAiUniversityNarrativeGenerator.class);
@@ -39,6 +40,7 @@ class OpenAiNarrativeWiringTest {
     @Test
     void doesNotRegisterLiveNarrativesWhenChatIsDisabled() {
         runner.withPropertyValues("spring.ai.model.chat=none")
+                .withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles("dev-no-jev"))
                 .run(context -> {
                     assertThat(context).doesNotHaveBean(OpenAiProfessionalNarrativeGenerator.class);
                     assertThat(context).doesNotHaveBean(OpenAiUniversityNarrativeGenerator.class);

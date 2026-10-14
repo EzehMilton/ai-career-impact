@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Profile;
 import java.time.Clock;
 
 @Configuration(proxyBeanMethods = false)
-@Profile("local-fixture & !live-cv-extraction")
+@Profile("dev")
 public class LocalFixtureProfessionalProfileConfiguration {
     @Bean
     LocalFixtureProfessionalProfileExtractor localFixtureProfessionalProfileExtractor(

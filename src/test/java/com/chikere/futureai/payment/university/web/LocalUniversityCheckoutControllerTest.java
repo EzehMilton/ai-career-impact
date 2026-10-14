@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(LocalUniversityCheckoutController.class)
-@ActiveProfiles("local-fixture")
+@ActiveProfiles("dev")
 @Import(WebSecurityConfiguration.class)
 class LocalUniversityCheckoutControllerTest {
 

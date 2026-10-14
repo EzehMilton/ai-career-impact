@@ -1,11 +1,11 @@
 package com.chikere.futureai.judgment.capture.professional;
 
 import com.chikere.futureai.assessment.professional.application.ProfessionalJudgmentProvider;
-import com.chikere.futureai.configuration.ApplicationProfiles;
 import com.chikere.futureai.judgment.typesafe.professional.ProfessionalJevStateMapper;
 import com.chikere.futureai.judgment.typesafe.professional.ProfessionalJudgmentSchema;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -20,7 +20,8 @@ import java.time.Clock;
  * to combine with {@code prod}.
  */
 @Configuration(proxyBeanMethods = false)
-@Profile(ApplicationProfiles.JEV_CAPTURE)
+@Profile({"dev", "dev-no-jev"})
+@ConditionalOnProperty(name = "app.dev.capture-jev", havingValue = "true")
 public class ProfessionalJevCaptureConfiguration {
     static final String DIRECTORY_PROPERTY = "app.professional.jev-capture.directory";
     static final String DEFAULT_DIRECTORY = "target/jev-capture";

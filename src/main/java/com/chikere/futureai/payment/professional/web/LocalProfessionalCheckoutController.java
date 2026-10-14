@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @Controller
-@Profile("local-fixture")
+@Profile("dev")
 public final class LocalProfessionalCheckoutController {
     private final ProfessionalReportPurchaseUseCase purchaseService;
     private final LocalProfessionalPaymentSimulator simulator;

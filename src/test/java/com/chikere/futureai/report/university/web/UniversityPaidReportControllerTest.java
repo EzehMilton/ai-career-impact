@@ -54,8 +54,8 @@ class UniversityPaidReportControllerTest {
                 .andExpect(status().isOk()).andExpect(view().name("university-assessment/paid-report"))
                 .andReturn().getResponse().getContentAsString();
 
-        assertThat(html).contains("Full course report", "Computer Science", "Future Readiness",
-                "Saved readiness detail", "Premium action one", "Skills worth developing",
+        assertThat(html).contains("Your detailed university course report", "Computer Science",
+                "Future Readiness", "Saved readiness detail", "Premium action one", "Skills worth developing",
                 "Career areas you mentioned", "Download PDF", "university-report-v1");
         assertThat(html).doesNotContain("future-proof", "You should become", "bad degree",
                 "guaranteed", "Role Adaptability", "Human Advantage");

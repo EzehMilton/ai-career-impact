@@ -79,10 +79,10 @@ class ALevelAssessmentControllerTest {
                 .andReturn().getResponse().getContentAsString();
 
         assertThat(html).contains("Your A-level subjects", "Predicted grades",
-                "What do you enjoy or feel strongest at?", "Degree areas you are considering",
-                "It is completely fine to be undecided",
-                "There are no good or bad subjects here",
-                "You do not need to know what you want to do yet");
+                "What do you enjoy or feel confident doing?", "degree areas you're considering",
+                "Leave this blank if you're still exploring",
+                "doesn't judge your abilities",
+                "you haven't decided on a degree or career");
         // "no good or bad subjects here" is deliberate reassurance, so only verdict phrasing is banned.
         assertThat(html).doesNotContain("AI Exposure", "Future Readiness", "future-proof",
                 "wrong subjects", "will limit your future", "you won't get");
@@ -135,12 +135,12 @@ class ALevelAssessmentControllerTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("noindex,nofollow")))
                 .andReturn().getResponse().getContentAsString();
 
-        assertThat(html).contains("Free A-level subject check", "Mathematics, Economics, Geography",
+        assertThat(html).contains("Free A-level assessment", "Mathematics, Economics, Geography",
                 "Future Optionality", "Degree Pathway Breadth", "Analytical Foundation",
                 "Human and Creative Strength", "Skill Transferability", "AI-Era Adaptability",
-                "What Future Optionality means", "not a prediction of university admission",
-                "Unlock the full A-level report", "&lt;script&gt;meaning&lt;/script&gt;",
-                "check that course's own published subject requirements");
+                "How to understand your A-level ratings", "not a prediction of university admission",
+                "Explore your A-level choices in more detail", "&lt;script&gt;meaning&lt;/script&gt;",
+                "check the university's published subject and grade requirements");
         assertThat(html).doesNotContain("Premium optionality detail", "Premium action one",
                 "Skills worth developing alongside your subjects", "Illustrative requirement note",
                 "secret-provider", "/report.pdf", "Download PDF",
