@@ -1,90 +1,179 @@
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Your full course report')}"></head>
+<head th:replace="~{fragments/layout :: head('Your full university course report')}"></head>
 <body>
 <a class="skip-link" href="#main">Skip to main content</a>
 <div th:replace="~{fragments/layout :: devBanner}"></div>
 <header th:replace="~{fragments/layout :: siteHeader('university')}"></header>
 
-<main class="page-shell paid-report" id="main">
+<main class="page-shell paid-report university-paid-report-refined" id="main">
   <meta name="robots" content="noindex,nofollow">
-  <aside class="fixture-warning" th:if="${report.developmentFixture}" role="alert">
+
+  <aside class="fixture-warning" th:if="${report.developmentFixture}" role="status">
     <strong>DEVELOPMENT MODE — LOCALLY PURCHASED REPORT</strong>
     <p>This report was unlocked using a local payment simulation, not a real Stripe transaction.</p>
   </aside>
-  <header class="page-header">
-    <p class="eyebrow">Full course report</p>
-    <h1 th:text="${report.headline}">Your detailed course report</h1>
-    <p class="intro">For <strong th:text="${report.courseTitle}">your course</strong><span th:if="${report.institution != null}"> at <span th:text="${report.institution}">your university</span></span></p>
-    <dl class="report-meta">
-      <div><dt>Report version</dt><dd th:text="${report.methodology.reportVersion}">version</dd></div>
-    </dl>
-    <p class="page-action"><a class="button-link" th:href="@{/university-assessment/{id}/report.pdf(id=${assessmentId})}">Download PDF</a></p>
-  </header>
 
-  <section class="panel">
-    <h2>What this assessment suggests</h2><p class="narrative-summary" th:text="${report.interpretation}">Interpretation</p>
-    <dl class="summary-list"><div><dt>Status</dt><dd th:text="${report.status}">Ready</dd></div><div><dt>Assessment confidence</dt><dd th:text="${report.confidence}">High</dd></div></dl>
+  <div class="page-header paid-report-header">
+    <p class="eyebrow">Your detailed university course report</p>
+    <h1>Your AI Career Impact Report</h1>
+    <p class="intro">A detailed assessment of the skills and opportunities in <strong th:text="${report.courseTitle}">your course</strong><span th:if="${report.institution != null}"> at <span th:text="${report.institution}">your university</span></span>.</p>
+    <p class="paid-report-header-actions">
+      <a class="button-link" th:href="@{/university-assessment/{id}/report.pdf(id=${assessmentId})}">Download PDF <span aria-hidden="true">&#8595;</span></a>
+    </p>
+  </div>
+
+  <section class="panel paid-overview" aria-labelledby="paid-overview-heading">
+    <p class="eyebrow">The big picture</p>
+    <h2 id="paid-overview-heading">Your course outlook at a glance</h2>
+    <p class="narrative-summary" th:text="${report.interpretation}">Overall interpretation</p>
+    <div class="paid-rating-overview" th:if="${!report.measures.isEmpty()}">
+      <div class="paid-rating-overview-item" th:each="measure : ${report.measures}">
+        <span class="paid-rating-overview-name" th:text="${measure.name}">Measure name</span>
+        <strong th:text="${measure.band}">Moderate</strong>
+      </div>
+    </div>
+    <details class="paid-meta-details">
+      <summary>Assessment information</summary>
+      <p class="helper" th:text="${report.headline}">Original report headline</p>
+      <dl class="summary-list">
+        <div><dt>Status</dt><dd th:text="${report.status}">Ready</dd></div>
+        <div><dt>Assessment confidence</dt><dd th:text="${report.confidence}">High</dd></div>
+      </dl>
+    </details>
+    <p class="paid-disclaimer">These findings describe the course, not your abilities or future employment prospects.</p>
   </section>
 
-  <section class="results-section" th:if="${!report.measures.isEmpty()}">
-    <h2>The five measures in detail</h2>
-    <div class="measure-grid">
-      <article class="panel measure-card" th:each="measure : ${report.measures}">
-        <h3 th:text="${measure.name}">Measure</h3><p class="measure-value"><strong th:text="${measure.indicator}">0.00</strong><span> / 10</span></p>
-        <dl class="measure-details"><div><dt>Band</dt><dd th:text="${measure.band}">Developing</dd></div><div><dt>Confidence</dt><dd th:text="${measure.confidence}">85%</dd></div></dl>
-        <p th:text="${measure.conciseExplanation}">Explanation</p><p th:if="${measure.detailedExplanation != null}" th:text="${measure.detailedExplanation}">Detail</p>
+  <section class="results-section" th:if="${!report.measures.isEmpty()}" aria-labelledby="paid-measures-heading">
+    <div class="paid-section-heading">
+      <h2 id="paid-measures-heading">Your five course assessment ratings</h2>
+      <p class="helper">Each rating reflects a different aspect of what the course appears to teach. A higher rating does not necessarily mean it is the better degree for you.</p>
+    </div>
+    <div class="measure-grid paid-measure-grid">
+      <article class="panel measure-card paid-measure-card" th:each="measure : ${report.measures}">
+        <h3 th:text="${measure.name}">Measure</h3>
+        <p class="paid-measure-band" th:text="${measure.band}">Moderate</p>
+        <p class="paid-measure-explanation" th:text="${measure.conciseExplanation}">Concise explanation</p>
+        <dl class="measure-details">
+          <div><dt>Assessment indicator</dt><dd><span th:text="${measure.indicator}">0.00</span> / 10</dd></div>
+          <div><dt>Confidence indicator</dt><dd th:text="${measure.confidence}">80%</dd></div>
+        </dl>
+        <p class="paid-measure-detail" th:if="${measure.detailedExplanation != null}" th:text="${measure.detailedExplanation}">Detailed explanation</p>
       </article>
+    </div>
+    <details class="paid-scale-details">
+      <summary>How to read the 0–10 indicators</summary>
+      <p>These 0–10 indicators describe course characteristics, not the probability of securing employment or a prediction of your future. Ratings across different assessment types are not directly comparable.</p>
+    </details>
+  </section>
+
+  <section class="factor-grid paid-factor-grid" aria-label="Course strengths and development opportunities">
+    <div class="panel">
+      <h2>What your course develops well</h2>
+      <p class="helper">Strengths identified from the course information you provided.</p>
+      <ul th:if="${!report.keyStrengths.isEmpty()}"><li th:each="factor : ${report.keyStrengths}" th:text="${factor}">Strength</li></ul>
+      <p th:if="${report.keyStrengths.isEmpty()}">No clear standout strengths were identified from the available details.</p>
+    </div>
+    <div class="panel">
+      <h2>Skills worth strengthening</h2>
+      <p class="helper">Areas you may want to develop alongside the course.</p>
+      <ul th:if="${!report.developmentAreas.isEmpty()}"><li th:each="factor : ${report.developmentAreas}" th:text="${factor}">Development area</li></ul>
+      <p th:if="${report.developmentAreas.isEmpty()}">No clear development areas were identified from the available details.</p>
     </div>
   </section>
 
-  <section class="factor-grid">
-    <div class="panel"><h2>Key strengths</h2><ul><li th:each="factor : ${report.keyStrengths}" th:text="${factor}">Strength</li></ul></div>
-    <div class="panel"><h2>Areas worth supplementing</h2><ul><li th:each="factor : ${report.developmentAreas}" th:text="${factor}">Development area</li></ul></div>
-  </section>
-
-  <section class="narrative-section">
-    <h2>Full interpretation</h2>
-    <article class="panel narrative-panel" th:if="${report.narrative.available}">
-      <h3>What this means</h3><p th:text="${report.narrative.whatThisMeans}">Meaning</p>
-      <h3>Future Readiness</h3><p th:text="${report.narrative.futureReadinessExplanation}">Readiness</p>
+  <section class="narrative-section paid-narrative-section" aria-labelledby="paid-narrative-heading">
+    <h2 id="paid-narrative-heading">What your results mean for your course</h2>
+    <article class="panel narrative-panel paid-narrative-panel" th:if="${report.narrative.available}">
+      <h3>What these results mean</h3><p th:text="${report.narrative.whatThisMeans}">Meaning</p>
+      <h3>How the course prepares you for change</h3><p th:text="${report.narrative.futureReadinessExplanation}">Future readiness</p>
       <h3>What the course develops well</h3><p th:text="${report.narrative.strengthsExplanation}">Strengths</p>
-      <h3>What you may want to strengthen</h3><p th:text="${report.narrative.developmentOpportunitiesExplanation}">Development</p>
+      <h3>What you may want to strengthen</h3><p th:text="${report.narrative.developmentOpportunitiesExplanation}">Development opportunities</p>
       <h3>Working alongside AI</h3><p th:text="${report.narrative.complementarityExplanation}">Complementarity</p>
-      <h3>Transferable capabilities</h3><p th:text="${report.narrative.transferableSkillsExplanation}">Transferability</p>
-      <h3>Career adaptability</h3><p th:text="${report.narrative.careerAdaptabilityExplanation}">Adaptability</p>
+      <h3>Skills you can use in different settings</h3><p th:text="${report.narrative.transferableSkillsExplanation}">Transferable skills</p>
+      <h3>Adapting to a changing job market</h3><p th:text="${report.narrative.careerAdaptabilityExplanation}">Career adaptability</p>
       <p class="narrative-caution" th:text="${report.narrative.caution}">Caution</p>
     </article>
     <div class="panel narrative-unavailable" th:unless="${report.narrative.available}"><p>The assessment is available, but its personalised explanation is currently unavailable.</p></div>
   </section>
 
-  <section class="results-section"><h2>Practical next steps</h2><div class="panel"><ul th:if="${!report.practicalActions.isEmpty()}"><li th:each="action : ${report.practicalActions}" th:text="${action}">Action</li></ul><p th:if="${report.practicalActions.isEmpty()}">Personalised next steps are unavailable with the explanation.</p></div></section>
+  <section class="results-section" aria-labelledby="paid-actions-heading">
+    <h2 id="paid-actions-heading">Practical next steps</h2>
+    <div class="panel paid-action-panel">
+      <ol class="paid-action-list" th:if="${!report.practicalActions.isEmpty()}">
+        <li th:each="action : ${report.practicalActions}"><span th:text="${action}">Action</span></li>
+      </ol>
+      <p th:if="${report.practicalActions.isEmpty()}">Personalised actions are unavailable with the explanation.</p>
+    </div>
+  </section>
 
-  <section class="results-section"><h2>Skills worth developing alongside the course</h2><div class="evidence-grid"><article class="panel" th:each="skill : ${report.skillPriorities}"><p class="evidence-category" th:text="${skill.priority}">Priority</p><h3 th:text="${skill.title}">Skill</h3><p th:text="${skill.rationale}">Rationale</p></article></div></section>
+  <section class="results-section" aria-labelledby="paid-skills-heading">
+    <h2 id="paid-skills-heading">Skills worth developing alongside the course</h2>
+    <div class="paid-skill-grid">
+      <article class="panel paid-skill-card" th:each="skill : ${report.skillPriorities}">
+        <p class="evidence-category" th:text="${skill.priority}">Priority</p>
+        <h3 th:text="${skill.title}">Skill</h3>
+        <p th:text="${skill.rationale}">Rationale</p>
+      </article>
+    </div>
+  </section>
 
-  <section class="panel">
-    <h2>Career areas you mentioned</h2>
+  <section class="panel paid-career-interests" aria-labelledby="paid-career-heading">
+    <h2 id="paid-career-heading">Career areas you mentioned</h2>
+    <p class="helper">These reflect your interests, not careers selected or recommended by the assessment.</p>
     <p th:text="${report.careerAreas.guidance}">Guidance</p>
-    <ul th:if="${!report.careerAreas.areasToExplore.isEmpty()}"><li th:each="area : ${report.careerAreas.areasToExplore}" th:text="${area}">Area</li></ul>
+    <ul th:if="${!report.careerAreas.areasToExplore.isEmpty()}">
+      <li th:each="area : ${report.careerAreas.areasToExplore}" th:text="${area}">Career area</li>
+    </ul>
     <p class="helper" th:text="${report.careerAreas.limitation}">Limitation</p>
   </section>
 
-  <section class="evidence-section">
-    <h2>External context</h2><p class="helper">This is saved factual context, separate from the measures above.</p>
+  <section class="evidence-section" aria-labelledby="paid-evidence-heading">
+    <h2 id="paid-evidence-heading">External course context</h2>
+    <p class="helper">Additional sourced context about courses and related opportunities, where available. This does not change your assessment ratings.</p>
+    <p class="helper">Only the sourced items shown are verified here. Other evidence categories may be unavailable.</p>
     <div class="fixture-evidence-label" th:if="${report.developmentFixture}">Local development evidence — not live official data</div>
     <p class="panel" th:if="${report.evidence.items.isEmpty()}" th:text="${report.evidence.message}">Unavailable</p>
     <p class="notice" th:if="${report.evidence.status == 'Partial'}" th:text="${report.evidence.message}">Partial</p>
-    <div class="evidence-grid"><article class="panel evidence-card" th:each="item : ${report.evidence.items}"><p class="evidence-category" th:text="${item.category}">Category</p><h3 th:text="${item.title}">Evidence</h3><p th:text="${item.summary}">Summary</p><p class="evidence-metric" th:if="${item.metric != null}" th:text="${item.metric}">Metric</p><dl class="evidence-meta"><div><dt>Source</dt><dd><a th:if="${item.sourceUrl != null}" th:href="${item.sourceUrl}" th:text="${item.source}" target="_blank" rel="noopener noreferrer">Source</a><span th:if="${item.sourceUrl == null}" th:text="${item.source}">Source</span></dd></div><div th:if="${item.geography != null}"><dt>Geography</dt><dd th:text="${item.geography}">UK</dd></div><div><dt>Date</dt><dd th:text="${item.date}">Date</dd></div></dl><p class="evidence-relevance" th:text="${item.relevance}">Relevance</p></article></div>
+    <div class="paid-evidence-grid">
+      <article class="panel evidence-card paid-evidence-card" th:each="item : ${report.evidence.items}">
+        <p class="evidence-category" th:text="${item.category}">Category</p>
+        <h3 th:text="${item.title}">Evidence</h3>
+        <p th:text="${item.summary}">Summary</p>
+        <p class="evidence-metric" th:if="${item.metric != null}" th:text="${item.metric}">Metric</p>
+        <p class="evidence-relevance" th:text="${item.relevance}">Relevance</p>
+        <details class="paid-evidence-source">
+          <summary>Source and evidence details</summary>
+          <dl class="evidence-meta">
+            <div><dt>Source</dt><dd><a th:if="${item.sourceUrl != null}" th:href="${item.sourceUrl}" th:text="${item.source}" target="_blank" rel="noopener noreferrer">Source</a><span th:if="${item.sourceUrl == null}" th:text="${item.source}">Source</span></dd></div>
+            <div th:if="${item.geography != null}"><dt>Geography</dt><dd th:text="${item.geography}">UK</dd></div>
+            <div><dt>Date</dt><dd th:text="${item.date}">Date</dd></div>
+          </dl>
+        </details>
+      </article>
+    </div>
   </section>
 
-  <section class="panel report-caveat"><h2>Methodology and limitations</h2><ul><li th:each="limitation : ${report.methodology.limitations}" th:text="${limitation}">Limitation</li></ul><dl class="evidence-meta"><div><dt>Decision policy</dt><dd th:text="${report.methodology.decisionPolicyVersion}">Version</dd></div><div><dt>Judgement schema</dt><dd th:text="${report.methodology.judgmentSchemaVersion}">Version</dd></div><div><dt>Report composition</dt><dd th:text="${report.methodology.reportVersion}">Version</dd></div></dl></section>
-  <p><a th:href="@{/methodology}" href="/methodology">Read how this works</a></p>
+  <section class="panel report-caveat paid-methodology" aria-labelledby="paid-methodology-heading">
+    <h2 id="paid-methodology-heading">About your assessment</h2>
+    <p>This report describes skills and learning opportunities associated with the course information provided. It does not assess your personal ability, guarantee employment, or replace official university entry requirements.</p>
+    <ul><li th:each="limitation : ${report.methodology.limitations}" th:text="${limitation}">Limitation</li></ul>
+    <details class="paid-technical-details">
+      <summary>Assessment methodology and technical details</summary>
+      <dl class="summary-list">
+        <div><dt>Decision policy</dt><dd th:text="${report.methodology.decisionPolicyVersion}">Version</dd></div>
+        <div><dt>Judgement schema</dt><dd th:text="${report.methodology.judgmentSchemaVersion}">Version</dd></div>
+        <div><dt>Report composition</dt><dd th:text="${report.methodology.reportVersion}">Version</dd></div>
+      </dl>
+    </details>
+    <p>Check official course requirements, course pages and prospectuses when making education decisions. <a th:href="@{/methodology}" href="/methodology">Read how this works</a>.</p>
+  </section>
 
-  <p class="page-action">
-    <a th:href="@{/university-assessment/{id}/report.pdf(id=${assessmentId})}">Download PDF</a>
-    <a class="button-link button-secondary" th:href="@{/university-assessment/{id}(id=${assessmentId})}">Back to your free result</a>
+  <nav class="page-action paid-report-bottom-actions" aria-label="Report actions">
+    <a class="button-link" th:href="@{/university-assessment/{id}/report.pdf(id=${assessmentId})}">Download PDF</a>
+    <a class="button-link button-secondary" th:href="@{/university-assessment/{id}(id=${assessmentId})}">Back to your free course result</a>
     <a class="button-link button-secondary" th:href="@{/}" href="/">Back to home</a>
-  </p>
+  </nav>
 </main>
 
 <footer th:replace="~{fragments/layout :: siteFooter}"></footer>

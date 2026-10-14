@@ -1,17 +1,18 @@
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Your A-level options')}"></head>
+<head th:replace="~{fragments/layout :: head('Your A-level choices assessment')}"></head>
 <body>
 <a class="skip-link" href="#main">Skip to main content</a>
 <div th:replace="~{fragments/layout :: devBanner}"></div>
 <header th:replace="~{fragments/layout :: siteHeader('a-level')}"></header>
 
-<main class="page-shell" id="main">
+<main class="page-shell alevel-results-refined" id="main">
   <meta name="robots" content="noindex,nofollow">
-  <div class="page-header">
-    <p class="eyebrow">Free A-level subject check</p>
-    <h1 th:text="${report.headline}">Your A-level subject assessment</h1>
-    <p class="intro">For <strong th:text="${#strings.listJoin(report.selectedSubjects, ', ')}">your subjects</strong></p>
+
+  <div class="page-header alevel-results-header">
+    <p class="eyebrow">Free A-level assessment</p>
+    <h1>Your A-level Choices Assessment</h1>
+    <p class="intro">For <strong th:text="${#strings.listJoin(report.selectedSubjects, ', ')}">your selected subjects</strong></p>
   </div>
 
   <aside class="fixture-warning" th:if="${report.developmentFixture}" role="status">
@@ -19,77 +20,82 @@
     <p>This result uses local fixture data and is not a live AI assessment.</p>
   </aside>
 
-  <!--/* 1. The headline result */-->
-  <section class="panel" aria-labelledby="summary-heading">
-    <h2 id="summary-heading">What this suggests</h2>
+  <section class="panel alevel-overview" aria-labelledby="summary-heading">
+    <p class="eyebrow">Your assessment</p>
+    <h2 id="summary-heading">Your results at a glance</h2>
     <p class="narrative-summary" th:text="${report.interpretation}">Overall interpretation</p>
-    <dl class="summary-list">
-      <div><dt>Status</dt><dd th:text="${report.status}">Ready</dd></div>
-      <div><dt>Assessment confidence</dt><dd th:text="${report.confidence}">High</dd></div>
-    </dl>
-    <p class="notice" th:if="${report.moreInformationRequired}">We need a little more detail about your subjects before we can show the measures. Go back and add the subjects you are taking or considering.</p>
-  </section>
 
-  <!--/* 2. What the measures mean */-->
-  <section class="panel results-section" th:unless="${report.moreInformationRequired}" aria-labelledby="optionality-heading">
-    <h2 id="optionality-heading">What Future Optionality means</h2>
-    <p>
-      Future Optionality describes how wide a range of plausible next steps your current subject
-      combination appears to keep open, and how widely the skills it builds transfer. Each number
-      runs from 0 to 10 and is an <strong>indicator</strong>, not a probability.
-    </p>
-    <p th:text="${report.admissionsDisclaimer}">This is not a prediction of university admission.</p>
-    <p>
-      A more focused combination is a perfectly reasonable choice &mdash; it simply points more
-      directly at fewer destinations. It describes your <strong>subjects</strong>, not you.
-    </p>
+    <div class="alevel-rating-overview" th:if="${!report.moreInformationRequired and !report.measures.isEmpty()}">
+      <div class="alevel-rating-overview-item" th:each="measure : ${report.measures}">
+        <span class="alevel-rating-overview-name" th:text="${measure.name}">Measure</span>
+        <strong th:text="${measure.band}">Balanced</strong>
+      </div>
+    </div>
+
+    <p class="notice" th:if="${report.moreInformationRequired}">We need a little more detail about your subjects before we can show the measures. Go back and add the subjects you are taking or considering.</p>
+    <p class="alevel-summary-reassurance">Your A-level choices don't define your entire future. This assessment helps you explore your options, not decide your future for you.</p>
+    <details class="alevel-assessment-details">
+      <summary>Assessment information</summary>
+      <dl class="summary-list">
+        <div><dt>Status</dt><dd th:text="${report.status}">Ready</dd></div>
+        <div><dt>Assessment confidence</dt><dd th:text="${report.confidence}">High</dd></div>
+      </dl>
+    </details>
   </section>
 
   <section class="results-section" th:unless="${report.moreInformationRequired}" aria-labelledby="measures-heading">
-    <h2 id="measures-heading">The six measures</h2>
-    <div class="measure-grid">
-      <article class="panel measure-card" th:each="measure : ${report.measures}">
+    <h2 id="measures-heading">Your six assessment ratings</h2>
+    <div class="measure-grid alevel-measure-grid">
+      <article class="panel measure-card alevel-measure-card" th:each="measure : ${report.measures}">
         <h3 th:text="${measure.name}">Measure</h3>
-        <p class="measure-value"><strong th:text="${measure.indicator}">0.00</strong><span> / 10</span></p>
+        <p class="alevel-measure-band" th:text="${measure.band}">Balanced</p>
+        <p th:text="${measure.conciseExplanation}">Concise explanation</p>
         <dl class="measure-details">
-          <div><dt>Band</dt><dd th:text="${measure.band}">Balanced</dd></div>
+          <div><dt>Assessment indicator</dt><dd><span th:text="${measure.indicator}">0.00</span> / 10</dd></div>
           <div><dt>Confidence</dt><dd th:text="${measure.confidence}">85%</dd></div>
         </dl>
-        <p th:text="${measure.conciseExplanation}">Concise explanation</p>
       </article>
     </div>
+
+    <details class="panel alevel-explanation-details" aria-labelledby="optionality-heading">
+      <summary id="optionality-heading">How to understand your A-level ratings</summary>
+      <p>Future Optionality describes how wide a range of plausible next steps your current subject combination appears to keep open, and how widely the skills it builds transfer. Each indicator runs from 0 to 10. It is not a probability.</p>
+      <p th:text="${report.admissionsDisclaimer}">This is not a prediction of university admission.</p>
+      <p>A more focused combination is a perfectly reasonable choice: it may point more directly towards fewer destinations. This assessment describes your <strong>subjects</strong>, not your abilities or worth. Higher ratings are not automatically better for your personal goals.</p>
+    </details>
   </section>
 
-  <!--/* 3. Why you got this result */-->
-  <section class="factor-grid" th:unless="${report.moreInformationRequired}" aria-label="Strengths and areas to research">
+  <section class="factor-grid alevel-factor-grid" th:unless="${report.moreInformationRequired}" aria-label="Strengths and areas to explore">
     <div class="panel">
-      <h2>What your combination builds well</h2>
+      <h2>Strengths of your subject combination</h2>
+      <p class="helper">Capabilities that your selected subjects appear to support.</p>
       <ul th:if="${!report.mainStrengths.isEmpty()}"><li th:each="factor : ${report.mainStrengths}" th:text="${factor}">Strength</li></ul>
       <p th:if="${report.mainStrengths.isEmpty()}">No clear standout strengths were identified from what you described.</p>
     </div>
     <div class="panel">
-      <h2>Areas you may want to supplement</h2>
+      <h2>Skills worth developing further</h2>
+      <p class="helper">Additional skills you could explore alongside your studies.</p>
       <ul th:if="${!report.developmentOpportunities.isEmpty()}"><li th:each="factor : ${report.developmentOpportunities}" th:text="${factor}">Development area</li></ul>
       <p th:if="${report.developmentOpportunities.isEmpty()}">No clear development areas were identified from what you described.</p>
-      <p class="helper">These are things you could build alongside your subjects. None of them is a suggestion to change what you are studying.</p>
+      <p class="helper">These are not recommendations to change your A-level subjects.</p>
     </div>
   </section>
 
   <section class="narrative-section" aria-labelledby="meaning-heading">
-    <h2 id="meaning-heading">Short interpretation</h2>
+    <h2 id="meaning-heading">What these results mean for your choices</h2>
     <div class="panel" th:if="${report.narrative.available}"><p th:text="${report.narrative.whatThisMeans}">What this means</p></div>
     <div class="panel narrative-unavailable" th:unless="${report.narrative.available}">
       <p>Your result is complete, but its personalised explanation is currently unavailable.</p>
     </div>
   </section>
 
-  <!--/* 4 and 5. What next, and what the full report adds */-->
-  <section class="panel unlock-panel" aria-labelledby="unlock-heading">
-    <h2 id="unlock-heading">Unlock the full A-level report</h2>
-    <p class="helper">What you already have, and what the full report adds.</p>
+  <section class="panel unlock-panel alevel-unlock-panel" aria-labelledby="unlock-heading">
+    <p class="eyebrow">Optional detailed report</p>
+    <h2 id="unlock-heading">Explore your A-level choices in more detail</h2>
+    <p class="helper">Get a deeper explanation of your ratings, practical ways to build your skills and guidance on exploring future study options.</p>
     <div class="tier-grid">
       <div class="tier tier-included">
-        <h3>Free check &mdash; included</h3>
+        <h3>Free assessment — included</h3>
         <ul>
           <li>Your core assessment and all six measures</li>
           <li>What each measure means</li>
@@ -98,7 +104,7 @@
         </ul>
       </div>
       <div class="tier">
-        <h3>Full report</h3>
+        <h3>Detailed report</h3>
         <ul>
           <li>A deeper personalised explanation of each measure</li>
           <li>Practical next steps</li>
@@ -108,37 +114,29 @@
         </ul>
       </div>
     </div>
-    <p class="helper">
-      Both tiers use the same assessment. The full report adds depth and explanation; it does not
-      change or re-run your result.
-    </p>
-    <p class="price-line" th:if="${purchase.displayPrice != null}">Price: <span th:text="${purchase.displayPrice}">Configured price</span></p>
-    <p class="page-action">
-      <a class="button-link" th:if="${purchase.active}" th:href="@{/a-level-assessment/{id}/report(id=${assessmentId})}">Open your purchased report</a>
-    </p>
+    <p class="helper">Your assessment ratings stay the same. The detailed report adds explanations and guidance; it does not change or re-run your assessment.</p>
+    <p class="price-line" th:if="${purchase.displayPrice != null}">Detailed report: <strong th:text="${purchase.displayPrice}">Configured price</strong></p>
+    <p class="page-action"><a class="button-link" th:if="${purchase.active}" th:href="@{/a-level-assessment/{id}/report(id=${assessmentId})}">Open your purchased report</a></p>
     <p class="notice" th:if="${purchase.pending}">Payment confirmation pending. Your full report will be available after payment is verified.</p>
     <p class="notice" th:if="${purchase.denied}">Paid report access is not currently active.</p>
     <form th:if="${purchase.checkoutAvailable}" method="post" th:action="@{/a-level-assessment/{id}/checkout(id=${assessmentId})}">
-      <button type="submit">Unlock my full report</button>
+      <button type="submit">Get my detailed report</button>
     </form>
     <p class="helper" th:if="${purchase.noEntitlement and !purchase.checkoutAvailable}">Paid report checkout is not currently available.</p>
   </section>
 
   <section class="panel report-caveat" aria-labelledby="caveat-heading">
-    <h2 id="caveat-heading">Important context</h2>
+    <h2 id="caveat-heading">About your assessment</h2>
     <p th:text="${report.methodologyCaveat}">Methodology caveat.</p>
-    <p>If a specific degree interests you, always check that course's own published subject requirements. Those are facts to look up, and they are shown separately from this assessment.</p>
-    <p>Use this alongside your teachers, your school's careers adviser, open days and people already doing the things you are curious about.</p>
-    <p>
-      Keep your result link safe &mdash; it is the only way back to this page.
-      <a th:href="@{/methodology}" href="/methodology">Read how this works</a>.
-    </p>
+    <p>If you are interested in a particular degree, always check the university's published subject and grade requirements. This assessment cannot predict admission or guarantee future career outcomes.</p>
+    <p>Use these insights alongside advice from your teachers, careers advisers, universities and people working in areas that interest you.</p>
+    <p>Save your result link if you want to return later. Anyone with the link may be able to view your results, so don't share it publicly. <a th:href="@{/methodology}" href="/methodology">Read how this works</a>.</p>
   </section>
 
-  <p class="page-action">
-    <a th:href="@{/a-level-assessment}" href="/a-level-assessment">Check another combination</a>
+  <nav class="page-action alevel-bottom-actions" aria-label="Result page navigation">
+    <a class="button-link button-secondary" th:href="@{/a-level-assessment}" href="/a-level-assessment">Check another combination</a>
     <a class="button-link button-secondary" th:href="@{/}" href="/">Back to home</a>
-  </p>
+  </nav>
 </main>
 
 <footer th:replace="~{fragments/layout :: siteFooter}"></footer>

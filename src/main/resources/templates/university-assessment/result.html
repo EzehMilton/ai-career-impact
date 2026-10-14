@@ -1,16 +1,16 @@
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Your course assessment')}"></head>
+<head th:replace="~{fragments/layout :: head('Your university course assessment')}"></head>
 <body>
 <a class="skip-link" href="#main">Skip to main content</a>
 <div th:replace="~{fragments/layout :: devBanner}"></div>
 <header th:replace="~{fragments/layout :: siteHeader('university')}"></header>
 
-<main class="page-shell" id="main">
+<main class="page-shell university-results-refined" id="main">
   <meta name="robots" content="noindex,nofollow">
-  <div class="page-header">
-    <p class="eyebrow">Free course assessment</p>
-    <h1 th:text="${report.headline}">Your course assessment</h1>
+  <div class="page-header university-results-header">
+    <p class="eyebrow">Free university course assessment</p>
+    <h1>Your University Course Assessment</h1>
     <p class="intro">For <strong th:text="${report.courseTitle}">your course</strong><span th:if="${report.institution != null}"> at <span th:text="${report.institution}">your university</span></span></p>
   </div>
 
@@ -19,76 +19,86 @@
     <p>This assessment uses local fixture data and is not a live AI assessment.</p>
   </aside>
 
-  <!--/* 1. The headline result */-->
-  <section class="panel" aria-labelledby="summary-heading">
-    <h2 id="summary-heading">What this assessment suggests</h2>
+  <section class="panel university-results-overview" aria-labelledby="summary-heading">
+    <p class="eyebrow">Your assessment</p>
+    <h2 id="summary-heading">Your results at a glance</h2>
     <p class="narrative-summary" th:text="${report.interpretation}">Overall interpretation</p>
-    <dl class="summary-list">
-      <div><dt>Status</dt><dd th:text="${report.status}">Ready</dd></div>
-      <div><dt>Assessment confidence</dt><dd th:text="${report.confidence}">High</dd></div>
-    </dl>
-    <p class="notice" th:if="${report.moreInformationRequired}">We need a bit more detail about the course before we can show the measures. Go back and add the modules, topics or skills the course covers.</p>
-  </section>
 
-  <!--/* 2. What the measures mean */-->
-  <section class="panel results-section" th:unless="${report.moreInformationRequired}" aria-labelledby="readiness-heading">
-    <h2 id="readiness-heading">What Future Readiness means</h2>
-    <p>
-      Future Readiness describes how well the course appears to develop capabilities that stay
-      valuable as AI tools become more capable. Each number runs from 0 to 10 and is an
-      <strong>indicator</strong>, not a probability.
-    </p>
-    <p th:text="${report.employmentDisclaimer}">This is not a guarantee of employment.</p>
-    <p>
-      It describes the <strong>course</strong>, not you. It cannot be compared with a score from any
-      other kind of assessment.
-    </p>
+    <div class="university-rating-overview" th:if="${!report.moreInformationRequired and !report.measures.isEmpty()}" aria-label="Your assessment ratings">
+      <div class="university-rating-overview-item" th:each="measure : ${report.measures}">
+        <span class="university-rating-overview-name" th:text="${measure.name}">Measure</span>
+        <strong th:text="${measure.band}">Developing</strong>
+      </div>
+    </div>
+
+    <details class="university-assessment-details">
+      <summary>Assessment information</summary>
+      <dl class="summary-list">
+        <div><dt>Status</dt><dd th:text="${report.status}">Ready</dd></div>
+        <div><dt>Assessment confidence</dt><dd th:text="${report.confidence}">High</dd></div>
+      </dl>
+      <p class="helper">Assessment confidence describes confidence in the assessment information, not certainty about an individual's future.</p>
+    </details>
+    <p class="notice" th:if="${report.moreInformationRequired}">We need a bit more detail about the course before we can show the measures. Please start a new course assessment with more information about its modules, topics or skills.</p>
   </section>
 
   <section class="results-section" th:unless="${report.moreInformationRequired}" aria-labelledby="measures-heading">
-    <h2 id="measures-heading">The five measures</h2>
-    <div class="measure-grid">
-      <article class="panel measure-card" th:each="measure : ${report.measures}">
+    <h2 id="measures-heading">Your five assessment ratings</h2>
+    <div class="measure-grid university-measure-grid">
+      <article class="panel measure-card university-measure-card" th:each="measure : ${report.measures}">
         <h3 th:text="${measure.name}">Measure</h3>
-        <p class="measure-value"><strong th:text="${measure.indicator}">0.00</strong><span> / 10</span></p>
-        <dl class="measure-details">
-          <div><dt>Band</dt><dd th:text="${measure.band}">Developing</dd></div>
-          <div><dt>Confidence</dt><dd th:text="${measure.confidence}">85%</dd></div>
+        <p class="university-measure-band" th:text="${measure.band}">Developing</p>
+        <p class="university-measure-explanation" th:text="${measure.conciseExplanation}">Concise explanation</p>
+        <dl class="measure-details university-measure-details">
+          <div><dt>Assessment indicator</dt><dd><span th:text="${measure.indicator}">0.00</span> / 10</dd></div>
+          <div><dt>Assessment confidence</dt><dd th:text="${measure.confidence}">85%</dd></div>
         </dl>
-        <p th:text="${measure.conciseExplanation}">Concise explanation</p>
       </article>
     </div>
+
+    <details class="university-scale-details panel">
+      <summary>How to understand your ratings</summary>
+      <div class="university-scale-content">
+        <h3>What Future Readiness means</h3>
+        <p>Future Readiness describes how well the course appears to develop capabilities that may remain useful as AI tools become more capable. Each indicator runs from 0 to 10. A higher number means more of the characteristic being measured, not necessarily a better personal outcome.</p>
+        <p th:text="${report.employmentDisclaimer}">This is not a guarantee of employment.</p>
+        <p>The ratings describe the <strong>course</strong>, not your abilities or future career. They are not university rankings and cannot be compared with results from a different type of assessment.</p>
+      </div>
+    </details>
   </section>
 
-  <!--/* 3. Why you got this result */-->
-  <section class="factor-grid" th:unless="${report.moreInformationRequired}" aria-label="Strengths and development areas">
+  <section class="factor-grid university-factor-grid" th:unless="${report.moreInformationRequired}" aria-label="Course strengths and development areas">
     <div class="panel">
-      <h2>What this course appears to develop well</h2>
+      <h2>Course strengths</h2>
+      <p class="helper">Capabilities that stand out in the course information provided.</p>
       <ul th:if="${!report.keyStrengths.isEmpty()}"><li th:each="factor : ${report.keyStrengths}" th:text="${factor}">Strength</li></ul>
-      <p th:if="${report.keyStrengths.isEmpty()}">No clear standout strengths were identified from what you described.</p>
+      <p th:if="${report.keyStrengths.isEmpty()}">No clear standout strengths were identified from the course information provided.</p>
     </div>
     <div class="panel">
-      <h2>Areas you may want to strengthen</h2>
+      <h2>Skills worth developing further</h2>
+      <p class="helper">Areas you may wish to build alongside the course.</p>
       <ul th:if="${!report.developmentAreas.isEmpty()}"><li th:each="factor : ${report.developmentAreas}" th:text="${factor}">Development area</li></ul>
-      <p th:if="${report.developmentAreas.isEmpty()}">No clear development areas were identified from what you described.</p>
+      <p th:if="${report.developmentAreas.isEmpty()}">No clear development areas were identified from the course information provided.</p>
     </div>
   </section>
 
   <section class="narrative-section" aria-labelledby="meaning-heading">
-    <h2 id="meaning-heading">Short interpretation</h2>
-    <div class="panel" th:if="${report.narrative.available}"><p th:text="${report.narrative.whatThisMeans}">What this means</p></div>
+    <h2 id="meaning-heading">What these results mean for your course</h2>
+    <div class="panel university-narrative-panel" th:if="${report.narrative.available}">
+      <p th:text="${report.narrative.whatThisMeans}">What this means</p>
+    </div>
     <div class="panel narrative-unavailable" th:unless="${report.narrative.available}">
       <p>Your assessment is complete, but its personalised explanation is currently unavailable.</p>
     </div>
   </section>
 
-  <!--/* 4 and 5. What next, and what the full report adds */-->
-  <section class="panel unlock-panel" aria-labelledby="unlock-heading">
-    <h2 id="unlock-heading">Unlock the full course report</h2>
-    <p class="helper">What you already have, and what the full report adds.</p>
+  <section class="panel unlock-panel university-unlock-panel" aria-labelledby="unlock-heading">
+    <p class="eyebrow">Optional detailed report</p>
+    <h2 id="unlock-heading">Explore your course in more detail</h2>
+    <p class="helper">Go beyond the assessment ratings with deeper explanations, practical next steps and guidance on skills to develop alongside your course.</p>
     <div class="tier-grid">
       <div class="tier tier-included">
-        <h3>Free assessment &mdash; included</h3>
+        <h3>Free assessment — included</h3>
         <ul>
           <li>Your core assessment and all five measures</li>
           <li>What each measure means</li>
@@ -97,7 +107,7 @@
         </ul>
       </div>
       <div class="tier">
-        <h3>Full report</h3>
+        <h3>Detailed report</h3>
         <ul>
           <li>A deeper personalised explanation of each measure</li>
           <li>Practical next steps</li>
@@ -105,38 +115,35 @@
           <li>External course context, where available</li>
           <li>A downloadable PDF</li>
         </ul>
+        <!-- Enable only after a representative sample PDF is available.
+        <p><a th:href="@{/samples/sample-university-report.pdf}" target="_blank" rel="noopener noreferrer">View a sample report ↗</a></p>
+        -->
       </div>
     </div>
-    <p class="helper">
-      Both tiers use the same assessment. The full report adds depth and explanation; it does not
-      change or re-run your result.
+    <p class="helper university-tier-note">Your assessment ratings stay the same. The optional report adds detail and guidance; it does not change or re-run your assessment.</p>
+    <p class="price-line" th:if="${purchase.displayPrice != null}">Detailed report: <span th:text="${purchase.displayPrice}">Configured price</span></p>
+    <p class="page-action" th:if="${purchase.active}">
+      <a class="button-link" th:href="@{/university-assessment/{id}/report(id=${assessmentId})}">Open your purchased report</a>
     </p>
-    <p class="price-line" th:if="${purchase.displayPrice != null}">Price: <span th:text="${purchase.displayPrice}">Configured price</span></p>
-    <p class="page-action">
-      <a class="button-link" th:if="${purchase.active}" th:href="@{/university-assessment/{id}/report(id=${assessmentId})}">Open your purchased report</a>
-    </p>
-    <p class="notice" th:if="${purchase.pending}">Payment confirmation pending. Your full report will be available after payment is verified.</p>
+    <p class="notice" th:if="${purchase.pending}">Payment confirmation pending. Your detailed report will be available after payment is verified.</p>
     <p class="notice" th:if="${purchase.denied}">Paid report access is not currently active.</p>
     <form th:if="${purchase.checkoutAvailable}" method="post" th:action="@{/university-assessment/{id}/checkout(id=${assessmentId})}">
-      <button type="submit">Unlock my full report</button>
+      <button type="submit">Get my detailed report</button>
     </form>
     <p class="helper" th:if="${purchase.noEntitlement and !purchase.checkoutAvailable}">Paid report checkout is not currently available.</p>
   </section>
 
-  <section class="panel report-caveat" aria-labelledby="caveat-heading">
-    <h2 id="caveat-heading">Important context</h2>
+  <section class="panel report-caveat university-context" aria-labelledby="caveat-heading">
+    <h2 id="caveat-heading">About your assessment</h2>
     <p th:text="${report.methodologyCaveat}">Methodology caveat.</p>
-    <p>No assessment can tell you whether a degree is right for you. Use this alongside course pages, open days, teachers and people already doing the work.</p>
-    <p>
-      Keep your result link safe &mdash; it is the only way back to this page.
-      <a th:href="@{/methodology}" href="/methodology">Read how this works</a>.
-    </p>
+    <p>No assessment can tell you whether a degree is right for you. Use these results alongside official course information, entry requirements, open days, teachers and people working in fields that interest you.</p>
+    <p>Keep your result link private and save it if you want to return to this page. <a th:href="@{/methodology}" href="/methodology">Read how this works</a>.</p>
   </section>
 
-  <p class="page-action">
-    <a th:href="@{/university-assessment}" href="/university-assessment">Assess another course</a>
+  <nav class="page-action university-bottom-actions" aria-label="Assessment navigation">
+    <a class="button-link button-secondary" th:href="@{/university-assessment}" href="/university-assessment">Assess another course</a>
     <a class="button-link button-secondary" th:href="@{/}" href="/">Back to home</a>
-  </p>
+  </nav>
 </main>
 
 <footer th:replace="~{fragments/layout :: siteFooter}"></footer>
