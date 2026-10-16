@@ -18,7 +18,7 @@
         <a class="button-link" href="#journeys">Choose an assessment</a>
         <a class="text-link" th:href="@{/methodology}" href="/methodology">How this works <span aria-hidden="true">&#8599;</span></a>
       </div>
-      <p class="hero-supporting">Free assessment <span aria-hidden="true">·</span> Optional detailed report from £2.99</p>
+      <p class="hero-supporting">Free assessment <span aria-hidden="true">&middot;</span> Optional detailed reports from £1.99</p>
     </div>
     <div class="hero-art" aria-hidden="true">
       <div class="orbit orbit-outer"></div>
@@ -45,6 +45,10 @@
         <h3>Professional</h3>
         <p class="journey-question">How could AI affect my current job or tasks?</p>
         <p class="journey-description">Discover which parts of your work AI could change, which skills may become more valuable and how you can prepare for the future.</p>
+        <div class="journey-pricing" aria-label="Professional assessment pricing">
+          <p class="journey-free"><span class="journey-free-dot" aria-hidden="true"></span>Free assessment</p>
+          <p class="journey-paid">Optional detailed report <strong>£4.99</strong></p>
+        </div>
         <p class="journey-cta">
           <a class="button-link button-secondary" th:href="@{/professional-assessment}" href="/professional-assessment">Assess my job <span aria-hidden="true">&#8594;</span></a>
         </p>
@@ -55,6 +59,10 @@
         <h3>University</h3>
         <p class="journey-question">Is my university course preparing me for an AI-driven future?</p>
         <p class="journey-description">Explore how your chosen course could prepare you for a changing job market and which skills may matter most.</p>
+        <div class="journey-pricing" aria-label="University assessment pricing">
+          <p class="journey-free"><span class="journey-free-dot" aria-hidden="true"></span>Free assessment</p>
+          <p class="journey-paid">Optional detailed report <strong>£2.99</strong></p>
+        </div>
         <p class="journey-cta">
           <a class="button-link button-secondary" th:href="@{/university-assessment}" href="/university-assessment">Assess a course <span aria-hidden="true">&#8594;</span></a>
         </p>
@@ -65,6 +73,10 @@
         <h3>A-level</h3>
         <p class="journey-question">Which opportunities could my A-level choices open up?</p>
         <p class="journey-description">Explore how your subject choices support university options, future careers and skills that may remain valuable as AI develops.</p>
+        <div class="journey-pricing" aria-label="A-level assessment pricing">
+          <p class="journey-free"><span class="journey-free-dot" aria-hidden="true"></span>Free assessment</p>
+          <p class="journey-paid">Optional detailed report <strong>£1.99</strong></p>
+        </div>
         <p class="journey-cta">
           <a class="button-link button-secondary" th:href="@{/a-level-assessment}" href="/a-level-assessment">Assess my choices <span aria-hidden="true">&#8594;</span></a>
         </p>
@@ -104,7 +116,7 @@
       </article>
       <article class="tier tier-paid">
         <p class="eyebrow">OPTIONAL</p>
-        <h3>Detailed report <span class="report-price">from £2.99</span></h3>
+        <h3>Detailed report</h3>
         <ul>
           <li>Everything in the free assessment</li>
           <li>Deeper analysis of your results</li>
@@ -112,18 +124,13 @@
           <li>Recommended next steps</li>
           <li>Downloadable PDF report</li>
         </ul>
-        <!--/* Enable only after a genuine, anonymised example PDF exists at this path.
-        <br>
+        <!-- Enable this link once a genuine, anonymised example PDF exists.
         <p class="sample-report-link">
-          <a th:href="@{/samples/sample-report.pdf}"
-             href="/samples/sample-report.pdf"
-             target="_blank"
-             rel="noopener noreferrer">
-            View sample report
-            <span aria-hidden="true">&#8599;</span>
+          <a th:href="@{/samples/sample-report.pdf}" href="/samples/sample-report.pdf" target="_blank" rel="noopener noreferrer">
+            View sample report <span aria-hidden="true">&#8599;</span>
           </a>
         </p>
-        */-->
+        -->
       </article>
     </div>
     <p class="same-assessment-note">Your assessment ratings stay the same. The optional report provides more detailed explanations and practical recommendations based on your results.</p>
@@ -139,7 +146,7 @@
     </div>
   </section>
 
-  <!--/* Development-only shortcuts. Rendered only under the dev profile. */-->
+  <!-- Development-only shortcuts. Rendered only under the dev profile. -->
   <section class="panel dev-section results-section" th:if="${developmentMode}" aria-labelledby="dev-heading">
     <p class="eyebrow">Development only</p>
     <h2 id="dev-heading">Development shortcuts</h2>
@@ -148,7 +155,7 @@
     <nav class="site-footer-nav" aria-label="Development shortcuts">
       <a th:href="@{/professional-assessment}" href="/professional-assessment">Professional form</a>
       <a th:href="@{/university-assessment}" href="/university-assessment">University form</a>
-      <a th:href="@{/a-level-assessment}" href="/a-level-assessment">A-level formGuidance to help you make informed decisions.</a>
+      <a th:href="@{/a-level-assessment}" href="/a-level-assessment">A-level form</a>
       <a th:href="@{/methodology}" href="/methodology">Methodology</a>
       <a th:href="@{/privacy}" href="/privacy">Your information</a>
     </nav>

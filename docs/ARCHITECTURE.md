@@ -315,7 +315,7 @@ Classification runs after the assessment and narrative have been persisted and b
 
 Ordinary assembled reports are not separately persisted because they would duplicate the assessment, narrative and evidence snapshots. `professional-report-v1` is defined once and exposed in report methodology. A confirmed purchase is the exception: its exact paid report is frozen as an immutable purchased snapshot, as described below.
 
-The paid route, `GET /professional-assessment/{UUID}/report`, requires an `ACTIVE` entitlement and renders only its frozen purchased snapshot. URL knowledge, a redirect query parameter and a pending Checkout Session do not grant access. No price is hard-coded: the expected low-cost consumer range is £2.99–£9.99, while Stripe Price configuration is authoritative for charging and optional display text comes from configuration.
+The paid route, `GET /professional-assessment/{UUID}/report`, requires an `ACTIVE` entitlement and renders only its frozen purchased snapshot. URL knowledge, a redirect query parameter and a pending Checkout Session do not grant access. No price is hard-coded: the expected low-cost consumer range is £1.99–£4.99, while Stripe Price configuration is authoritative for charging and optional display text comes from configuration.
 
 Missing or failed optional data does not prevent a report. A failed narrative leaves the deterministic assessment and report available; a failed evidence bundle gives a safe unavailable message; and missing classification simply omits that section. Reports expose no exceptions, credentials, prompt text, chain-of-thought, JPA entities or provider implementation details. Normal development remains offline, and there is no live-to-fixture fallback.
 

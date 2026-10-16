@@ -1418,3 +1418,77 @@ dd { margin: 0; font-weight: 700; text-align: right; }
   .privacy-page .privacy-bottom-nav a { width: 100%; text-align: center; }
 }
 
+/* AI Career Impact — home page pricing enhancements.
+   Append after the existing home-page styles. Scoped to .home-shell. */
+
+.home-shell .journey-grid > .journey-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.home-shell .journey-card .journey-description {
+  margin-bottom: 1.2rem;
+}
+
+.home-shell .journey-card .journey-pricing {
+  margin-top: auto;
+  padding: 1.05rem 0 0;
+  border-top: 1px solid rgba(201, 211, 239, 0.17);
+  display: flex;
+  flex-direction: column;
+  gap: 0.48rem;
+}
+
+.home-shell .journey-pricing p {
+  margin: 0;
+}
+
+.home-shell .journey-free {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #b8ead4;
+  font-size: 0.89rem;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.home-shell .journey-free-dot {
+  width: 0.43rem;
+  height: 0.43rem;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+.home-shell .journey-paid {
+  color: #cbd3e8;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.home-shell .journey-paid strong {
+  margin-left: 0.35rem;
+  color: #fff;
+  font-weight: 750;
+  font-size: 1.17rem;
+  white-space: nowrap;
+}
+
+.home-shell .journey-card .journey-cta {
+  margin-top: 1.1rem;
+  margin-bottom: 0;
+}
+
+/* Keep the offer-section minimum price visually readable. */
+.home-shell .offer-section .report-price {
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .home-shell .journey-card .journey-pricing {
+    padding-top: 0.9rem;
+  }
+}
+

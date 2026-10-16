@@ -59,7 +59,7 @@ class HomeControllerTest {
     void theHomePageIsHonestAboutFreePaidAndWhatAScoreIsNot() throws Exception {
         String html = mvc.perform(get("/")).andReturn().getResponse().getContentAsString();
 
-        assertThat(html).contains("Free assessment", "Detailed report", "£2.99", "Downloadable PDF");
+        assertThat(html).contains("Free assessment", "Detailed report", "£1.99", "Downloadable PDF");
         assertThat(html).contains("Your assessment ratings stay the same. The optional report provides more detailed explanations and practical recommendations based on your results.");
         assertThat(html).contains("cannot predict your individual future or guarantee particular outcomes");
         // None of the hype the product deliberately avoids.
