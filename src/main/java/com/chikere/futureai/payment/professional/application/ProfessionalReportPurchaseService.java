@@ -68,7 +68,7 @@ public final class ProfessionalReportPurchaseService implements ProfessionalRepo
                 applicationBaseUrl.resolve(resultPath + "?checkout=cancelled"));
         ProfessionalCheckoutSession session;
         try {
-            session = gateway.createCheckoutSession(request);
+            session = metrics.timed("checkout", "professional", () -> gateway.createCheckoutSession(request));
         }
         catch (RuntimeException failure) {
             throw new PaymentUnavailableException("checkout could not be created", failure);

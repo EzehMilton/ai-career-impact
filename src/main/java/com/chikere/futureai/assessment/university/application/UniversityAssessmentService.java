@@ -1,5 +1,6 @@
 package com.chikere.futureai.assessment.university.application;
 
+import com.chikere.futureai.configuration.JourneyMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +26,7 @@ public final class UniversityAssessmentService implements UniversityAssessmentSu
     private final UniversityDecisionPolicyV1 decisionPolicy;
     private final UniversityAssessmentStore store;
     private final Clock clock;
+    private final JourneyMetrics metrics;
 
     public UniversityAssessmentService(
             UniversityJudgmentProvider judgmentProvider,
@@ -37,10 +39,20 @@ public final class UniversityAssessmentService implements UniversityAssessmentSu
             UniversityDecisionPolicyV1 decisionPolicy,
             UniversityAssessmentStore store,
             Clock clock) {
+        this(judgmentProvider, decisionPolicy, store, clock, JourneyMetrics.disabled());
+    }
+
+    public UniversityAssessmentService(
+            UniversityJudgmentProvider judgmentProvider,
+            UniversityDecisionPolicyV1 decisionPolicy,
+            UniversityAssessmentStore store,
+            Clock clock,
+            JourneyMetrics metrics) {
         this.judgmentProvider = Objects.requireNonNull(judgmentProvider, "judgmentProvider must not be null");
         this.decisionPolicy = Objects.requireNonNull(decisionPolicy, "decisionPolicy must not be null");
         this.store = store;
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
+        this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
     }
 
     public UniversityAssessmentResult assess(UniversityAssessmentState state) {
@@ -71,13 +83,14 @@ public final class UniversityAssessmentService implements UniversityAssessmentSu
         Objects.requireNonNull(state, "state must not be null");
         final AssessmentJudgmentSet judgments;
         try {
-            judgments = judgmentProvider.judge(state);
+            judgments = metrics.timed("judgment", "university", () -> judgmentProvider.judge(state));
             LOGGER.info("Judgment journey=university outcome=SUCCEEDED schemaVersion={}",
                     judgments.schemaVersion());
         }
         catch (RuntimeException failure) {
             LOGGER.warn("Judgment journey=university outcome=FAILED failureType={}",
                     failure.getClass().getSimpleName());
+            metrics.judgmentFailed("university");
             throw failure;
         }
         UniversityDecisionResult decision = decisionPolicy.decide(judgments);

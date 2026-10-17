@@ -1,5 +1,6 @@
 package com.chikere.futureai.evidence.alevel.application;
 
+import com.chikere.futureai.configuration.JourneyMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,15 +27,24 @@ public final class ALevelEvidenceService implements ALevelEvidenceGathering {
     private final Optional<ALevelEvidenceProvider> provider;
     private final ALevelEvidenceRequestFactory requestFactory;
     private final Clock clock;
+    private final JourneyMetrics metrics;
 
     public ALevelEvidenceService(ALevelAssessmentStore assessmentStore, ALevelEvidenceStore evidenceStore,
             Optional<ALevelEvidenceProvider> provider, ALevelEvidenceRequestFactory requestFactory,
             Clock clock) {
+        this(assessmentStore, evidenceStore, provider, requestFactory, clock, JourneyMetrics.disabled());
+    }
+
+    public ALevelEvidenceService(ALevelAssessmentStore assessmentStore, ALevelEvidenceStore evidenceStore,
+            Optional<ALevelEvidenceProvider> provider, ALevelEvidenceRequestFactory requestFactory,
+            Clock clock,
+            JourneyMetrics metrics) {
         this.assessmentStore = Objects.requireNonNull(assessmentStore);
         this.evidenceStore = Objects.requireNonNull(evidenceStore);
         this.provider = Objects.requireNonNull(provider);
         this.requestFactory = Objects.requireNonNull(requestFactory);
         this.clock = Objects.requireNonNull(clock);
+        this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
     }
 
     @Override
@@ -56,7 +66,9 @@ public final class ALevelEvidenceService implements ALevelEvidenceGathering {
                 ALevelEvidenceVersions.EVIDENCE_SCHEMA, configuredProvider.source(),
                 configuredProvider.providerIdentifier(), EvidenceStatus.PENDING, attemptedAt, List.of()));
         try {
-            ALevelEvidenceBundle gathered = configuredProvider.gather(requestFactory.create(assessment));
+            var request = requestFactory.create(assessment);
+            ALevelEvidenceBundle gathered = metrics.timed("evidence", "a-level",
+                    () -> configuredProvider.gather(request));
             validateProviderResult(assessmentId, configuredProvider, gathered);
             evidenceStore.save(gathered);
             LOGGER.info("Evidence journey=alevel assessmentId={} outcome={} itemCount={}",

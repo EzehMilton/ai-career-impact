@@ -35,23 +35,28 @@ public class ALevelAssessmentConfiguration {
 
     @Bean
     ALevelAssessmentService aLevelAssessmentService(ALevelJudgmentProvider judgmentProvider,
-            ALevelDecisionPolicyV1 decisionPolicy, ALevelAssessmentStore store) {
-        return new ALevelAssessmentService(judgmentProvider, decisionPolicy, store, Clock.systemUTC());
+            ALevelDecisionPolicyV1 decisionPolicy, ALevelAssessmentStore store,
+            ObjectProvider<JourneyMetrics> metrics) {
+        return new ALevelAssessmentService(judgmentProvider, decisionPolicy, store, Clock.systemUTC(),
+                metrics.getIfAvailable(JourneyMetrics::disabled));
     }
 
     @Bean
     ALevelNarrativeService aLevelNarrativeService(ALevelAssessmentStore assessmentStore,
-            ALevelNarrativeStore narrativeStore, ALevelNarrativeGenerator generator) {
+            ALevelNarrativeStore narrativeStore, ALevelNarrativeGenerator generator,
+            ObjectProvider<JourneyMetrics> metrics) {
         return new ALevelNarrativeService(assessmentStore, narrativeStore, generator,
-                new ALevelNarrativeContextFactory(), new ALevelNarrativeValidator(), Clock.systemUTC());
+                new ALevelNarrativeContextFactory(), new ALevelNarrativeValidator(), Clock.systemUTC(),
+                metrics.getIfAvailable(JourneyMetrics::disabled));
     }
 
     @Bean
     ALevelEvidenceService aLevelEvidenceService(ALevelAssessmentStore assessmentStore,
             ALevelEvidenceStore evidenceStore, Optional<ALevelEvidenceProvider> evidenceProvider,
-            @Value("${app.a-level.evidence.geography:United Kingdom}") String geography) {
+            @Value("${app.a-level.evidence.geography:United Kingdom}") String geography,
+            ObjectProvider<JourneyMetrics> metrics) {
         return new ALevelEvidenceService(assessmentStore, evidenceStore, evidenceProvider,
-                new ALevelEvidenceRequestFactory(geography), Clock.systemUTC());
+                new ALevelEvidenceRequestFactory(geography), Clock.systemUTC(), metrics.getIfAvailable(JourneyMetrics::disabled));
     }
 
     @Bean

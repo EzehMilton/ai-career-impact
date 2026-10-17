@@ -76,7 +76,7 @@ public final class UniversityReportPurchaseService implements UniversityReportPu
                 applicationBaseUrl.resolve(resultPath + "?checkout=cancelled"));
         UniversityCheckoutSession session;
         try {
-            session = gateway.createCheckoutSession(request);
+            session = metrics.timed("checkout", "university", () -> gateway.createCheckoutSession(request));
         }
         catch (RuntimeException failure) {
             throw new PaymentUnavailableException("checkout could not be created", failure);

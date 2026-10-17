@@ -1,7 +1,9 @@
 package com.chikere.futureai.pdf.professional.web;
 
 import com.chikere.futureai.pdf.professional.application.*;
+import com.chikere.futureai.configuration.RecordingJourneyMetricsConfiguration;
 import com.chikere.futureai.security.WebSecurityConfiguration;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -19,10 +21,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ProfessionalReportPdfController.class)
-@Import(WebSecurityConfiguration.class)
+@Import({WebSecurityConfiguration.class, RecordingJourneyMetricsConfiguration.class})
 class ProfessionalReportPdfControllerTest {
     @Autowired MockMvc mvc;
     @MockitoBean ProfessionalReportPdfUseCase pdfService;
+    @Autowired MeterRegistry registry;
 
     @Test
     void activeDownloadHasPdfAttachmentAndPrivateNoStoreHeaders() throws Exception {
@@ -53,5 +56,6 @@ class ProfessionalReportPdfControllerTest {
         String text = mvc.perform(get("/professional-assessment/" + id + "/report.pdf"))
                 .andExpect(status().isServiceUnavailable()).andReturn().getResponse().getContentAsString();
         assertThat(text).contains("report is available online").doesNotContain("secret", "renderer failure");
+        assertThat(registry.get("pdf.generation.failures").tag("journey", "professional").counter().count()).isEqualTo(1);
     }
 }

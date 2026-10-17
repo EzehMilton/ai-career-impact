@@ -1,7 +1,9 @@
 package com.chikere.futureai.payment.professional.web;
 
 import com.chikere.futureai.payment.professional.application.*;
+import com.chikere.futureai.configuration.RecordingJourneyMetricsConfiguration;
 import com.chikere.futureai.security.WebSecurityConfiguration;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -13,16 +15,18 @@ import java.net.URI;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ProfessionalCheckoutController.class)
-@Import(WebSecurityConfiguration.class)
+@Import({WebSecurityConfiguration.class, RecordingJourneyMetricsConfiguration.class})
 class ProfessionalCheckoutControllerTest {
     @Autowired MockMvc mvc;
     @MockitoBean ProfessionalReportPurchaseUseCase purchaseService;
+    @Autowired MeterRegistry registry;
 
     @Test
     void checkoutPostRequiresCsrfAndRedirectsOnlyToGatewaySession() throws Exception {
@@ -45,5 +49,6 @@ class ProfessionalCheckoutControllerTest {
         mvc.perform(post("/professional-assessment/" + id + "/checkout").with(csrf()))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(status().reason("Paid report checkout is currently unavailable."));
+        assertThat(registry.get("checkout.failures").tag("journey", "professional").counter().count()).isEqualTo(1);
     }
 }

@@ -1,5 +1,6 @@
 package com.chikere.futureai.assessment.professional.application;
 
+import com.chikere.futureai.configuration.JourneyMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +22,7 @@ public final class ProfessionalAssessmentService implements ProfessionalAssessme
     private final ProfessionalDecisionPolicyV1 decisionPolicy;
     private final ProfessionalAssessmentStore store;
     private final Clock clock;
+    private final JourneyMetrics metrics;
 
     public ProfessionalAssessmentService(
             ProfessionalJudgmentProvider judgmentProvider,
@@ -33,10 +35,20 @@ public final class ProfessionalAssessmentService implements ProfessionalAssessme
             ProfessionalDecisionPolicyV1 decisionPolicy,
             ProfessionalAssessmentStore store,
             Clock clock) {
+        this(judgmentProvider, decisionPolicy, store, clock, JourneyMetrics.disabled());
+    }
+
+    public ProfessionalAssessmentService(
+            ProfessionalJudgmentProvider judgmentProvider,
+            ProfessionalDecisionPolicyV1 decisionPolicy,
+            ProfessionalAssessmentStore store,
+            Clock clock,
+            JourneyMetrics metrics) {
         this.judgmentProvider = Objects.requireNonNull(judgmentProvider, "judgmentProvider must not be null");
         this.decisionPolicy = Objects.requireNonNull(decisionPolicy, "decisionPolicy must not be null");
         this.store = store;
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
+        this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
     }
 
     public ProfessionalAssessmentResult assess(ProfessionalAssessmentState state) {
@@ -74,13 +86,14 @@ public final class ProfessionalAssessmentService implements ProfessionalAssessme
         Objects.requireNonNull(state, "state must not be null");
         final AssessmentJudgmentSet judgments;
         try {
-            judgments = judgmentProvider.judge(state);
+            judgments = metrics.timed("judgment", "professional", () -> judgmentProvider.judge(state));
             LOGGER.info("Judgment journey=professional outcome=SUCCEEDED schemaVersion={}",
                     judgments.schemaVersion());
         }
         catch (RuntimeException failure) {
             LOGGER.warn("Judgment journey=professional outcome=FAILED failureType={}",
                     failure.getClass().getSimpleName());
+            metrics.judgmentFailed("professional");
             throw failure;
         }
         ProfessionalDecisionResult decision = decisionPolicy.decide(judgments);

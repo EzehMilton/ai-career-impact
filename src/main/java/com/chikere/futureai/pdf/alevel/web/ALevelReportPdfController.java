@@ -3,6 +3,8 @@ package com.chikere.futureai.pdf.alevel.web;
 import com.chikere.futureai.pdf.alevel.application.ALevelReportPdfAccessDeniedException;
 import com.chikere.futureai.pdf.alevel.application.ALevelReportPdfUseCase;
 import com.chikere.futureai.pdf.alevel.application.PurchasedALevelReportPdf;
+import com.chikere.futureai.configuration.FailureDescription;
+import com.chikere.futureai.configuration.JourneyMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.CacheControl;
@@ -11,6 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,9 +27,13 @@ public final class ALevelReportPdfController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ALevelReportPdfController.class);
     private static final CacheControl PRIVATE_NO_STORE = CacheControl.noStore().cachePrivate();
     private final ALevelReportPdfUseCase pdfService;
+    private final JourneyMetrics metrics;
 
-    public ALevelReportPdfController(ALevelReportPdfUseCase pdfService) {
+    /** Metrics resolve optionally so a sliced web test without a registry still loads this controller. */
+    public ALevelReportPdfController(ALevelReportPdfUseCase pdfService,
+            ObjectProvider<JourneyMetrics> metrics) {
         this.pdfService = pdfService;
+        this.metrics = metrics.getIfAvailable(JourneyMetrics::disabled);
     }
 
     @GetMapping("/a-level-assessment/{assessmentId}/report.pdf")
@@ -49,8 +56,9 @@ public final class ALevelReportPdfController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).cacheControl(PRIVATE_NO_STORE).build();
         }
         catch (RuntimeException failure) {
+            metrics.pdfGenerationFailed("a-level");
             LOGGER.error("Purchased A-level report PDF could not be supplied ({})",
-                    failure.getClass().getSimpleName());
+                    FailureDescription.of(failure));
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).cacheControl(PRIVATE_NO_STORE)
                     .contentType(new MediaType("text", "plain", StandardCharsets.UTF_8))
                     .body("Your report is available online, but the PDF could not be generated right now.");

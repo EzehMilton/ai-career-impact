@@ -261,6 +261,7 @@ Micrometer is present through the Actuator starter. No Prometheus registry is on
 | --- | --- |
 | `assessments.created` | `journey` |
 | `narrative.failures` | `journey` |
+| `judgment.failures` | `journey` |
 | `evidence.failures` | `journey` |
 | `checkout.failures` | `journey` |
 | `payment.confirmations` | `journey` |
@@ -271,7 +272,11 @@ The only tag is the journey or the rate-limit group. An assessment id, professio
 
 Recording is never load-bearing. `JourneyMetrics` swallows its own failures, and every collaborator resolves it optionally and falls back to an instance that records nothing — so a missing or broken registry cannot fail an assessment, a payment, a report or a PDF, and cannot even stop a context from starting.
 
-`checkout.failures` and `pdf.generation.failures` are declared and tested but not yet incremented from the checkout and PDF controllers; wiring them requires threading the collaborator through six sliced controller tests and is the one piece of instrumentation left for the next phase.
+`checkout.failures` and `pdf.generation.failures` are incremented by the checkout and PDF controllers whenever they answer 503. `judgment.failures` is incremented by each assessment service when the judgment provider throws.
+
+Every call that leaves the process is also timed as `external.calls`, tagged `operation` (`judgment`, `narrative`, `evidence`, `cv-extraction`, `checkout`), `journey` and `outcome` (`success` or `failure`, meaning returned or threw). The operation names a step, not a vendor, so fixture-backed development runs are not mislabelled as Jev or OpenAI. A narrative that returns but fails validation counts as a timer success and a `narrative.failures` increment.
+
+Failure log lines on checkout, PDF and Stripe webhook paths describe the failure by its cause chain of class names, for example `PaymentUnavailableException<-ApiConnectionException`, via `FailureDescription`. Messages are never logged, since a provider message can echo request content.
 
 The three assessment workflows also increment `narrative.failures` when a provider or validator failure is persisted as narrative status `FAILED`, as well as when narrative lifecycle persistence throws. The metric remains tagged only by journey.
 
@@ -292,6 +297,8 @@ Flyway runs on startup, validates what is already applied, and `clean` is disabl
 Production levels are set so the log is readable and says nothing it should not. SQL and Hibernate bind parameters stay at `WARN`: a bind parameter is somebody's job title or course description. Stripe and HTTP client logging is at `WARN` for the same reason. `ERROR` is never suppressed.
 
 Every line carries the request correlation id through `logging.pattern.level`. Startup and background lines, which have no request, read `no-request` rather than being blank.
+
+Under `prod` the console log is structured JSON in Elastic Common Schema (`logging.structured.format.console=ecs`), one object per line, with MDC entries such as `requestId` as fields; the text pattern above applies to the other profiles. Override with `LOGGING_STRUCTURED_FORMAT_CONSOLE`, for example `logstash`.
 
 ## Required, optional and development-only configuration
 
