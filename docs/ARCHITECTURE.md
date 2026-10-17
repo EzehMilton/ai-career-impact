@@ -1024,7 +1024,7 @@ Three filters and a set of bounds sit in front of the journeys. They are documen
 
 ### Production profile and configuration
 
-A `prod` profile carries the production-only differences — secure cookies, forwarded-header handling, constrained Actuator exposure, quieter logging and connection-pool hooks — and nothing else. Everything the application needs in every environment stays in the base property file, so there is one place to read for what a setting does.
+A `prod` profile carries the production-only differences — secure cookies, forwarded-header handling, constrained Actuator exposure, quieter and structured (ECS JSON) logging and connection-pool hooks — and nothing else. Everything the application needs in every environment stays in the base property file, so there is one place to read for what a setting does.
 
 `StartupConfigurationValidator` refuses to start on a contradiction or a gap. Asking for `prod` and `local-fixture` together, or for `live-payment` alongside the simulator that overrides it, is a request the application cannot satisfy as asked, so it stops rather than silently choosing. Missing configuration is checked per capability, which is what keeps `local-fixture` free of every production secret. No failure message ever repeats a configured value.
 
@@ -1034,8 +1034,52 @@ A `prod` profile carries the production-only differences — secure cookies, for
 
 Health is published and nothing else is. Liveness depends on no external provider — a Stripe or OpenAI outage must not look like a dead process — while readiness includes the database, without which no request can be served usefully. Health reports a bare status with no component detail, and `/actuator/**` is denied in the filter chain in addition to being unexposed, so publishing an endpoint by accident in configuration is not enough to make it reachable.
 
-`JourneyMetrics` counts assessments, enrichment failures, payment confirmations and rate-limit rejections, tagged only by journey or group. It is observational by construction: it swallows its own failures, and every collaborator resolves it optionally and falls back to an instance that records nothing, so missing instrumentation can neither fail a request nor prevent a context from starting.
+### Observability
+
+Three signals exist today: correlated logs, structured production logging and in-process metrics. There is no tracing; for one process and one database the request id and the timers below answer the same questions more cheaply.
+
+**Correlated logs.** `RequestCorrelationFilter` puts the request id into the MDC, and every log line carries it. Log lines use stable `key=value` fields (`journey=… outcome=… failureType=…`) and identify work by assessment, entitlement or Stripe event id, never by user content. SQL bind parameters, Stripe and HTTP-client logging stay at `WARN` in `prod` because a bind parameter is somebody's job title.
+
+**Structured logging in production.** Under `prod` the console log is Elastic Common Schema JSON (`logging.structured.format.console=ecs`), one object per line, with MDC entries such as `requestId` as fields. Other profiles keep the readable text pattern. Logging configuration is JVM-wide, so a test that captures output after a `prod`-profile context sees JSON; assertions on log lines must accept both shapes.
+
+**Failure descriptions.** Application exceptions wrap the real failure, so an outer class alone says "checkout failed" for an authentication error, a bad price and a timeout alike. Error lines on the checkout, PDF and Stripe webhook paths use `FailureDescription`, which renders the cause chain as class names only — `PaymentUnavailableException<-ApiConnectionException`. Messages are never logged, because a provider or library message can echo request content.
+
+**Metrics.** `JourneyMetrics` (in `configuration`) is the only place meters are created:
+
+| Meter | Kind | Tags | Recorded by |
+| --- | --- | --- | --- |
+| `assessments.created` | counter | `journey` | assessment workflows |
+| `judgment.failures` | counter | `journey` | assessment services, when the judgment provider throws |
+| `narrative.failures` | counter | `journey` | assessment workflows |
+| `evidence.failures` | counter | `journey` | assessment workflows |
+| `checkout.failures` | counter | `journey` | checkout controllers, whenever they answer 503 |
+| `payment.confirmations` | counter | `journey` | purchase services |
+| `pdf.generation.failures` | counter | `journey` | PDF controllers, whenever they answer 503 |
+| `rate_limit.rejections` | counter | `group` | `RateLimitFilter` |
+| `external.calls` | timer | `operation`, `journey`, `outcome` | the application service that owns each outbound call |
+
+`external.calls` wraps exactly the calls that leave the process: `judgment` (Jev), `narrative` (OpenAI), `evidence` (evidence provider), `cv-extraction` (OpenAI) and `checkout` (Stripe). `outcome` is `success` or `failure` — returned or threw — so a narrative that returns but fails validation is a timer success and a `narrative.failures` increment. The operation names a step rather than a vendor, so fixture-backed development runs are not mislabelled as Jev or OpenAI traffic. Spring's own observations (`http.server.requests`, Hikari, JVM, Spring AI client timings) are registered automatically alongside these.
+
+The rules that keep this safe:
+
+- **Bounded cardinality.** Tags are a journey, a rate-limit group, a fixed operation name and an outcome. An assessment id, profession, course title or address as a tag would create unbounded series and turn a metrics backend into a second, unaudited copy of user data.
+- **Never load-bearing.** Every recording method swallows its own failure, and `timed` passes the wrapped call's result or exception through unchanged. A broken registry cannot fail an assessment, a payment, a report or a PDF.
+- **Optional wiring.** Services take `JourneyMetrics` through an additional constructor used by Spring configuration; the original constructors delegate with `JourneyMetrics.disabled()`. Controllers resolve it through `ObjectProvider`, so a sliced `@WebMvcTest` without a registry still loads. `JourneyMetrics` is final and is not mocked; tests that assert on it import `RecordingJourneyMetricsConfiguration`, which supplies a real in-memory registry.
 
 ### What is left
 
-Live provider integration: real Jev judgments, real OpenAI narratives, real Stripe checkout and signed webhooks, and live evidence retrieval. Those need real credentials and real calls, and are listed with the rest of the outstanding work at the end of [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md).
+**Observability.** The metrics above are recorded but cannot yet be read in production, so they are instrumentation rather than monitoring.
+
+- **Export.** No registry for a metrics backend is on the classpath, and `prod` exposes only `health` and `info`; meters live in memory and are lost on restart. The next step is one registry for whichever backend is chosen — Prometheus or OTLP — and nothing more.
+- **Where the endpoint lives.** `/actuator/**` is denied in the security filter chain as well as unexposed. A Prometheus scrape endpoint therefore needs a deliberate decision, most simply a separate management port reachable only from inside the deployment network, rather than opening an actuator path on the public port. An OTLP push needs neither.
+- **Dashboards and alerts.** Nothing yet turns the meters into a signal. The first alerts worth having are a rise in `checkout.failures` or `external.calls{operation="checkout",outcome="failure"}` (lost revenue), any `judgment.failures` (no assessment can complete), and `payment.confirmations` dropping to zero while checkouts are being started.
+- **Webhook processing.** Stripe webhook failures are logged with their cause chain but not counted; a failed confirmation after a customer has paid deserves its own counter.
+- **Unmeasured work.** PDF rendering is not timed, and the evidence timer measures the whole provider call rather than individual upstream requests.
+- **Stripe detail.** Failure lines name the Stripe exception class but not Stripe's error code or request id, which would let a failure be matched to Stripe's dashboard. That belongs in the Stripe adapters, not in controllers.
+- **Dependency health.** Readiness deliberately excludes Jev, OpenAI, Stripe and the evidence provider, so an outage cannot take the service out of rotation. Their health is visible only through `external.calls`, which is the intended design but depends on export existing.
+
+**Live provider integration.** Real Jev judgments, real OpenAI narratives, real Stripe checkout and signed webhooks, and live evidence retrieval need real credentials and real calls, and are listed with the rest of the outstanding work at the end of [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md).
+
+**Journey gaps.** There is no live evidence adapter for the university or A-level journeys, only ports, persistence and deterministic fixtures. The university journey has no upload input and no occupation-classification equivalent. See [University limitations](#university-limitations-and-next-sub-phases) and [A-level limitations](#a-level-limitations-and-next-sub-phases).
+
+**Accounts.** There are no user accounts in any journey. The opaque assessment UUID remains a temporary pre-authentication access reference: anyone holding a saved URL can reach that assessment and an entitled report. Account-bound ownership belongs in a later phase.

@@ -37,17 +37,21 @@ public class UniversityAssessmentConfiguration {
     UniversityAssessmentService universityAssessmentService(
             UniversityJudgmentProvider judgmentProvider,
             UniversityDecisionPolicyV1 decisionPolicy,
-            UniversityAssessmentStore store) {
-        return new UniversityAssessmentService(judgmentProvider, decisionPolicy, store, Clock.systemUTC());
+            UniversityAssessmentStore store,
+            ObjectProvider<JourneyMetrics> metrics) {
+        return new UniversityAssessmentService(judgmentProvider, decisionPolicy, store, Clock.systemUTC(),
+                metrics.getIfAvailable(JourneyMetrics::disabled));
     }
 
     @Bean
     UniversityNarrativeService universityNarrativeService(
             UniversityAssessmentStore assessmentStore,
             UniversityNarrativeStore narrativeStore,
-            UniversityNarrativeGenerator generator) {
+            UniversityNarrativeGenerator generator,
+            ObjectProvider<JourneyMetrics> metrics) {
         return new UniversityNarrativeService(assessmentStore, narrativeStore, generator,
-                new UniversityNarrativeContextFactory(), new UniversityNarrativeValidator(), Clock.systemUTC());
+                new UniversityNarrativeContextFactory(), new UniversityNarrativeValidator(), Clock.systemUTC(),
+                metrics.getIfAvailable(JourneyMetrics::disabled));
     }
 
     @Bean
@@ -55,9 +59,10 @@ public class UniversityAssessmentConfiguration {
             UniversityAssessmentStore assessmentStore,
             UniversityEvidenceStore evidenceStore,
             Optional<UniversityEvidenceProvider> evidenceProvider,
-            @Value("${app.university.evidence.geography:United Kingdom}") String geography) {
+            @Value("${app.university.evidence.geography:United Kingdom}") String geography,
+            ObjectProvider<JourneyMetrics> metrics) {
         return new UniversityEvidenceService(assessmentStore, evidenceStore, evidenceProvider,
-                new UniversityEvidenceRequestFactory(geography), Clock.systemUTC());
+                new UniversityEvidenceRequestFactory(geography), Clock.systemUTC(), metrics.getIfAvailable(JourneyMetrics::disabled));
     }
 
     @Bean

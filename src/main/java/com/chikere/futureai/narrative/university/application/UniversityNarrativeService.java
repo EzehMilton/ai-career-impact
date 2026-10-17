@@ -1,5 +1,6 @@
 package com.chikere.futureai.narrative.university.application;
 
+import com.chikere.futureai.configuration.JourneyMetrics;
 import com.chikere.futureai.assessment.university.application.UniversityAssessmentStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,7 @@ public final class UniversityNarrativeService implements UniversityNarrativeGene
     private final UniversityNarrativeContextFactory contextFactory;
     private final UniversityNarrativeValidator validator;
     private final Clock clock;
+    private final JourneyMetrics metrics;
 
     public UniversityNarrativeService(
             UniversityAssessmentStore assessmentStore,
@@ -31,12 +33,24 @@ public final class UniversityNarrativeService implements UniversityNarrativeGene
             UniversityNarrativeContextFactory contextFactory,
             UniversityNarrativeValidator validator,
             Clock clock) {
+        this(assessmentStore, narrativeStore, generator, contextFactory, validator, clock, JourneyMetrics.disabled());
+    }
+
+    public UniversityNarrativeService(
+            UniversityAssessmentStore assessmentStore,
+            UniversityNarrativeStore narrativeStore,
+            UniversityNarrativeGenerator generator,
+            UniversityNarrativeContextFactory contextFactory,
+            UniversityNarrativeValidator validator,
+            Clock clock,
+            JourneyMetrics metrics) {
         this.assessmentStore = Objects.requireNonNull(assessmentStore);
         this.narrativeStore = Objects.requireNonNull(narrativeStore);
         this.generator = Objects.requireNonNull(generator);
         this.contextFactory = Objects.requireNonNull(contextFactory);
         this.validator = Objects.requireNonNull(validator);
         this.clock = Objects.requireNonNull(clock);
+        this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
     }
 
     @Override
@@ -54,7 +68,7 @@ public final class UniversityNarrativeService implements UniversityNarrativeGene
                 attemptedAt, Optional.empty()));
         try {
             UniversityNarrativeContext context = contextFactory.create(assessment);
-            UniversityNarrative narrative = validator.validate(generator.generate(context));
+            UniversityNarrative narrative = validator.validate(metrics.timed("narrative", "university", () -> generator.generate(context)));
             var available = stored(assessmentId, NarrativeStatus.AVAILABLE, Optional.of(narrative),
                     attemptedAt, Optional.of(Instant.now(clock)));
             narrativeStore.save(available);

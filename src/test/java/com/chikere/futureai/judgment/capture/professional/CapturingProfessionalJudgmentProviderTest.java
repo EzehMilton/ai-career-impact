@@ -95,9 +95,11 @@ class CapturingProfessionalJudgmentProviderTest {
 
         assertThat(result).isEqualTo(delegate.judge(STATE));
         assertThat(files(directory)).containsExactly(notADirectory);
+        // Logging is JVM-wide, so after a prod-profile test in the same run this line is ECS JSON,
+        // where the message is followed by the closing quote of its field rather than end of line.
         List<String> warnings = output.getAll().lines().filter(line -> line.contains("Jev capture")).toList();
         assertThat(warnings).singleElement().satisfies(line -> assertThat(line)
-                .contains("WARN").matches(".*Professional Jev capture write failed failureType=\\w+Exception$")
+                .contains("WARN").matches(".*Professional Jev capture write failed failureType=\\w+Exception(\"[,}].*)?$")
                 .doesNotContain(directory.toString()).doesNotContain("Software Engineer"));
     }
 

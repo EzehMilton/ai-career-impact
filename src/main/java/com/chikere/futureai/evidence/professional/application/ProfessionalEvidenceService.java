@@ -1,5 +1,6 @@
 package com.chikere.futureai.evidence.professional.application;
 
+import com.chikere.futureai.configuration.JourneyMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,17 +22,27 @@ public final class ProfessionalEvidenceService implements ProfessionalEvidenceGa
     private final ProfessionalOccupationClassificationStore classificationStore;
     private final ProfessionalEvidenceRequestFactory requestFactory;
     private final Clock clock;
+    private final JourneyMetrics metrics;
 
     public ProfessionalEvidenceService(ProfessionalAssessmentStore assessmentStore,
             ProfessionalEvidenceStore evidenceStore, Optional<ProfessionalEvidenceProvider> provider,
             ProfessionalOccupationClassificationStore classificationStore,
             ProfessionalEvidenceRequestFactory requestFactory, Clock clock) {
+        this(assessmentStore, evidenceStore, provider, classificationStore, requestFactory, clock, JourneyMetrics.disabled());
+    }
+
+    public ProfessionalEvidenceService(ProfessionalAssessmentStore assessmentStore,
+            ProfessionalEvidenceStore evidenceStore, Optional<ProfessionalEvidenceProvider> provider,
+            ProfessionalOccupationClassificationStore classificationStore,
+            ProfessionalEvidenceRequestFactory requestFactory, Clock clock,
+            JourneyMetrics metrics) {
         this.assessmentStore = Objects.requireNonNull(assessmentStore);
         this.evidenceStore = Objects.requireNonNull(evidenceStore);
         this.provider = Objects.requireNonNull(provider);
         this.classificationStore = Objects.requireNonNull(classificationStore);
         this.requestFactory = Objects.requireNonNull(requestFactory);
         this.clock = Objects.requireNonNull(clock);
+        this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
     }
 
     @Override
@@ -48,8 +59,9 @@ public final class ProfessionalEvidenceService implements ProfessionalEvidenceGa
                 ProfessionalEvidenceVersions.EVIDENCE_SCHEMA, configuredProvider.source(),
                 configuredProvider.providerIdentifier(), EvidenceStatus.PENDING, attemptedAt, List.of()));
         try {
-            ProfessionalEvidenceBundle gathered = configuredProvider.gather(requestFactory.create(assessment,
-                    classificationStore.findByAssessmentId(assessmentId)));
+            var request = requestFactory.create(assessment, classificationStore.findByAssessmentId(assessmentId));
+            ProfessionalEvidenceBundle gathered = metrics.timed("evidence", "professional",
+                    () -> configuredProvider.gather(request));
             validateProviderResult(assessmentId, configuredProvider, gathered);
             evidenceStore.save(gathered);
             LOGGER.info("Evidence journey=professional assessmentId={} outcome={} itemCount={}",

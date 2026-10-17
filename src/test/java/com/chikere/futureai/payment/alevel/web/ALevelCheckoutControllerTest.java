@@ -4,7 +4,9 @@ import com.chikere.futureai.payment.alevel.application.ALevelCheckoutSession;
 import com.chikere.futureai.payment.alevel.application.ALevelPaymentProvider;
 import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseUseCase;
 import com.chikere.futureai.payment.alevel.application.PaymentUnavailableException;
+import com.chikere.futureai.configuration.RecordingJourneyMetricsConfiguration;
 import com.chikere.futureai.security.WebSecurityConfiguration;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -16,6 +18,7 @@ import java.net.URI;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -25,11 +28,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ALevelCheckoutController.class)
-@Import(WebSecurityConfiguration.class)
+@Import({WebSecurityConfiguration.class, RecordingJourneyMetricsConfiguration.class})
 class ALevelCheckoutControllerTest {
 
     @Autowired MockMvc mvc;
     @MockitoBean ALevelReportPurchaseUseCase purchaseService;
+    @Autowired MeterRegistry registry;
 
     @Test
     void checkoutRequiresCsrfAndRedirectsOnlyToTheGatewaySession() throws Exception {
@@ -56,5 +60,6 @@ class ALevelCheckoutControllerTest {
         mvc.perform(post("/a-level-assessment/" + id + "/checkout").with(csrf()))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(status().reason("Paid report checkout is currently unavailable."));
+        assertThat(registry.get("checkout.failures").tag("journey", "a-level").counter().count()).isEqualTo(1);
     }
 }

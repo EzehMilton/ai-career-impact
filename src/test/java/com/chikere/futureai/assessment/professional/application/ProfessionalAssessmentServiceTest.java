@@ -1,9 +1,12 @@
 package com.chikere.futureai.assessment.professional.application;
 
+import com.chikere.futureai.configuration.JourneyMetrics;
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV1;
 import com.chikere.futureai.decision.professional.ProfessionalMeasure;
 import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfessionalJudgmentProvider;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -66,6 +69,23 @@ class ProfessionalAssessmentServiceTest {
         verifyNoMoreInteractions(provider);
         assertThatNullPointerException().isThrownBy(() -> service.assess(null));
         verifyNoMoreInteractions(provider);
+    }
+
+    @Test
+    void providerFailureIsCountedAndTimedWithoutChangingWhatPropagates() {
+        ProfessionalAssessmentState state = state("Software Developer");
+        ProfessionalJudgmentProvider provider = mock(ProfessionalJudgmentProvider.class);
+        IllegalStateException failure = new IllegalStateException("Jev unavailable");
+        when(provider.judge(state)).thenThrow(failure);
+        MeterRegistry registry = new SimpleMeterRegistry();
+        ProfessionalAssessmentService service = new ProfessionalAssessmentService(provider,
+                new ProfessionalDecisionPolicyV1(), null, Clock.systemUTC(), new JourneyMetrics(registry));
+
+        assertThatThrownBy(() -> service.assess(state)).isSameAs(failure);
+        assertThat(registry.get("judgment.failures").tag("journey", "professional").counter().count())
+                .isEqualTo(1);
+        assertThat(registry.get("external.calls").tag("operation", "judgment").tag("journey", "professional")
+                .tag("outcome", "failure").timer().count()).isEqualTo(1);
     }
 
     @Test

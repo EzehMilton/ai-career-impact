@@ -1,5 +1,6 @@
 package com.chikere.futureai.assessment.alevel.application;
 
+import com.chikere.futureai.configuration.JourneyMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +26,7 @@ public final class ALevelAssessmentService implements ALevelAssessmentSubmission
     private final ALevelDecisionPolicyV1 decisionPolicy;
     private final ALevelAssessmentStore store;
     private final Clock clock;
+    private final JourneyMetrics metrics;
 
     public ALevelAssessmentService(ALevelJudgmentProvider judgmentProvider,
             ALevelDecisionPolicyV1 decisionPolicy) {
@@ -33,10 +35,17 @@ public final class ALevelAssessmentService implements ALevelAssessmentSubmission
 
     public ALevelAssessmentService(ALevelJudgmentProvider judgmentProvider,
             ALevelDecisionPolicyV1 decisionPolicy, ALevelAssessmentStore store, Clock clock) {
+        this(judgmentProvider, decisionPolicy, store, clock, JourneyMetrics.disabled());
+    }
+
+    public ALevelAssessmentService(ALevelJudgmentProvider judgmentProvider,
+            ALevelDecisionPolicyV1 decisionPolicy, ALevelAssessmentStore store, Clock clock,
+            JourneyMetrics metrics) {
         this.judgmentProvider = Objects.requireNonNull(judgmentProvider, "judgmentProvider must not be null");
         this.decisionPolicy = Objects.requireNonNull(decisionPolicy, "decisionPolicy must not be null");
         this.store = store;
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
+        this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
     }
 
     public ALevelAssessmentResult assess(ALevelAssessmentState state) {
@@ -67,13 +76,14 @@ public final class ALevelAssessmentService implements ALevelAssessmentSubmission
         Objects.requireNonNull(state, "state must not be null");
         final AssessmentJudgmentSet judgments;
         try {
-            judgments = judgmentProvider.judge(state);
+            judgments = metrics.timed("judgment", "a-level", () -> judgmentProvider.judge(state));
             LOGGER.info("Judgment journey=alevel outcome=SUCCEEDED schemaVersion={}",
                     judgments.schemaVersion());
         }
         catch (RuntimeException failure) {
             LOGGER.warn("Judgment journey=alevel outcome=FAILED failureType={}",
                     failure.getClass().getSimpleName());
+            metrics.judgmentFailed("a-level");
             throw failure;
         }
         ALevelDecisionResult decision = decisionPolicy.decide(judgments);

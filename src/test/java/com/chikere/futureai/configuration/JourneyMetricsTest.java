@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Counters are observational. These tests hold the two properties that make them safe to leave in
@@ -32,6 +33,7 @@ class JourneyMetricsTest {
 
     @Test
     void everyFailureKindHasItsOwnCounter() {
+        metrics.judgmentFailed("a-level");
         metrics.narrativeFailed("a-level");
         metrics.evidenceFailed("a-level");
         metrics.checkoutFailed("a-level");
@@ -39,6 +41,7 @@ class JourneyMetricsTest {
         metrics.paymentConfirmed("a-level");
         metrics.rateLimitRejected("cv-upload");
 
+        assertThat(count("judgment.failures", "journey", "a-level")).isEqualTo(1);
         assertThat(count("narrative.failures", "journey", "a-level")).isEqualTo(1);
         assertThat(count("evidence.failures", "journey", "a-level")).isEqualTo(1);
         assertThat(count("checkout.failures", "journey", "a-level")).isEqualTo(1);
@@ -83,6 +86,41 @@ class JourneyMetricsTest {
 
         assertThatCode(() -> new JourneyMetrics(broken).assessmentCreated("professional"))
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    void aTimedCallReturnsItsResultAndIsRecordedAsASuccess() {
+        String result = metrics.timed("judgment", "professional", () -> "judged");
+
+        assertThat(result).isEqualTo("judged");
+        assertThat(registry.get("external.calls").tag("operation", "judgment").tag("journey", "professional")
+                .tag("outcome", "success").timer().count()).isEqualTo(1);
+    }
+
+    @Test
+    void aTimedCallThatThrowsIsRecordedAsAFailureAndTheSameExceptionPropagates() {
+        IllegalStateException providerFailure = new IllegalStateException("provider unavailable");
+
+        assertThatThrownBy(() -> metrics.timed("checkout", "university", () -> {
+            throw providerFailure;
+        })).isSameAs(providerFailure);
+        assertThat(registry.get("external.calls").tag("operation", "checkout").tag("journey", "university")
+                .tag("outcome", "failure").timer().count()).isEqualTo(1);
+    }
+
+    @Test
+    void aBrokenRegistryCannotBreakATimedCall() {
+        MeterRegistry broken = new SimpleMeterRegistry() {
+            @Override
+            protected io.micrometer.core.instrument.Timer newTimer(io.micrometer.core.instrument.Meter.Id id,
+                    io.micrometer.core.instrument.distribution.DistributionStatisticConfig config,
+                    io.micrometer.core.instrument.distribution.pause.PauseDetector pauseDetector) {
+                throw new IllegalStateException("registry is unavailable");
+            }
+        };
+
+        assertThat(new JourneyMetrics(broken).timed("narrative", "a-level", () -> 42)).isEqualTo(42);
+        assertThat(JourneyMetrics.disabled().timed("narrative", "a-level", () -> 42)).isEqualTo(42);
     }
 
     private double count(String name, String tag, String value) {

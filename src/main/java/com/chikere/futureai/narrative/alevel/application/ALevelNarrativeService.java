@@ -1,5 +1,6 @@
 package com.chikere.futureai.narrative.alevel.application;
 
+import com.chikere.futureai.configuration.JourneyMetrics;
 import com.chikere.futureai.assessment.alevel.application.ALevelAssessmentStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,16 +24,25 @@ public final class ALevelNarrativeService implements ALevelNarrativeGeneration {
     private final ALevelNarrativeContextFactory contextFactory;
     private final ALevelNarrativeValidator validator;
     private final Clock clock;
+    private final JourneyMetrics metrics;
 
     public ALevelNarrativeService(ALevelAssessmentStore assessmentStore,
             ALevelNarrativeStore narrativeStore, ALevelNarrativeGenerator generator,
             ALevelNarrativeContextFactory contextFactory, ALevelNarrativeValidator validator, Clock clock) {
+        this(assessmentStore, narrativeStore, generator, contextFactory, validator, clock, JourneyMetrics.disabled());
+    }
+
+    public ALevelNarrativeService(ALevelAssessmentStore assessmentStore,
+            ALevelNarrativeStore narrativeStore, ALevelNarrativeGenerator generator,
+            ALevelNarrativeContextFactory contextFactory, ALevelNarrativeValidator validator, Clock clock,
+            JourneyMetrics metrics) {
         this.assessmentStore = Objects.requireNonNull(assessmentStore);
         this.narrativeStore = Objects.requireNonNull(narrativeStore);
         this.generator = Objects.requireNonNull(generator);
         this.contextFactory = Objects.requireNonNull(contextFactory);
         this.validator = Objects.requireNonNull(validator);
         this.clock = Objects.requireNonNull(clock);
+        this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
     }
 
     @Override
@@ -50,7 +60,7 @@ public final class ALevelNarrativeService implements ALevelNarrativeGeneration {
                 attemptedAt, Optional.empty()));
         try {
             ALevelNarrativeContext context = contextFactory.create(assessment);
-            ALevelNarrative narrative = validator.validate(generator.generate(context), context);
+            ALevelNarrative narrative = validator.validate(metrics.timed("narrative", "a-level", () -> generator.generate(context)), context);
             var available = stored(assessmentId, NarrativeStatus.AVAILABLE, Optional.of(narrative),
                     attemptedAt, Optional.of(Instant.now(clock)));
             narrativeStore.save(available);

@@ -2,10 +2,13 @@ package com.chikere.futureai.configuration;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * Counts the handful of things worth knowing about in production, tagged only by journey.
@@ -13,7 +16,8 @@ import java.util.Objects;
  * <p>Two rules shape this class:</p>
  *
  * <ul>
- *   <li><strong>Low cardinality.</strong> The only tag is the journey, or the rate-limit group. An
+ *   <li><strong>Low cardinality.</strong> The only tag is the journey, or the rate-limit group;
+ *       timers add a fixed operation name and a success or failure outcome. An
  *       assessment id, a profession, a course title or an address as a tag would create an
  *       unbounded number of time series and would also turn a metrics backend into a second,
  *       unaudited copy of user data.</li>
@@ -48,6 +52,10 @@ public final class JourneyMetrics {
         count("assessments.created", "journey", journey);
     }
 
+    public void judgmentFailed(String journey) {
+        count("judgment.failures", "journey", journey);
+    }
+
     public void narrativeFailed(String journey) {
         count("narrative.failures", "journey", journey);
     }
@@ -70,6 +78,43 @@ public final class JourneyMetrics {
 
     public void rateLimitRejected(String group) {
         count("rate_limit.rejections", "group", group);
+    }
+
+    /**
+     * Runs {@code work} and records how long it took as {@code external.calls}, tagged by
+     * operation, journey and whether it returned or threw. The work's own result or exception is
+     * passed through unchanged; only the measurement is allowed to fail quietly.
+     *
+     * @param operation a fixed name such as {@code judgment} or {@code checkout}, never user data
+     */
+    public <T> T timed(String operation, String journey, Supplier<T> work) {
+        long started = System.nanoTime();
+        String outcome = "failure";
+        try {
+            T result = work.get();
+            outcome = "success";
+            return result;
+        }
+        finally {
+            record(operation, journey, outcome, System.nanoTime() - started);
+        }
+    }
+
+    private void record(String operation, String journey, String outcome, long elapsedNanos) {
+        if (registry == null) {
+            return;
+        }
+        try {
+            Timer.builder("external.calls")
+                    .tag("operation", operation)
+                    .tag("journey", journey)
+                    .tag("outcome", outcome)
+                    .register(registry)
+                    .record(elapsedNanos, TimeUnit.NANOSECONDS);
+        }
+        catch (RuntimeException metricsFailure) {
+            LOGGER.debug("Could not record external.calls", metricsFailure);
+        }
     }
 
     private void count(String name, String tag, String value) {

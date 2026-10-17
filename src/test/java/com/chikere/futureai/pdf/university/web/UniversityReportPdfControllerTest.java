@@ -4,7 +4,9 @@ import com.chikere.futureai.pdf.university.application.PurchasedUniversityReport
 import com.chikere.futureai.pdf.university.application.UniversityReportPdfAccessDeniedException;
 import com.chikere.futureai.pdf.university.application.UniversityReportPdfGenerationException;
 import com.chikere.futureai.pdf.university.application.UniversityReportPdfUseCase;
+import com.chikere.futureai.configuration.RecordingJourneyMetricsConfiguration;
 import com.chikere.futureai.security.WebSecurityConfiguration;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -26,11 +28,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UniversityReportPdfController.class)
-@Import(WebSecurityConfiguration.class)
+@Import({WebSecurityConfiguration.class, RecordingJourneyMetricsConfiguration.class})
 class UniversityReportPdfControllerTest {
 
     @Autowired MockMvc mvc;
     @MockitoBean UniversityReportPdfUseCase pdfService;
+    @Autowired MeterRegistry registry;
 
     @Test
     void anAuthorisedDownloadReturnsTheExactPersistedBytes() throws Exception {
@@ -76,5 +79,6 @@ class UniversityReportPdfControllerTest {
 
         assertThat(body).contains("PDF could not be generated right now")
                 .doesNotContain("secret renderer stack detail", "UniversityReportPdfGenerationException");
+        assertThat(registry.get("pdf.generation.failures").tag("journey", "university").counter().count()).isEqualTo(1);
     }
 }

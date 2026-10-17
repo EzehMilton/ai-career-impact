@@ -1,5 +1,6 @@
 package com.chikere.futureai.narrative.professional.application;
 
+import com.chikere.futureai.configuration.JourneyMetrics;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,7 @@ public final class ProfessionalNarrativeService implements ProfessionalNarrative
     private final ProfessionalNarrativeContextFactory contextFactory;
     private final ProfessionalNarrativeValidator validator;
     private final Clock clock;
+    private final JourneyMetrics metrics;
 
     public ProfessionalNarrativeService(
             ProfessionalAssessmentStore assessmentStore,
@@ -27,12 +29,24 @@ public final class ProfessionalNarrativeService implements ProfessionalNarrative
             ProfessionalNarrativeContextFactory contextFactory,
             ProfessionalNarrativeValidator validator,
             Clock clock) {
+        this(assessmentStore, narrativeStore, generator, contextFactory, validator, clock, JourneyMetrics.disabled());
+    }
+
+    public ProfessionalNarrativeService(
+            ProfessionalAssessmentStore assessmentStore,
+            ProfessionalNarrativeStore narrativeStore,
+            ProfessionalNarrativeGenerator generator,
+            ProfessionalNarrativeContextFactory contextFactory,
+            ProfessionalNarrativeValidator validator,
+            Clock clock,
+            JourneyMetrics metrics) {
         this.assessmentStore = Objects.requireNonNull(assessmentStore);
         this.narrativeStore = Objects.requireNonNull(narrativeStore);
         this.generator = Objects.requireNonNull(generator);
         this.contextFactory = Objects.requireNonNull(contextFactory);
         this.validator = Objects.requireNonNull(validator);
         this.clock = Objects.requireNonNull(clock);
+        this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
     }
 
     @Override
@@ -50,7 +64,7 @@ public final class ProfessionalNarrativeService implements ProfessionalNarrative
         narrativeStore.save(pending);
         try {
             ProfessionalNarrativeContext context = contextFactory.create(assessment);
-            ProfessionalNarrative narrative = validator.validate(generator.generate(context));
+            ProfessionalNarrative narrative = validator.validate(metrics.timed("narrative", "professional", () -> generator.generate(context)));
             var available = stored(assessmentId, NarrativeStatus.AVAILABLE, Optional.of(narrative),
                     attemptedAt, Optional.of(Instant.now(clock)));
             narrativeStore.save(available);

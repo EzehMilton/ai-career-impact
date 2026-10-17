@@ -4,7 +4,9 @@ import com.chikere.futureai.pdf.alevel.application.ALevelReportPdfAccessDeniedEx
 import com.chikere.futureai.pdf.alevel.application.ALevelReportPdfGenerationException;
 import com.chikere.futureai.pdf.alevel.application.ALevelReportPdfUseCase;
 import com.chikere.futureai.pdf.alevel.application.PurchasedALevelReportPdf;
+import com.chikere.futureai.configuration.RecordingJourneyMetricsConfiguration;
 import com.chikere.futureai.security.WebSecurityConfiguration;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -26,11 +28,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ALevelReportPdfController.class)
-@Import(WebSecurityConfiguration.class)
+@Import({WebSecurityConfiguration.class, RecordingJourneyMetricsConfiguration.class})
 class ALevelReportPdfControllerTest {
 
     @Autowired MockMvc mvc;
     @MockitoBean ALevelReportPdfUseCase pdfService;
+    @Autowired MeterRegistry registry;
 
     @Test
     void anAuthorisedDownloadReturnsTheExactPersistedBytes() throws Exception {
@@ -75,5 +78,6 @@ class ALevelReportPdfControllerTest {
 
         assertThat(body).contains("PDF could not be generated right now")
                 .doesNotContain("secret renderer stack detail", "ALevelReportPdfGenerationException");
+        assertThat(registry.get("pdf.generation.failures").tag("journey", "a-level").counter().count()).isEqualTo(1);
     }
 }

@@ -4,6 +4,7 @@ import com.chikere.futureai.payment.alevel.application.ALevelPaymentNotification
 import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseUseCase;
 import com.chikere.futureai.payment.alevel.application.InvalidPaymentNotificationException;
 import jakarta.servlet.http.HttpServletResponse;
+import com.chikere.futureai.configuration.FailureDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -46,7 +47,7 @@ public final class ALevelStripeWebhookController {
         }
         catch (RuntimeException retryable) {
             LOGGER.error("Verified Stripe A-level payment event could not be processed ({})",
-                    retryable.getClass().getSimpleName());
+                    FailureDescription.of(retryable));
             return ResponseEntity.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).build();
         }
     }

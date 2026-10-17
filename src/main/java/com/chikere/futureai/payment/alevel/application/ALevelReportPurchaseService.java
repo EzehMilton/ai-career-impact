@@ -76,7 +76,7 @@ public final class ALevelReportPurchaseService implements ALevelReportPurchaseUs
                 applicationBaseUrl.resolve(resultPath + "?checkout=cancelled"));
         ALevelCheckoutSession session;
         try {
-            session = gateway.createCheckoutSession(request);
+            session = metrics.timed("checkout", "a-level", () -> gateway.createCheckoutSession(request));
         }
         catch (RuntimeException failure) {
             throw new PaymentUnavailableException("checkout could not be created", failure);

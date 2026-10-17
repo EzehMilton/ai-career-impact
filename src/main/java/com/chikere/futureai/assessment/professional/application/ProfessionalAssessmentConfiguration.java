@@ -34,18 +34,21 @@ public class ProfessionalAssessmentConfiguration {
     ProfessionalAssessmentService professionalAssessmentService(
             ProfessionalJudgmentProvider judgmentProvider,
             ProfessionalDecisionPolicyV1 decisionPolicy,
-            ProfessionalAssessmentStore store) {
-        return new ProfessionalAssessmentService(judgmentProvider, decisionPolicy, store, Clock.systemUTC());
+            ProfessionalAssessmentStore store,
+            ObjectProvider<JourneyMetrics> metrics) {
+        return new ProfessionalAssessmentService(judgmentProvider, decisionPolicy, store, Clock.systemUTC(),
+                metrics.getIfAvailable(JourneyMetrics::disabled));
     }
 
     @Bean
     ProfessionalNarrativeService professionalNarrativeService(
             ProfessionalAssessmentStore assessmentStore,
             ProfessionalNarrativeStore narrativeStore,
-            ProfessionalNarrativeGenerator generator) {
+            ProfessionalNarrativeGenerator generator,
+            ObjectProvider<JourneyMetrics> metrics) {
         return new ProfessionalNarrativeService(assessmentStore, narrativeStore, generator,
                 new ProfessionalNarrativeContextFactory(), new ProfessionalNarrativeValidator(),
-                Clock.systemUTC());
+                Clock.systemUTC(), metrics.getIfAvailable(JourneyMetrics::disabled));
     }
 
     @Bean
@@ -75,10 +78,11 @@ public class ProfessionalAssessmentConfiguration {
             ProfessionalEvidenceStore evidenceStore,
             Optional<ProfessionalEvidenceProvider> evidenceProvider,
             ProfessionalOccupationClassificationStore classificationStore,
-            @Value("${app.professional.evidence.geography:United Kingdom}") String geography) {
+            @Value("${app.professional.evidence.geography:United Kingdom}") String geography,
+            ObjectProvider<JourneyMetrics> metrics) {
         return new ProfessionalEvidenceService(assessmentStore, evidenceStore, evidenceProvider,
                 classificationStore, new ProfessionalEvidenceRequestFactory(geography),
-                Clock.systemUTC());
+                Clock.systemUTC(), metrics.getIfAvailable(JourneyMetrics::disabled));
     }
 
     @Bean

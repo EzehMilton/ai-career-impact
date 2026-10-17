@@ -1,5 +1,6 @@
 package com.chikere.futureai.evidence.university.application;
 
+import com.chikere.futureai.configuration.JourneyMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,15 +27,24 @@ public final class UniversityEvidenceService implements UniversityEvidenceGather
     private final Optional<UniversityEvidenceProvider> provider;
     private final UniversityEvidenceRequestFactory requestFactory;
     private final Clock clock;
+    private final JourneyMetrics metrics;
 
     public UniversityEvidenceService(UniversityAssessmentStore assessmentStore,
             UniversityEvidenceStore evidenceStore, Optional<UniversityEvidenceProvider> provider,
             UniversityEvidenceRequestFactory requestFactory, Clock clock) {
+        this(assessmentStore, evidenceStore, provider, requestFactory, clock, JourneyMetrics.disabled());
+    }
+
+    public UniversityEvidenceService(UniversityAssessmentStore assessmentStore,
+            UniversityEvidenceStore evidenceStore, Optional<UniversityEvidenceProvider> provider,
+            UniversityEvidenceRequestFactory requestFactory, Clock clock,
+            JourneyMetrics metrics) {
         this.assessmentStore = Objects.requireNonNull(assessmentStore);
         this.evidenceStore = Objects.requireNonNull(evidenceStore);
         this.provider = Objects.requireNonNull(provider);
         this.requestFactory = Objects.requireNonNull(requestFactory);
         this.clock = Objects.requireNonNull(clock);
+        this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
     }
 
     @Override
@@ -56,7 +66,9 @@ public final class UniversityEvidenceService implements UniversityEvidenceGather
                 UniversityEvidenceVersions.EVIDENCE_SCHEMA, configuredProvider.source(),
                 configuredProvider.providerIdentifier(), EvidenceStatus.PENDING, attemptedAt, List.of()));
         try {
-            UniversityEvidenceBundle gathered = configuredProvider.gather(requestFactory.create(assessment));
+            var request = requestFactory.create(assessment);
+            UniversityEvidenceBundle gathered = metrics.timed("evidence", "university",
+                    () -> configuredProvider.gather(request));
             validateProviderResult(assessmentId, configuredProvider, gathered);
             evidenceStore.save(gathered);
             LOGGER.info("Evidence journey=university assessmentId={} outcome={} itemCount={}",
