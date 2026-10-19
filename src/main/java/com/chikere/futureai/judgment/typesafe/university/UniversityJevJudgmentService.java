@@ -6,6 +6,8 @@ import com.chikere.futureai.assessment.university.application.AssessmentSource;
 import com.chikere.futureai.assessment.university.application.UniversityJudgmentProvider;
 import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
 import com.chikere.futureai.judgment.domain.DimensionJudgment;
+import com.chikere.futureai.cost.ProviderCostTracker;
+import com.chikere.futureai.cost.ProviderUsage;
 import org.springaicommunity.typesafe.TypeSafeClient;
 import org.springaicommunity.typesafe.response.NoulAnswer;
 import org.springaicommunity.typesafe.response.ScoreAnswer;
@@ -25,6 +27,7 @@ public final class UniversityJevJudgmentService implements UniversityJudgmentPro
     private final UniversityJudgmentSchema schema;
     private final UniversityJevStateMapper stateMapper;
     private final String configuredModelIdentifier;
+    private final ProviderCostTracker costs;
 
     public UniversityJevJudgmentService(
             TypeSafeClient typeSafeClient,
@@ -38,21 +41,38 @@ public final class UniversityJevJudgmentService implements UniversityJudgmentPro
             UniversityJudgmentSchema schema,
             UniversityJevStateMapper stateMapper,
             String configuredModelIdentifier) {
+        this(typeSafeClient, schema, stateMapper, configuredModelIdentifier, ProviderCostTracker.disabled());
+    }
+
+    public UniversityJevJudgmentService(TypeSafeClient typeSafeClient, UniversityJudgmentSchema schema,
+            UniversityJevStateMapper stateMapper, String configuredModelIdentifier,
+            ProviderCostTracker costs) {
         this.typeSafeClient = Objects.requireNonNull(typeSafeClient, "typeSafeClient must not be null");
         this.schema = Objects.requireNonNull(schema, "schema must not be null");
         this.stateMapper = Objects.requireNonNull(stateMapper, "stateMapper must not be null");
         this.configuredModelIdentifier = configuredModelIdentifier;
+        this.costs = Objects.requireNonNull(costs, "costs must not be null");
     }
 
     @Override
     public AssessmentJudgmentSet judge(UniversityAssessmentState assessmentState) {
         Map<String, Object> state = stateMapper.map(assessmentState);
         SystemOneResponse response = typeSafeClient.systemOne(state, schema.questions());
+        recordUsage(response);
 
         List<DimensionJudgment> judgments = schema.questions().keySet().stream()
                 .map(questionId -> toDomainJudgment(questionId, response))
                 .toList();
         return new AssessmentJudgmentSet(JourneyType.UNIVERSITY, schema.version(), judgments);
+    }
+
+    private void recordUsage(SystemOneResponse response) {
+        var usage = response == null ? null : response.usage();
+        String model = response == null || response.model() == null || response.model().isBlank()
+                ? configuredModelIdentifier : response.model();
+        costs.record(ProviderUsage.of(ProviderUsage.JEV, model,
+                usage == null ? null : usage.inputTokens(),
+                usage == null ? null : usage.outputTokens()));
     }
 
     @Override

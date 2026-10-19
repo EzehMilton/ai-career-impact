@@ -280,6 +280,23 @@ Failure log lines on checkout, PDF and Stripe webhook paths describe the failure
 
 The three assessment workflows also increment `narrative.failures` when a provider or validator failure is persisted as narrative status `FAILED`, as well as when narrative lifecycle persistence throws. The metric remains tagged only by journey.
 
+## Estimated provider cost
+
+Every assessment that makes a real Jev or OpenAI call logs one line when its submission finishes, at `INFO` from `com.chikere.futureai.cost.ProviderCostTracker`:
+
+```
+Estimated provider cost operation=assessment journey=professional assessmentId=… outcome=completed jevCalls=1 jevInputTokens=2140 jevOutputTokens=0 jevCost=0.000090 openaiCalls=1 openaiInputTokens=3012 openaiOutputTokens=774 openaiCost=0.000916 totalCost=0.001006 currency=USD
+```
+
+- **Tokens are the providers' own counts.** Jev's come from `SystemOneResponse.usage()`. OpenAI's come from the chat response metadata, read by `OpenAiUsageAdvisor`, which is added to Spring AI's shared `ChatClient.Builder` and so covers all three narrative generators and the CV extractor.
+- **Cost is tokens × configured list price.** It is an estimate to plan with, not an invoice. Rates are per million tokens and are set with `COST_OPENAI_INPUT_PER_MILLION_TOKENS`, `COST_OPENAI_OUTPUT_PER_MILLION_TOKENS`, `COST_JEV_INPUT_PER_MILLION_TOKENS`, `COST_JEV_OUTPUT_PER_MILLION_TOKENS` and `COST_CURRENCY`. The defaults are `gpt-4o-mini` standard pricing (0.15 / 0.60 USD) and the Jev early-access figure reported by third-party trackers (0.042 / 0 USD), because TypeSafe publishes no pricing page. Confirm both against your own terms, and change the OpenAI rates whenever `OPENAI_MODEL` changes.
+- **The CV path costs two lines.** Extraction happens in its own request before an assessment exists, so it logs `operation=cv-extraction assessmentId=none`. The cost of a CV-based assessment is that line plus the assessment's own line. Extractions that are never confirmed still cost money, and are counted that way.
+- **Failures are still reported.** If a submission fails after Jev has answered, for example on save, the line reads `outcome=failed assessmentId=none` and still shows what was spent.
+- **What is not counted:** provider-side retries of failed attempts (the SDKs do not expose them), Nomis evidence (free), and Stripe fees (charged only on purchase). A call whose response carried no usage is shown as `…CallsWithoutUsage=1` and priced at zero rather than guessed.
+- **Nothing is logged without a billable call**, so `local-fixture` runs stay quiet. The line carries no submitted content.
+
+Under `prod` the line is an ECS JSON object whose `message` holds these fields. To get an average cost per assessment, sum `totalCost` over the period and divide by the number of `operation=assessment outcome=completed` lines.
+
 ## Datasource
 
 Spring Boot defaults, with hooks so an operator can change them without a rebuild. These are deliberately close to the defaults: they exist to be adjustable, not because a number has been measured as correct.

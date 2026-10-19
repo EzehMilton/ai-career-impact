@@ -15,6 +15,7 @@ import com.chikere.futureai.report.professional.application.ProfessionalReportAs
 import com.chikere.futureai.report.professional.application.ProfessionalReportService;
 import org.springframework.beans.factory.annotation.Value;
 import com.chikere.futureai.configuration.JourneyMetrics;
+import com.chikere.futureai.cost.ProviderCostTracker;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -56,10 +57,12 @@ public class ProfessionalAssessmentConfiguration {
             ProfessionalAssessmentService assessmentService,
             ProfessionalNarrativeService narrativeService,
             ProfessionalOccupationClassificationService classificationService,
-            ProfessionalEvidenceService evidenceService, ObjectProvider<JourneyMetrics> metrics) {
+            ProfessionalEvidenceService evidenceService, ObjectProvider<JourneyMetrics> metrics,
+            ObjectProvider<ProviderCostTracker> costs) {
         return new ProfessionalAssessmentWorkflow(assessmentService, narrativeService,
                 classificationService, evidenceService,
-                metrics.getIfAvailable(JourneyMetrics::disabled));
+                metrics.getIfAvailable(JourneyMetrics::disabled),
+                costs.getIfAvailable(ProviderCostTracker::disabled));
     }
 
     @Bean

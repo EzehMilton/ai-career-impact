@@ -1,6 +1,7 @@
 package com.chikere.futureai.cv.professional.application;
 
 import com.chikere.futureai.configuration.JourneyMetrics;
+import com.chikere.futureai.cost.ProviderCostTracker;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentInputMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ public final class ProfessionalCvUploadService implements ProfessionalCvAnalysis
     private final ProfessionalProfileValidator profileValidator;
     private final Clock clock;
     private final JourneyMetrics metrics;
+    private final ProviderCostTracker costs;
 
     public ProfessionalCvUploadService(ProfessionalCvParser parser,
             Optional<ProfessionalProfileExtractor> profileExtractor,
@@ -28,11 +30,19 @@ public final class ProfessionalCvUploadService implements ProfessionalCvAnalysis
             Optional<ProfessionalProfileExtractor> profileExtractor,
             ProfessionalProfileValidator profileValidator, Clock clock,
             JourneyMetrics metrics) {
+        this(parser, profileExtractor, profileValidator, clock, metrics, ProviderCostTracker.disabled());
+    }
+
+    public ProfessionalCvUploadService(ProfessionalCvParser parser,
+            Optional<ProfessionalProfileExtractor> profileExtractor,
+            ProfessionalProfileValidator profileValidator, Clock clock,
+            JourneyMetrics metrics, ProviderCostTracker costs) {
         this.parser = Objects.requireNonNull(parser);
         this.profileExtractor = Objects.requireNonNull(profileExtractor);
         this.profileValidator = Objects.requireNonNull(profileValidator);
         this.clock = Objects.requireNonNull(clock);
         this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
+        this.costs = Objects.requireNonNull(costs, "costs must not be null");
     }
 
     @Override
@@ -64,7 +74,8 @@ public final class ProfessionalCvUploadService implements ProfessionalCvAnalysis
         ProfessionalProfile candidate;
         try {
             String text = parsed.text();
-            candidate = metrics.timed("cv-extraction", "professional", () -> extractor.extract(text));
+            candidate = costs.trackCvExtraction(
+                    () -> metrics.timed("cv-extraction", "professional", () -> extractor.extract(text)));
         }
         catch (ProfessionalProfileExtractionException exception) {
             LOGGER.warn("Professional profile extraction failed fileType={} outcome=FAILED "
