@@ -28,7 +28,7 @@ class HomeControllerTest {
                 .andExpect(view().name("home")).andReturn().getResponse().getContentAsString();
 
         assertThat(html).contains("AI Career &amp; Future Assessment",
-                "How will AI affect your career and education?",
+                "How will AI affect your career or education?",
                 "clear assessments and practical guidance");
         assertThat(html).contains("<title>Understand how AI may affect your choices | AI Career Impact</title>");
     }

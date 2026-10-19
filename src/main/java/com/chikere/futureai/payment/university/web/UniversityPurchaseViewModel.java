@@ -9,7 +9,8 @@ public record UniversityPurchaseViewModel(
         boolean active,
         boolean denied,
         boolean checkoutAvailable,
-        String displayPrice) {
+        String displayPrice,
+        boolean complimentaryAvailable) {
 
     public static UniversityPurchaseViewModel from(UniversityPurchaseAccess access) {
         var status = access.status();
@@ -18,6 +19,7 @@ public record UniversityPurchaseViewModel(
                 status.filter(value -> value == UniversityEntitlementStatus.ACTIVE).isPresent(),
                 status.filter(value -> value == UniversityEntitlementStatus.REFUNDED
                         || value == UniversityEntitlementStatus.REVOKED).isPresent(),
-                access.checkoutAvailable(), access.displayPrice().orElse(null));
+                access.checkoutAvailable(), access.displayPrice().orElse(null),
+                access.complimentaryAvailable());
     }
 }

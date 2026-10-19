@@ -1,5 +1,6 @@
 package com.chikere.futureai.payment.university.application;
 
+import com.chikere.futureai.payment.complimentary.ComplimentaryRedemptionResult;
 import com.chikere.futureai.report.university.application.UniversityReport;
 
 import java.util.Optional;
@@ -15,4 +16,10 @@ public interface UniversityReportPurchaseUseCase {
     Optional<UniversityReport> findPurchasedReport(UUID assessmentId);
 
     Optional<UniversityReportEntitlement> findEntitlement(UUID assessmentId);
+
+    /**
+     * Grants the ordinary full report for a valid complimentary access code, without any payment
+     * provider. Idempotent per assessment: an already ACTIVE entitlement is left untouched.
+     */
+    ComplimentaryRedemptionResult redeemComplimentaryAccess(UUID assessmentId, String submittedCode);
 }

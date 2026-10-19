@@ -4,6 +4,9 @@ import com.chikere.futureai.report.university.application.UniversityReport;
 import com.chikere.futureai.report.university.application.UniversityReportQuery;
 import com.chikere.futureai.report.university.application.UniversityReportTier;
 
+import com.chikere.futureai.payment.complimentary.ComplimentaryRedemptionResult;
+import com.chikere.futureai.payment.complimentary.ComplimentaryReportAccess;
+
 import java.net.URI;
 import com.chikere.futureai.configuration.JourneyMetrics;
 import org.slf4j.Logger;
@@ -31,6 +34,7 @@ public final class UniversityReportPurchaseService implements UniversityReportPu
     private final Optional<String> displayPrice;
     private final Clock clock;
     private final JourneyMetrics metrics;
+    private final ComplimentaryReportAccess complimentaryAccess;
 
     public UniversityReportPurchaseService(UniversityReportQuery reportService,
             UniversityPurchaseStore purchaseStore, Optional<UniversityPaymentGateway> paymentGateway,
@@ -42,6 +46,14 @@ public final class UniversityReportPurchaseService implements UniversityReportPu
             UniversityPurchaseStore purchaseStore, Optional<UniversityPaymentGateway> paymentGateway,
             URI applicationBaseUrl, Optional<String> displayPrice, Clock clock,
             JourneyMetrics metrics) {
+        this(reportService, purchaseStore, paymentGateway, applicationBaseUrl, displayPrice, clock, metrics,
+                ComplimentaryReportAccess.disabled());
+    }
+
+    public UniversityReportPurchaseService(UniversityReportQuery reportService,
+            UniversityPurchaseStore purchaseStore, Optional<UniversityPaymentGateway> paymentGateway,
+            URI applicationBaseUrl, Optional<String> displayPrice, Clock clock,
+            JourneyMetrics metrics, ComplimentaryReportAccess complimentaryAccess) {
         this.reportService = Objects.requireNonNull(reportService);
         this.purchaseStore = Objects.requireNonNull(purchaseStore);
         this.paymentGateway = Objects.requireNonNull(paymentGateway);
@@ -50,6 +62,7 @@ public final class UniversityReportPurchaseService implements UniversityReportPu
                 .map(String::strip).filter(value -> !value.isEmpty());
         this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
         this.clock = Objects.requireNonNull(clock);
+        this.complimentaryAccess = Objects.requireNonNull(complimentaryAccess);
     }
 
     /** Calls the external gateway before opening the short pending-entitlement database transaction. */
@@ -193,7 +206,8 @@ public final class UniversityReportPurchaseService implements UniversityReportPu
         boolean checkoutAvailable = paymentGateway.isPresent()
                 && (status.isEmpty()
                 || status.filter(value -> value == UniversityEntitlementStatus.FAILED).isPresent());
-        return new UniversityPurchaseAccess(status, checkoutAvailable, displayPrice);
+        boolean complimentaryAvailable = complimentaryAccess.enabled() && status.isEmpty();
+        return new UniversityPurchaseAccess(status, checkoutAvailable, displayPrice, complimentaryAvailable);
     }
 
     /** Only an ACTIVE entitlement returns the frozen purchased report. */
@@ -212,6 +226,57 @@ public final class UniversityReportPurchaseService implements UniversityReportPu
     @Override
     public Optional<UniversityReportEntitlement> findEntitlement(UUID assessmentId) {
         return purchaseStore.findEntitlementByAssessmentId(Objects.requireNonNull(assessmentId));
+    }
+
+    /**
+     * Grants the same frozen PAID report a confirmed payment produces, with no payment gateway
+     * involved. Only an assessment without any entitlement is unlocked: an ACTIVE one already has
+     * the report, and a PENDING, REFUNDED or REVOKED one belongs to the payment flow, which a code
+     * must never override. The submitted code is compared and then discarded; it is never logged.
+     */
+    @Override
+    public ComplimentaryRedemptionResult redeemComplimentaryAccess(UUID assessmentId, String submittedCode) {
+        Objects.requireNonNull(assessmentId);
+        if (!complimentaryAccess.enabled()) return ComplimentaryRedemptionResult.DISABLED;
+        ComplimentaryRedemptionResult result = redeem(assessmentId, submittedCode);
+        LOGGER.info("University complimentary access assessmentId={} outcome={}", assessmentId, result);
+        return result;
+    }
+
+    private ComplimentaryRedemptionResult redeem(UUID assessmentId, String submittedCode) {
+        if (!complimentaryAccess.accepts(submittedCode)) return ComplimentaryRedemptionResult.INVALID_CODE;
+        var existing = purchaseStore.findEntitlementByAssessmentId(assessmentId);
+        if (existing.isPresent()) return redemptionFor(existing.orElseThrow());
+        UniversityReport paidReport = reportService.assemble(assessmentId, UniversityReportTier.PAID)
+                .orElseThrow(() -> new IllegalArgumentException("assessment does not exist"));
+        if (paidReport.measures().size() != 5) return ComplimentaryRedemptionResult.NOT_ELIGIBLE;
+        UUID entitlementId = UUID.randomUUID();
+        Instant now = Instant.now(clock);
+        // The checkout columns are required by the payment schema. These values name the grant
+        // rather than a provider session, and no gateway is ever asked about them.
+        var entitlement = new UniversityReportEntitlement(entitlementId, assessmentId, UniversityReportTier.PAID,
+                UniversityEntitlementStatus.ACTIVE, UniversityPaymentProvider.COMPLIMENTARY,
+                "complimentary_" + entitlementId,
+                applicationBaseUrl.resolve("/university-assessment/" + assessmentId + "/report"), "complimentary",
+                Optional.empty(), Optional.of(paidReport.reportVersion()), now, Optional.of(now));
+        var snapshot = new PurchasedUniversityReportSnapshot(entitlementId, assessmentId,
+                paidReport.reportVersion(), now, paidReport);
+        try {
+            purchaseStore.saveComplimentary(entitlement, snapshot);
+        }
+        catch (RuntimeException failure) {
+            // A simultaneous redemption or checkout for the same assessment took the one row first.
+            return purchaseStore.findEntitlementByAssessmentId(assessmentId)
+                    .map(UniversityReportPurchaseService::redemptionFor)
+                    .orElseThrow(() -> failure);
+        }
+        return ComplimentaryRedemptionResult.UNLOCKED;
+    }
+
+    private static ComplimentaryRedemptionResult redemptionFor(UniversityReportEntitlement existing) {
+        return existing.status() == UniversityEntitlementStatus.ACTIVE
+                ? ComplimentaryRedemptionResult.ALREADY_ACTIVE
+                : ComplimentaryRedemptionResult.NOT_ELIGIBLE;
     }
 
     private PurchasedUniversityReportSnapshot freezeCurrentPaidReport(UniversityReportEntitlement entitlement) {

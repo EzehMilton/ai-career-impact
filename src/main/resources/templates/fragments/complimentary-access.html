@@ -1,0 +1,32 @@
+<!doctype html>
+<!--/*
+  The complimentary access-code form on a free result page. Identical for every journey.
+
+  actionUrl  the journey's complimentary-access POST
+  available  true only while complimentary access is enabled and the assessment has no entitlement
+
+  Nothing here knows the configured code: the visitor's entry is posted and checked on the server.
+  complimentaryMessage is the flash message left by a refused redemption.
+*/-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="form(actionUrl, available)">
+  <form class="complimentary-access" th:if="${available}" method="post" th:action="${actionUrl}">
+    <h3>Have an access code?</h3>
+    <p id="accessCode-hint" class="helper">Enter your access code to unlock the full report without payment.</p>
+    <div class="field field-short">
+      <label for="accessCode">Access code</label>
+      <input id="accessCode" name="accessCode" type="text" maxlength="200" required
+             autocomplete="off" autocapitalize="off" spellcheck="false"
+             th:aria-invalid="${complimentaryMessage != null} ? 'true'"
+             th:aria-describedby="${complimentaryMessage != null} ? 'accessCode-hint accessCode-error' : 'accessCode-hint'">
+      <p id="accessCode-error" class="field-error" role="alert" th:if="${complimentaryMessage != null}"
+         th:text="${complimentaryMessage}">That access code is not valid.</p>
+    </div>
+    <button type="submit" class="button-secondary">Unlock full report</button>
+  </form>
+  <p class="notice" role="status" th:if="${!available and complimentaryMessage != null}"
+     th:text="${complimentaryMessage}">An access code cannot be used for this assessment.</p>
+</th:block>
+</body>
+</html>

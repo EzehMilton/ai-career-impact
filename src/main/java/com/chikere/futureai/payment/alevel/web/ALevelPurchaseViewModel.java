@@ -9,7 +9,8 @@ public record ALevelPurchaseViewModel(
         boolean active,
         boolean denied,
         boolean checkoutAvailable,
-        String displayPrice) {
+        String displayPrice,
+        boolean complimentaryAvailable) {
 
     public static ALevelPurchaseViewModel from(ALevelPurchaseAccess access) {
         var status = access.status();
@@ -18,6 +19,7 @@ public record ALevelPurchaseViewModel(
                 status.filter(value -> value == ALevelEntitlementStatus.ACTIVE).isPresent(),
                 status.filter(value -> value == ALevelEntitlementStatus.REFUNDED
                         || value == ALevelEntitlementStatus.REVOKED).isPresent(),
-                access.checkoutAvailable(), access.displayPrice().orElse(null));
+                access.checkoutAvailable(), access.displayPrice().orElse(null),
+                access.complimentaryAvailable());
     }
 }

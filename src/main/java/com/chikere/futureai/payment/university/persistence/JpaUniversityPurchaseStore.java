@@ -125,13 +125,7 @@ class JpaUniversityPurchaseStore implements UniversityPurchaseStore {
                 || !snapshot.assessmentId().equals(entitlement.assessmentId)) {
             throw new InvalidPaymentNotificationException("payment confirmation does not match entitlement");
         }
-        var snapshotEntity = new PurchasedUniversityReportSnapshotEntity();
-        snapshotEntity.entitlementId = snapshot.entitlementId();
-        snapshotEntity.assessmentId = snapshot.assessmentId();
-        snapshotEntity.reportVersion = snapshot.reportVersion();
-        snapshotEntity.frozenAt = snapshot.frozenAt();
-        snapshotEntity.reportJson = snapshotCodec.write(snapshot.report());
-        snapshots.save(snapshotEntity);
+        snapshots.save(toSnapshotEntity(snapshot));
 
         entitlement.status = UniversityEntitlementStatus.ACTIVE;
         entitlement.providerPaymentReference = event.paymentReference().orElse(null);
@@ -143,6 +137,33 @@ class JpaUniversityPurchaseStore implements UniversityPurchaseStore {
         entitlements.flush();
         events.flush();
         return PurchaseConfirmationResult.ACTIVATED;
+    }
+
+    @Override
+    @Transactional
+    public void saveComplimentary(UniversityReportEntitlement entitlement, PurchasedUniversityReportSnapshot snapshot) {
+        if (entitlement.status() != UniversityEntitlementStatus.ACTIVE
+                || entitlement.paymentProvider() != UniversityPaymentProvider.COMPLIMENTARY
+                || !snapshot.entitlementId().equals(entitlement.entitlementId())
+                || !snapshot.assessmentId().equals(entitlement.assessmentId())) {
+            throw new IllegalArgumentException("not an active complimentary entitlement with its snapshot");
+        }
+        // The unique assessment_id column is the final guard against a concurrent second entitlement.
+        if (entitlements.findByAssessmentId(entitlement.assessmentId()).isPresent()) {
+            throw new IllegalStateException("an entitlement already exists for this assessment");
+        }
+        entitlements.saveAndFlush(toEntity(entitlement));
+        snapshots.saveAndFlush(toSnapshotEntity(snapshot));
+    }
+
+    private PurchasedUniversityReportSnapshotEntity toSnapshotEntity(PurchasedUniversityReportSnapshot snapshot) {
+        var entity = new PurchasedUniversityReportSnapshotEntity();
+        entity.entitlementId = snapshot.entitlementId();
+        entity.assessmentId = snapshot.assessmentId();
+        entity.reportVersion = snapshot.reportVersion();
+        entity.frozenAt = snapshot.frozenAt();
+        entity.reportJson = snapshotCodec.write(snapshot.report());
+        return entity;
     }
 
     private void saveEvent(UniversityPaymentEvent event) {

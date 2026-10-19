@@ -25,5 +25,11 @@ public interface ALevelPurchaseStore {
     PurchaseConfirmationResult confirmAndFreeze(ALevelPaymentEvent event,
             PurchasedALevelReportSnapshot snapshot);
 
+    /**
+     * Creates an already ACTIVE complimentary entitlement together with its frozen report, in one
+     * transaction. Fails if the assessment already has an entitlement of any kind.
+     */
+    void saveComplimentary(ALevelReportEntitlement entitlement, PurchasedALevelReportSnapshot snapshot);
+
     enum PurchaseConfirmationResult { ACTIVATED, ALREADY_PROCESSED }
 }

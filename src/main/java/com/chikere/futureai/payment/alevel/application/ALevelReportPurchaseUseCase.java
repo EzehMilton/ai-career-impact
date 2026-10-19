@@ -1,5 +1,6 @@
 package com.chikere.futureai.payment.alevel.application;
 
+import com.chikere.futureai.payment.complimentary.ComplimentaryRedemptionResult;
 import com.chikere.futureai.report.alevel.application.ALevelReport;
 
 import java.util.Optional;
@@ -15,4 +16,10 @@ public interface ALevelReportPurchaseUseCase {
     Optional<ALevelReport> findPurchasedReport(UUID assessmentId);
 
     Optional<ALevelReportEntitlement> findEntitlement(UUID assessmentId);
+
+    /**
+     * Grants the ordinary full report for a valid complimentary access code, without any payment
+     * provider. Idempotent per assessment: an already ACTIVE entitlement is left untouched.
+     */
+    ComplimentaryRedemptionResult redeemComplimentaryAccess(UUID assessmentId, String submittedCode);
 }

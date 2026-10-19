@@ -8,7 +8,8 @@ public record ProfessionalPurchaseViewModel(
         boolean active,
         boolean denied,
         boolean checkoutAvailable,
-        String displayPrice) {
+        String displayPrice,
+        boolean complimentaryAvailable) {
 
     public static ProfessionalPurchaseViewModel from(ProfessionalPurchaseAccess access) {
         var status = access.status();
@@ -17,6 +18,7 @@ public record ProfessionalPurchaseViewModel(
                 status.filter(value -> value == ProfessionalEntitlementStatus.ACTIVE).isPresent(),
                 status.filter(value -> value == ProfessionalEntitlementStatus.REFUNDED
                         || value == ProfessionalEntitlementStatus.REVOKED).isPresent(),
-                access.checkoutAvailable(), access.displayPrice().orElse(null));
+                access.checkoutAvailable(), access.displayPrice().orElse(null),
+                access.complimentaryAvailable());
     }
 }
