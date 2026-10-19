@@ -4,6 +4,7 @@ import com.chikere.futureai.report.professional.application.ProfessionalReportTi
 
 import java.net.URI;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 public record ProfessionalCheckoutRequest(
@@ -12,7 +13,8 @@ public record ProfessionalCheckoutRequest(
         ProfessionalReportTier reportTier,
         String priceConfigurationKey,
         URI successUrl,
-        URI cancelUrl) {
+        URI cancelUrl,
+        Optional<String> replacesCheckoutSessionId) {
 
     public ProfessionalCheckoutRequest {
         Objects.requireNonNull(entitlementId);
@@ -24,6 +26,14 @@ public record ProfessionalCheckoutRequest(
         priceConfigurationKey = required(priceConfigurationKey, "priceConfigurationKey");
         requireHttp(successUrl, "successUrl");
         requireHttp(cancelUrl, "cancelUrl");
+        replacesCheckoutSessionId = Objects.requireNonNull(replacesCheckoutSessionId)
+                .map(String::strip).filter(value -> !value.isEmpty());
+    }
+
+    /** A first checkout for this entitlement, replacing nothing. */
+    public ProfessionalCheckoutRequest(UUID entitlementId, UUID assessmentId, ProfessionalReportTier reportTier,
+            String priceConfigurationKey, URI successUrl, URI cancelUrl) {
+        this(entitlementId, assessmentId, reportTier, priceConfigurationKey, successUrl, cancelUrl, Optional.empty());
     }
 
     private static String required(String value, String name) {

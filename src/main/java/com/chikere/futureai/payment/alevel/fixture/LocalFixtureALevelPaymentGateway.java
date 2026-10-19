@@ -38,6 +38,12 @@ public final class LocalFixtureALevelPaymentGateway
                 Optional.of(Instant.now(clock).plus(30, ChronoUnit.MINUTES)));
     }
 
+    /** A local session never expires or completes on its own; the simulator completes it. */
+    @Override
+    public ALevelCheckoutSessionState checkoutSessionState(String checkoutSessionId) {
+        return ALevelCheckoutSessionState.OPEN;
+    }
+
     @Override
     public ALevelPaymentNotification successfulNotification(ALevelReportEntitlement entitlement) {
         if (entitlement.paymentProvider() != provider()

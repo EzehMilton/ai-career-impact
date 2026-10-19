@@ -27,6 +27,11 @@ public final class StripeUniversityPaymentGateway implements UniversityPaymentGa
     }
 
     @Override
+    public UniversityCheckoutSessionState checkoutSessionState(String checkoutSessionId) {
+        return checkoutOperations.state(checkoutSessionId);
+    }
+
+    @Override
     public Optional<UniversityPaymentEvent> verifyPaymentNotification(
             UniversityPaymentNotification notification) {
         return webhookVerifier.verify(notification).map(event -> {

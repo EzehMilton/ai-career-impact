@@ -51,6 +51,9 @@ public final class ProfessionalReportPurchaseService implements ProfessionalRepo
         ProfessionalPaymentGateway gateway = paymentGateway.orElseThrow(() ->
                 new PaymentUnavailableException("paid report checkout is not configured"));
         var existing = purchaseStore.findEntitlementByAssessmentId(assessmentId);
+        if (existing.isPresent() && existing.orElseThrow().status() == ProfessionalEntitlementStatus.PENDING) {
+            return resumePendingCheckout(gateway, existing.orElseThrow());
+        }
         if (existing.isPresent() && existing.orElseThrow().status() != ProfessionalEntitlementStatus.FAILED) {
             throw new PaymentUnavailableException("a purchase already exists for this assessment");
         }
@@ -81,6 +84,59 @@ public final class ProfessionalReportPurchaseService implements ProfessionalRepo
                 session.checkoutSessionId(), session.redirectUrl(), priceConfigurationKey,
                 Optional.empty(), Optional.empty(), Instant.now(clock), Optional.empty());
         purchaseStore.savePending(pending);
+        return session;
+    }
+
+    /**
+     * A PENDING purchase is either a checkout the visitor left (Stripe's cancel link, a closed tab)
+     * or one that has been paid and is waiting for its webhook. The browser cannot tell these apart,
+     * so the provider's own record of the session decides. The entitlement status is never changed
+     * here: only the verified webhook moves it to ACTIVE.
+     */
+    private ProfessionalCheckoutSession resumePendingCheckout(ProfessionalPaymentGateway gateway,
+            ProfessionalReportEntitlement pending) {
+        if (pending.paymentProvider() != gateway.provider()) {
+            throw new PaymentUnavailableException("the pending checkout belongs to another payment provider");
+        }
+        ProfessionalCheckoutSessionState state;
+        try {
+            state = gateway.checkoutSessionState(pending.providerCheckoutSessionId());
+        }
+        catch (RuntimeException failure) {
+            throw new PaymentUnavailableException("the pending checkout could not be checked", failure);
+        }
+        return switch (state) {
+            // Still payable: back to the same session, which can be paid at most once.
+            case OPEN -> new ProfessionalCheckoutSession(pending.providerCheckoutSessionId(), pending.checkoutUrl(),
+                    pending.paymentProvider(), Optional.empty());
+            // Already paid: never open a second payment while the webhook is on its way.
+            case COMPLETE -> throw new CheckoutAwaitingConfirmationException();
+            // Can no longer be paid, so a fresh session for the same entitlement cannot double-charge.
+            case EXPIRED -> replaceExpiredCheckout(gateway, pending);
+        };
+    }
+
+    private ProfessionalCheckoutSession replaceExpiredCheckout(ProfessionalPaymentGateway gateway,
+            ProfessionalReportEntitlement pending) {
+        String priceConfigurationKey = gateway.priceConfigurationKey();
+        String resultPath = "/professional-assessment/" + pending.assessmentId();
+        var request = new ProfessionalCheckoutRequest(pending.entitlementId(), pending.assessmentId(),
+                ProfessionalReportTier.PAID, priceConfigurationKey,
+                applicationBaseUrl.resolve(resultPath + "?checkout=returned"),
+                applicationBaseUrl.resolve(resultPath + "?checkout=cancelled"),
+                Optional.of(pending.providerCheckoutSessionId()));
+        ProfessionalCheckoutSession session;
+        try {
+            session = metrics.timed("checkout", "professional", () -> gateway.createCheckoutSession(request));
+        }
+        catch (RuntimeException failure) {
+            throw new PaymentUnavailableException("checkout could not be created", failure);
+        }
+        if (session.provider() != pending.paymentProvider()) {
+            throw new PaymentUnavailableException("payment gateway returned unexpected provenance");
+        }
+        purchaseStore.replaceExpiredCheckout(pending.entitlementId(), pending.providerCheckoutSessionId(),
+                session, priceConfigurationKey, Instant.now(clock));
         return session;
     }
 

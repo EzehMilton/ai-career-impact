@@ -117,7 +117,12 @@
     <p class="helper">Your assessment ratings stay the same. The detailed report adds explanations and guidance; it does not change or re-run your assessment.</p>
     <p class="price-line" th:if="${purchase.displayPrice != null}">Detailed report: <strong th:text="${purchase.displayPrice}">Configured price</strong></p>
     <p class="page-action"><a class="button-link" th:if="${purchase.active}" th:href="@{/a-level-assessment/{id}/report(id=${assessmentId})}">Open your purchased report</a></p>
-    <p class="notice" th:if="${purchase.pending}">Payment confirmation pending. Your full report will be available after payment is verified.</p>
+    <th:block th:if="${purchase.pending}"><div th:replace="~{fragments/payment-confirmation :: panel(
+        statusUrl=@{/a-level-assessment/{id}/payment-status(id=${assessmentId})},
+        reportUrl=@{/a-level-assessment/{id}/report(id=${assessmentId})},
+        resultUrl=@{/a-level-assessment/{id}(id=${assessmentId})},
+        checkoutUrl=@{/a-level-assessment/{id}/checkout(id=${assessmentId})},
+        mode=${paymentPanel})}"></div></th:block>
     <p class="notice" th:if="${purchase.denied}">Paid report access is not currently active.</p>
     <form th:if="${purchase.checkoutAvailable}" method="post" th:action="@{/a-level-assessment/{id}/checkout(id=${assessmentId})}">
       <button type="submit">Get my detailed report</button>

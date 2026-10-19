@@ -62,4 +62,15 @@ class UniversityCheckoutControllerTest {
                 .andExpect(status().reason("Paid report checkout is currently unavailable."));
         assertThat(registry.get("checkout.failures").tag("journey", "university").counter().count()).isEqualTo(1);
     }
+
+    @Test
+    void aRetryForACheckoutAlreadyPaidAtStripeWaitsForTheWebhookInsteadOfStartingAnotherPayment() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(purchaseService.startCheckout(id)).thenThrow(
+                new com.chikere.futureai.payment.university.application.CheckoutAwaitingConfirmationException());
+
+        mvc.perform(post("/university-assessment/" + id + "/checkout").with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/university-assessment/" + id + "?checkout=returned"));
+    }
 }

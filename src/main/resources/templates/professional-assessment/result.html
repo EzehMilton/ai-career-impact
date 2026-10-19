@@ -123,7 +123,12 @@
     <p class="page-action" th:if="${purchase.active}">
       <a class="button-link" th:href="@{/professional-assessment/{id}/report(id=${assessmentId})}">Open your purchased report</a>
     </p>
-    <p class="notice" th:if="${purchase.pending}">Payment confirmation pending. Your full report will be available after payment is verified.</p>
+    <th:block th:if="${purchase.pending}"><div th:replace="~{fragments/payment-confirmation :: panel(
+        statusUrl=@{/professional-assessment/{id}/payment-status(id=${assessmentId})},
+        reportUrl=@{/professional-assessment/{id}/report(id=${assessmentId})},
+        resultUrl=@{/professional-assessment/{id}(id=${assessmentId})},
+        checkoutUrl=@{/professional-assessment/{id}/checkout(id=${assessmentId})},
+        mode=${paymentPanel})}"></div></th:block>
     <p class="notice" th:if="${purchase.denied}">Paid report access is not currently active.</p>
     <form th:if="${purchase.checkoutAvailable}" method="post" th:action="@{/professional-assessment/{id}/checkout(id=${assessmentId})}">
       <button type="submit">Get my detailed report</button>

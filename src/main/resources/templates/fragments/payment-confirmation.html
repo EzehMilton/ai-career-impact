@@ -1,0 +1,52 @@
+<!doctype html>
+<!--/*
+  Shown while a paid-report entitlement is PENDING. Only the verified Stripe webhook activates an
+  entitlement; this panel just reads the saved status back and moves the visitor on when it is ACTIVE.
+
+  statusUrl    read-only JSON status endpoint for this journey and assessment
+  reportUrl    the paid report, which still checks the ACTIVE entitlement itself
+  resultUrl    this result page, used by the manual check when JavaScript is unavailable
+  checkoutUrl  the existing checkout POST; for a PENDING purchase it resumes the same Stripe session,
+               or replaces it only once Stripe reports it expired, so it can never charge twice
+  mode         'confirming' straight after a Stripe return (polls), 'cancelled' after Stripe's cancel
+               link, 'pending' otherwise (manual check and retry)
+
+  /js/payment-confirmation.js switches between the data-payment-state panels. Without JavaScript
+  the "Check payment status" link reloads the result page, which renders the current state.
+*/-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div class="payment-confirmation" th:fragment="panel(statusUrl, reportUrl, resultUrl, checkoutUrl, mode)"
+     data-payment-confirmation
+     th:attr="data-status-url=${statusUrl},data-report-url=${reportUrl},data-auto-poll=${mode == 'confirming'}">
+  <div class="payment-state" data-payment-state="confirming" role="status" aria-live="polite" th:hidden="${mode != 'confirming'}">
+    <h3><span class="payment-spinner" aria-hidden="true"></span>Confirming your payment</h3>
+    <p>We are securely confirming your payment with Stripe. This normally takes only a few seconds.</p>
+    <noscript><p><a th:href="${resultUrl}">Check payment status</a></p></noscript>
+  </div>
+  <div class="payment-state" data-payment-state="delayed" role="status" aria-live="polite" th:hidden="${mode != 'pending'}">
+    <h3>Payment confirmation is taking longer than expected</h3>
+    <p>Your payment may still be processing. You will not be charged again by checking the status.</p>
+    <p class="page-action"><a class="button-link" data-payment-check th:href="${resultUrl}">Check payment status</a></p>
+    <p class="helper">Did not finish paying? Trying again takes you back to the same secure Stripe checkout, so you will not be charged twice.</p>
+    <form method="post" th:action="${checkoutUrl}">
+      <button type="submit" class="button-secondary">Try payment again</button>
+    </form>
+  </div>
+  <div class="payment-state" data-payment-state="cancelled" role="status" aria-live="polite" th:hidden="${mode != 'cancelled'}">
+    <h3>Payment was not completed.</h3>
+    <p>Your detailed report has not been unlocked. You can try again whenever you are ready.</p>
+    <form method="post" th:action="${checkoutUrl}">
+      <button type="submit">Try payment again</button>
+    </form>
+    <p class="helper">Already paid in another window? <a data-payment-check th:href="${resultUrl}">Check payment status</a></p>
+  </div>
+  <div class="payment-state" data-payment-state="unavailable" role="status" aria-live="polite" hidden>
+    <h3>We could not confirm this payment</h3>
+    <p>Your detailed report has not been unlocked. Reload this page to see your options.</p>
+    <p class="page-action"><a class="button-link button-secondary" th:href="${resultUrl}">Reload this page</a></p>
+  </div>
+  <script th:src="@{/js/payment-confirmation.js}" src="/js/payment-confirmation.js" defer></script>
+</div>
+</body>
+</html>

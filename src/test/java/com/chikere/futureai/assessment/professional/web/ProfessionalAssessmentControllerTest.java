@@ -139,6 +139,113 @@ class ProfessionalAssessmentControllerTest {
                 .doesNotContain("secret provider exception", "IllegalStateException");
     }
 
+    @Test
+    void returningFromStripeWhilePendingShowsTheConfirmationPanelAndActivatesNothing() throws Exception {
+        when(reportService.assemble(ID, ProfessionalReportTier.FREE)).thenReturn(Optional.of(report(ProfessionalReportTier.FREE, true, true)));
+        when(purchaseService.accessFor(ID)).thenReturn(new ProfessionalPurchaseAccess(
+                Optional.of(com.chikere.futureai.payment.professional.application.ProfessionalEntitlementStatus.PENDING), false, Optional.empty()));
+
+        String html = mvc.perform(get("/professional-assessment/" + ID).param("checkout", "returned"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("Confirming your payment",
+                "We are securely confirming your payment with Stripe. This normally takes only a few seconds.",
+                "data-status-url=\"/professional-assessment/" + ID + "/payment-status\"",
+                "data-report-url=\"/professional-assessment/" + ID + "/report\"",
+                "data-auto-poll=\"true\"", "src=\"/js/payment-confirmation.js\"",
+                "Payment confirmation is taking longer than expected",
+                "You will not be charged again by checking the status.", "Check payment status")
+                .doesNotContain("Payment confirmation pending", "Open your purchased report")
+                .doesNotContainIgnoringCase("payment completed");
+        assertThat(html).containsPattern("data-payment-state=\"delayed\"[^>]*hidden")
+                .doesNotContainPattern("data-payment-state=\"confirming\"[^>]*hidden")
+                .doesNotContainPattern("<script(?![^>]*\\ssrc=)[^>]*>");
+        // Rendering the return page only reads the entitlement; nothing here can confirm a payment.
+        org.mockito.Mockito.verify(purchaseService).accessFor(ID);
+        org.mockito.Mockito.verifyNoMoreInteractions(purchaseService);
+    }
+
+    @Test
+    void aPendingPurchaseSeenWithoutAStripeReturnOffersTheManualCheckInsteadOfPolling() throws Exception {
+        when(reportService.assemble(ID, ProfessionalReportTier.FREE)).thenReturn(Optional.of(report(ProfessionalReportTier.FREE, true, true)));
+        when(purchaseService.accessFor(ID)).thenReturn(new ProfessionalPurchaseAccess(
+                Optional.of(com.chikere.futureai.payment.professional.application.ProfessionalEntitlementStatus.PENDING), false, Optional.empty()));
+
+        String html = mvc.perform(get("/professional-assessment/" + ID)).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("data-auto-poll=\"false\"", "Check payment status",
+                "href=\"/professional-assessment/" + ID + "\"");
+        assertThat(html).containsPattern("data-payment-state=\"confirming\"[^>]*hidden")
+                .doesNotContainPattern("data-payment-state=\"delayed\"[^>]*hidden");
+    }
+
+    @Test
+    void returningFromStripeAfterTheWebhookActivatedGoesStraightToThePaidReport() throws Exception {
+        when(reportService.assemble(ID, ProfessionalReportTier.FREE)).thenReturn(Optional.of(report(ProfessionalReportTier.FREE, true, true)));
+        when(purchaseService.accessFor(ID)).thenReturn(new ProfessionalPurchaseAccess(
+                Optional.of(com.chikere.futureai.payment.professional.application.ProfessionalEntitlementStatus.ACTIVE), false, Optional.empty()));
+
+        mvc.perform(get("/professional-assessment/" + ID).param("checkout", "returned"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/professional-assessment/" + ID + "/report"));
+        org.mockito.Mockito.verify(purchaseService).accessFor(ID);
+        org.mockito.Mockito.verifyNoMoreInteractions(purchaseService);
+    }
+
+    @Test
+    void aForgedStripeReturnWithoutAPurchaseUnlocksNothing() throws Exception {
+        when(reportService.assemble(ID, ProfessionalReportTier.FREE)).thenReturn(Optional.of(report(ProfessionalReportTier.FREE, true, true)));
+
+        String html = mvc.perform(get("/professional-assessment/" + ID).param("checkout", "returned"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+        assertThat(html).doesNotContain("Confirming your payment", "data-payment-confirmation",
+                "Open your purchased report", "payment-confirmation.js");
+        org.mockito.Mockito.verify(purchaseService).accessFor(ID);
+        org.mockito.Mockito.verifyNoMoreInteractions(purchaseService);
+    }
+
+    @Test
+    void returningThroughStripesCancelLinkOffersASafeRetryAndActivatesNothing() throws Exception {
+        when(reportService.assemble(ID, ProfessionalReportTier.FREE)).thenReturn(Optional.of(report(ProfessionalReportTier.FREE, true, true)));
+        when(purchaseService.accessFor(ID)).thenReturn(new ProfessionalPurchaseAccess(
+                Optional.of(com.chikere.futureai.payment.professional.application.ProfessionalEntitlementStatus.PENDING), false, Optional.empty()));
+
+        String html = mvc.perform(get("/professional-assessment/" + ID).param("checkout", "cancelled"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("Payment was not completed.", "Your detailed report has not been unlocked.",
+                "Try payment again", "action=\"/professional-assessment/" + ID + "/checkout\"", "name=\"_csrf\"",
+                "data-auto-poll=\"false\"")
+                .doesNotContain("Open your purchased report", "Payment confirmation pending")
+                .doesNotContainIgnoringCase("payment completed");
+        assertThat(html).doesNotContainPattern("data-payment-state=\"cancelled\"[^>]*hidden")
+                .containsPattern("data-payment-state=\"confirming\"[^>]*hidden")
+                .containsPattern("data-payment-state=\"delayed\"[^>]*hidden");
+        org.mockito.Mockito.verify(purchaseService).accessFor(ID);
+        org.mockito.Mockito.verifyNoMoreInteractions(purchaseService);
+    }
+
+    @Test
+    void aForgedCancelReturnUnlocksNothingWhetherOrNotAPurchaseExists() throws Exception {
+        when(reportService.assemble(ID, ProfessionalReportTier.FREE)).thenReturn(Optional.of(report(ProfessionalReportTier.FREE, true, true)));
+
+        String none = mvc.perform(get("/professional-assessment/" + ID).param("checkout", "cancelled"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(none).doesNotContain("Payment was not completed.", "data-payment-confirmation",
+                "Open your purchased report");
+
+        when(purchaseService.accessFor(ID)).thenReturn(new ProfessionalPurchaseAccess(
+                Optional.of(com.chikere.futureai.payment.professional.application.ProfessionalEntitlementStatus.ACTIVE), false, Optional.empty()));
+        String active = mvc.perform(get("/professional-assessment/" + ID).param("checkout", "cancelled"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        // Cancelling never takes away a purchase the webhook has already confirmed.
+        assertThat(active).contains("Open your purchased report").doesNotContain("Payment was not completed.");
+        org.mockito.Mockito.verify(purchaseService, org.mockito.Mockito.times(2)).accessFor(ID);
+        org.mockito.Mockito.verifyNoMoreInteractions(purchaseService);
+    }
+
     private ProfessionalReport report(ProfessionalReportTier tier, boolean narrative, boolean fixture) {
         var source = new ProfessionalReportSource(snapshot(fixture), narrative ? Optional.of(storedNarrative()) : Optional.empty(),
                 Optional.of(evidence()), Optional.empty());

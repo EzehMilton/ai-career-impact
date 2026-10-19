@@ -174,6 +174,62 @@ class ALevelAssessmentStoreTest {
     }
 
     @Test
+    void anExpiredCheckoutIsReplacedInPlaceAndOnlyTheReplacementSessionCanThenActivate() {
+        UUID assessmentId = savedAssessment("mixed_balanced");
+        var report = new ALevelReportAssembler().assemble(new ALevelReportSource(
+                store.findById(assessmentId).orElseThrow(), Optional.empty(), Optional.empty()),
+                ALevelReportTier.PAID);
+        UUID entitlementId = UUID.randomUUID();
+        purchaseStore.savePending(new ALevelReportEntitlement(entitlementId, assessmentId, ALevelReportTier.PAID,
+                ALevelEntitlementStatus.PENDING, ALevelPaymentProvider.STRIPE, "cs_expired_a_level",
+                URI.create("https://checkout.stripe.test/expired"), "price_configured", Optional.empty(),
+                Optional.empty(), Instant.parse("2026-10-01T12:01:00Z"), Optional.empty()));
+        var replacement = new ALevelCheckoutSession("cs_retry_a_level", URI.create("https://checkout.stripe.test/retry"),
+                ALevelPaymentProvider.STRIPE, Optional.empty());
+        var other = new ALevelCheckoutSession("cs_other_a_level", URI.create("https://checkout.stripe.test/other"),
+                ALevelPaymentProvider.STRIPE, Optional.empty());
+        Instant retriedAt = Instant.parse("2026-10-02T09:00:00Z");
+
+        purchaseStore.replaceExpiredCheckout(entitlementId, "cs_expired_a_level", replacement, "price_configured", retriedAt);
+        // A concurrent retry that shared the idempotency key received the same session: harmless.
+        purchaseStore.replaceExpiredCheckout(entitlementId, "cs_expired_a_level", replacement, "price_configured", retriedAt);
+        // A retry that still believes the expired session is current must not overwrite the replacement.
+        assertThatThrownBy(() -> purchaseStore.replaceExpiredCheckout(entitlementId, "cs_expired_a_level", other,
+                "price_configured", retriedAt)).isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("the pending checkout changed before it could be replaced");
+
+        assertThat(purchaseStore.findEntitlementByAssessmentId(assessmentId)).get().satisfies(retried -> {
+            assertThat(retried.entitlementId()).isEqualTo(entitlementId);
+            assertThat(retried.status()).isEqualTo(ALevelEntitlementStatus.PENDING);
+            assertThat(retried.providerCheckoutSessionId()).isEqualTo("cs_retry_a_level");
+            assertThat(retried.checkoutUrl()).isEqualTo(URI.create("https://checkout.stripe.test/retry"));
+            assertThat(retried.createdAt()).isEqualTo(retriedAt);
+        });
+
+        var snapshot = new PurchasedALevelReportSnapshot(entitlementId, assessmentId, report.reportVersion(),
+                Instant.parse("2026-10-02T09:05:00Z"), report);
+        var expiredEvent = new ALevelPaymentEvent("evt_expired_a_level", ALevelPaymentProvider.STRIPE, "cs_expired_a_level",
+                entitlementId, assessmentId, Optional.of("pi_expired"), Instant.parse("2026-10-02T09:04:00Z"));
+        var retriedEvent = new ALevelPaymentEvent("evt_retry_a_level", ALevelPaymentProvider.STRIPE, "cs_retry_a_level",
+                entitlementId, assessmentId, Optional.of("pi_retry"), Instant.parse("2026-10-02T09:04:00Z"));
+        assertThatThrownBy(() -> purchaseStore.confirmAndFreeze(expiredEvent, snapshot))
+                .isInstanceOf(InvalidPaymentNotificationException.class);
+        assertThat(purchaseStore.findEntitlementByAssessmentId(assessmentId).orElseThrow().status())
+                .isEqualTo(ALevelEntitlementStatus.PENDING);
+
+        assertThat(purchaseStore.confirmAndFreeze(retriedEvent, snapshot))
+                .isEqualTo(ALevelPurchaseStore.PurchaseConfirmationResult.ACTIVATED);
+        assertThat(purchaseStore.confirmAndFreeze(retriedEvent, snapshot))
+                .isEqualTo(ALevelPurchaseStore.PurchaseConfirmationResult.ALREADY_PROCESSED);
+        assertThat(purchaseStore.findEntitlementByAssessmentId(assessmentId).orElseThrow().status())
+                .isEqualTo(ALevelEntitlementStatus.ACTIVE);
+        // An active purchase can never be pointed at another checkout.
+        assertThatThrownBy(() -> purchaseStore.replaceExpiredCheckout(entitlementId, "cs_retry_a_level", other,
+                "price_configured", retriedAt)).isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("the pending checkout changed before it could be replaced");
+    }
+
+    @Test
     void roundTripFreezesTheEntitlementPurchasedReportProcessedEventAndImmutablePdf() {
         UUID assessmentId = savedAssessment("mixed_balanced");
         UUID entitlementId = UUID.randomUUID();

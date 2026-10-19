@@ -24,13 +24,14 @@ import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 public class WebSecurityConfiguration {
 
     /**
-     * The application serves no JavaScript at all and no inline styles, so the policy can forbid
-     * scripts outright rather than allow-listing them. {@code form-action} names Stripe because
-     * paying leaves the site through a redirect that follows a form submission.
+     * The only JavaScript is the first-party payment-confirmation poller served from /js/, so
+     * scripts are limited to this origin with no inline or eval allowance, and there are no inline
+     * styles. Its status requests fall under {@code default-src 'self'}. {@code form-action} names
+     * Stripe because paying leaves the site through a redirect that follows a form submission.
      */
     private static final String CONTENT_SECURITY_POLICY = String.join("; ",
             "default-src 'self'",
-            "script-src 'none'",
+            "script-src 'self'",
             "style-src 'self'",
             "img-src 'self' data:",
             "font-src 'self'",
@@ -77,7 +78,9 @@ public class WebSecurityConfiguration {
                         "/a-level-assessment", "/a-level-assessment/*",
                         "/a-level-assessment/*/report", "/a-level-assessment/*/checkout/local",
                         "/a-level-assessment/*/report.pdf",
-                        "/css/**", "/favicon.ico").permitAll()
+                        "/professional-assessment/*/payment-status", "/university-assessment/*/payment-status",
+                        "/a-level-assessment/*/payment-status",
+                        "/css/**", "/js/**", "/favicon.ico").permitAll()
                 .requestMatchers(HttpMethod.POST, "/professional-assessment",
                         "/professional-assessment/cv",
                         "/professional-assessment/cv/edit", "/professional-assessment/cv/confirm",

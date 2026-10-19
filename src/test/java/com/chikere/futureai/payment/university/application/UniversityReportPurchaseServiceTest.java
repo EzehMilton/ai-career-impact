@@ -27,10 +27,12 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -207,6 +209,136 @@ class UniversityReportPurchaseServiceTest {
         when(assessmentStore.findById(ASSESSMENT)).thenReturn(Optional.empty());
 
         assertThat(service(Optional.empty()).findPurchasedReport(ASSESSMENT)).contains(frozen.report());
+    }
+
+    @Test
+    void retryingAPendingCheckoutWhoseStripeSessionIsStillOpenResumesItWithoutAnyNewSessionOrStateChange() {
+        var gateway = stripeGateway();
+        when(purchaseStore.findEntitlementByAssessmentId(ASSESSMENT))
+                .thenReturn(Optional.of(entitlement(UniversityEntitlementStatus.PENDING)));
+        when(gateway.checkoutSessionState("cs_test")).thenReturn(UniversityCheckoutSessionState.OPEN);
+
+        var session = service(Optional.of(gateway)).startCheckout(ASSESSMENT);
+
+        assertThat(session.checkoutSessionId()).isEqualTo("cs_test");
+        assertThat(session.redirectUrl()).isEqualTo(URI.create("https://checkout.stripe.test/x"));
+        verify(gateway, never()).createCheckoutSession(any());
+        verify(purchaseStore, never()).savePending(any());
+        verify(purchaseStore, never()).replaceExpiredCheckout(any(), any(), any(), any(), any());
+        verify(purchaseStore, never()).confirmAndFreeze(any(), any());
+    }
+
+    @Test
+    void retryingAfterTheStripeSessionExpiredReplacesItForTheSameEntitlementWhichStaysPending() {
+        var gateway = stripeGateway();
+        when(purchaseStore.findEntitlementByAssessmentId(ASSESSMENT))
+                .thenReturn(Optional.of(entitlement(UniversityEntitlementStatus.PENDING)));
+        when(gateway.checkoutSessionState("cs_test")).thenReturn(UniversityCheckoutSessionState.EXPIRED);
+        var replacement = new UniversityCheckoutSession("cs_retry", URI.create("https://checkout.stripe.test/retry"),
+                UniversityPaymentProvider.STRIPE, Optional.empty());
+        doReturn(replacement).when(gateway).createCheckoutSession(any());
+
+        var session = service(Optional.of(gateway)).startCheckout(ASSESSMENT);
+
+        assertThat(session).isEqualTo(replacement);
+        ArgumentCaptor<UniversityCheckoutRequest> request = ArgumentCaptor.forClass(UniversityCheckoutRequest.class);
+        verify(gateway).createCheckoutSession(request.capture());
+        assertThat(request.getValue().entitlementId()).isEqualTo(ENTITLEMENT);
+        assertThat(request.getValue().replacesCheckoutSessionId()).contains("cs_test");
+        assertThat(request.getValue().cancelUrl().toString())
+                .isEqualTo("http://localhost:8080/university-assessment/" + ASSESSMENT + "?checkout=cancelled");
+        verify(purchaseStore).replaceExpiredCheckout(ENTITLEMENT, "cs_test", replacement, "price_configured",
+                Instant.parse("2026-10-01T12:00:00Z"));
+        verify(purchaseStore, never()).savePending(any());
+        verify(purchaseStore, never()).confirmAndFreeze(any(), any());
+    }
+
+    @Test
+    void retryingACheckoutAlreadyPaidAtStripeNeverStartsASecondPayment() {
+        var gateway = stripeGateway();
+        when(purchaseStore.findEntitlementByAssessmentId(ASSESSMENT))
+                .thenReturn(Optional.of(entitlement(UniversityEntitlementStatus.PENDING)));
+        when(gateway.checkoutSessionState("cs_test")).thenReturn(UniversityCheckoutSessionState.COMPLETE);
+
+        var service = service(Optional.of(gateway));
+
+        assertThatThrownBy(() -> service.startCheckout(ASSESSMENT))
+                .isInstanceOf(CheckoutAwaitingConfirmationException.class);
+        verify(gateway, never()).createCheckoutSession(any());
+        verify(purchaseStore, never()).replaceExpiredCheckout(any(), any(), any(), any(), any());
+        verify(purchaseStore, never()).confirmAndFreeze(any(), any());
+    }
+
+    @Test
+    void whenStripeCannotSayWhatHappenedToTheSessionNoReplacementIsGuessed() {
+        var gateway = stripeGateway();
+        when(purchaseStore.findEntitlementByAssessmentId(ASSESSMENT))
+                .thenReturn(Optional.of(entitlement(UniversityEntitlementStatus.PENDING)));
+        when(gateway.checkoutSessionState("cs_test")).thenThrow(new IllegalStateException("stripe unavailable"));
+
+        var service = service(Optional.of(gateway));
+
+        assertThatThrownBy(() -> service.startCheckout(ASSESSMENT)).isInstanceOf(PaymentUnavailableException.class);
+        verify(gateway, never()).createCheckoutSession(any());
+        verify(purchaseStore, never()).replaceExpiredCheckout(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void anActivePurchaseNeverAsksStripeOrStartsAnotherCheckout() {
+        var gateway = stripeGateway();
+        when(purchaseStore.findEntitlementByAssessmentId(ASSESSMENT))
+                .thenReturn(Optional.of(entitlement(UniversityEntitlementStatus.ACTIVE)));
+
+        var service = service(Optional.of(gateway));
+
+        assertThatThrownBy(() -> service.startCheckout(ASSESSMENT))
+                .isInstanceOf(PaymentUnavailableException.class).hasMessageContaining("already exists");
+        verify(gateway, never()).checkoutSessionState(any());
+        verify(gateway, never()).createCheckoutSession(any());
+    }
+
+    @Test
+    void afterARetryOnlyTheVerifiedEventForTheReplacementSessionActivatesAndOnlyOnce() {
+        var gateway = stripeGateway();
+        stubAssessment();
+        var replaced = new UniversityReportEntitlement(ENTITLEMENT, ASSESSMENT, UniversityReportTier.PAID,
+                UniversityEntitlementStatus.PENDING, UniversityPaymentProvider.STRIPE, "cs_retry",
+                URI.create("https://checkout.stripe.test/retry"), "price_configured", Optional.empty(),
+                Optional.empty(), Instant.parse("2026-10-01T12:00:00Z"), Optional.empty());
+        when(purchaseStore.findEntitlementById(ENTITLEMENT)).thenReturn(Optional.of(replaced));
+        when(purchaseStore.findSnapshotByAssessmentId(ASSESSMENT)).thenReturn(Optional.empty());
+        var expiredSession = new UniversityPaymentEvent("evt_expired", UniversityPaymentProvider.STRIPE, "cs_test",
+                ENTITLEMENT, ASSESSMENT, Optional.of("pi_0"), Instant.parse("2026-10-01T12:00:00Z"));
+        var retried = new UniversityPaymentEvent("evt_retry", UniversityPaymentProvider.STRIPE, "cs_retry",
+                ENTITLEMENT, ASSESSMENT, Optional.of("pi_1"), Instant.parse("2026-10-01T12:00:00Z"));
+        var expiredNotification = new UniversityPaymentNotification("expired-session payload", "signature");
+        var retriedNotification = new UniversityPaymentNotification("retried-session payload", "signature");
+        doReturn(Optional.of(expiredSession)).when(gateway).verifyPaymentNotification(expiredNotification);
+        doReturn(Optional.of(retried)).when(gateway).verifyPaymentNotification(retriedNotification);
+        when(purchaseStore.isEventProcessed(UniversityPaymentProvider.STRIPE, "evt_expired")).thenReturn(false);
+        when(purchaseStore.isEventProcessed(UniversityPaymentProvider.STRIPE, "evt_retry")).thenReturn(false, true);
+        when(purchaseStore.confirmAndFreeze(eq(retried), any()))
+                .thenReturn(UniversityPurchaseStore.PurchaseConfirmationResult.ACTIVATED);
+        var service = service(Optional.of(gateway));
+
+        assertThatThrownBy(() -> service.processPaymentNotification(expiredNotification))
+                .isInstanceOf(InvalidPaymentNotificationException.class);
+        verify(purchaseStore, never()).confirmAndFreeze(any(), any());
+
+        assertThat(service.processPaymentNotification(retriedNotification))
+                .isEqualTo(UniversityPaymentProcessingResult.ACTIVATED);
+        assertThat(service.processPaymentNotification(retriedNotification))
+                .isEqualTo(UniversityPaymentProcessingResult.ALREADY_PROCESSED);
+        verify(purchaseStore, times(1)).confirmAndFreeze(eq(retried), any());
+        // Every notification, including the retried one, went through the gateway's verification.
+        verify(gateway, times(3)).verifyPaymentNotification(any());
+    }
+
+    private UniversityPaymentGateway stripeGateway() {
+        var gateway = mock(UniversityPaymentGateway.class);
+        when(gateway.provider()).thenReturn(UniversityPaymentProvider.STRIPE);
+        when(gateway.priceConfigurationKey()).thenReturn("price_configured");
+        return gateway;
     }
 
     private UniversityReportPurchaseService service(Optional<UniversityPaymentGateway> gateway) {

@@ -292,6 +292,69 @@ class ProfessionalAssessmentStoreTest {
     }
 
     @Test
+    void anExpiredCheckoutIsReplacedInPlaceAndOnlyTheReplacementSessionCanThenActivate() {
+        var state = new ProfessionalAssessmentState("Software Architect", "Designs systems.",
+                List.of("Design platforms"), List.of("Architecture"), OptionalInt.of(12));
+        var judgments = new LocalFixtureProfessionalJudgmentProvider("senior_software_architect").judge(state);
+        var decision = new ProfessionalDecisionPolicyV1().decide(judgments);
+        UUID assessmentId = UUID.randomUUID();
+        var assessment = new StoredProfessionalAssessment(assessmentId, Instant.parse("2026-09-30T12:00:00Z"),
+                state, judgments, new ProfessionalAssessmentResult(decision, AssessmentSource.LOCAL_FIXTURE,
+                judgments.schemaVersion(), decision.policyVersion()), Optional.empty());
+        store.save(assessment);
+        var report = new ProfessionalReportAssembler().assemble(new ProfessionalReportSource(assessment,
+                Optional.empty(), Optional.empty(), Optional.empty()), ProfessionalReportTier.PAID);
+        UUID entitlementId = UUID.randomUUID();
+        purchaseStore.savePending(new ProfessionalReportEntitlement(entitlementId, assessmentId, ProfessionalReportTier.PAID,
+                ProfessionalEntitlementStatus.PENDING, ProfessionalPaymentProvider.STRIPE, "cs_expired_professional",
+                URI.create("https://checkout.stripe.test/expired"), "price_configured", Optional.empty(),
+                Optional.empty(), Instant.parse("2026-10-01T12:01:00Z"), Optional.empty()));
+        var replacement = new ProfessionalCheckoutSession("cs_retry_professional", URI.create("https://checkout.stripe.test/retry"),
+                ProfessionalPaymentProvider.STRIPE, Optional.empty());
+        var other = new ProfessionalCheckoutSession("cs_other_professional", URI.create("https://checkout.stripe.test/other"),
+                ProfessionalPaymentProvider.STRIPE, Optional.empty());
+        Instant retriedAt = Instant.parse("2026-10-02T09:00:00Z");
+
+        purchaseStore.replaceExpiredCheckout(entitlementId, "cs_expired_professional", replacement, "price_configured", retriedAt);
+        // A concurrent retry that shared the idempotency key received the same session: harmless.
+        purchaseStore.replaceExpiredCheckout(entitlementId, "cs_expired_professional", replacement, "price_configured", retriedAt);
+        // A retry that still believes the expired session is current must not overwrite the replacement.
+        assertThatThrownBy(() -> purchaseStore.replaceExpiredCheckout(entitlementId, "cs_expired_professional", other,
+                "price_configured", retriedAt)).isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("the pending checkout changed before it could be replaced");
+
+        assertThat(purchaseStore.findEntitlementByAssessmentId(assessmentId)).get().satisfies(retried -> {
+            assertThat(retried.entitlementId()).isEqualTo(entitlementId);
+            assertThat(retried.status()).isEqualTo(ProfessionalEntitlementStatus.PENDING);
+            assertThat(retried.providerCheckoutSessionId()).isEqualTo("cs_retry_professional");
+            assertThat(retried.checkoutUrl()).isEqualTo(URI.create("https://checkout.stripe.test/retry"));
+            assertThat(retried.createdAt()).isEqualTo(retriedAt);
+        });
+
+        var snapshot = new PurchasedProfessionalReportSnapshot(entitlementId, assessmentId, report.reportVersion(),
+                Instant.parse("2026-10-02T09:05:00Z"), report);
+        var expiredEvent = new ProfessionalPaymentEvent("evt_expired_professional", ProfessionalPaymentProvider.STRIPE, "cs_expired_professional",
+                entitlementId, assessmentId, Optional.of("pi_expired"), Instant.parse("2026-10-02T09:04:00Z"));
+        var retriedEvent = new ProfessionalPaymentEvent("evt_retry_professional", ProfessionalPaymentProvider.STRIPE, "cs_retry_professional",
+                entitlementId, assessmentId, Optional.of("pi_retry"), Instant.parse("2026-10-02T09:04:00Z"));
+        assertThatThrownBy(() -> purchaseStore.confirmAndFreeze(expiredEvent, snapshot))
+                .isInstanceOf(InvalidPaymentNotificationException.class);
+        assertThat(purchaseStore.findEntitlementByAssessmentId(assessmentId).orElseThrow().status())
+                .isEqualTo(ProfessionalEntitlementStatus.PENDING);
+
+        assertThat(purchaseStore.confirmAndFreeze(retriedEvent, snapshot))
+                .isEqualTo(ProfessionalPurchaseStore.PurchaseConfirmationResult.ACTIVATED);
+        assertThat(purchaseStore.confirmAndFreeze(retriedEvent, snapshot))
+                .isEqualTo(ProfessionalPurchaseStore.PurchaseConfirmationResult.ALREADY_PROCESSED);
+        assertThat(purchaseStore.findEntitlementByAssessmentId(assessmentId).orElseThrow().status())
+                .isEqualTo(ProfessionalEntitlementStatus.ACTIVE);
+        // An active purchase can never be pointed at another checkout.
+        assertThatThrownBy(() -> purchaseStore.replaceExpiredCheckout(entitlementId, "cs_retry_professional", other,
+                "price_configured", retriedAt)).isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("the pending checkout changed before it could be replaced");
+    }
+
+    @Test
     void migratedPostgresqlRoundTripPreservesEntitlementFrozenReportAndProcessedEvent() {
         var state = new ProfessionalAssessmentState("Software Architect", "Designs systems.",
                 List.of("Design platforms"), List.of("Architecture"), OptionalInt.of(12));

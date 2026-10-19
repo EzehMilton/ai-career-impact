@@ -27,6 +27,11 @@ public final class StripeALevelPaymentGateway implements ALevelPaymentGateway {
     }
 
     @Override
+    public ALevelCheckoutSessionState checkoutSessionState(String checkoutSessionId) {
+        return checkoutOperations.state(checkoutSessionId);
+    }
+
+    @Override
     public Optional<ALevelPaymentEvent> verifyPaymentNotification(ALevelPaymentNotification notification) {
         return webhookVerifier.verify(notification).map(event -> {
             checkoutOperations.validateCompletedSession(event, priceId);

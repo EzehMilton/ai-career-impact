@@ -4,6 +4,7 @@ import com.chikere.futureai.report.university.application.UniversityReportTier;
 
 import java.net.URI;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 public record UniversityCheckoutRequest(
@@ -12,7 +13,8 @@ public record UniversityCheckoutRequest(
         UniversityReportTier reportTier,
         String priceConfigurationKey,
         URI successUrl,
-        URI cancelUrl) {
+        URI cancelUrl,
+        Optional<String> replacesCheckoutSessionId) {
 
     public UniversityCheckoutRequest {
         Objects.requireNonNull(entitlementId);
@@ -24,6 +26,14 @@ public record UniversityCheckoutRequest(
         priceConfigurationKey = required(priceConfigurationKey, "priceConfigurationKey");
         requireHttp(successUrl, "successUrl");
         requireHttp(cancelUrl, "cancelUrl");
+        replacesCheckoutSessionId = Objects.requireNonNull(replacesCheckoutSessionId)
+                .map(String::strip).filter(value -> !value.isEmpty());
+    }
+
+    /** A first checkout for this entitlement, replacing nothing. */
+    public UniversityCheckoutRequest(UUID entitlementId, UUID assessmentId, UniversityReportTier reportTier,
+            String priceConfigurationKey, URI successUrl, URI cancelUrl) {
+        this(entitlementId, assessmentId, reportTier, priceConfigurationKey, successUrl, cancelUrl, Optional.empty());
     }
 
     private static String required(String value, String name) {
