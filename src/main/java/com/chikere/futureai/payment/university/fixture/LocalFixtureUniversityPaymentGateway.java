@@ -39,6 +39,12 @@ public final class LocalFixtureUniversityPaymentGateway
                 Optional.of(Instant.now(clock).plus(30, ChronoUnit.MINUTES)));
     }
 
+    /** A local session never expires or completes on its own; the simulator completes it. */
+    @Override
+    public UniversityCheckoutSessionState checkoutSessionState(String checkoutSessionId) {
+        return UniversityCheckoutSessionState.OPEN;
+    }
+
     @Override
     public UniversityPaymentNotification successfulNotification(UniversityReportEntitlement entitlement) {
         if (entitlement.paymentProvider() != provider()

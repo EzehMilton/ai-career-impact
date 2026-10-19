@@ -3,6 +3,7 @@ package com.chikere.futureai.payment.university.stripe;
 import com.chikere.futureai.payment.university.application.PaymentUnavailableException;
 import com.chikere.futureai.payment.university.application.InvalidPaymentNotificationException;
 import com.chikere.futureai.payment.university.application.UniversityCheckoutRequest;
+import com.chikere.futureai.payment.university.application.UniversityCheckoutSessionState;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.RequestOptions;
@@ -34,7 +35,7 @@ final class StripeSdkCheckoutOperations implements StripeCheckoutOperations {
                 .putMetadata(UniversityStripeMetadata.ENTITLEMENT_ID, request.entitlementId().toString())
                 .build();
         var options = RequestOptions.builder().setApiKey(secretKey)
-                .setIdempotencyKey("university-report-" + request.entitlementId()).build();
+                .setIdempotencyKey(idempotencyKey(request)).build();
         try {
             Session session = Session.create(params, options);
             if (session.getId() == null || session.getUrl() == null) {
@@ -46,6 +47,37 @@ final class StripeSdkCheckoutOperations implements StripeCheckoutOperations {
         catch (StripeException | IllegalArgumentException failure) {
             throw new PaymentUnavailableException("Stripe checkout session creation failed", failure);
         }
+    }
+
+    /**
+     * A first checkout keeps its original key. A replacement is keyed by the expired session it
+     * replaces, so two concurrent retries receive the same new session rather than two payable ones.
+     */
+    static String idempotencyKey(UniversityCheckoutRequest request) {
+        return "university-report-" + request.entitlementId()
+                + request.replacesCheckoutSessionId().map(expired -> "-replaces-" + expired).orElse("");
+    }
+
+    @Override
+    public UniversityCheckoutSessionState state(String checkoutSessionId) {
+        final Session session;
+        try {
+            session = Session.retrieve(checkoutSessionId, RequestOptions.builder().setApiKey(secretKey).build());
+        }
+        catch (StripeException unavailable) {
+            throw new PaymentUnavailableException("Stripe checkout state is temporarily unavailable", unavailable);
+        }
+        return stateOf(session.getStatus());
+    }
+
+    static UniversityCheckoutSessionState stateOf(String stripeStatus) {
+        return switch (stripeStatus == null ? "" : stripeStatus) {
+            case "open" -> UniversityCheckoutSessionState.OPEN;
+            case "complete" -> UniversityCheckoutSessionState.COMPLETE;
+            case "expired" -> UniversityCheckoutSessionState.EXPIRED;
+            // Unknown is never treated as safe to replace.
+            default -> throw new PaymentUnavailableException("Stripe returned an unknown checkout status");
+        };
     }
 
     @Override

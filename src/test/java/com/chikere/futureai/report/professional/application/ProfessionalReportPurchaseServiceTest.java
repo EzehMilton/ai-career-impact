@@ -201,6 +201,142 @@ class ProfessionalReportPurchaseServiceTest {
                 && value.providerCheckoutSessionId().equals("cs_retry")));
     }
 
+    @Test
+    void retryingAPendingCheckoutWhoseStripeSessionIsStillOpenResumesItWithoutAnyNewSessionOrStateChange() {
+        UUID assessmentId = UUID.randomUUID(); UUID entitlementId = UUID.randomUUID();
+        var reports = mock(ProfessionalReportQuery.class); var store = mock(ProfessionalPurchaseStore.class);
+        var gateway = stripeGateway();
+        when(store.findEntitlementByAssessmentId(assessmentId)).thenReturn(Optional.of(pending(entitlementId, assessmentId)));
+        when(gateway.checkoutSessionState("cs_1")).thenReturn(ProfessionalCheckoutSessionState.OPEN);
+
+        var session = service(reports, store, Optional.of(gateway)).startCheckout(assessmentId);
+
+        assertThat(session.checkoutSessionId()).isEqualTo("cs_1");
+        assertThat(session.redirectUrl()).isEqualTo(URI.create("https://checkout.stripe.test/session"));
+        verify(gateway, never()).createCheckoutSession(any());
+        verify(store, never()).savePending(any());
+        verify(store, never()).replaceExpiredCheckout(any(), any(), any(), any(), any());
+        verify(store, never()).confirmAndFreeze(any(), any());
+        verifyNoInteractions(reports);
+    }
+
+    @Test
+    void retryingAfterTheStripeSessionExpiredReplacesItForTheSameEntitlementWhichStaysPending() {
+        UUID assessmentId = UUID.randomUUID(); UUID entitlementId = UUID.randomUUID();
+        var reports = mock(ProfessionalReportQuery.class); var store = mock(ProfessionalPurchaseStore.class);
+        var gateway = stripeGateway();
+        when(store.findEntitlementByAssessmentId(assessmentId)).thenReturn(Optional.of(pending(entitlementId, assessmentId)));
+        when(gateway.checkoutSessionState("cs_1")).thenReturn(ProfessionalCheckoutSessionState.EXPIRED);
+        var replacement = new ProfessionalCheckoutSession("cs_retry", URI.create("https://checkout.stripe.test/retry"),
+                ProfessionalPaymentProvider.STRIPE, Optional.empty());
+        when(gateway.createCheckoutSession(any())).thenReturn(replacement);
+
+        assertThat(service(reports, store, Optional.of(gateway)).startCheckout(assessmentId)).isEqualTo(replacement);
+
+        var request = ArgumentCaptor.forClass(ProfessionalCheckoutRequest.class);
+        verify(gateway).createCheckoutSession(request.capture());
+        assertThat(request.getValue().entitlementId()).isEqualTo(entitlementId);
+        assertThat(request.getValue().replacesCheckoutSessionId()).contains("cs_1");
+        assertThat(request.getValue().cancelUrl().toString())
+                .isEqualTo("https://example.test/professional-assessment/" + assessmentId + "?checkout=cancelled");
+        verify(store).replaceExpiredCheckout(entitlementId, "cs_1", replacement, "price_configured", NOW);
+        verify(store, never()).savePending(any());
+        verify(store, never()).confirmAndFreeze(any(), any());
+    }
+
+    @Test
+    void retryingACheckoutAlreadyPaidAtStripeNeverStartsASecondPayment() {
+        UUID assessmentId = UUID.randomUUID(); UUID entitlementId = UUID.randomUUID();
+        var store = mock(ProfessionalPurchaseStore.class); var gateway = stripeGateway();
+        when(store.findEntitlementByAssessmentId(assessmentId)).thenReturn(Optional.of(pending(entitlementId, assessmentId)));
+        when(gateway.checkoutSessionState("cs_1")).thenReturn(ProfessionalCheckoutSessionState.COMPLETE);
+        var service = service(mock(ProfessionalReportQuery.class), store, Optional.of(gateway));
+
+        assertThatThrownBy(() -> service.startCheckout(assessmentId))
+                .isInstanceOf(CheckoutAwaitingConfirmationException.class);
+        verify(gateway, never()).createCheckoutSession(any());
+        verify(store, never()).replaceExpiredCheckout(any(), any(), any(), any(), any());
+        verify(store, never()).confirmAndFreeze(any(), any());
+    }
+
+    @Test
+    void whenStripeCannotSayWhatHappenedToTheSessionNoReplacementIsGuessed() {
+        UUID assessmentId = UUID.randomUUID(); UUID entitlementId = UUID.randomUUID();
+        var store = mock(ProfessionalPurchaseStore.class); var gateway = stripeGateway();
+        when(store.findEntitlementByAssessmentId(assessmentId)).thenReturn(Optional.of(pending(entitlementId, assessmentId)));
+        when(gateway.checkoutSessionState("cs_1")).thenThrow(new IllegalStateException("stripe unavailable"));
+        var service = service(mock(ProfessionalReportQuery.class), store, Optional.of(gateway));
+
+        assertThatThrownBy(() -> service.startCheckout(assessmentId)).isInstanceOf(PaymentUnavailableException.class);
+        verify(gateway, never()).createCheckoutSession(any());
+        verify(store, never()).replaceExpiredCheckout(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void anActivePurchaseNeverAsksStripeOrStartsAnotherCheckout() {
+        UUID assessmentId = UUID.randomUUID(); UUID entitlementId = UUID.randomUUID();
+        var active = new ProfessionalReportEntitlement(entitlementId, assessmentId, ProfessionalReportTier.PAID,
+                ProfessionalEntitlementStatus.ACTIVE, ProfessionalPaymentProvider.STRIPE, "cs_1",
+                URI.create("https://checkout.stripe.test/session"), "price_configured", Optional.of("pi_1"),
+                Optional.of("professional-report-v1"), NOW, Optional.of(NOW));
+        var store = mock(ProfessionalPurchaseStore.class); var gateway = stripeGateway();
+        when(store.findEntitlementByAssessmentId(assessmentId)).thenReturn(Optional.of(active));
+        var service = service(mock(ProfessionalReportQuery.class), store, Optional.of(gateway));
+
+        assertThatThrownBy(() -> service.startCheckout(assessmentId))
+                .isInstanceOf(PaymentUnavailableException.class).hasMessageContaining("already exists");
+        verify(gateway, never()).checkoutSessionState(any());
+        verify(gateway, never()).createCheckoutSession(any());
+    }
+
+    @Test
+    void afterARetryOnlyTheVerifiedEventForTheReplacementSessionActivatesAndOnlyOnce() {
+        var source = ProfessionalReportAssemblerTest.source(true, true, true);
+        UUID assessmentId = source.assessment().id(); UUID entitlementId = UUID.randomUUID();
+        var replaced = new ProfessionalReportEntitlement(entitlementId, assessmentId, ProfessionalReportTier.PAID,
+                ProfessionalEntitlementStatus.PENDING, ProfessionalPaymentProvider.STRIPE, "cs_retry",
+                URI.create("https://checkout.stripe.test/retry"), "price_configured", Optional.empty(),
+                Optional.empty(), NOW, Optional.empty());
+        var reports = mock(ProfessionalReportQuery.class); var store = mock(ProfessionalPurchaseStore.class);
+        var gateway = stripeGateway();
+        when(reports.assemble(assessmentId, ProfessionalReportTier.PAID))
+                .thenReturn(Optional.of(new ProfessionalReportAssembler().assemble(source, ProfessionalReportTier.PAID)));
+        when(store.findEntitlementById(entitlementId)).thenReturn(Optional.of(replaced));
+        when(store.findSnapshotByAssessmentId(assessmentId)).thenReturn(Optional.empty());
+        var expiredSession = new ProfessionalPaymentEvent("evt_expired", ProfessionalPaymentProvider.STRIPE, "cs_1",
+                entitlementId, assessmentId, Optional.of("pi_0"), NOW);
+        var retried = new ProfessionalPaymentEvent("evt_retry", ProfessionalPaymentProvider.STRIPE, "cs_retry",
+                entitlementId, assessmentId, Optional.of("pi_1"), NOW);
+        var expiredNotification = new ProfessionalPaymentNotification("expired-session payload", "signature");
+        var retriedNotification = new ProfessionalPaymentNotification("retried-session payload", "signature");
+        when(gateway.verifyPaymentNotification(expiredNotification)).thenReturn(Optional.of(expiredSession));
+        when(gateway.verifyPaymentNotification(retriedNotification)).thenReturn(Optional.of(retried));
+        when(store.isEventProcessed(ProfessionalPaymentProvider.STRIPE, "evt_expired")).thenReturn(false);
+        when(store.isEventProcessed(ProfessionalPaymentProvider.STRIPE, "evt_retry")).thenReturn(false, true);
+        when(store.confirmAndFreeze(eq(retried), any()))
+                .thenReturn(ProfessionalPurchaseStore.PurchaseConfirmationResult.ACTIVATED);
+        var service = service(reports, store, Optional.of(gateway));
+
+        assertThatThrownBy(() -> service.processPaymentNotification(expiredNotification))
+                .isInstanceOf(InvalidPaymentNotificationException.class);
+        verify(store, never()).confirmAndFreeze(any(), any());
+
+        assertThat(service.processPaymentNotification(retriedNotification))
+                .isEqualTo(ProfessionalPaymentProcessingResult.ACTIVATED);
+        assertThat(service.processPaymentNotification(retriedNotification))
+                .isEqualTo(ProfessionalPaymentProcessingResult.ALREADY_PROCESSED);
+        verify(store, times(1)).confirmAndFreeze(eq(retried), any());
+        // Every notification, including the retried one, went through the gateway's verification.
+        verify(gateway, times(3)).verifyPaymentNotification(any());
+    }
+
+    private ProfessionalPaymentGateway stripeGateway() {
+        var gateway = mock(ProfessionalPaymentGateway.class);
+        when(gateway.provider()).thenReturn(ProfessionalPaymentProvider.STRIPE);
+        when(gateway.priceConfigurationKey()).thenReturn("price_configured");
+        return gateway;
+    }
+
     private ProfessionalReportPurchaseService service(ProfessionalReportQuery reports,
             ProfessionalPurchaseStore store, Optional<ProfessionalPaymentGateway> gateway) {
         return new ProfessionalReportPurchaseService(reports, store, gateway,

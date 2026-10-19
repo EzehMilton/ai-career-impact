@@ -158,6 +158,62 @@ class UniversityAssessmentStoreTest {
     }
 
     @Test
+    void anExpiredCheckoutIsReplacedInPlaceAndOnlyTheReplacementSessionCanThenActivate() {
+        UUID assessmentId = savedAssessment("nursing");
+        var report = new UniversityReportAssembler().assemble(new UniversityReportSource(
+                store.findById(assessmentId).orElseThrow(), Optional.empty(), Optional.empty()),
+                UniversityReportTier.PAID);
+        UUID entitlementId = UUID.randomUUID();
+        purchaseStore.savePending(new UniversityReportEntitlement(entitlementId, assessmentId, UniversityReportTier.PAID,
+                UniversityEntitlementStatus.PENDING, UniversityPaymentProvider.STRIPE, "cs_expired_university",
+                URI.create("https://checkout.stripe.test/expired"), "price_configured", Optional.empty(),
+                Optional.empty(), Instant.parse("2026-10-01T12:01:00Z"), Optional.empty()));
+        var replacement = new UniversityCheckoutSession("cs_retry_university", URI.create("https://checkout.stripe.test/retry"),
+                UniversityPaymentProvider.STRIPE, Optional.empty());
+        var other = new UniversityCheckoutSession("cs_other_university", URI.create("https://checkout.stripe.test/other"),
+                UniversityPaymentProvider.STRIPE, Optional.empty());
+        Instant retriedAt = Instant.parse("2026-10-02T09:00:00Z");
+
+        purchaseStore.replaceExpiredCheckout(entitlementId, "cs_expired_university", replacement, "price_configured", retriedAt);
+        // A concurrent retry that shared the idempotency key received the same session: harmless.
+        purchaseStore.replaceExpiredCheckout(entitlementId, "cs_expired_university", replacement, "price_configured", retriedAt);
+        // A retry that still believes the expired session is current must not overwrite the replacement.
+        assertThatThrownBy(() -> purchaseStore.replaceExpiredCheckout(entitlementId, "cs_expired_university", other,
+                "price_configured", retriedAt)).isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("the pending checkout changed before it could be replaced");
+
+        assertThat(purchaseStore.findEntitlementByAssessmentId(assessmentId)).get().satisfies(retried -> {
+            assertThat(retried.entitlementId()).isEqualTo(entitlementId);
+            assertThat(retried.status()).isEqualTo(UniversityEntitlementStatus.PENDING);
+            assertThat(retried.providerCheckoutSessionId()).isEqualTo("cs_retry_university");
+            assertThat(retried.checkoutUrl()).isEqualTo(URI.create("https://checkout.stripe.test/retry"));
+            assertThat(retried.createdAt()).isEqualTo(retriedAt);
+        });
+
+        var snapshot = new PurchasedUniversityReportSnapshot(entitlementId, assessmentId, report.reportVersion(),
+                Instant.parse("2026-10-02T09:05:00Z"), report);
+        var expiredEvent = new UniversityPaymentEvent("evt_expired_university", UniversityPaymentProvider.STRIPE, "cs_expired_university",
+                entitlementId, assessmentId, Optional.of("pi_expired"), Instant.parse("2026-10-02T09:04:00Z"));
+        var retriedEvent = new UniversityPaymentEvent("evt_retry_university", UniversityPaymentProvider.STRIPE, "cs_retry_university",
+                entitlementId, assessmentId, Optional.of("pi_retry"), Instant.parse("2026-10-02T09:04:00Z"));
+        assertThatThrownBy(() -> purchaseStore.confirmAndFreeze(expiredEvent, snapshot))
+                .isInstanceOf(InvalidPaymentNotificationException.class);
+        assertThat(purchaseStore.findEntitlementByAssessmentId(assessmentId).orElseThrow().status())
+                .isEqualTo(UniversityEntitlementStatus.PENDING);
+
+        assertThat(purchaseStore.confirmAndFreeze(retriedEvent, snapshot))
+                .isEqualTo(UniversityPurchaseStore.PurchaseConfirmationResult.ACTIVATED);
+        assertThat(purchaseStore.confirmAndFreeze(retriedEvent, snapshot))
+                .isEqualTo(UniversityPurchaseStore.PurchaseConfirmationResult.ALREADY_PROCESSED);
+        assertThat(purchaseStore.findEntitlementByAssessmentId(assessmentId).orElseThrow().status())
+                .isEqualTo(UniversityEntitlementStatus.ACTIVE);
+        // An active purchase can never be pointed at another checkout.
+        assertThatThrownBy(() -> purchaseStore.replaceExpiredCheckout(entitlementId, "cs_retry_university", other,
+                "price_configured", retriedAt)).isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("the pending checkout changed before it could be replaced");
+    }
+
+    @Test
     void roundTripFreezesTheEntitlementPurchasedReportProcessedEventAndImmutablePdf() {
         UUID assessmentId = savedAssessment("nursing");
         UUID entitlementId = UUID.randomUUID();

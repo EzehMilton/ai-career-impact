@@ -5,6 +5,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -54,6 +55,26 @@ class JpaUniversityPurchaseStore implements UniversityPurchaseStore {
             throw new IllegalStateException("an entitlement already exists with this identifier");
         }
         entitlements.saveAndFlush(toEntity(entitlement));
+    }
+
+    @Override
+    @Transactional
+    public void replaceExpiredCheckout(UUID entitlementId, String expiredCheckoutSessionId,
+            UniversityCheckoutSession replacement, String priceConfigurationKey, Instant replacedAt) {
+        var entity = entitlements.findByIdForUpdate(entitlementId)
+                .orElseThrow(() -> new IllegalStateException("entitlement does not exist"));
+        // A concurrent retry with the same idempotency key already stored this exact session.
+        if (replacement.checkoutSessionId().equals(entity.providerCheckoutSessionId)) return;
+        if (entity.status != UniversityEntitlementStatus.PENDING
+                || entity.paymentProvider != replacement.provider()
+                || !expiredCheckoutSessionId.equals(entity.providerCheckoutSessionId)) {
+            throw new IllegalStateException("the pending checkout changed before it could be replaced");
+        }
+        entity.providerCheckoutSessionId = replacement.checkoutSessionId();
+        entity.checkoutUrl = replacement.redirectUrl().toString();
+        entity.priceConfigurationKey = priceConfigurationKey;
+        entity.createdAt = replacedAt;
+        entitlements.saveAndFlush(entity);
     }
 
     @Override

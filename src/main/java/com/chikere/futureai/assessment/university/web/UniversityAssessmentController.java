@@ -17,6 +17,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.UUID;
@@ -74,7 +75,9 @@ public final class UniversityAssessmentController {
     }
 
     @GetMapping("/university-assessment/{assessmentId}")
-    public String showResult(@PathVariable String assessmentId, Model model, HttpServletResponse response) {
+    public String showResult(@PathVariable String assessmentId,
+            @RequestParam(name = "checkout", required = false) String checkout,
+            Model model, HttpServletResponse response) {
         response.setHeader("Cache-Control", "private, no-store");
         UUID id;
         try {
@@ -92,7 +95,15 @@ public final class UniversityAssessmentController {
             }
             model.addAttribute("assessmentId", id);
             model.addAttribute("report", reportViewMapper.toView(report.orElseThrow()));
-            model.addAttribute("purchase", UniversityPurchaseViewModel.from(purchaseService.accessFor(id)));
+            var purchase = UniversityPurchaseViewModel.from(purchaseService.accessFor(id));
+            // The Stripe return only chooses which page to show. Access is still decided by the
+            // entitlement that the verified webhook activated, and the report checks it again.
+            boolean returnedFromCheckout = "returned".equals(checkout);
+            if (returnedFromCheckout && purchase.active()) {
+                return "redirect:/university-assessment/" + id + "/report";
+            }
+            model.addAttribute("purchase", purchase);
+            model.addAttribute("paymentPanel", paymentPanel(checkout));
             return "university-assessment/result";
         }
         catch (RuntimeException exception) {
@@ -100,5 +111,15 @@ public final class UniversityAssessmentController {
             response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
             return "university-assessment/error";
         }
+    }
+
+    /**
+     * Which pending-payment panel to show. Only presentation: a PENDING purchase stays PENDING until
+     * the verified webhook activates it, whatever the browser claims about where it came from.
+     */
+    private static String paymentPanel(String checkout) {
+        if ("returned".equals(checkout)) return "confirming";
+        if ("cancelled".equals(checkout)) return "cancelled";
+        return "pending";
     }
 }

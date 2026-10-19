@@ -1,5 +1,6 @@
 package com.chikere.futureai.payment.alevel.web;
 
+import com.chikere.futureai.payment.alevel.application.CheckoutAwaitingConfirmationException;
 import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseUseCase;
 import jakarta.servlet.http.HttpServletResponse;
 import com.chikere.futureai.configuration.FailureDescription;
@@ -37,6 +38,10 @@ public final class ALevelCheckoutController {
         }
         catch (IllegalArgumentException unknown) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
+        }
+        catch (CheckoutAwaitingConfirmationException alreadyPaid) {
+            // Paid at Stripe but not yet confirmed by the webhook: wait for it, never pay again.
+            response.sendRedirect("/a-level-assessment/" + UUID.fromString(assessmentId) + "?checkout=returned");
         }
         catch (RuntimeException failure) {
             metrics.checkoutFailed("a-level");

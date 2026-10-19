@@ -59,6 +59,9 @@ public final class UniversityReportPurchaseService implements UniversityReportPu
         UniversityPaymentGateway gateway = paymentGateway.orElseThrow(() ->
                 new PaymentUnavailableException("paid report checkout is not configured"));
         var existing = purchaseStore.findEntitlementByAssessmentId(assessmentId);
+        if (existing.isPresent() && existing.orElseThrow().status() == UniversityEntitlementStatus.PENDING) {
+            return resumePendingCheckout(gateway, existing.orElseThrow());
+        }
         if (existing.isPresent() && existing.orElseThrow().status() != UniversityEntitlementStatus.FAILED) {
             throw new PaymentUnavailableException("a purchase already exists for this assessment");
         }
@@ -89,6 +92,59 @@ public final class UniversityReportPurchaseService implements UniversityReportPu
                 session.checkoutSessionId(), session.redirectUrl(), priceConfigurationKey,
                 Optional.empty(), Optional.empty(), Instant.now(clock), Optional.empty());
         purchaseStore.savePending(pending);
+        return session;
+    }
+
+    /**
+     * A PENDING purchase is either a checkout the visitor left (Stripe's cancel link, a closed tab)
+     * or one that has been paid and is waiting for its webhook. The browser cannot tell these apart,
+     * so the provider's own record of the session decides. The entitlement status is never changed
+     * here: only the verified webhook moves it to ACTIVE.
+     */
+    private UniversityCheckoutSession resumePendingCheckout(UniversityPaymentGateway gateway,
+            UniversityReportEntitlement pending) {
+        if (pending.paymentProvider() != gateway.provider()) {
+            throw new PaymentUnavailableException("the pending checkout belongs to another payment provider");
+        }
+        UniversityCheckoutSessionState state;
+        try {
+            state = gateway.checkoutSessionState(pending.providerCheckoutSessionId());
+        }
+        catch (RuntimeException failure) {
+            throw new PaymentUnavailableException("the pending checkout could not be checked", failure);
+        }
+        return switch (state) {
+            // Still payable: back to the same session, which can be paid at most once.
+            case OPEN -> new UniversityCheckoutSession(pending.providerCheckoutSessionId(), pending.checkoutUrl(),
+                    pending.paymentProvider(), Optional.empty());
+            // Already paid: never open a second payment while the webhook is on its way.
+            case COMPLETE -> throw new CheckoutAwaitingConfirmationException();
+            // Can no longer be paid, so a fresh session for the same entitlement cannot double-charge.
+            case EXPIRED -> replaceExpiredCheckout(gateway, pending);
+        };
+    }
+
+    private UniversityCheckoutSession replaceExpiredCheckout(UniversityPaymentGateway gateway,
+            UniversityReportEntitlement pending) {
+        String priceConfigurationKey = gateway.priceConfigurationKey();
+        String resultPath = "/university-assessment/" + pending.assessmentId();
+        var request = new UniversityCheckoutRequest(pending.entitlementId(), pending.assessmentId(),
+                UniversityReportTier.PAID, priceConfigurationKey,
+                applicationBaseUrl.resolve(resultPath + "?checkout=returned"),
+                applicationBaseUrl.resolve(resultPath + "?checkout=cancelled"),
+                Optional.of(pending.providerCheckoutSessionId()));
+        UniversityCheckoutSession session;
+        try {
+            session = metrics.timed("checkout", "university", () -> gateway.createCheckoutSession(request));
+        }
+        catch (RuntimeException failure) {
+            throw new PaymentUnavailableException("checkout could not be created", failure);
+        }
+        if (session.provider() != pending.paymentProvider()) {
+            throw new PaymentUnavailableException("payment gateway returned unexpected provenance");
+        }
+        purchaseStore.replaceExpiredCheckout(pending.entitlementId(), pending.providerCheckoutSessionId(),
+                session, priceConfigurationKey, Instant.now(clock));
         return session;
     }
 

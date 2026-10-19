@@ -51,4 +51,15 @@ class ProfessionalCheckoutControllerTest {
                 .andExpect(status().reason("Paid report checkout is currently unavailable."));
         assertThat(registry.get("checkout.failures").tag("journey", "professional").counter().count()).isEqualTo(1);
     }
+
+    @Test
+    void aRetryForACheckoutAlreadyPaidAtStripeWaitsForTheWebhookInsteadOfStartingAnotherPayment() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(purchaseService.startCheckout(id)).thenThrow(
+                new com.chikere.futureai.payment.professional.application.CheckoutAwaitingConfirmationException());
+
+        mvc.perform(post("/professional-assessment/" + id + "/checkout").with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/professional-assessment/" + id + "?checkout=returned"));
+    }
 }

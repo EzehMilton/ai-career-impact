@@ -1,5 +1,6 @@
 package com.chikere.futureai.payment.professional.web;
 
+import com.chikere.futureai.payment.professional.application.CheckoutAwaitingConfirmationException;
 import com.chikere.futureai.payment.professional.application.ProfessionalReportPurchaseUseCase;
 import jakarta.servlet.http.HttpServletResponse;
 import com.chikere.futureai.configuration.FailureDescription;
@@ -35,6 +36,10 @@ public final class ProfessionalCheckoutController {
         }
         catch (IllegalArgumentException unknown) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
+        }
+        catch (CheckoutAwaitingConfirmationException alreadyPaid) {
+            // Paid at Stripe but not yet confirmed by the webhook: wait for it, never pay again.
+            response.sendRedirect("/professional-assessment/" + UUID.fromString(assessmentId) + "?checkout=returned");
         }
         catch (RuntimeException failure) {
             metrics.checkoutFailed("professional");

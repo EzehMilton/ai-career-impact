@@ -181,7 +181,7 @@ class ProductRouteSecurityTest {
         HttpResponse<String> response = get("/");
 
         assertThat(response.headers().firstValue("content-security-policy")).get().asString()
-                .contains("default-src 'self'").contains("script-src 'none'")
+                .contains("default-src 'self'").contains("script-src 'self';")
                 .contains("frame-ancestors 'none'").contains("object-src 'none'")
                 .contains("form-action 'self' https://checkout.stripe.com")
                 .doesNotContain("unsafe-inline").doesNotContain("unsafe-eval").doesNotContain("*");
@@ -201,6 +201,44 @@ class ProductRouteSecurityTest {
 
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.headers().firstValue("content-type")).get().asString().contains("css");
+    }
+
+    @Test
+    void scriptsAreLimitedToThisOriginOnEveryPageThatCouldLoadOne() throws Exception {
+        for (String path : List.of("/", "/professional-assessment", "/university-assessment", "/a-level-assessment")) {
+            String policy = get(path).headers().firstValue("content-security-policy").orElseThrow();
+            String scripts = java.util.Arrays.stream(policy.split(";")).map(String::strip)
+                    .filter(directive -> directive.startsWith("script-src")).findFirst().orElseThrow();
+
+            // Only the first-party poller under /js/ may run: no inline code, no eval, no other host.
+            assertThat(scripts).as("%s script-src", path).isEqualTo("script-src 'self'");
+            assertThat(policy).as("%s policy", path)
+                    .doesNotContain("unsafe-inline", "unsafe-eval", "strict-dynamic", "http:", "*");
+        }
+    }
+
+    @Test
+    void thePaymentConfirmationScriptIsServedFromThisApplication() throws Exception {
+        HttpResponse<String> response = get("/js/payment-confirmation.js");
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.headers().firstValue("content-type")).get().asString().contains("javascript");
+        assertThat(response.body()).contains("data-status-url").doesNotContain("eval(", "new Function", "stripe.com");
+    }
+
+    @Test
+    void thePaymentStatusRoutesAreReadOnlyAndRevealNothingForAnUnpurchasedAssessment() throws Exception {
+        for (String journey : JOURNEYS) {
+            HttpResponse<String> status = getJson(journey + "/" + UNISSUED + "/payment-status");
+
+            assertThat(status.statusCode()).as("%s status without purchase", journey).isEqualTo(404);
+            assertThat(status.headers().firstValue("cache-control")).get().asString().contains("no-store");
+            assertThat(status.body()).as("%s status body", journey)
+                    .doesNotContain("cs_", "pi_", "price_", "whsec", "sk_", "entitlement");
+            // A write is refused before it reaches anything, exactly like every other browser POST.
+            assertThat(post(journey + "/" + UNISSUED + "/payment-status").statusCode())
+                    .as("%s status POST", journey).isEqualTo(403);
+        }
     }
 
     @Test

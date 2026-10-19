@@ -4,6 +4,7 @@ import com.chikere.futureai.report.alevel.application.ALevelReportTier;
 
 import java.net.URI;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 public record ALevelCheckoutRequest(
@@ -12,7 +13,8 @@ public record ALevelCheckoutRequest(
         ALevelReportTier reportTier,
         String priceConfigurationKey,
         URI successUrl,
-        URI cancelUrl) {
+        URI cancelUrl,
+        Optional<String> replacesCheckoutSessionId) {
 
     public ALevelCheckoutRequest {
         Objects.requireNonNull(entitlementId);
@@ -24,6 +26,14 @@ public record ALevelCheckoutRequest(
         priceConfigurationKey = required(priceConfigurationKey, "priceConfigurationKey");
         requireHttp(successUrl, "successUrl");
         requireHttp(cancelUrl, "cancelUrl");
+        replacesCheckoutSessionId = Objects.requireNonNull(replacesCheckoutSessionId)
+                .map(String::strip).filter(value -> !value.isEmpty());
+    }
+
+    /** A first checkout for this entitlement, replacing nothing. */
+    public ALevelCheckoutRequest(UUID entitlementId, UUID assessmentId, ALevelReportTier reportTier,
+            String priceConfigurationKey, URI successUrl, URI cancelUrl) {
+        this(entitlementId, assessmentId, reportTier, priceConfigurationKey, successUrl, cancelUrl, Optional.empty());
     }
 
     private static String required(String value, String name) {

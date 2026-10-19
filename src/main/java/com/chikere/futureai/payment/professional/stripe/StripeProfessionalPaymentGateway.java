@@ -24,6 +24,11 @@ public final class StripeProfessionalPaymentGateway implements ProfessionalPayme
     }
 
     @Override
+    public ProfessionalCheckoutSessionState checkoutSessionState(String checkoutSessionId) {
+        return checkoutOperations.state(checkoutSessionId);
+    }
+
+    @Override
     public Optional<ProfessionalPaymentEvent> verifyPaymentNotification(ProfessionalPaymentNotification notification) {
         return webhookVerifier.verify(notification).map(event -> {
             checkoutOperations.validateCompletedSession(event, priceId);

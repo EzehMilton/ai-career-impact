@@ -37,6 +37,12 @@ public final class LocalFixtureProfessionalPaymentGateway
                 Optional.of(Instant.now(clock).plus(30, ChronoUnit.MINUTES)));
     }
 
+    /** A local session never expires or completes on its own; the simulator completes it. */
+    @Override
+    public ProfessionalCheckoutSessionState checkoutSessionState(String checkoutSessionId) {
+        return ProfessionalCheckoutSessionState.OPEN;
+    }
+
     @Override
     public ProfessionalPaymentNotification successfulNotification(ProfessionalReportEntitlement entitlement) {
         if (entitlement.paymentProvider() != provider()

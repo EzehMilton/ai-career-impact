@@ -1,10 +1,18 @@
 package com.chikere.futureai.payment.professional.application;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface ProfessionalPurchaseStore {
     void savePending(ProfessionalReportEntitlement entitlement);
+
+    /**
+     * Points a still-PENDING entitlement at a new checkout session after its previous session
+     * expired unpaid. The status is never changed here.
+     */
+    void replaceExpiredCheckout(UUID entitlementId, String expiredCheckoutSessionId,
+            ProfessionalCheckoutSession replacement, String priceConfigurationKey, Instant replacedAt);
     Optional<ProfessionalReportEntitlement> findEntitlementByAssessmentId(UUID assessmentId);
     Optional<ProfessionalReportEntitlement> findEntitlementById(UUID entitlementId);
     Optional<PurchasedProfessionalReportSnapshot> findSnapshotByAssessmentId(UUID assessmentId);
