@@ -25,5 +25,11 @@ public interface UniversityPurchaseStore {
     PurchaseConfirmationResult confirmAndFreeze(UniversityPaymentEvent event,
             PurchasedUniversityReportSnapshot snapshot);
 
+    /**
+     * Creates an already ACTIVE complimentary entitlement together with its frozen report, in one
+     * transaction. Fails if the assessment already has an entitlement of any kind.
+     */
+    void saveComplimentary(UniversityReportEntitlement entitlement, PurchasedUniversityReportSnapshot snapshot);
+
     enum PurchaseConfirmationResult { ACTIVATED, ALREADY_PROCESSED }
 }

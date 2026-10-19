@@ -125,13 +125,7 @@ class JpaProfessionalPurchaseStore implements ProfessionalPurchaseStore {
                 || !snapshot.assessmentId().equals(entitlement.assessmentId)) {
             throw new InvalidPaymentNotificationException("ENTITLEMENT_REFERENCE_MISMATCH");
         }
-        var snapshotEntity = new PurchasedProfessionalReportSnapshotEntity();
-        snapshotEntity.entitlementId = snapshot.entitlementId();
-        snapshotEntity.assessmentId = snapshot.assessmentId();
-        snapshotEntity.reportVersion = snapshot.reportVersion();
-        snapshotEntity.frozenAt = snapshot.frozenAt();
-        snapshotEntity.reportJson = snapshotCodec.write(snapshot.report());
-        snapshots.save(snapshotEntity);
+        snapshots.save(toSnapshotEntity(snapshot));
 
         entitlement.status = ProfessionalEntitlementStatus.ACTIVE;
         entitlement.providerPaymentReference = event.paymentReference().orElse(null);
@@ -141,6 +135,33 @@ class JpaProfessionalPurchaseStore implements ProfessionalPurchaseStore {
         saveEvent(event);
         snapshots.flush(); entitlements.flush(); events.flush();
         return PurchaseConfirmationResult.ACTIVATED;
+    }
+
+    @Override
+    @Transactional
+    public void saveComplimentary(ProfessionalReportEntitlement entitlement, PurchasedProfessionalReportSnapshot snapshot) {
+        if (entitlement.status() != ProfessionalEntitlementStatus.ACTIVE
+                || entitlement.paymentProvider() != ProfessionalPaymentProvider.COMPLIMENTARY
+                || !snapshot.entitlementId().equals(entitlement.entitlementId())
+                || !snapshot.assessmentId().equals(entitlement.assessmentId())) {
+            throw new IllegalArgumentException("not an active complimentary entitlement with its snapshot");
+        }
+        // The unique assessment_id column is the final guard against a concurrent second entitlement.
+        if (entitlements.findByAssessmentId(entitlement.assessmentId()).isPresent()) {
+            throw new IllegalStateException("an entitlement already exists for this assessment");
+        }
+        entitlements.saveAndFlush(toEntity(entitlement));
+        snapshots.saveAndFlush(toSnapshotEntity(snapshot));
+    }
+
+    private PurchasedProfessionalReportSnapshotEntity toSnapshotEntity(PurchasedProfessionalReportSnapshot snapshot) {
+        var entity = new PurchasedProfessionalReportSnapshotEntity();
+        entity.entitlementId = snapshot.entitlementId();
+        entity.assessmentId = snapshot.assessmentId();
+        entity.reportVersion = snapshot.reportVersion();
+        entity.frozenAt = snapshot.frozenAt();
+        entity.reportJson = snapshotCodec.write(snapshot.report());
+        return entity;
     }
 
     private void saveEvent(ProfessionalPaymentEvent event) {

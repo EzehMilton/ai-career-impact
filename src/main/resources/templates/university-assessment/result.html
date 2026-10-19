@@ -136,6 +136,9 @@
       <button type="submit">Get my detailed report</button>
     </form>
     <p class="helper" th:if="${purchase.noEntitlement and !purchase.checkoutAvailable}">Paid report checkout is not currently available.</p>
+    <div th:replace="~{fragments/complimentary-access :: form(
+        actionUrl=@{/university-assessment/{id}/complimentary-access(id=${assessmentId})},
+        available=${purchase.complimentaryAvailable})}"></div>
   </section>
 
   <section class="panel report-caveat university-context" aria-labelledby="caveat-heading">

@@ -20,5 +20,11 @@ public interface ProfessionalPurchaseStore {
     PurchaseConfirmationResult confirmAndFreeze(ProfessionalPaymentEvent event,
             PurchasedProfessionalReportSnapshot snapshot);
 
+    /**
+     * Creates an already ACTIVE complimentary entitlement together with its frozen report, in one
+     * transaction. Fails if the assessment already has an entitlement of any kind.
+     */
+    void saveComplimentary(ProfessionalReportEntitlement entitlement, PurchasedProfessionalReportSnapshot snapshot);
+
     enum PurchaseConfirmationResult { ACTIVATED, ALREADY_PROCESSED }
 }

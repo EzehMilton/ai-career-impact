@@ -1,5 +1,6 @@
 package com.chikere.futureai.assessment.alevel.application;
 
+import com.chikere.futureai.payment.complimentary.ComplimentaryReportAccess;
 import com.chikere.futureai.decision.alevel.ALevelDecisionPolicyV1;
 import com.chikere.futureai.evidence.alevel.application.ALevelEvidenceProvider;
 import com.chikere.futureai.evidence.alevel.application.ALevelEvidenceRequestFactory;
@@ -82,9 +83,11 @@ public class ALevelAssessmentConfiguration {
             ALevelPurchaseStore purchaseStore, Optional<ALevelPaymentGateway> paymentGateway,
             @Value("${app.a-level.report.base-url}") URI applicationBaseUrl,
             @Value("${app.a-level.report.display-price:}") String displayPrice,
-            ObjectProvider<JourneyMetrics> metrics) {
+            ObjectProvider<JourneyMetrics> metrics,
+            ObjectProvider<ComplimentaryReportAccess> complimentaryAccess) {
         return new ALevelReportPurchaseService(reportService, purchaseStore, paymentGateway,
                 applicationBaseUrl, Optional.ofNullable(displayPrice), Clock.systemUTC(),
-                metrics.getIfAvailable(JourneyMetrics::disabled));
+                metrics.getIfAvailable(JourneyMetrics::disabled),
+                complimentaryAccess.getIfAvailable(ComplimentaryReportAccess::disabled));
     }
 }

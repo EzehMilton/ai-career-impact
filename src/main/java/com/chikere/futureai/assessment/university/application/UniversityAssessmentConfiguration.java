@@ -1,5 +1,6 @@
 package com.chikere.futureai.assessment.university.application;
 
+import com.chikere.futureai.payment.complimentary.ComplimentaryReportAccess;
 import com.chikere.futureai.decision.university.UniversityDecisionPolicyV1;
 import com.chikere.futureai.evidence.university.application.UniversityEvidenceProvider;
 import com.chikere.futureai.evidence.university.application.UniversityEvidenceRequestFactory;
@@ -91,9 +92,11 @@ public class UniversityAssessmentConfiguration {
             Optional<UniversityPaymentGateway> paymentGateway,
             @Value("${app.university.report.base-url}") URI applicationBaseUrl,
             @Value("${app.university.report.display-price:}") String displayPrice,
-            ObjectProvider<JourneyMetrics> metrics) {
+            ObjectProvider<JourneyMetrics> metrics,
+            ObjectProvider<ComplimentaryReportAccess> complimentaryAccess) {
         return new UniversityReportPurchaseService(reportService, purchaseStore, paymentGateway,
                 applicationBaseUrl, Optional.ofNullable(displayPrice), Clock.systemUTC(),
-                metrics.getIfAvailable(JourneyMetrics::disabled));
+                metrics.getIfAvailable(JourneyMetrics::disabled),
+                complimentaryAccess.getIfAvailable(ComplimentaryReportAccess::disabled));
     }
 }
