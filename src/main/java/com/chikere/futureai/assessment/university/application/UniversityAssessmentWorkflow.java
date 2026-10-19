@@ -5,6 +5,7 @@ import com.chikere.futureai.evidence.university.application.UniversityEvidenceGa
 import com.chikere.futureai.narrative.university.application.UniversityNarrativeGeneration;
 import com.chikere.futureai.narrative.university.application.NarrativeStatus;
 import com.chikere.futureai.configuration.JourneyMetrics;
+import com.chikere.futureai.cost.ProviderCostTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +21,7 @@ public final class UniversityAssessmentWorkflow implements UniversityAssessmentU
     private final UniversityNarrativeGeneration narrativeService;
     private final UniversityEvidenceGathering evidenceService;
     private final JourneyMetrics metrics;
+    private final ProviderCostTracker costs;
 
     public UniversityAssessmentWorkflow(UniversityAssessmentSubmission assessmentService,
             UniversityNarrativeGeneration narrativeService, UniversityEvidenceGathering evidenceService) {
@@ -29,14 +31,25 @@ public final class UniversityAssessmentWorkflow implements UniversityAssessmentU
     public UniversityAssessmentWorkflow(UniversityAssessmentSubmission assessmentService,
             UniversityNarrativeGeneration narrativeService, UniversityEvidenceGathering evidenceService,
             JourneyMetrics metrics) {
+        this(assessmentService, narrativeService, evidenceService, metrics, ProviderCostTracker.disabled());
+    }
+
+    public UniversityAssessmentWorkflow(UniversityAssessmentSubmission assessmentService,
+            UniversityNarrativeGeneration narrativeService, UniversityEvidenceGathering evidenceService,
+            JourneyMetrics metrics, ProviderCostTracker costs) {
         this.assessmentService = Objects.requireNonNull(assessmentService);
         this.narrativeService = Objects.requireNonNull(narrativeService);
         this.evidenceService = Objects.requireNonNull(evidenceService);
         this.metrics = Objects.requireNonNull(metrics);
+        this.costs = Objects.requireNonNull(costs);
     }
 
     @Override
     public UUID submit(UniversityAssessmentState state) {
+        return costs.trackAssessment("university", () -> submitAndEnrich(state));
+    }
+
+    private UUID submitAndEnrich(UniversityAssessmentState state) {
         UUID id = assessmentService.submitUniversityAssessment(state);
         metrics.assessmentCreated("university");
         try {

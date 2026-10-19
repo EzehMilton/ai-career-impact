@@ -6,6 +6,12 @@ import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
 import com.chikere.futureai.judgment.domain.DimensionJudgment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import com.chikere.futureai.cost.ProviderCostProperties;
+import com.chikere.futureai.cost.ProviderCostTracker;
+import com.chikere.futureai.cost.ProviderRates;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.mockito.ArgumentCaptor;
 import org.springaicommunity.typesafe.JsonContent;
 import org.springaicommunity.typesafe.TypeSafeClient;
@@ -17,10 +23,12 @@ import org.springaicommunity.typesafe.response.ScoreAnswer;
 import org.springaicommunity.typesafe.response.SystemOneResponse;
 import org.springaicommunity.typesafe.response.Usage;
 
+import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,6 +39,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(OutputCaptureExtension.class)
 class ProfessionalJevJudgmentServiceTest {
 
     private TypeSafeClient typeSafeClient;
@@ -89,6 +98,24 @@ class ProfessionalJevJudgmentServiceTest {
         when(typeSafeClient.systemOne(anyMap(), anyMap())).thenThrow(failure);
 
         assertThatThrownBy(() -> service.judge(assessmentState())).isSameAs(failure);
+    }
+
+    @Test
+    void recordsTheTokenUsageJevReportsForCostEstimation(CapturedOutput output) {
+        var tracker = new ProviderCostTracker(new ProviderCostProperties("USD", null,
+                new ProviderRates(new BigDecimal("0.042"), BigDecimal.ZERO)));
+        var tracked = new ProfessionalJevJudgmentService(typeSafeClient, schema,
+                new ProfessionalJevStateMapper(), "jev-latest", tracker);
+        SystemOneResponse withUsage = response();
+        when(typeSafeClient.systemOne(anyMap(), anyMap())).thenReturn(new SystemOneResponse(
+                withUsage.model(), withUsage.answers(), new Usage(2_000, 0), withUsage.requestId()));
+
+        tracker.trackAssessment("professional", () -> {
+            tracked.judge(assessmentState());
+            return UUID.randomUUID();
+        });
+
+        assertThat(output).contains("jevCalls=1 jevInputTokens=2000 jevOutputTokens=0 jevCost=0.000084");
     }
 
     private SystemOneResponse response() {

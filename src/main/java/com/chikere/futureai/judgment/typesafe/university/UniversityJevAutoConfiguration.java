@@ -1,7 +1,9 @@
 package com.chikere.futureai.judgment.typesafe.university;
 
+import com.chikere.futureai.cost.ProviderCostTracker;
 import org.springaicommunity.typesafe.TypeSafeClient;
 import org.springaicommunity.typesafe.autoconfigure.TypeSafeAutoConfiguration;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -30,7 +32,9 @@ public class UniversityJevAutoConfiguration {
             TypeSafeClient typeSafeClient,
             UniversityJudgmentSchema schema,
             UniversityJevStateMapper stateMapper,
-            @Value("${spring.ai.typesafe.model:}") String configuredModelIdentifier) {
-        return new UniversityJevJudgmentService(typeSafeClient, schema, stateMapper, configuredModelIdentifier);
+            @Value("${spring.ai.typesafe.model:}") String configuredModelIdentifier,
+            ObjectProvider<ProviderCostTracker> costs) {
+        return new UniversityJevJudgmentService(typeSafeClient, schema, stateMapper, configuredModelIdentifier,
+                costs.getIfAvailable(ProviderCostTracker::disabled));
     }
 }

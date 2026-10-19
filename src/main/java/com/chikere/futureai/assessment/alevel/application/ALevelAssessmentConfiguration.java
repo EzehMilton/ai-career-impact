@@ -17,6 +17,7 @@ import com.chikere.futureai.report.alevel.application.ALevelReportAssembler;
 import com.chikere.futureai.report.alevel.application.ALevelReportService;
 import org.springframework.beans.factory.annotation.Value;
 import com.chikere.futureai.configuration.JourneyMetrics;
+import com.chikere.futureai.cost.ProviderCostTracker;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -62,9 +63,11 @@ public class ALevelAssessmentConfiguration {
     @Bean
     ALevelAssessmentWorkflow aLevelAssessmentWorkflow(ALevelAssessmentService assessmentService,
             ALevelNarrativeService narrativeService, ALevelEvidenceService evidenceService,
-            ObjectProvider<JourneyMetrics> metrics) {
+            ObjectProvider<JourneyMetrics> metrics,
+            ObjectProvider<ProviderCostTracker> costs) {
         return new ALevelAssessmentWorkflow(assessmentService, narrativeService, evidenceService,
-                metrics.getIfAvailable(JourneyMetrics::disabled));
+                metrics.getIfAvailable(JourneyMetrics::disabled),
+                costs.getIfAvailable(ProviderCostTracker::disabled));
     }
 
     @Bean

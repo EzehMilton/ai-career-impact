@@ -6,6 +6,7 @@ import com.chikere.futureai.narrative.professional.application.NarrativeStatus;
 import com.chikere.futureai.evidence.professional.application.ProfessionalEvidenceGathering;
 import com.chikere.futureai.occupation.professional.application.ProfessionalOccupationClassificationUseCase;
 import com.chikere.futureai.configuration.JourneyMetrics;
+import com.chikere.futureai.cost.ProviderCostTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +22,7 @@ public final class ProfessionalAssessmentWorkflow implements ProfessionalAssessm
     private final ProfessionalEvidenceGathering evidenceService;
     private final ProfessionalOccupationClassificationUseCase classificationService;
     private final JourneyMetrics metrics;
+    private final ProviderCostTracker costs;
 
     public ProfessionalAssessmentWorkflow(
             ProfessionalAssessmentSubmission assessmentService,
@@ -37,21 +39,35 @@ public final class ProfessionalAssessmentWorkflow implements ProfessionalAssessm
             ProfessionalOccupationClassificationUseCase classificationService,
             ProfessionalEvidenceGathering evidenceService,
             JourneyMetrics metrics) {
+        this(assessmentService, narrativeService, classificationService, evidenceService, metrics,
+                ProviderCostTracker.disabled());
+    }
+
+    public ProfessionalAssessmentWorkflow(
+            ProfessionalAssessmentSubmission assessmentService,
+            ProfessionalNarrativeGeneration narrativeService,
+            ProfessionalOccupationClassificationUseCase classificationService,
+            ProfessionalEvidenceGathering evidenceService,
+            JourneyMetrics metrics,
+            ProviderCostTracker costs) {
         this.assessmentService = Objects.requireNonNull(assessmentService);
         this.narrativeService = Objects.requireNonNull(narrativeService);
         this.classificationService = Objects.requireNonNull(classificationService);
         this.evidenceService = Objects.requireNonNull(evidenceService);
         this.metrics = Objects.requireNonNull(metrics);
+        this.costs = Objects.requireNonNull(costs);
     }
 
     @Override
     public UUID submit(ProfessionalAssessmentState state) {
-        return enrich(assessmentService.submitProfessionalAssessment(state));
+        return costs.trackAssessment("professional",
+                () -> enrich(assessmentService.submitProfessionalAssessment(state)));
     }
 
     @Override
     public UUID submit(ProfessionalAssessmentState state, ProfessionalAssessmentInputMetadata inputMetadata) {
-        return enrich(assessmentService.submitProfessionalAssessment(state, inputMetadata));
+        return costs.trackAssessment("professional",
+                () -> enrich(assessmentService.submitProfessionalAssessment(state, inputMetadata)));
     }
 
     private UUID enrich(UUID id) {

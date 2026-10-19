@@ -5,6 +5,7 @@ import com.chikere.futureai.evidence.alevel.application.ALevelEvidenceGathering;
 import com.chikere.futureai.narrative.alevel.application.ALevelNarrativeGeneration;
 import com.chikere.futureai.narrative.alevel.application.NarrativeStatus;
 import com.chikere.futureai.configuration.JourneyMetrics;
+import com.chikere.futureai.cost.ProviderCostTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +21,7 @@ public final class ALevelAssessmentWorkflow implements ALevelAssessmentUseCase {
     private final ALevelNarrativeGeneration narrativeService;
     private final ALevelEvidenceGathering evidenceService;
     private final JourneyMetrics metrics;
+    private final ProviderCostTracker costs;
 
     public ALevelAssessmentWorkflow(ALevelAssessmentSubmission assessmentService,
             ALevelNarrativeGeneration narrativeService, ALevelEvidenceGathering evidenceService) {
@@ -29,14 +31,25 @@ public final class ALevelAssessmentWorkflow implements ALevelAssessmentUseCase {
     public ALevelAssessmentWorkflow(ALevelAssessmentSubmission assessmentService,
             ALevelNarrativeGeneration narrativeService, ALevelEvidenceGathering evidenceService,
             JourneyMetrics metrics) {
+        this(assessmentService, narrativeService, evidenceService, metrics, ProviderCostTracker.disabled());
+    }
+
+    public ALevelAssessmentWorkflow(ALevelAssessmentSubmission assessmentService,
+            ALevelNarrativeGeneration narrativeService, ALevelEvidenceGathering evidenceService,
+            JourneyMetrics metrics, ProviderCostTracker costs) {
         this.assessmentService = Objects.requireNonNull(assessmentService);
         this.narrativeService = Objects.requireNonNull(narrativeService);
         this.evidenceService = Objects.requireNonNull(evidenceService);
         this.metrics = Objects.requireNonNull(metrics);
+        this.costs = Objects.requireNonNull(costs);
     }
 
     @Override
     public UUID submit(ALevelAssessmentState state) {
+        return costs.trackAssessment("a-level", () -> submitAndEnrich(state));
+    }
+
+    private UUID submitAndEnrich(ALevelAssessmentState state) {
         UUID id = assessmentService.submitALevelAssessment(state);
         metrics.assessmentCreated("a-level");
         try {

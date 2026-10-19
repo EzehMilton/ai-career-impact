@@ -17,6 +17,7 @@ import com.chikere.futureai.report.university.application.UniversityReportAssemb
 import com.chikere.futureai.report.university.application.UniversityReportService;
 import org.springframework.beans.factory.annotation.Value;
 import com.chikere.futureai.configuration.JourneyMetrics;
+import com.chikere.futureai.cost.ProviderCostTracker;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -69,9 +70,11 @@ public class UniversityAssessmentConfiguration {
     UniversityAssessmentWorkflow universityAssessmentWorkflow(
             UniversityAssessmentService assessmentService,
             UniversityNarrativeService narrativeService,
-            UniversityEvidenceService evidenceService, ObjectProvider<JourneyMetrics> metrics) {
+            UniversityEvidenceService evidenceService, ObjectProvider<JourneyMetrics> metrics,
+            ObjectProvider<ProviderCostTracker> costs) {
         return new UniversityAssessmentWorkflow(assessmentService, narrativeService, evidenceService,
-                metrics.getIfAvailable(JourneyMetrics::disabled));
+                metrics.getIfAvailable(JourneyMetrics::disabled),
+                costs.getIfAvailable(ProviderCostTracker::disabled));
     }
 
     @Bean
