@@ -6,33 +6,55 @@
 <div th:replace="~{fragments/layout :: devBanner}"></div>
 <header th:replace="~{fragments/layout :: siteHeader('home')}"></header>
 
+<!--/*
+  Every product claim on this page is taken from the application's own behaviour:
+  the three form templates, the result templates, methodology.html and privacy.html.
+  If any of those change, re-check the matching copy here.
+
+  Prices are hard-coded below but configured per environment
+  (app.*.report.display-price). Keep them in step, or expose them to this view.
+*/-->
+
 <main class="page-shell home-shell" id="main">
+
+  <!-- ============ HERO ============ -->
   <section class="home-hero" aria-labelledby="hero-heading">
     <div class="hero-copy">
       <p class="eyebrow">AI Career &amp; Future Assessment</p>
       <h1 id="hero-heading">How will AI affect your career or education?</h1>
       <p class="home-lede">
-        Discover what AI could mean for your job, university course or A-level choices, with clear assessments and practical guidance for the future.
+        Describe your job, a university course or your A-level subjects. You'll get a free result with scores out of 10, the main reasons behind them and a plain-English explanation of what they mean.
       </p>
       <div class="hero-actions">
         <a class="button-link" href="#journeys">Choose an assessment</a>
-        <a class="text-link" th:href="@{/methodology}" href="/methodology">How this works <span aria-hidden="true">&#8599;</span></a>
+        <a class="text-link" href="#measures">See what you'll get <span aria-hidden="true">&#8595;</span></a>
       </div>
-      <p class="hero-supporting">Free assessment <span aria-hidden="true">&middot;</span> Optional detailed reports from £1.99</p>
+      <ul class="hero-facts" aria-label="Key facts">
+        <li>Free, with no sign-up or email needed</li>
+        <li>Your result is saved and won't change later</li>
+        <li>Optional detailed report from £1.99</li>
+      </ul>
     </div>
-    <div class="hero-art" aria-hidden="true">
-      <div class="orbit orbit-outer"></div>
-      <div class="orbit orbit-inner"></div>
-      <div class="orbit-core"><span>AI</span><i></i></div>
-      <span class="orbit-point orbit-point-one"></span>
-      <span class="orbit-point orbit-point-two"></span>
-      <span class="orbit-point orbit-point-three"></span>
-      <span class="orbit-label orbit-label-one">WORK</span>
-      <span class="orbit-label orbit-label-two">STUDY</span>
-      <span class="orbit-label orbit-label-three">CHOICE</span>
-    </div>
+
+    <!--/* Figures from a generated professional report (software engineer).
+           Replace with live-provider output before launch: this one came from development fixtures. */-->
+    <figure class="hero-preview">
+      <div class="preview-card">
+        <p class="preview-label">Example &middot; Professional assessment</p>
+        <p class="preview-title">Software engineer</p>
+        <dl class="preview-ratings">
+          <div><dt>AI Exposure</dt><dd><span class="meter" style="--level:48.1%" aria-hidden="true"></span><span class="preview-score">4.8</span><span class="preview-band">Moderate</span></dd></div>
+          <div><dt>Human Advantage</dt><dd><span class="meter" style="--level:66.8%" aria-hidden="true"></span><span class="preview-score">6.7</span><span class="preview-band">Moderate</span></dd></div>
+          <div><dt>AI Complementarity</dt><dd><span class="meter" style="--level:80.3%" aria-hidden="true"></span><span class="preview-score">8.0</span><span class="preview-band">High</span></dd></div>
+          <div><dt>Role Adaptability</dt><dd><span class="meter" style="--level:84.1%" aria-hidden="true"></span><span class="preview-score">8.4</span><span class="preview-band">High</span></dd></div>
+        </dl>
+        <p class="preview-note">AI Exposure describes characteristics of the work. It is not a probability that you will lose your job.</p>
+      </div>
+      <figcaption class="visually-hidden">An example professional result showing four measures scored out of 10.</figcaption>
+    </figure>
   </section>
 
+  <!-- ============ JOURNEYS ============ -->
   <section class="home-section journey-section" id="journeys" aria-labelledby="journey-heading">
     <div class="section-heading">
       <p class="eyebrow">Three distinct assessments</p>
@@ -40,11 +62,16 @@
     </div>
 
     <div class="journey-grid">
+      <!-- Professional -->
       <article class="panel journey-card journey-professional">
         <div class="journey-card-top"><span class="journey-mark" aria-hidden="true">01</span><p class="journey-for">People currently in employment</p></div>
         <h3>Professional</h3>
         <p class="journey-question">How could AI affect my current job or tasks?</p>
-        <p class="journey-description">Discover which parts of your work AI could change, which skills may become more valuable and how you can prepare for the future.</p>
+        <p class="journey-description">AI can affect people with the same job title differently, so we assess what you actually do, not just the title.</p>
+        <dl class="journey-details">
+          <div><dt>You'll tell us</dt><dd>Your job title, a description of your day-to-day work, your main responsibilities and skills. Or upload your CV and check what we extract first.</dd></div>
+          <div><dt>You'll get</dt><dd>Four measures out of 10, including AI Exposure and Human Advantage, plus what pushes your exposure up and what protects your role.</dd></div>
+        </dl>
         <div class="journey-pricing" aria-label="Professional assessment pricing">
           <p class="journey-free"><span class="journey-free-dot" aria-hidden="true"></span>Free assessment</p>
           <p class="journey-paid">Optional detailed report <strong>£4.99</strong></p>
@@ -54,11 +81,19 @@
         </p>
       </article>
 
+      <!-- University -->
       <article class="panel journey-card journey-university">
         <div class="journey-card-top"><span class="journey-mark" aria-hidden="true">02</span><p class="journey-for">Prospective and current university students</p></div>
         <h3>University</h3>
         <p class="journey-question">Is my university course preparing me for an AI-driven future?</p>
-        <p class="journey-description">Explore how your chosen course could prepare you for a changing job market and which skills may matter most.</p>
+        <ul class="journey-audiences">
+          <li><strong>Applying?</strong> Assess each course you're considering, one after another.</li>
+          <li><strong>Already studying?</strong> See which skills to build alongside your degree.</li>
+        </ul>
+        <dl class="journey-details">
+          <div><dt>You'll tell us</dt><dd>The course title, what it covers, its key modules and the skills it develops. Keep the course page or prospectus handy.</dd></div>
+          <div><dt>You'll get</dt><dd>Five measures out of 10, led by Future Readiness. We assess what the course teaches, not you or your university.</dd></div>
+        </dl>
         <div class="journey-pricing" aria-label="University assessment pricing">
           <p class="journey-free"><span class="journey-free-dot" aria-hidden="true"></span>Free assessment</p>
           <p class="journey-paid">Optional detailed report <strong>£2.99</strong></p>
@@ -68,11 +103,16 @@
         </p>
       </article>
 
+      <!-- A-level -->
       <article class="panel journey-card journey-a-level">
         <div class="journey-card-top"><span class="journey-mark" aria-hidden="true">03</span><p class="journey-for">Students choosing their A-level subjects</p></div>
         <h3>A-level</h3>
         <p class="journey-question">Which opportunities could my A-level choices open up?</p>
-        <p class="journey-description">Explore how your subject choices support university options, future careers and skills that may remain valuable as AI develops.</p>
+        <p class="journey-description"><strong>Still deciding?</strong> Check one subject combination, then check another to see how they differ.</p>
+        <dl class="journey-details">
+          <div><dt>You'll tell us</dt><dd>Just your subjects. Interests, predicted grades and career ideas are optional.</dd></div>
+          <div><dt>You'll get</dt><dd>Six measures out of 10, led by Future Optionality: how many next steps your subjects keep open. Plus the combination's strengths and skills worth building.</dd></div>
+        </dl>
         <div class="journey-pricing" aria-label="A-level assessment pricing">
           <p class="journey-free"><span class="journey-free-dot" aria-hidden="true"></span>Free assessment</p>
           <p class="journey-paid">Optional detailed report <strong>£1.99</strong></p>
@@ -84,65 +124,183 @@
     </div>
   </section>
 
+  <!-- ============ WHAT YOU'LL GET: the real measures ============ -->
+  <section class="home-section measures-section" id="measures" aria-labelledby="measures-heading">
+    <div class="section-heading">
+      <p class="eyebrow">What you'll see</p>
+      <h2 id="measures-heading">Clear measures, each with the reasons behind it.</h2>
+      <p class="section-intro">Every measure is scored from 0 to 10, given a band and explained in plain English. Each assessment answers a different question, so their scores aren't comparable with each other.</p>
+    </div>
+
+    <div class="measures-grid">
+      <article class="panel measures-card journey-professional">
+        <p class="measures-tag">Professional</p>
+        <h3>AI Exposure</h3>
+        <p class="measures-lead">How readily the work you do might be performed, automated or changed by AI.</p>
+        <p class="measures-not">Not a probability of job loss.</p>
+        <p class="measures-bands" aria-label="Bands">Low <span aria-hidden="true">&middot;</span> Moderate <span aria-hidden="true">&middot;</span> High</p>
+        <p class="measures-also-label">Also measured</p>
+        <ul class="measures-also">
+          <li>Human Advantage</li>
+          <li>AI Complementarity</li>
+          <li>Role Adaptability</li>
+        </ul>
+      </article>
+
+      <article class="panel measures-card journey-university">
+        <p class="measures-tag">University</p>
+        <h3>Future Readiness</h3>
+        <p class="measures-lead">How well a course appears to develop capabilities that stay valuable as AI tools improve.</p>
+        <p class="measures-not">Not a guarantee of employability.</p>
+        <p class="measures-bands" aria-label="Bands">Limited <span aria-hidden="true">&middot;</span> Developing <span aria-hidden="true">&middot;</span> Strong</p>
+        <p class="measures-also-label">Also measured</p>
+        <ul class="measures-also">
+          <li>Human Differentiation</li>
+          <li>AI Complementarity</li>
+          <li>Skill Transferability</li>
+          <li>Career Adaptability</li>
+        </ul>
+      </article>
+
+      <article class="panel measures-card journey-a-level">
+        <p class="measures-tag">A-level</p>
+        <h3>Future Optionality</h3>
+        <p class="measures-lead">How wide a range of next steps your subject combination keeps open.</p>
+        <p class="measures-not">Not a prediction of university admission. A focused combination can be the right choice.</p>
+        <p class="measures-bands" aria-label="Bands">Focused <span aria-hidden="true">&middot;</span> Balanced <span aria-hidden="true">&middot;</span> Broad</p>
+        <p class="measures-also-label">Also measured</p>
+        <ul class="measures-also">
+          <li>Degree Pathway Breadth</li>
+          <li>Analytical Foundation</li>
+          <li>Human and Creative Strength</li>
+          <li>Skill Transferability</li>
+          <li>AI-Era Adaptability</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ PROCESS ============ -->
   <section class="home-section process-section" aria-labelledby="process-heading">
     <div class="section-heading">
       <p class="eyebrow">A clear process</p>
       <h2 id="process-heading">How it works in four simple steps.</h2>
-      <p class="section-intro">Tell us about your job, university course or A-level subjects. You'll have a chance to review your information before we assess it.</p>
     </div>
     <ol class="process-steps">
-      <li><span class="step-index">01</span><h3>Choose an assessment</h3><p>Select your job, university course or A-level subjects.</p></li>
-      <li><span class="step-index">02</span><h3>Tell us about yourself</h3><p>Answer a few questions so we can understand your situation.</p></li>
-      <li><span class="step-index">03</span><h3>Get your free result</h3><p>See your assessment ratings, what they mean and the main factors behind your results.</p></li>
-      <li><span class="step-index">04</span><h3>Explore your future</h3><p>Get optional, more detailed guidance and a downloadable report.</p></li>
+      <li><span class="step-index">01</span><h3>Choose an assessment</h3><p>Pick the one that fits: your job, a university course or your A-level subjects.</p></li>
+      <li><span class="step-index">02</span><h3>Describe it in your own words</h3><p>No name or email needed. If you upload a CV, you check and correct what we extract before anything is assessed.</p></li>
+      <li><span class="step-index">03</span><h3>Get your free result</h3><p>Your measures, the main factors behind them and what they mean, saved at a private link you can come back to.</p></li>
+      <li><span class="step-index">04</span><h3>Go deeper if you want</h3><p>An optional report with a fuller explanation, practical next steps and a downloadable PDF.</p></li>
     </ol>
   </section>
 
+  <!-- ============ OFFER ============ -->
   <section class="home-section offer-section" aria-labelledby="offer-heading">
     <div class="section-heading">
-      <p class="eyebrow">Useful from the start</p>
+      <p class="eyebrow">Free or detailed</p>
       <h2 id="offer-heading">What's included in your assessment?</h2>
     </div>
     <div class="tier-grid home-tier-grid">
       <article class="tier tier-included">
-        <p class="eyebrow">FREE</p>
+        <p class="eyebrow">Free</p>
         <h3>Free assessment</h3>
         <ul>
-          <li>Your assessment ratings</li>
-          <li>Easy-to-understand explanations</li>
-          <li>Key strengths and challenges</li>
-          <li>Summary of your results</li>
+          <li>Every measure, with its score and band</li>
+          <li>What each measure means</li>
+          <li>The main factors behind your result</li>
+          <li>A short personalised interpretation</li>
         </ul>
       </article>
       <article class="tier tier-paid">
-        <p class="eyebrow">OPTIONAL</p>
+        <p class="eyebrow">Optional &middot; one-off payment</p>
         <h3>Detailed report</h3>
         <ul>
           <li>Everything in the free assessment</li>
-          <li>Deeper analysis of your results</li>
-          <li>Skills and areas to develop</li>
-          <li>Recommended next steps</li>
-          <li>Downloadable PDF report</li>
+          <li>A deeper explanation of each measure</li>
+          <li>Practical next steps and prioritised skills to build</li>
+          <li>Sourced external context, where we have it</li>
+          <li>A downloadable PDF to keep or share</li>
         </ul>
-        <!--/* Enable this link once a genuine, anonymised example PDF exists.
+        <p class="tier-prices">£4.99 professional <span aria-hidden="true">&middot;</span> £2.99 university <span aria-hidden="true">&middot;</span> £1.99 A-level</p>
+        <!--/* Enable once a sample generated with live providers exists. The current example PDF is a
+               development-fixture report (it says so on the cover) and isn't suitable to publish.
         <p class="sample-report-link">
           <a th:href="@{/samples/sample-report.pdf}" href="/samples/sample-report.pdf" target="_blank" rel="noopener noreferrer">
-            View sample report <span aria-hidden="true">&#8599;</span>
+            View a sample report <span aria-hidden="true">&#8599;</span>
           </a>
         </p>
         */-->
       </article>
     </div>
-    <p class="same-assessment-note">Your assessment ratings stay the same. The optional report provides more detailed explanations and practical recommendations based on your results.</p>
+    <p class="same-assessment-note">Your scores are the same either way. Paying adds depth and explanation. It doesn't buy a more accurate or more favourable result.</p>
   </section>
 
+  <!-- ============ TRUST ============ -->
   <section class="trust-panel" aria-labelledby="trust-heading">
     <span class="trust-symbol" aria-hidden="true">i</span>
     <div>
-      <p class="eyebrow">A note on what this means</p>
-      <h2 id="trust-heading">Guidance to help you make informed decisions.</h2>
-      <p>Our assessments explore how AI may influence different jobs, university courses and subject choices. They provide useful insights and guidance, but cannot predict your individual future or guarantee particular outcomes.</p>
-      <a class="text-link" th:href="@{/methodology}" href="/methodology">Read how this works <span aria-hidden="true">&#8594;</span></a>
+      <p class="eyebrow">How results are produced</p>
+      <h2 id="trust-heading">No black box, and no overall verdict from AI.</h2>
+      <p>Our assessments explore how AI may influence jobs, university courses and subject choices. They can help you make informed decisions, but cannot predict your individual future or guarantee particular outcomes.</p>
+      <ul class="trust-points">
+        <li>
+          <h3>AI answers narrow questions</h3>
+          <p>An AI model rates what you described against a fixed set of specific questions, each with a scale written out in advance. It never gives an overall verdict.</p>
+        </li>
+        <li>
+          <h3>Fixed rules produce the scores</h3>
+          <p>Ordinary code combines those ratings using published, versioned weights. The written explanation comes afterwards and can't change a number.</p>
+        </li>
+        <li>
+          <h3>What we won't do</h3>
+          <p>Predict job loss or admission, rank courses or universities, invent statistics, or tell you to change your subjects or career.</p>
+        </li>
+      </ul>
+      <a class="text-link" th:href="@{/methodology}" href="/methodology">Read the full methodology <span aria-hidden="true">&#8594;</span></a>
+    </div>
+  </section>
+
+  <!-- ============ PARENTS & ADVISERS ============ -->
+  <section class="home-section parents-section panel" aria-labelledby="parents-heading">
+    <div>
+      <p class="eyebrow">For parents, carers and advisers</p>
+      <h2 id="parents-heading">Helping a young person choose?</h2>
+      <p>The A-level assessment works well completed together. It only needs a list of subjects and asks for no name or email. It describes the subjects, not the student's ability, and never tells anyone to change their choices. Use it as a starting point for conversations, alongside advice from teachers and careers advisers.</p>
+    </div>
+    <a class="button-link button-secondary" th:href="@{/a-level-assessment}" href="/a-level-assessment">Try the A-level assessment <span aria-hidden="true">&#8594;</span></a>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section class="home-section faq-section" aria-labelledby="faq-heading">
+    <div class="section-heading">
+      <p class="eyebrow">Common questions</p>
+      <h2 id="faq-heading">Before you start.</h2>
+    </div>
+    <div class="faq-list">
+      <details>
+        <summary>Will it tell me whether I'll lose my job?</summary>
+        <p>No. Nobody can predict that for an individual. AI Exposure describes characteristics of your work, such as how much of it is digital or repetitive. It sits alongside measures of where human skills remain important and how your role could adapt.</p>
+      </details>
+      <details>
+        <summary>Is this just a chatbot's opinion?</summary>
+        <p>No. AI is used for narrow, structured ratings, not a verdict. Your scores come from fixed weights applied in code, and every result records the methodology version that produced it. The weights are our own: a transparent starting point, not validated economic or educational science. <a class="text-link" th:href="@{/methodology}" href="/methodology">See exactly how it works</a>.</p>
+      </details>
+      <details>
+        <summary>Do I need an account?</summary>
+        <p>No, and we don't ask for your name or email. Each result is saved at a long, private link, so bookmark it to come back later. Anyone with the link can open it, so don't share it publicly.</p>
+      </details>
+      <details>
+        <summary>Can I compare courses or subject combinations?</summary>
+        <p>Yes. Run the assessment again with a different course or combination. Each one is saved separately at its own link. Scores from different assessment types (say, a university score and an A-level score) measure different things and shouldn't be compared.</p>
+      </details>
+      <details>
+        <summary>What happens to my CV if I upload one?</summary>
+        <p>We read the PDF or Word file in memory and remove email addresses, phone numbers, links and postcodes before AI turns it into a short work profile. You review and correct that profile before anything is assessed. We don't keep the original file. <a class="text-link" th:href="@{/privacy}" href="/privacy">How we handle your information</a></p>
+      </details>
+      <details>
+        <summary>How do I pay for a detailed report?</summary>
+        <p>It's a one-off payment, made after you've seen your free result, through Stripe's secure checkout. We never see your card details, and there's no subscription.</p>
+      </details>
     </div>
   </section>
 

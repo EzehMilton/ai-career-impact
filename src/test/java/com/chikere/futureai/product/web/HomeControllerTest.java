@@ -29,7 +29,9 @@ class HomeControllerTest {
 
         assertThat(html).contains("AI Career &amp; Future Assessment",
                 "How will AI affect your career or education?",
-                "clear assessments and practical guidance");
+                "the main reasons behind them and a plain-English explanation");
+        // The visitor learns the practical terms before starting.
+        assertThat(html).contains("no sign-up or email needed", "saved and won't change later");
         assertThat(html).contains("<title>Understand how AI may affect your choices | AI Career Impact</title>");
     }
 
@@ -40,27 +42,35 @@ class HomeControllerTest {
         assertThat(html).contains("Choose the question that matters to you.");
         // Each distinct journey carries its question, description and route-specific action.
         assertThat(html).contains("Professional", "How could AI affect my current job or tasks?",
-                "skills may become more valuable", "Assess my job");
+                "what you actually do, not just the title", "upload your CV", "Assess my job");
         assertThat(html).contains("University",
                 "Is my university course preparing me for an AI-driven future?",
-                "changing job market", "Assess a course");
+                "Already studying?", "not you or your university", "Assess a course");
         assertThat(html).contains("A-level", "Which opportunities could my A-level choices open up?",
-                "university options, future careers", "Assess my choices");
+                "Just your subjects", "Assess my choices");
 
         assertThat(html).contains("href=\"/professional-assessment\"");
         assertThat(html).contains("href=\"/university-assessment\"");
         assertThat(html).contains("href=\"/a-level-assessment\"");
-        // No jargon, and no technical measure names on the landing page.
-        assertThat(html).doesNotContain("journey type", "JourneyType", "AI Exposure", "Future Readiness",
-                "Future Optionality", "Human Advantage", "Skill Transferability");
+        // No internal jargon. Measure names now appear deliberately, each with a plain-English
+        // definition and what it is not, so visitors know what they will receive.
+        assertThat(html).doesNotContain("journey type", "JourneyType");
+        assertThat(html).contains("Not a probability of job loss.", "Not a guarantee of employability.",
+                "Not a prediction of university admission.",
+                "so their scores aren't comparable with each other");
     }
 
     @Test
     void theHomePageIsHonestAboutFreePaidAndWhatAScoreIsNot() throws Exception {
         String html = mvc.perform(get("/")).andReturn().getResponse().getContentAsString();
 
-        assertThat(html).contains("Free assessment", "Detailed report", "£1.99", "Downloadable PDF");
-        assertThat(html).contains("Your assessment ratings stay the same. The optional report provides more detailed explanations and practical recommendations based on your results.");
+        assertThat(html).contains("Free assessment", "Detailed report", "£1.99", "downloadable PDF",
+                "one-off payment");
+        assertThat(html).contains("Your scores are the same either way. Paying adds depth and explanation. "
+                + "It doesn't buy a more accurate or more favourable result.");
+        // How results are produced is stated plainly, including the limits of the weights.
+        assertThat(html).contains("It never gives an overall verdict.",
+                "a transparent starting point, not validated economic or educational science");
         assertThat(html).contains("cannot predict your individual future or guarantee particular outcomes");
         // None of the hype the product deliberately avoids.
         assertThat(html).doesNotContain("AI-proof", "Beat AI", "future-proof", "Future-proof",
