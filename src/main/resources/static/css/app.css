@@ -1614,3 +1614,119 @@ dd { margin: 0; font-weight: 700; text-align: right; }
   .home-shell .hero-preview::before { inset: -4% 0; }
   .home-shell .parents-section .button-link { width: 100%; justify-content: space-between; }
 }
+
+/* ---------- home hero sample: HTML/CSS-only interaction ---------- */
+.home-shell .preview-choice {
+  /* Uses the existing visually-hidden pattern while remaining keyboard-focusable. */
+}
+
+.home-shell .preview-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .4rem;
+  margin-bottom: .7rem;
+}
+
+.home-shell .preview-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.4rem;
+  padding: .5rem .55rem;
+  border: 1px solid var(--border);
+  border-radius: .6rem;
+  background: rgba(255, 255, 255, .025);
+  color: var(--ink-subtle);
+  font-size: .76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color .16s ease, background .16s ease, color .16s ease;
+}
+
+.home-shell .preview-tab:hover {
+  border-color: var(--border-strong);
+  background: rgba(132, 149, 255, .08);
+  color: var(--ink-strong);
+}
+
+.home-shell #preview-professional:checked ~ .preview-tabs label[for="preview-professional"],
+.home-shell #preview-university:checked ~ .preview-tabs label[for="preview-university"],
+.home-shell #preview-a-level:checked ~ .preview-tabs label[for="preview-a-level"] {
+  border-color: #7184e9;
+  background: rgba(100, 123, 244, .15);
+  color: var(--ink-strong);
+}
+
+.home-shell #preview-professional:focus-visible ~ .preview-tabs label[for="preview-professional"],
+.home-shell #preview-university:focus-visible ~ .preview-tabs label[for="preview-university"],
+.home-shell #preview-a-level:focus-visible ~ .preview-tabs label[for="preview-a-level"] {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.home-shell .preview-journey { display: none; }
+
+.home-shell #preview-professional:checked ~ .preview-card .preview-professional-content,
+.home-shell #preview-university:checked ~ .preview-card .preview-university-content,
+.home-shell #preview-a-level:checked ~ .preview-card .preview-a-level-content {
+  display: block;
+}
+
+.home-shell .preview-measure {
+  margin: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: .65rem;
+  background: transparent;
+}
+
+.home-shell .preview-measure + .preview-measure { margin-top: .35rem; }
+
+.home-shell .preview-measure[open] {
+  border-color: color-mix(in srgb, var(--brand-accent) 42%, var(--border));
+  background: rgba(100, 123, 244, .06);
+}
+
+.home-shell .preview-measure summary {
+  display: grid;
+  gap: .3rem;
+  padding: .55rem .6rem;
+  cursor: pointer;
+  list-style: none;
+  border-radius: .65rem;
+}
+
+.home-shell .preview-measure summary::-webkit-details-marker { display: none; }
+.home-shell .preview-measure summary::marker { content: ""; }
+
+.home-shell .preview-measure summary:hover {
+  background: rgba(255, 255, 255, .025);
+}
+
+.home-shell .preview-measure-name {
+  color: var(--ink-muted);
+  font-size: .86rem;
+  font-weight: 550;
+}
+
+.home-shell .preview-measure[open] .preview-measure-name { color: var(--ink-strong); }
+
+.home-shell .preview-measure-result {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+}
+
+.home-shell .preview-measure > p {
+  margin: 0;
+  padding: 0 .6rem .7rem;
+  color: var(--ink-subtle);
+  font-size: .82rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 42rem) {
+  .home-shell .preview-tabs {
+    grid-template-columns: 1fr;
+  }
+}
