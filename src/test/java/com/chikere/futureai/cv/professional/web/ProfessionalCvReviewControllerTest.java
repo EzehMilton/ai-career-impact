@@ -6,16 +6,20 @@ import com.chikere.futureai.assessment.professional.application.ProfessionalAsse
 import com.chikere.futureai.cv.professional.application.*;
 import com.chikere.futureai.security.WebSecurityConfiguration;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.net.ConnectException;
 import java.time.Instant;
 import java.util.List;
 import java.util.OptionalInt;
@@ -29,6 +33,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ProfessionalCvReviewController.class)
+@ExtendWith(OutputCaptureExtension.class)
 @Import({WebSecurityConfiguration.class, ProfessionalProfileEditMapper.class,
         ProfessionalProfileValidator.class, ProfessionalProfileAssessmentMapper.class})
 class ProfessionalCvReviewControllerTest {
@@ -84,6 +89,29 @@ class ProfessionalCvReviewControllerTest {
         assertThat(state.getValue().profession()).isEqualTo("Software Architect");
         assertThat(state.getValue().skills()).containsExactly("Architecture", "Communication", "Payments");
         assertThat(session.getAttribute(ProfessionalCvSession.PROFILE)).isNull();
+    }
+
+    @Test
+    void aFailedConfirmationLogsTheRootCauseClassButNoMessages(CapturedOutput output) throws Exception {
+        when(workflow.submit(any(), any())).thenThrow(new IllegalStateException("outer secret",
+                new RuntimeException("middle secret", new ConnectException("inner secret"))));
+
+        mvc.perform(post("/professional-assessment/cv/confirm").session(session()).with(csrf()))
+                .andExpect(status().isServiceUnavailable());
+
+        assertThat(output.getAll())
+                .contains("Professional profile confirmation failed failureType=IllegalStateException rootCause=ConnectException")
+                .doesNotContain("secret");
+    }
+
+    @Test
+    void aFailureWithoutACauseLogsNone(CapturedOutput output) throws Exception {
+        when(workflow.submit(any(), any())).thenThrow(new IllegalStateException("no cause"));
+
+        mvc.perform(post("/professional-assessment/cv/confirm").session(session()).with(csrf()))
+                .andExpect(status().isServiceUnavailable());
+
+        assertThat(output.getAll()).contains("failureType=IllegalStateException rootCause=none");
     }
 
     @Test

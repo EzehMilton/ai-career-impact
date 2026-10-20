@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.NestedExceptionUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -81,8 +82,10 @@ public final class ProfessionalCvReviewController {
             return "redirect:/professional-assessment/" + id;
         }
         catch (RuntimeException exception) {
-            LOGGER.error("Professional profile confirmation failed failureType={}",
-                    exception.getClass().getSimpleName());
+            // Class names only: the root cause (e.g. ConnectException, SSLHandshakeException) says why, without messages.
+            Throwable rootCause = NestedExceptionUtils.getRootCause(exception);
+            LOGGER.error("Professional profile confirmation failed failureType={} rootCause={}",
+                    exception.getClass().getSimpleName(), rootCause == null ? "none" : rootCause.getClass().getSimpleName());
             response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
             return "professional-assessment/error";
         }
