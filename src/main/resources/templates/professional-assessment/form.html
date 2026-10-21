@@ -7,88 +7,66 @@
 <header th:replace="~{fragments/layout :: siteHeader('professional')}"></header>
 
 <main class="page-shell professional-assessment-page" id="main">
-  <div class="page-header">
-    <p class="eyebrow">Professional assessment</p>
-    <h1>How will AI affect the work you do?</h1>
-    <p class="intro">AI may affect people with the same job title differently. Tell us what you do in your day-to-day work so we can assess which activities AI could change and where your skills may remain valuable.</p>
-  </div>
-
-  <section class="alert alert-info professional-before" aria-labelledby="who-heading">
-    <h2 id="who-heading">Before you begin</h2>
-    <p>This assessment is for people who are working or have a role they can describe. You'll need to tell us about your job, main responsibilities and the skills you use.</p>
-    <p>You can enter these details yourself or upload your CV to help fill them in. If you upload a CV, you'll be able to review and correct the extracted information before the assessment begins.</p>
-  </section>
-
-  <section class="panel input-choice" aria-labelledby="input-heading">
-    <h2 id="input-heading">Choose how to begin</h2>
-    <p class="helper input-choice-intro">Both options lead to the same free assessment. Choose whichever is easier for you.</p>
-    <div class="input-options">
-      <div class="professional-entry-option">
-        <h3>Enter my details</h3>
-        <p class="helper">Describe your day-to-day work, responsibilities and skills using the form below.</p>
-        <a class="button-link button-secondary" href="#form-heading">Enter details manually <span aria-hidden="true">&#8594;</span></a>
-      </div>
-      <form class="cv-upload" th:action="@{/professional-assessment/cv}" method="post" enctype="multipart/form-data">
-        <h3>Upload my CV</h3>
-        <p class="helper">We'll extract relevant work details for you to review and edit before your assessment.</p>
-        <p class="helper">PDF or DOCX, maximum 5 MiB. We do not retain the raw file.</p>
-        <label for="cv">Choose a CV file <span class="required">Required</span></label>
-        <input id="cv" name="cv" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required aria-describedby="cv-privacy">
-        <p class="helper" id="cv-privacy">Your CV is used to extract work details. <a th:href="@{/privacy}" href="/privacy">How we handle your information</a>.</p>
-        <button type="submit">Extract details from my CV</button>
-      </form>
+    <div class="page-header">
+        <p class="eyebrow">Professional assessment</p>
+        <h1>How will AI affect the work you do?</h1>
+        <p class="intro">AI may affect people with the same job title differently. Tell us what you do in your day-to-day work so we can assess which activities AI could change and where your skills may remain valuable.</p>
     </div>
-    <p class="field-error" role="alert" th:if="${cvError}" th:text="${cvError}"></p>
-    <p th:if="${cvError}"><a href="#form-heading">Enter my details manually instead</a></p>
-  </section>
 
-  <section class="panel work-form" aria-labelledby="form-heading">
-    <h2 id="form-heading">Tell us about your work</h2>
-    <p class="helper">Focus on what you actually do, rather than just your job title. Examples are provided to help you get started.</p>
-    <form th:action="@{/professional-assessment}" th:object="${form}" method="post" novalidate>
-      <div class="field">
-        <label for="profession">Job title <span class="required">Required</span></label>
-        <p class="helper" id="profession-help">For example: Software Engineer, Project Manager or Care Assistant.</p>
-        <input id="profession" type="text" th:field="*{profession}" maxlength="120" autocomplete="organization-title" placeholder="e.g. Software Engineer" aria-describedby="profession-help profession-error" th:attr="aria-invalid=${#fields.hasErrors('profession')}">
-        <p id="profession-error" class="field-error" th:if="${#fields.hasErrors('profession')}" th:errors="*{profession}"></p>
-      </div>
+    <section class="alert alert-info professional-before" aria-labelledby="who-heading">
+        <h2 id="who-heading">Before you begin</h2>
+        <p>This assessment is for people who are working or have a role they can describe. You'll need to tell us about your job, day-to-day work, main responsibilities and the skills you use.</p>
+        <p>The more specific you can be about what you actually do, the more useful your assessment can be. Focus on your real work rather than what someone with your job title might usually do.</p>
+    </section>
 
-      <div class="field">
-        <label for="workDescription">Describe your day-to-day work <span class="required">Required</span></label>
-        <p id="workDescription-help" class="helper">What do you do, what decisions do you make, and who do you work with? For example: “I discuss requirements with clients, develop and review software, help colleagues solve problems and make technical decisions.”</p>
-        <textarea id="workDescription" th:field="*{workDescription}" rows="4" minlength="40" maxlength="4000" placeholder="Describe a typical working day in your own words..." aria-describedby="workDescription-help workDescription-error" th:attr="aria-invalid=${#fields.hasErrors('workDescription')}"></textarea>
-        <p id="workDescription-error" class="field-error" th:if="${#fields.hasErrors('workDescription')}" th:errors="*{workDescription}"></p>
-      </div>
+    <section class="panel work-form" aria-labelledby="form-heading">
+        <h2 id="form-heading">Tell us about your work</h2>
+        <p class="helper">Focus on what you actually do, rather than just your job title. The prompts and examples below are there to help you give enough detail for a useful assessment.</p>
 
-      <div class="field">
-        <label for="responsibilities">Main responsibilities <span class="required">Required</span></label>
-        <p id="responsibilities-help" class="helper">List your main responsibilities, one per line. For example: Review technical designs; Meet clients to discuss requirements; Resolve production issues.</p>
-        <textarea id="responsibilities" th:field="*{responsibilities}" rows="4" maxlength="4000" placeholder="Write one responsibility on each line" aria-describedby="responsibilities-help responsibilities-error" th:attr="aria-invalid=${#fields.hasErrors('responsibilities')}"></textarea>
-        <p id="responsibilities-error" class="field-error" th:if="${#fields.hasErrors('responsibilities')}" th:errors="*{responsibilities}"></p>
-      </div>
+        <form th:action="@{/professional-assessment}" th:object="${form}" method="post" novalidate>
+            <div class="field">
+                <label for="profession">Job title <span class="required">Required</span></label>
+                <p class="helper" id="profession-help">For example: Software Engineer, Project Manager or Care Assistant.</p>
+                <input id="profession" type="text" th:field="*{profession}" maxlength="120" autocomplete="organization-title" placeholder="e.g. Software Engineer" aria-describedby="profession-help profession-error" th:attr="aria-invalid=${#fields.hasErrors('profession')}">
+                <p id="profession-error" class="field-error" th:if="${#fields.hasErrors('profession')}" th:errors="*{profession}"></p>
+            </div>
 
-      <div class="field">
-        <label for="skills">Skills you use in your job <span class="required">Required</span></label>
-        <p id="skills-help" class="helper">Include practical and people skills, one per line. For example: Problem solving; Communication; Java programming; Team leadership.</p>
-        <textarea id="skills" th:field="*{skills}" rows="3" maxlength="2000" placeholder="Write one skill on each line" aria-describedby="skills-help skills-error" th:attr="aria-invalid=${#fields.hasErrors('skills')}"></textarea>
-        <p id="skills-error" class="field-error" th:if="${#fields.hasErrors('skills')}" th:errors="*{skills}"></p>
-      </div>
+            <div class="field">
+                <label for="workDescription">Describe your day-to-day work <span class="required">Required</span></label>
+                <p id="workDescription-help" class="helper">Describe what you spend your time doing, the decisions you make and the people you work with. For example: “I discuss requirements with clients, develop and review software, help colleagues solve problems and make technical decisions.”</p>
+                <textarea id="workDescription" th:field="*{workDescription}" rows="4" minlength="40" maxlength="4000" placeholder="Describe a typical working day in your own words..." aria-describedby="workDescription-help workDescription-error" th:attr="aria-invalid=${#fields.hasErrors('workDescription')}"></textarea>
+                <p id="workDescription-error" class="field-error" th:if="${#fields.hasErrors('workDescription')}" th:errors="*{workDescription}"></p>
+            </div>
 
-      <div class="field field-short">
-        <label for="yearsOfExperience">Years of experience <span class="optional">Optional</span></label>
-        <p id="yearsOfExperience-help" class="helper">In this role or similar work.</p>
-        <input id="yearsOfExperience" type="number" th:field="*{yearsOfExperience}" min="0" max="70" inputmode="numeric" placeholder="e.g. 5" aria-describedby="yearsOfExperience-help yearsOfExperience-error" th:attr="aria-invalid=${#fields.hasErrors('yearsOfExperience')}">
-        <p id="yearsOfExperience-error" class="field-error" th:if="${#fields.hasErrors('yearsOfExperience')}" th:errors="*{yearsOfExperience}"></p>
-      </div>
+            <div class="field">
+                <label for="responsibilities">Main responsibilities <span class="required">Required</span></label>
+                <p id="responsibilities-help" class="helper">List your main responsibilities, one per line. Include recurring work, responsibilities that require judgement, and anything where you are responsible for an outcome. For example: Review technical designs; Meet clients to discuss requirements; Resolve production issues.</p>
+                <textarea id="responsibilities" th:field="*{responsibilities}" rows="4" maxlength="4000" placeholder="Write one responsibility on each line" aria-describedby="responsibilities-help responsibilities-error" th:attr="aria-invalid=${#fields.hasErrors('responsibilities')}"></textarea>
+                <p id="responsibilities-error" class="field-error" th:if="${#fields.hasErrors('responsibilities')}" th:errors="*{responsibilities}"></p>
+            </div>
 
-      <button type="submit">Assess my work</button>
-      <p class="helper">Your assessment is free. You can choose to buy a more detailed report after seeing your results.</p>
-    </form>
-  </section>
+            <div class="field">
+                <label for="skills">Skills you use in your job <span class="required">Required</span></label>
+                <p id="skills-help" class="helper">Include technical, practical and people skills, one per line. For example: Problem solving; Communication; Java programming; Team leadership.</p>
+                <textarea id="skills" th:field="*{skills}" rows="3" maxlength="2000" placeholder="Write one skill on each line" aria-describedby="skills-help skills-error" th:attr="aria-invalid=${#fields.hasErrors('skills')}"></textarea>
+                <p id="skills-error" class="field-error" th:if="${#fields.hasErrors('skills')}" th:errors="*{skills}"></p>
+            </div>
 
-  <p class="page-action professional-return-link">
-    <a class="button-link button-secondary" th:href="@{/}" href="/">&#8592; Back to home</a>
-  </p>
+            <div class="field field-short">
+                <label for="yearsOfExperience">Years of experience <span class="optional">Optional</span></label>
+                <p id="yearsOfExperience-help" class="helper">In this role or similar work.</p>
+                <input id="yearsOfExperience" type="number" th:field="*{yearsOfExperience}" min="0" max="70" inputmode="numeric" placeholder="e.g. 5" aria-describedby="yearsOfExperience-help yearsOfExperience-error" th:attr="aria-invalid=${#fields.hasErrors('yearsOfExperience')}">
+                <p id="yearsOfExperience-error" class="field-error" th:if="${#fields.hasErrors('yearsOfExperience')}" th:errors="*{yearsOfExperience}"></p>
+            </div>
+
+            <button type="submit">Assess my work</button>
+            <p class="helper">Your assessment is free. You can choose to buy a more detailed report after seeing your results.</p>
+        </form>
+    </section>
+
+    <p class="page-action professional-return-link">
+        <a class="button-link button-secondary" th:href="@{/}" href="/">&#8592; Back to home</a>
+    </p>
 </main>
 
 <footer th:replace="~{fragments/layout :: siteFooter}"></footer>

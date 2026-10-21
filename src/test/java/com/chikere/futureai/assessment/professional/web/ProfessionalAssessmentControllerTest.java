@@ -9,7 +9,6 @@ import com.chikere.futureai.report.professional.application.*;
 import com.chikere.futureai.report.professional.web.ProfessionalReportViewMapper;
 import com.chikere.futureai.payment.professional.application.*;
 import com.chikere.futureai.security.WebSecurityConfiguration;
-import com.chikere.futureai.cv.professional.web.ProfessionalCvSession;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentCaptor;
@@ -18,7 +17,6 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.mock.web.MockHttpSession;
 
 import java.time.Instant;
 import java.util.*;
@@ -66,31 +64,6 @@ class ProfessionalAssessmentControllerTest {
         verify(workflow).submit(state.capture(), metadata.capture());
         assertThat(state.getValue().profession()).isEqualTo("Software Architect");
         assertThat(metadata.getValue()).isEqualTo(ProfessionalAssessmentInputMetadata.manual());
-    }
-
-    @Test
-    void manualPostCannotBypassCvReviewOrClaimCvProvenance() throws Exception {
-        var session = new MockHttpSession();
-        var metadata = ProfessionalAssessmentInputMetadata.cvUpload("safe-cv.pdf", "application/pdf",
-                "professional-cv-parser-v1", "professional-cv-extractor-v2", Instant.parse("2026-10-01T08:00:00Z"));
-        session.setAttribute(ProfessionalCvSession.INPUT_METADATA, metadata);
-        session.setAttribute(ProfessionalCvSession.PROFILE, "unexpected stale profile");
-        when(workflow.submit(any(), any())).thenReturn(ID);
-
-        mvc.perform(validPost().session(session).with(csrf()).with(request -> {
-                    request.setParameter("profession", "Edited Architect");
-                    return request;
-                }))
-                .andExpect(status().is3xxRedirection());
-
-        ArgumentCaptor<ProfessionalAssessmentState> state = ArgumentCaptor.forClass(ProfessionalAssessmentState.class);
-        ArgumentCaptor<ProfessionalAssessmentInputMetadata> provenance =
-                ArgumentCaptor.forClass(ProfessionalAssessmentInputMetadata.class);
-        verify(workflow).submit(state.capture(), provenance.capture());
-        assertThat(state.getValue().profession()).isEqualTo("Edited Architect");
-        assertThat(provenance.getValue()).isEqualTo(ProfessionalAssessmentInputMetadata.manual());
-        assertThat(session.getAttribute(ProfessionalCvSession.INPUT_METADATA)).isNull();
-        assertThat(session.getAttribute(ProfessionalCvSession.PROFILE)).isNull();
     }
 
     @Test

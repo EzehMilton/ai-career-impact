@@ -61,11 +61,6 @@ public final class ProviderCostTracker {
         return track("assessment", journey, submission, UUID::toString);
     }
 
-    /** Runs a CV profile extraction, which happens in its own request before any assessment exists. */
-    public <T> T trackCvExtraction(Supplier<T> extraction) {
-        return track("cv-extraction", "professional", extraction, ignored -> "none");
-    }
-
     private <T> T track(String operation, String journey, Supplier<T> work, Function<T, String> reference) {
         if (rates == null || current.get() != null) {
             // Disabled, or already inside a tracked unit whose own line will include these calls.

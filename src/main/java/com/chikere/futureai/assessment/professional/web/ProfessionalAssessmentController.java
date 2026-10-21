@@ -3,7 +3,6 @@ package com.chikere.futureai.assessment.professional.web;
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentUseCase;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentInputMetadata;
-import com.chikere.futureai.cv.professional.web.ProfessionalCvSession;
 import com.chikere.futureai.report.professional.application.ProfessionalReportQuery;
 import com.chikere.futureai.report.professional.application.ProfessionalReportTier;
 import com.chikere.futureai.report.professional.web.ProfessionalReportViewMapper;
@@ -11,7 +10,6 @@ import com.chikere.futureai.payment.professional.application.ProfessionalReportP
 import com.chikere.futureai.payment.professional.web.ProfessionalPurchaseViewModel;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -51,9 +49,7 @@ public final class ProfessionalAssessmentController {
     }
 
     @GetMapping("/professional-assessment")
-    public String showForm(Model model, HttpSession session) {
-        session.removeAttribute(ProfessionalCvSession.INPUT_METADATA);
-        session.removeAttribute(ProfessionalCvSession.PROFILE);
+    public String showForm(Model model) {
         model.addAttribute("form", new ProfessionalAssessmentForm());
         return FORM_VIEW;
     }
@@ -63,7 +59,6 @@ public final class ProfessionalAssessmentController {
             @Valid @ModelAttribute("form") ProfessionalAssessmentForm form,
             BindingResult bindingResult,
             Model model,
-            HttpSession session,
             HttpServletResponse response) {
         if (bindingResult.hasErrors()) {
             return FORM_VIEW;
@@ -71,8 +66,6 @@ public final class ProfessionalAssessmentController {
         try {
             ProfessionalAssessmentState state = formMapper.toState(form);
             UUID id = workflow.submit(state, ProfessionalAssessmentInputMetadata.manual());
-            session.removeAttribute(ProfessionalCvSession.INPUT_METADATA);
-            session.removeAttribute(ProfessionalCvSession.PROFILE);
             return "redirect:/professional-assessment/" + id;
         }
         catch (RuntimeException exception) {

@@ -10,7 +10,7 @@
   <header class="page-header privacy-hero">
     <p class="eyebrow">Your information</p>
     <h1>How we handle your information</h1>
-    <p class="intro">A straightforward explanation of what the application saves, what happens when you upload a CV, and when external services are involved.</p>
+    <p class="intro">A straightforward explanation of what the application saves and when external services are involved.</p>
   </header>
 
   <aside class="privacy-notice" aria-labelledby="privacy-notice-title">
@@ -24,7 +24,6 @@
   <nav class="privacy-contents" aria-label="On this page">
     <strong>On this page</strong>
     <a href="#stored">What we save</a>
-    <a href="#cv">CV uploads</a>
     <a href="#payment">Payments</a>
     <a href="#providers">External services</a>
     <a href="#access">Access to results</a>
@@ -56,42 +55,15 @@
     </div>
   </section>
 
-  <section class="privacy-section" id="cv" aria-labelledby="cv-heading">
-    <div class="privacy-section-heading">
-      <p class="eyebrow">02 / Professional assessments</p>
-      <h2 id="cv-heading">What happens when you upload a CV</h2>
-      <p>Your CV is used to prepare a work profile that you can review before an assessment begins.</p>
-    </div>
-    <ol class="privacy-process">
-      <li class="panel privacy-process-step">
-        <span class="privacy-step-number" aria-hidden="true">1</span>
-        <div><h3>Read your document</h3><p>The PDF or DOCX file is read in memory and text is extracted.</p></div>
-      </li>
-      <li class="panel privacy-process-step">
-        <span class="privacy-step-number" aria-hidden="true">2</span>
-        <div><h3>Remove some contact details</h3><p>Before sending the text to the configured AI extraction provider, the application removes email addresses, phone numbers, web links and postcodes. Other information, including your name, may remain.</p></div>
-      </li>
-      <li class="panel privacy-process-step">
-        <span class="privacy-step-number" aria-hidden="true">3</span>
-        <div><h3>Review the extracted profile</h3><p>AI organises the text into a structured role, summary, responsibilities, skills and experience. You can correct this information before continuing.</p></div>
-      </li>
-      <li class="panel privacy-process-step">
-        <span class="privacy-step-number" aria-hidden="true">4</span>
-        <div><h3>Save your confirmed input</h3><p>The application saves the profile you confirm, plus the fact that it came from an upload, the sanitised filename, file type and parsing time. The original CV file and its raw extracted text are not retained by the application.</p></div>
-      </li>
-    </ol>
-    <div class="privacy-quiet-note"><strong>Important distinction.</strong> Removing contact details does not make CV text anonymous. The statement about not retaining the file describes this application's handling; the AI provider may have its own processing and retention practices, which need to be disclosed in the production privacy notice.</div>
-  </section>
-
   <div class="privacy-split">
     <section class="panel privacy-section privacy-compact" id="payment" aria-labelledby="payment-heading">
-      <p class="eyebrow">03 / Purchases</p>
+      <p class="eyebrow">02 / Purchases</p>
       <h2 id="payment-heading">How payments work</h2>
       <p>Card details are entered on Stripe's hosted checkout page, rather than into this application. The application keeps payment references from Stripe to confirm purchases; it does not receive or store card details.</p>
       <p>In the described development mode, payments are simulated and no card details are requested.</p>
     </section>
     <section class="panel privacy-section privacy-compact" id="access" aria-labelledby="access-heading">
-      <p class="eyebrow">04 / Your results</p>
+      <p class="eyebrow">03 / Your results</p>
       <h2 id="access-heading">How you access your results</h2>
       <p>There are currently no user accounts. Each assessment can be reopened using its long, hard-to-guess link; there is no public page listing assessments.</p>
       <p><strong>Keep your result link private.</strong> Anyone who has the link may be able to open your assessment. Link-only access is a current limitation, not a substitute for all account and security controls.</p>
@@ -100,13 +72,12 @@
 
   <section class="privacy-section" id="providers" aria-labelledby="providers-heading">
     <div class="privacy-section-heading">
-      <p class="eyebrow">05 / Other services</p>
+      <p class="eyebrow">04 / Other services</p>
       <h2 id="providers-heading">When external services are involved</h2>
       <p>When live integrations are enabled, the application sends relevant information to providers that perform particular tasks. It does not send a result-page link or an entire saved assessment record as part of the described flow.</p>
     </div>
     <div class="panel privacy-provider-wrap">
       <div class="privacy-provider-row privacy-provider-head" aria-hidden="true"><span>Service</span><span>Why it's used and what it receives</span></div>
-      <div class="privacy-provider-row"><strong>CV profile extraction</strong><p>Processes CV text after the listed contact details have been removed, to create a profile for your review.</p></div>
       <div class="privacy-provider-row"><strong>AI assessment and explanation</strong><p>Receives relevant information about the work, course or subjects you described, so it can provide structured judgments and explanations.</p></div>
       <div class="privacy-provider-row"><strong>Published-data sources</strong><p>May receive an occupation or subject reference to look up external statistics or factual context.</p></div>
       <div class="privacy-provider-row"><strong>Stripe</strong><p>Handles hosted checkout and payment processing when you buy a full report.</p></div>
@@ -116,12 +87,12 @@
 
   <section class="privacy-section" id="promises" aria-labelledby="promises-heading">
     <div class="privacy-section-heading">
-      <p class="eyebrow">06 / Boundaries</p>
+      <p class="eyebrow">05 / Boundaries</p>
       <h2 id="promises-heading">What we don't do</h2>
     </div>
     <div class="panel privacy-boundaries">
       <ul>
-        <li>We do not require your name, email address or date of birth to complete an assessment. Free-text answers and CVs may still contain personal information.</li>
+        <li>We do not require your name, email address or date of birth to complete an assessment. Free-text answers may still contain personal information.</li>
         <li>The application is described as having no advertising, analytics or third-party tracking.</li>
         <li>We do not sell assessment information. Relevant information may be shared with service providers as described above.</li>
         <li>API keys and provider credentials are not stored with assessment data or shown in the interface.</li>

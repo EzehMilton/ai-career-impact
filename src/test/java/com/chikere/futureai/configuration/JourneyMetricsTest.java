@@ -39,7 +39,7 @@ class JourneyMetricsTest {
         metrics.checkoutFailed("a-level");
         metrics.pdfGenerationFailed("a-level");
         metrics.paymentConfirmed("a-level");
-        metrics.rateLimitRejected("cv-upload");
+        metrics.rateLimitRejected("checkout-start");
 
         assertThat(count("judgment.failures", "journey", "a-level")).isEqualTo(1);
         assertThat(count("narrative.failures", "journey", "a-level")).isEqualTo(1);
@@ -47,7 +47,7 @@ class JourneyMetricsTest {
         assertThat(count("checkout.failures", "journey", "a-level")).isEqualTo(1);
         assertThat(count("pdf.generation.failures", "journey", "a-level")).isEqualTo(1);
         assertThat(count("payment.confirmations", "journey", "a-level")).isEqualTo(1);
-        assertThat(count("rate_limit.rejections", "group", "cv-upload")).isEqualTo(1);
+        assertThat(count("rate_limit.rejections", "group", "checkout-start")).isEqualTo(1);
     }
 
     @Test

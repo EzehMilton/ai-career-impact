@@ -7,8 +7,8 @@ public final class ApplicationProfiles {
     public static final String DEV = "dev";
 
     /**
-     * Hybrid development: fixture Jev judgments and fixture evidence, but real OpenAI, Stripe and
-     * CV extraction. For machines that cannot reach the TypeSafe / Jev network.
+     * Hybrid development: fixture Jev judgments and fixture evidence, but real OpenAI and Stripe.
+     * For machines that cannot reach the TypeSafe / Jev network.
      */
     public static final String DEV_NO_JEV = "dev-no-jev";
 

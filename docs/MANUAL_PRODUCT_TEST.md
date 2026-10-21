@@ -53,7 +53,7 @@ Visit `/`, `/methodology`, `/privacy` and all three journey start pages.
 
 From the landing page, follow **My current job**.
 
-- [ ] The form explains who it is for and what you will need, and says that uploading a CV is optional
+- [ ] The form explains who it is for and what you will need
 - [ ] Submit the form manually. You are redirected to a result page
 - [ ] The result shows **AI Exposure** and the other professional measures
 - [ ] The result reads in this order: headline, how to read the numbers, measures, why, short interpretation, free-versus-full, context
@@ -61,14 +61,7 @@ From the landing page, follow **My current job**.
 - [ ] There is **no** Download PDF link and no `report.pdf` anywhere on the free result
 - [ ] A price line appears only if a display price is configured
 
-**CV upload.** Return to `/professional-assessment` and upload a PDF or DOCX.
-
-- [ ] A dedicated **We analysed your CV** page shows only a concise structured profile, never raw CV text
-- [ ] **Edit what we understood** permits corrections to role, summary, responsibilities, technical skills, human skills and years
-- [ ] **Continue with this profile** submits the confirmed profile through the existing assessment pipeline
-- [ ] A CV with insufficient career information offers **Describe my work manually** and does not guess form values
-- [ ] A corrupt/encrypted document, malformed extraction response or unavailable extractor fails safely to manual entry
-- [ ] Under `local-fixture`, both `senior_software_architect` and `routine_software_developer` complete this flow without network calls
+- [ ] The form offers no file upload, and `/professional-assessment/cv` shows the not-found page
 
 ## 4. University journey
 

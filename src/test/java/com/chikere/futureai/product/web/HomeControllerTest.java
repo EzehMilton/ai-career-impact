@@ -42,7 +42,7 @@ class HomeControllerTest {
         assertThat(html).contains("Choose the question that matters to you.");
         // Each distinct journey carries its question, description and route-specific action.
         assertThat(html).contains("Professional", "How could AI affect my current job or tasks?",
-                "what you actually do, not just the title", "upload your CV", "Assess my job");
+                "what you actually do, not just the title", "Assess my job");
         assertThat(html).contains("University",
                 "Is my university course preparing me for an AI-driven future?",
                 "Already studying?", "not you or your university", "Assess a course");
@@ -56,7 +56,7 @@ class HomeControllerTest {
         // definition and what it is not, so visitors know what they will receive.
         assertThat(html).doesNotContain("journey type", "JourneyType");
         assertThat(html).contains("Not a probability of job loss.", "Not a guarantee of employability.",
-                "Not a prediction of university admission.",
+                "A focused combination can be the right choice.",
                 "so their scores aren't comparable with each other");
     }
 
@@ -109,20 +109,9 @@ class HomeControllerTest {
                 .andExpect(view().name("privacy")).andReturn().getResponse().getContentAsString();
 
         assertThat(html).contains("This is a product information notice, not a legal privacy policy");
-        assertThat(html).contains("The original CV file and its raw extracted text are not retained");
         assertThat(html).contains("Card details are entered on Stripe's hosted checkout page");
         assertThat(html).contains("There are currently no user accounts");
         assertThat(html).doesNotContain("we comply with", "GDPR-compliant", "legally binding");
-    }
-
-    @Test
-    void thePrivacyPageSaysContactDetailsAreRemovedBeforeCvTextIsSent() throws Exception {
-        String html = mvc.perform(get("/privacy")).andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString().replaceAll("\\s+", " ");
-
-        assertThat(html).contains("the application removes email addresses, "
-                + "phone numbers, web links and postcodes");
-        assertThat(html).contains("including your name, may remain");
     }
 
     @Test

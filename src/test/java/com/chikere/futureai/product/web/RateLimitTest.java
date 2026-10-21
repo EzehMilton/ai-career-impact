@@ -23,12 +23,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>The limiter keys on the client address, so every test in this class shares one allowance per
  * group. Each test therefore uses a <em>different</em> group — one submits assessments, the other
- * uploads CVs — rather than relying on execution order.</p>
+ * starts checkouts — rather than relying on execution order.</p>
  */
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
         "app.rate-limit.assessment-submission.permits=2",
-        "app.rate-limit.cv-upload.permits=1",
+        "app.rate-limit.checkout-start.permits=1",
         "app.rate-limit.window=PT5M"})
 class RateLimitTest {
 
@@ -67,11 +67,12 @@ class RateLimitTest {
         // is never told it is being throttled when the real problem is its token.
         var browser = new TestBrowser(port);
         String token = browser.csrfTokenFrom("/professional-assessment");
-        browser.postForm("/professional-assessment/cv", token);
-        assertThat(browser.postForm("/professional-assessment/cv", token).statusCode())
-                .as("the cv-upload allowance is now spent").isEqualTo(429);
+        String checkout = "/professional-assessment/8c7b6a59-4d3e-4f2a-8b1c-0d9e8f7a6b5c/checkout";
+        browser.postForm(checkout, token);
+        assertThat(browser.postForm(checkout, token).statusCode())
+                .as("the checkout-start allowance is now spent").isEqualTo(429);
 
-        HttpResponse<String> withoutToken = browser.postForm("/professional-assessment/cv", null);
+        HttpResponse<String> withoutToken = browser.postForm(checkout, null);
 
         assertThat(withoutToken.statusCode()).isEqualTo(403);
     }

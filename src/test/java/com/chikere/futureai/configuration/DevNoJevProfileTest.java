@@ -3,9 +3,6 @@ package com.chikere.futureai.configuration;
 import com.chikere.futureai.TestcontainersConfiguration;
 import com.chikere.futureai.assessment.professional.application.AssessmentSource;
 import com.chikere.futureai.assessment.professional.application.ProfessionalJudgmentProvider;
-import com.chikere.futureai.cv.professional.application.ProfessionalProfileExtractor;
-import com.chikere.futureai.cv.professional.fixture.LocalFixtureProfessionalProfileExtractor;
-import com.chikere.futureai.cv.professional.openai.OpenAiProfessionalProfileExtractor;
 import com.chikere.futureai.evidence.professional.application.EvidenceSource;
 import com.chikere.futureai.evidence.professional.application.ProfessionalEvidenceProvider;
 import com.chikere.futureai.evidence.professional.fixture.LocalFixtureProfessionalEvidenceProvider;
@@ -32,7 +29,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * The dev-no-jev profile must use real OpenAI CV extraction and real OpenAI narrative while keeping
+ * The dev-no-jev profile must use real OpenAI narrative while keeping
  * fixture Jev judgments, fixture evidence and real Stripe payment. No TypeSafe client must exist.
  */
 @Import(TestcontainersConfiguration.class)
@@ -55,21 +52,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DevNoJevProfileTest {
 
     @Autowired ApplicationContext context;
-    @Autowired ProfessionalProfileExtractor profileExtractor;
     @Autowired ProfessionalJudgmentProvider judgmentProvider;
     @Autowired ProfessionalNarrativeGenerator narrativeGenerator;
     @Autowired ProfessionalEvidenceProvider evidenceProvider;
     @Autowired ProfessionalPaymentGateway paymentGateway;
 
-    // The extractor is built at startup, so build() must already return a ChatClient mock then.
+    // The narrative generators are built at startup, so build() must already return a ChatClient mock then.
     @MockitoBean(answers = Answers.RETURNS_MOCKS) ChatClient.Builder openAiChatClientBuilder;
 
     @Test
-    void cvExtractionIsRealOpenAiWhileJevAndEvidenceRemainFixtureBacked() {
-        assertThat(profileExtractor).isInstanceOf(OpenAiProfessionalProfileExtractor.class);
-        assertThat(context.getBeansOfType(ProfessionalProfileExtractor.class)).hasSize(1);
-        assertThat(context.getBeansOfType(LocalFixtureProfessionalProfileExtractor.class)).isEmpty();
-
+    void narrativeIsRealOpenAiWhileJevAndEvidenceRemainFixtureBacked() {
         assertThat(judgmentProvider).isInstanceOf(LocalFixtureProfessionalJudgmentProvider.class);
         assertThat(judgmentProvider.source()).isEqualTo(AssessmentSource.LOCAL_FIXTURE);
 

@@ -56,7 +56,6 @@ There is no production traffic yet, so the figures are modelled across three dem
 | Peak-hour share of daily volume | 15% | Consumer web traffic concentrates in evenings |
 | Event spike (e.g. A-level results day, a viral post) | 10× the normal peak hour, sustained for ~1 hour | Student journeys are strongly seasonal |
 | Journey mix | 50% Professional, 25% University, 25% A-level | Professional is the default card |
-| Professional submissions that use CV upload | 40% | Upload is the lower-effort path |
 | Paid conversion | 5% of assessments | Typical for a low-priced add-on |
 | Purchases that download the PDF | 70% | |
 | Page views per assessment session | 7 (home, form, submit, result ×2, methodology/privacy, paid report) | |
@@ -69,7 +68,6 @@ From [LIVE_AI_VERIFICATION.md](LIVE_AI_VERIFICATION.md) and [LIVE_EVIDENCE_VERIF
 | --- | --- | --- |
 | Jev judgments (TypeSafe SDK 0.2.0) | 1.2 s – 5.5 s | SDK defaults: 10 s read timeout, up to 2 retries, 30 s retry budget (checked only between attempts) |
 | OpenAI narrative (`gpt-4o-mini`) | 6.1 s – 18.5 s (six live runs) | **Not set by the application**; Spring AI / client defaults apply and are unverified |
-| OpenAI CV extraction | Not measured | Not set by the application |
 | Nomis evidence (two HTTP requests) | Not measured separately | 5 s connect, 10 s read, per request |
 | Stripe Checkout Session creation | Not measured | Stripe SDK defaults |
 | Java decision policy, persistence, rendering | Milliseconds | — |
@@ -82,7 +80,6 @@ Because the calls run in series inside the request, a **typical submission takes
 | --- | ---: | ---: | ---: | ---: |
 | Assessment submissions, average | 0.012/s | 0.12/s | 1.16/s | — |
 | Assessment submissions, peak hour | 0.04/s | 0.42/s | 4.2/s | 42/s |
-| CV uploads, peak hour | 0.008/s | 0.08/s | 0.8/s | 8/s |
 | Page views, peak hour | 0.3/s | 2.9/s | 29/s | 290/s |
 | Checkout starts per day | 50 | 500 | 5,000 | — |
 | Stripe webhooks per day (≈1 per purchase, plus retries) | ~50 | ~500 | ~5,000 | — |
@@ -96,7 +93,7 @@ Because the calls run in series inside the request, a **typical submission takes
 
 Tomcat's default pool is 200 platform threads. The application is comfortable up to the 100k/day steady state, but **a results-day spike at that scale exhausts the request pool**, after which cheap page views queue behind slow submissions.
 
-**Bandwidth** is not a constraint. Pages are ~20–40 KB of HTML, the single stylesheet is cached for five minutes, CVs average a few hundred KB (5 MB cap) and PDFs ~100 KB. Even at 100k/day this is ~25 GB/day egress, roughly 2–3 Mbit/s on average.
+**Bandwidth** is not a constraint. Pages are ~20–40 KB of HTML, the single stylesheet is cached for five minutes and PDFs ~100 KB. Even at 100k/day this is ~25 GB/day egress, roughly 2–3 Mbit/s on average.
 
 ### 1.4 Outbound provider demand
 
@@ -105,13 +102,12 @@ Rough token sizing per call (prompt instructions plus the bounded user input, pl
 | Call | Input tokens | Output tokens |
 | --- | ---: | ---: |
 | Narrative | ~3,000 | ~800 |
-| CV extraction (up to 30,000 masked characters) | up to ~8,500 | ~1,000 |
 
 | | 1k/day | 10k/day | 100k/day | 100k/day spike |
 | --- | ---: | ---: | ---: | ---: |
 | Jev requests per day | 1,000 | 10,000 | 100,000 | — |
-| OpenAI requests per day (narrative + CV extraction) | 1,200 | 12,000 | 120,000 | — |
-| OpenAI tokens per minute, peak hour | ~11k | ~110k | ~1.1M | **~11M** |
+| OpenAI requests per day (narrative) | 1,000 | 10,000 | 100,000 | — |
+| OpenAI tokens per minute, peak hour | ~9.5k | ~95k | ~950k | **~9.5M** |
 | Nomis requests per day (`live-evidence` only, 2 per professional assessment) | 1,000 | 10,000 | 100,000 | — |
 
 The tokens-per-minute figure, not CPU, is the first hard ceiling: it has to fit within the OpenAI account's rate-limit tier, and the Jev equivalent has to fit TypeSafe's limits. Nomis is an anonymous public API, and fetching its full SOC codelist on every report becomes an etiquette and latency problem well before it becomes a cost one.
@@ -122,7 +118,6 @@ The tokens-per-minute figure, not CPU, is the first hard ceiling: it has to fit 
 | --- | --- | --- |
 | Report price | £4.99 Professional, £2.99 University, £1.99 A-level | `home.html` display text; the Stripe Price is authoritative |
 | OpenAI narrative | ≈ $0.001 | At `gpt-4o-mini` list pricing; re-check current pricing |
-| OpenAI CV extraction | ≈ $0.002 | |
 | Jev judgment | **unknown** | The largest unknown in the cost model; obtain from TypeSafe |
 | Stripe fee | ≈ 1.5% + 20p (UK cards) | About 11–12% of a £1.99 sale; re-check current pricing |
 
@@ -161,7 +156,7 @@ There is **no retention or deletion policy**, so storage grows without bound. At
 
 In-memory state per instance:
 
-- **HTTP sessions** hold one `ProfessionalProfile` (a few KB) per in-progress CV review, 30-minute timeout in `prod`.
+- **HTTP sessions** hold only a CSRF token, 30-minute timeout in `prod`.
 - **Rate-limiter windows** hold one entry per client per group, swept once more than 10,000 are tracked.
 
 ### 1.7 Processing
@@ -171,11 +166,10 @@ In-memory state per instance:
 | Request handling, validation, Thymeleaf rendering | Low CPU, milliseconds | Every request |
 | Decision policies | Negligible: tens of multiply-adds | Per submission |
 | Waiting on Jev / OpenAI / Nomis | No CPU, but **holds a request thread** for 10–60 s | Per submission |
-| CV parsing (PDFBox / POI) | Moderate CPU, **tens of MB heap per parse**, bounded by 50 pages, 100k characters, 16 MiB per DOCX entry | Per upload |
 | PDF rendering (OpenHTMLToPDF / PDFBox) | Hundreds of ms CPU, tens of MB heap | Once per purchase, first download only |
 | Webhook processing | One short locking transaction plus report assembly and JSON encoding | Per purchase |
 
-The application is **I/O-bound, not CPU-bound**. A 2 vCPU / 2–4 GB instance can render far more pages than the providers can serve judgments. Memory spikes come from concurrent CV parses and first-time PDF renders, which are the two places to size heap for.
+The application is **I/O-bound, not CPU-bound**. A 2 vCPU / 2–4 GB instance can render far more pages than the providers can serve judgments. Memory spikes come from concurrent first-time PDF renders, which is the place to size heap for.
 
 ---
 
@@ -193,7 +187,7 @@ All routes are server-rendered HTML unless stated. Every browser POST is CSRF-pr
 | GET | `/methodology` | How assessments work | |
 | GET | `/privacy` | Data handling | |
 | GET | `/css/app.css` | The single stylesheet | `max-age=300, public` |
-| — | `/error` | Shared error views (403, 404, 413, 429, 5xx) | |
+| — | `/error` | Shared error views (403, 404, 429, 5xx) | |
 | GET | `/actuator/health[/liveness\|/readiness]`, `/actuator/info` | Probes | All other `/actuator/**` denied |
 
 **Per journey** — `{journey}` is `professional-assessment`, `university-assessment` or `a-level-assessment`
@@ -209,15 +203,6 @@ All routes are server-rendered HTML unless stated. Every browser POST is CSRF-pr
 | GET/POST | `/{journey}/{uuid}/checkout/local[/confirm]` | Simulated payment | — | `local-fixture` profile only |
 
 \* Nomis only under `live-evidence`, and only for the Professional journey.
-
-**Professional CV path**
-
-| Method | Path | Purpose | Outbound calls | Rate-limit group |
-| --- | --- | --- | --- | --- |
-| POST | `/professional-assessment/cv` | Upload PDF/DOCX, parse, extract profile into session | OpenAI | `cv-upload` (5/min) |
-| GET | `/professional-assessment/cv/review` | Review the extracted profile | — | — |
-| GET/POST | `/professional-assessment/cv/edit` | Correct the profile | — | — |
-| POST | `/professional-assessment/cv/confirm` | Submit the confirmed profile as an assessment | Jev, OpenAI, Nomis* | `assessment-submission` |
 
 **Payment webhooks** (`live-payment` only; signature-authenticated, CSRF-exempt, never rate-limited)
 
@@ -243,9 +228,8 @@ Domain and application types are immutable Java records with no JPA annotations;
 | `*Report` | Composed view | Delivery-neutral `FREE` or `PAID` report |
 | `*ReportEntitlement` | Payment state | `PENDING` → `ACTIVE` (also `FAILED`, `REFUNDED`, `REVOKED`) |
 | `Purchased*ReportSnapshot` | Frozen JSONB | The exact paid report bought, versioned (`professional-report-v1`) |
-| `ProfessionalProfile` | Session-only | CV-extracted role, duties, skills, experience; never persisted |
 
-Every saved record carries the versions that produced it: judgment schema (`professional-v1`), decision policy (`professional-decision-v1`), prompt (`professional-narrative-v1`), evidence (`professional-evidence-v1`), report (`professional-report-v1`), PDF layout (`professional-report-pdf-v1`), CV parser and extractor.
+Every saved record carries the versions that produced it: judgment schema (`professional-v1`), decision policy (`professional-decision-v1`), prompt (`professional-narrative-v1`), evidence (`professional-evidence-v1`), report (`professional-report-v1`), PDF layout (`professional-report-pdf-v1`), and, for historical CV-sourced assessments only, the CV parser and extractor.
 
 ### 2.3 Relationships
 
@@ -318,13 +302,13 @@ flowchart LR
     subgraph App["Spring Boot modular monolith (one JVM)"]
         direction TB
         Filters["Filters: RequestCorrelation → Spring Security<br/>(CSRF, CSP, headers) → RateLimit"]
-        Web["Web: thin controllers + form mappers<br/>(assessment, cv, report, payment, pdf, product)"]
+        Web["Web: thin controllers + form mappers<br/>(assessment, report, payment, pdf, product)"]
         Workflow["Application: *AssessmentWorkflow<br/>*AssessmentService, *NarrativeService,<br/>*EvidenceService, *ReportPurchaseService, *ReportPdfService"]
         Policy["decision: *DecisionPolicyV1<br/>(pure Java)"]
         Assembler["report: *ReportAssembler<br/>(pure Java)"]
-        Ports["Ports: JudgmentProvider, NarrativeGenerator,<br/>EvidenceProvider, PaymentGateway,<br/>ProfileExtractor, Store, PdfRenderer"]
+        Ports["Ports: JudgmentProvider, NarrativeGenerator,<br/>EvidenceProvider, PaymentGateway,<br/>Store, PdfRenderer"]
         Adapters["Adapters: typesafe, openai, nomis, stripe,<br/>jpa, openhtml, local fixture"]
-        Session[(In-memory HTTP session<br/>CV profile)]
+        Session[(In-memory HTTP session<br/>CSRF token)]
         Limiter[(In-memory rate-limit windows)]
         Metrics[(Micrometer registry<br/>in memory, not exported)]
     end
@@ -435,23 +419,15 @@ Narrative and evidence write `PENDING` before calling the provider. If the JVM d
 - Only `checkout.session.completed` is consumed. **Refunds, disputes and chargebacks are not processed**, so a refunded purchase stays `ACTIVE`. The `REFUNDED` and `REVOKED` states exist but nothing sets them automatically.
 - If the Stripe session is created but the `PENDING` write fails, an orphaned session exists. This is harmless (it expires and grants nothing), but if a customer manages to pay it, there is no entitlement to activate.
 
-### 4.5 CV upload and parsing
-
-PDFBox and POI are memory-heavy and historically a source of parser CVEs. The limits (5 MB upload, 50 pages, 100k characters, 16 MiB per inflated DOCX entry, inflate ratio guard) bound each parse well, but **concurrency is not bounded beyond the 5-per-minute per-client limit**. A burst from many clients can push the heap into GC thrash or OOM, and an OOM also strands any in-flight `PENDING` rows (4.3). POI's guards are JVM-wide statics.
-
-### 4.6 In-memory session state
-
-The reviewed CV profile lives only in the instance's HTTP session. A deploy or restart mid-review loses it, and with more than one instance it breaks unless the load balancer uses sticky sessions. Moving to a shared session store is blocked by a known bug: `ProfessionalProfile` holds `OptionalInt` and `ProfessionalAssessmentInputMetadata` holds `Optional`, neither of which is serialisable.
-
-### 4.7 PostgreSQL as the single stateful component
+### 4.5 PostgreSQL as the single stateful component
 
 Every journey, payment and PDF depends on one database. There is no stated backup, point-in-time recovery or high-availability configuration (that is deployment concern, but it is undecided), storage grows without a retention policy, and PDFs in `BYTEA` inflate backups and restore times.
 
-### 4.8 Operational blindness
+### 4.6 Operational blindness
 
 Metrics are recorded but not exported, so they are lost on restart and visible to nobody. The first sign of a Jev outage or a broken webhook secret is likely to be a customer email. Readiness deliberately excludes external providers (correctly), which also means nothing automated notices them failing.
 
-### 4.9 Lower-risk items worth noting
+### 4.7 Lower-risk items worth noting
 
 - **Nomis** fetches the full SOC codelist for every new report. That is wasteful and makes evidence latency depend on a public API's mood. Its failure is soft.
 - **PDF first render** is concurrent-safe by design (both renderers race, one wins), but under a burst of first downloads it is a CPU and heap spike.
@@ -473,8 +449,8 @@ Metrics are recorded but not exported, so they are lost on restart and visible t
 | R6 | Webhook fails after the customer paid | Low–medium | Paid but no report; support load | Transaction rollback plus Stripe retries for days; idempotent re-delivery | Counter and alert on webhook failures; a manual re-drive runbook using the Stripe dashboard |
 | R7 | Refund or chargeback leaves access `ACTIVE` | Medium | Revenue leakage; dispute risk | Status values exist | Consume `charge.refunded` and `charge.dispute.created` and set `REFUNDED`/`REVOKED` |
 | R8 | Database loss or corruption | Low | Total loss, including purchased reports | Flyway validation; `clean` disabled | Managed PostgreSQL with PITR; tested restores; PDFs out of the database at scale |
-| R9 | Heap exhaustion from CV/PDF bursts | Low–medium | Instance restart; triggers R5 | Per-document limits | A semaphore bounding concurrent parses and renders; heap sized for it |
-| R10 | UUID leakage exposes someone's assessment or paid report | Medium | Privacy (CV-derived personal data) | 122-bit random UUIDs, `noindex`, `no-store`, no listing, identical 404s | Accounts or emailed magic links; a retention and deletion policy |
+| R9 | Heap exhaustion from PDF bursts | Low–medium | Instance restart; triggers R5 | Per-document limits | A semaphore bounding concurrent renders; heap sized for it |
+| R10 | UUID leakage exposes someone's assessment or paid report | Medium | Privacy (personal data in free-text answers) | 122-bit random UUIDs, `noindex`, `no-store`, no listing, identical 404s | Accounts or emailed magic links; a retention and deletion policy |
 | R11 | Unbounded data retention | Certain | GDPR exposure; cost | None | A documented retention period with a deletion job (purchases may need longer for accounting) |
 | R12 | Cost runaway from abuse | Medium | Direct spend | Per-IP limits; CSRF; bounded inputs | A global daily spend circuit breaker; per-provider concurrency caps |
 | R13 | Model wording drift contradicting saved bands | Medium | Trust | Prompt contracts; validators; scores never from the model | Expand the validator with band-consistency checks; sample review |
@@ -503,7 +479,7 @@ The codebase is careful about failure. These properties already hold and should 
 | **Store immutable snapshots and PDFs** | Reproducible, auditable purchases; no re-render cost | Storage growth; data duplication between snapshot and source rows | Correct; revisit storage location (object store) rather than the principle |
 | **PDFs in PostgreSQL `BYTEA`** | One store; transactional consistency; no new infrastructure | Backup size; database storage cost at scale | Fine below ~10k/day; move behind the existing `PdfStore` port later |
 | **In-memory rate limiter** | No Redis | Per-instance allowance; shared-IP false positives | Fine for 1–3 instances; a shared limit can use PostgreSQL before anything else is added |
-| **In-memory sessions** | No session store | Lost on restart; sticky sessions needed for more than one instance | Fix the `Optional` serialisation bug, then use Spring Session JDBC on the existing database |
+| **In-memory sessions** | No session store | Lost on restart; sticky sessions needed for more than one instance | Use Spring Session JDBC on the existing database |
 | **UUID-as-capability, no accounts** | Zero signup friction | Leaked URL means leaked report; lost URL means lost report | Acceptable pre-launch; the main product-level gap before scale |
 | **No JavaScript** | Tiny attack surface; strict CSP; accessible | Progress feedback for slow work must use `<meta http-equiv="refresh">` | Workable; see 6.2 |
 | **Per-journey duplication** (tables, payments, PDFs) | Journeys release independently; semantics stay legible | More code; changes repeated three times | Deliberate and documented; keep it |
@@ -518,7 +494,7 @@ As demand rises, constraints are hit in this order. Compute is last.
 
 1. **Upstream quotas and cost**: Jev and OpenAI rate limits (section 1.4), and the free-tier cost per assessment.
 2. **Request duration**: proxy timeouts and double-submits (R1, R2) appear at any volume. Thread exhaustion appears at spike volumes.
-3. **Memory**: concurrent CV parses and first-time PDF renders.
+3. **Memory**: concurrent first-time PDF renders.
 4. **Single-instance availability**: deploys and crashes cause downtime and stuck `PENDING` rows.
 5. **Database storage**: driven mostly by PDFs and the lack of retention.
 6. **Database throughput**: effectively never at these volumes. Every query is a primary-key lookup, and each submission writes about 20–30 small rows.
@@ -543,9 +519,9 @@ One instance (2 vCPU, 2–4 GB heap) behind a TLS proxy, with managed PostgreSQL
 Two or three instances for availability and zero-downtime deploys.
 
 - **Asynchronous submission without a broker.** The POST validates, inserts a `submission` row (`RECEIVED`) and immediately redirects to `/{journey}/{uuid}`. That page renders a "preparing your assessment" view with `<meta http-equiv="refresh" content="3">`, which works with the existing no-JavaScript CSP. An in-process worker pool claims work with `SELECT … FOR UPDATE SKIP LOCKED` on PostgreSQL and runs the existing workflow unchanged. This removes R1 (the UUID reaches the user in milliseconds), bounds upstream concurrency to the pool size, and makes crash recovery a matter of re-claiming unfinished rows. No new infrastructure is needed. The trade-off is a status page, and an accepted assessment that later fails needs a terminal "could not be completed" state.
-- **Virtual threads** (`spring.threads.virtual.enabled=true`, Java 21). Whatever stays blocking (CV extraction, checkout creation) no longer consumes scarce platform threads. Check the PostgreSQL driver version for pinning-free locking.
-- **Bulkheads.** Use semaphores on Jev, OpenAI, CV parsing and PDF rendering concurrency, so a provider slowdown or a parse burst cannot consume the whole instance.
-- **Shared sessions.** Fix the `Optional` / `OptionalInt` serialisation and enable Spring Session JDBC on the existing database, or use sticky sessions as an interim measure.
+- **Virtual threads** (`spring.threads.virtual.enabled=true`, Java 21). Whatever stays blocking (checkout creation) no longer consumes scarce platform threads. Check the PostgreSQL driver version for pinning-free locking.
+- **Bulkheads.** Use semaphores on Jev, OpenAI and PDF rendering concurrency, so a provider slowdown or a render burst cannot consume the whole instance.
+- **Shared sessions.** Enable Spring Session JDBC on the existing database, or use sticky sessions as an interim measure.
 - **Rate limiting.** Accept the per-instance multiplier (it is documented), and, now that a trusted proxy exists under `prod`, revisit keying so school networks are not starved (R14).
 - **Webhook completeness.** Handle refunds and disputes (R7), and add a webhook failure counter.
 - **Cache the Nomis SOC codelist** in memory with a daily refresh. It changes rarely and is identical for every request.
@@ -589,4 +565,4 @@ The likely next pressure is organisational (team size, release cadence per journ
 3. What timeout does the production proxy or load balancer apply?
 4. What is the real paid conversion rate and journey mix? (Export `assessments.created` and `payment.confirmations`.)
 5. What retention period is acceptable for assessment content, and separately for purchase records?
-6. How large are real CVs and real PDFs? (Replace the estimates in sections 1.6–1.7.)
+6. How large are real PDFs? (Replace the estimates in sections 1.6–1.7.)

@@ -1,9 +1,5 @@
 package com.chikere.futureai.configuration;
 
-import com.chikere.futureai.cv.professional.fixture.LocalFixtureProfessionalProfileConfiguration;
-import com.chikere.futureai.cv.professional.fixture.LocalFixtureProfessionalProfileExtractor;
-import com.chikere.futureai.cv.professional.openai.OpenAiProfessionalProfileConfiguration;
-import com.chikere.futureai.cv.professional.openai.OpenAiProfessionalProfileExtractor;
 import com.chikere.futureai.evidence.professional.fixture.LocalFixtureProfessionalEvidenceConfiguration;
 import com.chikere.futureai.evidence.professional.fixture.LocalFixtureProfessionalEvidenceProvider;
 import com.chikere.futureai.evidence.professional.nomis.NomisProfessionalEvidenceConfiguration;
@@ -43,8 +39,6 @@ import static org.mockito.Mockito.mock;
  * Jev real           NO       NO         YES
  * Narrative fixture  YES      NO         NO
  * Narrative real     NO       YES        YES
- * CV fixture         YES      NO         NO
- * CV real            NO       YES        YES
  * Stripe fixture     YES      NO         NO
  * Stripe real        NO       YES        YES
  * Evidence fixture   YES      YES        NO
@@ -76,8 +70,6 @@ class ProfileMatrixTest {
                     ConfiguredProfessionalOccupationConfiguration.class,
                     LocalFixtureProfessionalPaymentConfiguration.class,
                     StripeProfessionalPaymentConfiguration.class,
-                    LocalFixtureProfessionalProfileConfiguration.class,
-                    OpenAiProfessionalProfileConfiguration.class,
                     OpenAiProfessionalNarrativeConfiguration.class)
             .withBean(TypeSafeClient.class, () -> mock(TypeSafeClient.class))
             .withBean(ObjectMapper.class, ObjectMapper::new)
@@ -149,36 +141,6 @@ class ProfileMatrixTest {
     void narrativeRealIsNotActiveUnderDev() {
         runner.withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles("dev"))
                 .run(ctx -> assertThat(ctx.getBeansOfType(OpenAiProfessionalNarrativeGenerator.class))
-                        .isEmpty());
-    }
-
-    // ── CV extraction ────────────────────────────────────────────────────────────────────────────
-
-    @Test
-    void cvFixtureIsActiveOnlyUnderDev() {
-        runner.withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles("dev"))
-                .run(ctx -> assertThat(ctx.getBeansOfType(LocalFixtureProfessionalProfileExtractor.class))
-                        .isNotEmpty());
-        for (String profile : new String[]{"dev-no-jev", "prod"}) {
-            runner.withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles(profile))
-                    .run(ctx -> assertThat(ctx.getBeansOfType(LocalFixtureProfessionalProfileExtractor.class))
-                            .as("profile=%s", profile).isEmpty());
-        }
-    }
-
-    @Test
-    void cvRealIsActiveUnderDevNoJevAndProd() {
-        for (String profile : new String[]{"dev-no-jev", "prod"}) {
-            runner.withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles(profile))
-                    .run(ctx -> assertThat(ctx.getBeansOfType(OpenAiProfessionalProfileExtractor.class))
-                            .as("profile=%s", profile).isNotEmpty());
-        }
-    }
-
-    @Test
-    void cvRealIsNotActiveUnderDev() {
-        runner.withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles("dev"))
-                .run(ctx -> assertThat(ctx.getBeansOfType(OpenAiProfessionalProfileExtractor.class))
                         .isEmpty());
     }
 

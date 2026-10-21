@@ -397,133 +397,17 @@ Flyway V6 adds `purchased_professional_report_pdf`, with one row per entitlement
 The insert uses PostgreSQL `ON CONFLICT DO NOTHING`, followed by reading the single stored winner. If simultaneous first requests both render, the entitlement primary key ensures one immutable artifact wins and both callers return that same persisted artifact. No distributed lock or queue is needed. Existing rows are never updated or regenerated; subsequent downloads and application restarts return identical bytes and SHA-256.
 
 Only an `ACTIVE` entitlement reaches generation or download. Missing, pending, failed, refunded and revoked states receive HTTP 403. Successful responses use `application/pdf`, an attachment disposition with a sanitised filename, an exact content length, `nosniff`, and private/no-store caching. Rendering or persistence failure leaves the entitlement, purchased snapshot and paid HTML report unchanged and returns a generic temporary PDF-unavailability message without provider or renderer details.
-## Professional CV input
+## Professional input provenance
 
-CV upload is an alternative input path, not an assessment engine:
+Professional input is manual only: `ProfessionalAssessmentForm` maps to `ProfessionalAssessmentState`
+and every new assessment is saved with `ProfessionalAssessmentInputMetadata.manual()`.
 
-```text
-Manual input -> ProfessionalAssessmentForm -> ProfessionalAssessmentState --\
-                                                                             -> existing judgment/policy pipeline
-CV upload -> ProfessionalCvParser -> ProfessionalProfileExtractor            /
-                    |                         |
-                    v                         v
-          transient clean text       ProfessionalProfile
-                                              |
-                                      review / edit / confirm
-                                              |
-                              ProfessionalProfileAssessmentMapper
-```
-
-`ProfessionalCvParser` accepts a Spring-independent `ProfessionalCvDocument` and does one job:
-PDFBox or Apache POI converts it to bounded, cleaned text. It never decides a role, skill,
-responsibility or years of experience. `ProfessionalProfileExtractor` is the separate information-
-extraction boundary. The normal adapter uses Spring AI/OpenAI provider structured output to create
-the small immutable `ProfessionalProfile`; under `local-fixture`, a deterministic fixture adapter
-supports the complete browser flow without OpenAI or Jev.
-
-For local extraction-quality testing, `local-fixture,live-cv-extraction` replaces only that fixture
-extractor with the OpenAI adapter. The fixture judgment, narrative, occupation, evidence and payment
-providers remain active, so the mode cannot silently become a production or mixed-provider setup.
-It requires only `OPENAI_API_KEY` and never falls back to fixture profile values after extraction or
-validation failure. Exact setup and acceptance steps are in
-[`LIVE_CV_EXTRACTION_TEST.md`](LIVE_CV_EXTRACTION_TEST.md).
-
-The text-only parser contract is versioned `professional-cv-parser-v2`; historical V1 assessment
-metadata is retained unchanged.
-
-The extraction prompt requires support from the document, null/empty values under uncertainty,
-separation of responsibilities and skills, and warnings for ambiguity. It explicitly forbids
-assessment measures, job-loss predictions and labour-market claims. `ProfessionalProfileValidator`
-then applies only structural safeguards: title shape and length, required responsibilities, concise
-skills, duplicate role/responsibility text and plausible experience bounds. It does not attempt
-semantic classification.
-
-Before the CV text reaches OpenAI, the adapter, in this order, neutralises any `<cv-data>`/`</cv-data>`
-markers inside it, so the document cannot close its own data block; removes contact details with
-`ProfessionalCvContactMasker`; and sends at most `app.professional.cv.maximum-extraction-characters`
-(default 30,000, at least 1,000) characters. The masker replaces email addresses with `[email]`, web
-links (http/https, `www.`, and linkedin.com/github.com paths) with `[link]`, phone numbers of 10 to 20
-digits with `[phone]`, and full UK postcodes in capitals with `[postcode]`. It never masks a digit run
-that the experience calculator would read as a date or date range, and it does not try to remove names
-or street addresses, so those may still be sent. Its patterns are length-bounded and anchored to token
-boundaries, so masking stays linear on any input the parser allows. The prompt tells the model to
-ignore the placeholders. Duty evidence and employment dates are checked against this exact masked,
-truncated text, and neither the raw nor the masked text is logged or persisted. When the text is cut, the profile carries a review warning. Null or blank list items in
-the structured response are dropped rather than failing extraction.
-
-The model returns current-role `dayToDayDuties`, each with word-for-word `evidence`, and lists
-one-off `achievements` separately. Java keeps a duty only when its evidence (at least 12 characters
-after normalising case, whitespace, quote and dash style, and a leading bullet) is an exact substring
-of the text actually sent to OpenAI. Unmatched duties are dropped with one generic warning. The first
-12 verified duty texts become `responsibilities`. Achievements never reach Jev. If no duty survives, the existing
-validator rejects the profile and the user describes their work manually.
-
-Years of experience is calculated in Java, not estimated by the model. The model only lists
-`employmentHistory`: every dated job with its title, employer, start and end copied exactly as
-written, and whether it is the same as or closely related to the current role.
-`ProfessionalExperienceCalculator` (pure Java, driven by the injected clock) then:
-
-- counts a job when the model marks it relevant, and always counts the current job, recognised by
-  matching the selected entry's start and end dates;
-- requires each counted date to appear in the text actually sent to OpenAI, using the same
-  normalisation as duty evidence (Present-style end words are exempt);
-- parses `MM/YYYY`, `M/YYYY`, `MM.YYYY`, `MM-YYYY`, English month names and abbreviations, and a
-  year alone (January as a start, December as an end); Present, Current, Now, To date and Ongoing
-  mean the current month and are accepted only as an end date;
-- merges overlapping or touching periods, counts months inclusively, does not count future months
-  of a contract that has not ended yet, and rounds to the nearest year (six months rounds up).
-
-Any doubt gives no number rather than a guess: an unparseable or uncopied relevant date, an end
-before its start, a start after the current month, no relevant job, or more than 70 years. The
-profile then carries one fixed warning asking the user to add their years if they know them. A
-current job that started at least 12 months ago can never produce zero.
-
-The extractor also returns the selected entry's employer and start/end dates as written in the CV.
-They exist only so the review page can say which job was used ("We used your role at {employer}
-({start} – {end}).", or the employer-only or dates-only form, or nothing when neither is known), and
-so the user can correct them on the edit page. `ProfessionalProfileValidator` strips them and silently
-clears an employer over 120 characters or a date over 40; they never reject a profile.
-`ProfessionalProfileAssessmentMapper` ignores them, so they never reach Jev or the narrative and are
-never persisted. The review and edit pages also tell the user that CVs usually list achievements,
-and ask them to add their typical weekly tasks and remove one-offs or tasks from earlier jobs.
-
-Under "Years of experience" the review page shows one "Based on: {title} at {employer} ({start} –
-{end})" line per counted job, carried as `ProfessionalProfile.experienceBasis` (at most ten lines).
-Like the employer and dates it is display-only: the mapper ignores it, so it never reaches Jev and
-is never persisted. The edit page does not edit it; the user edits the years number directly, and
-changing or clearing that number removes the basis so the page no longer explains a value the CV
-did not produce. The validator also drops the basis when it omits an implausible years value. The
-local-fixture extractor calculates its years from its own dated history in the same way.
-
-The reviewed profile lives only in the in-memory servlet session (Tomcat session persistence is off
-and there is no Spring Session store), so it is never serialised and does not survive a restart; a
-missing or unrecognised session profile redirects to the professional assessment start page.
-
-Only PDF and DOCX are accepted. Filename, declared media type, file signature, configured size,
-and actual parseability are checked. Scanned/image-only PDFs fail safely; there is no OCR fallback.
-Encrypted/unreadable files, sparse career information, unavailable extraction, malformed structured
-output and timeouts return to manual entry rather than populating guessed values.
-
-### Known limitations
-
-`ProfessionalProfile` holds an `OptionalInt` and `ProfessionalAssessmentInputMetadata` holds
-`Optional` values. Both records declare `Serializable`, but neither `OptionalInt` nor `Optional` is
-serialisable, so these session attributes cannot be written out. This is harmless while sessions
-stay in memory, but it must be fixed before enabling Tomcat session persistence or Spring Session.
-
-Raw CV bytes and extracted text exist only during the upload call and are never persisted or logged.
-A short-lived server session carries only the structured profile and trusted parse provenance across
-review/edit/confirm. `ProfessionalProfileAssessmentMapper` combines the confirmed role, summary,
-responsibilities, technical/human skills, context and optional experience into the unchanged
-`ProfessionalAssessmentState`. Alongside the assessment snapshot, V7 stores `MANUAL`/`CV_UPLOAD`,
-the sanitised filename, canonical media type, parser version and parse timestamp, and V18 adds
-`cv_extractor_version`. Every `ProfessionalProfileExtractor` reports a `version()`, which
-`ProfessionalCvUploadService` records next to the parser version: `professional-cv-extractor-v2` for
-the OpenAI extractor and `professional-cv-extractor-fixture-v1` for the local fixture. V18 backfills
-`professional-cv-extractor-v1` on every earlier CV upload, since all of them used that extractor, and
-re-creates `professional_assessment_cv_metadata_consistent` so a manual row must have no extractor
-version and a CV upload must have one. These fields do not affect scoring; judgments, policies,
-reports and PDFs are unchanged.
+An earlier version also accepted a CV upload. That path has been removed, but its provenance columns
+remain so historical assessments load unchanged: V7 stores `MANUAL`/`CV_UPLOAD`, the sanitised
+filename, canonical media type, parser version and parse timestamp, and V18 adds
+`cv_extractor_version`. `professional_assessment_cv_metadata_consistent` still requires a manual row
+to have none of these fields and a `CV_UPLOAD` row to have all of them. These fields never affected
+scoring; judgments, policies, reports and PDFs do not read them.
 
 ## University journey
 
@@ -765,7 +649,7 @@ For local startup, run:
 ### University limitations and next sub-phases
 
 - There is no live university evidence adapter yet. Only the port, model, persistence and deterministic fixture exist.
-- There is no CV- or prospectus-upload equivalent for the university journey; input is manual only.
+- There is no prospectus-upload input for the university journey; input is manual only.
 - There is no occupation-classification equivalent, because the university evidence request is course-shaped rather than occupation-shaped.
 - As in the professional journey, there are no user accounts. The opaque assessment UUID is a temporary pre-authentication access reference, not production-grade authorisation. Anyone holding a saved URL may reach that assessment and an entitled report. There is no public listing route, but account-bound ownership belongs in a later phase.
 
@@ -870,7 +754,7 @@ Factor wording explains capability contribution rather than judging a subject: "
 ### A-level persistence and migrations
 
 Flyway **V13** adds `a_level_assessment` with input, provenance and headline decision, plus ordered judgment, measure and factor tables; a check constraint pins both journey columns to `A_LEVEL`. **V14** adds `a_level_assessment_narrative`, **V15** the evidence bundle and items, **V16** the entitlement, purchased snapshot and processed payment event, and **V17** the purchased PDF. A-level tables are entirely separate from professional and university tables. V1–V12 are unchanged. **V18** later added the professional `cv_extractor_version` column (see
-Professional CV input). The repository is now at Flyway v18.
+Professional input provenance). The repository is now at Flyway v18.
 
 Selected subjects, strengths, degree areas and career areas are JSONB arrays (order preserved); predicted grades are a JSONB object keyed by canonical subject (PostgreSQL does not preserve jsonb object key order, so grade display order follows the subject array). `ALevelAssessmentStore` inserts only, and `GET /a-level-assessment/{UUID}` loads saved records without invoking any provider or policy.
 
@@ -1020,7 +904,6 @@ Three filters and a set of bounds sit in front of the journeys. They are documen
 - **Correlation runs first.** `RequestCorrelationFilter` is at highest precedence, so a request rejected by security still carries an `X-Request-ID` in its response and in every log line. An inbound identifier is reused only if it matches a narrow pattern, because it reaches both a log line and a response header.
 - **Rate limiting runs after security.** `RateLimitFilter` is ordered behind the Spring Security chain so a missing or stale CSRF token stays a 403 and never spends an allowance. The limiter is in-process and keyed on the container-reported client address; it is deliberately not reading forwarded headers while no trusted proxy is configured.
 - **Collections are bounded as well as characters.** `@BoundedTextList` caps how many entries a textarea may produce and how long any one may be, counting them exactly as the form mappers split them. A character limit alone leaves the number of judged, stored and rendered list entries unbounded.
-- **Extraction stops early.** PDF text is read a page at a time and abandoned once it passes the cap; DOCX inflation is bounded by Apache POI's own ZIP guards, which abort before the XML is materialised. Those guards are JVM-wide statics, which is POI's API rather than a choice made here.
 
 ### Production profile and configuration
 
@@ -1058,7 +941,7 @@ Three signals exist today: correlated logs, structured production logging and in
 | `rate_limit.rejections` | counter | `group` | `RateLimitFilter` |
 | `external.calls` | timer | `operation`, `journey`, `outcome` | the application service that owns each outbound call |
 
-`external.calls` wraps exactly the calls that leave the process: `judgment` (Jev), `narrative` (OpenAI), `evidence` (evidence provider), `cv-extraction` (OpenAI) and `checkout` (Stripe). `outcome` is `success` or `failure` — returned or threw — so a narrative that returns but fails validation is a timer success and a `narrative.failures` increment. The operation names a step rather than a vendor, so fixture-backed development runs are not mislabelled as Jev or OpenAI traffic. Spring's own observations (`http.server.requests`, Hikari, JVM, Spring AI client timings) are registered automatically alongside these.
+`external.calls` wraps exactly the calls that leave the process: `judgment` (Jev), `narrative` (OpenAI), `evidence` (evidence provider) and `checkout` (Stripe). `outcome` is `success` or `failure` — returned or threw — so a narrative that returns but fails validation is a timer success and a `narrative.failures` increment. The operation names a step rather than a vendor, so fixture-backed development runs are not mislabelled as Jev or OpenAI traffic. Spring's own observations (`http.server.requests`, Hikari, JVM, Spring AI client timings) are registered automatically alongside these.
 
 The rules that keep this safe:
 

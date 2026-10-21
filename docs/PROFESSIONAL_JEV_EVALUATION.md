@@ -42,7 +42,7 @@ The full dataset currently makes 16 System One requests. The normal suite may st
 ### Capturing what the running application sends to Jev
 
 The harness above uses fictional cases. To see what a real assessment in the running application
-sent to Jev and what came back, for example after a CV upload, start the application with the
+sent to Jev and what came back, start the application with the
 development-only `jev-capture` profile added to the profiles you already use:
 
 ```shell
@@ -72,7 +72,7 @@ from one WARN log line naming only the exception type, never the path or content
 wrapped, so the files show the state and questions Jev would have been given alongside the fixture's
 answers.
 
-The files contain the assessment input, which can include details from an uploaded CV. Treat them as
+The files contain the assessment input, which can include personal details. Treat them as
 personal data: keep them local, do not commit them (`target/` is ignored), and delete them when done.
 The startup validator refuses to run `jev-capture` together with `prod`.
 

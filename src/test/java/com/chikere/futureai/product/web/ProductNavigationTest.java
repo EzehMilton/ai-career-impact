@@ -93,11 +93,14 @@ class ProductNavigationTest {
     }
 
     @Test
-    void theProfessionalJourneyStillOffersBothManualEntryAndCvUpload() throws Exception {
+    void theProfessionalJourneyOffersManualEntryOnly() throws Exception {
         String form = get("/professional-assessment").body();
 
-        assertThat(form).contains("Upload my CV", "/professional-assessment/cv",
-                "multipart/form-data", "Extract details from my CV");
+        assertThat(form).contains("action=\"/professional-assessment\"", "name=\"profession\"",
+                "name=\"workDescription\"", "name=\"responsibilities\"", "name=\"skills\"",
+                "name=\"yearsOfExperience\"");
+        assertThat(form).doesNotContain("/professional-assessment/cv", "multipart/form-data",
+                "type=\"file\"");
     }
 
     @Test
@@ -127,7 +130,7 @@ class ProductNavigationTest {
                 "chain of thought", "postgres", "Flyway");
 
         String privacy = get("/privacy").body();
-        assertThat(privacy).contains("not retained");
+        assertThat(privacy).contains("does not receive or store card details");
         assertThat(privacy).doesNotContain("jdbc:", "postgres", "sk_", "secret");
     }
 

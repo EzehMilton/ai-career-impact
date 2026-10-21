@@ -2,11 +2,6 @@ package com.chikere.futureai.assessment.professional.application;
 
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.decision.professional.ProfessionalMeasure;
-import com.chikere.futureai.cv.professional.application.ProfessionalProfileExtractor;
-import com.chikere.futureai.cv.professional.fixture.LocalFixtureProfessionalProfileConfiguration;
-import com.chikere.futureai.cv.professional.fixture.LocalFixtureProfessionalProfileExtractor;
-import com.chikere.futureai.cv.professional.openai.OpenAiProfessionalProfileConfiguration;
-import com.chikere.futureai.cv.professional.openai.OpenAiProfessionalProfileExtractor;
 import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfessionalConfiguration;
 import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfessionalJudgmentProvider;
 import com.chikere.futureai.judgment.typesafe.professional.ProfessionalJevAutoConfiguration;
@@ -65,8 +60,6 @@ class ProfessionalProviderWiringTest {
                     ProfessionalPaymentConfiguration.class,
                     LocalFixtureProfessionalPaymentConfiguration.class,
                     StripeProfessionalPaymentConfiguration.class,
-                    LocalFixtureProfessionalProfileConfiguration.class,
-                    OpenAiProfessionalProfileConfiguration.class,
                     OpenAiProfessionalNarrativeConfiguration.class)
             .withBean(TypeSafeClient.class, () -> mock(TypeSafeClient.class))
             .withBean(ProfessionalAssessmentStore.class, () -> mock(ProfessionalAssessmentStore.class))
@@ -107,9 +100,6 @@ class ProfessionalProviderWiringTest {
                     assertThat(context.getBean(ProfessionalNarrativeGenerator.class).source())
                             .isEqualTo(NarrativeSource.LOCAL_FIXTURE);
                     assertThat(context).doesNotHaveBean(OpenAiProfessionalNarrativeGenerator.class);
-                    assertThat(context.getBean(ProfessionalProfileExtractor.class))
-                            .isInstanceOf(LocalFixtureProfessionalProfileExtractor.class);
-                    assertThat(context).doesNotHaveBean(OpenAiProfessionalProfileExtractor.class);
                     assertThat(context.getBean(ProfessionalEvidenceProvider.class))
                             .isInstanceOf(LocalFixtureProfessionalEvidenceProvider.class);
                     assertThat(context.getBean(ProfessionalEvidenceProvider.class).source())
@@ -155,9 +145,6 @@ class ProfessionalProviderWiringTest {
                     assertThat(context.getBean(ProfessionalNarrativeGenerator.class).source())
                             .isEqualTo(NarrativeSource.OPENAI);
                     assertThat(context).doesNotHaveBean(LocalFixtureProfessionalNarrativeGenerator.class);
-                    assertThat(context.getBean(ProfessionalProfileExtractor.class))
-                            .isInstanceOf(OpenAiProfessionalProfileExtractor.class);
-                    assertThat(context).doesNotHaveBean(LocalFixtureProfessionalProfileExtractor.class);
                     assertThat(context.getBean(ProfessionalEvidenceProvider.class))
                             .isInstanceOf(LocalFixtureProfessionalEvidenceProvider.class);
                     assertThat(context.getBean(ProfessionalEvidenceProvider.class).source())
@@ -189,9 +176,6 @@ class ProfessionalProviderWiringTest {
                     assertThat(context.getBean(ProfessionalNarrativeGenerator.class))
                             .isInstanceOf(OpenAiProfessionalNarrativeGenerator.class);
                     assertThat(context).doesNotHaveBean(LocalFixtureProfessionalNarrativeGenerator.class);
-                    assertThat(context.getBean(ProfessionalProfileExtractor.class))
-                            .isInstanceOf(OpenAiProfessionalProfileExtractor.class);
-                    assertThat(context).doesNotHaveBean(LocalFixtureProfessionalProfileExtractor.class);
                     assertThat(context.getBean(ProfessionalEvidenceProvider.class))
                             .isInstanceOf(NomisProfessionalEvidenceProvider.class);
                     assertThat(context.getBean(ProfessionalEvidenceProvider.class).source())
