@@ -54,6 +54,11 @@ public final class UniversityAssessmentController {
         return FORM_VIEW;
     }
 
+    @GetMapping("/university-assessment/example")
+    public String showExample() {
+        return "university-assessment/university-example";
+    }
+
     @PostMapping("/university-assessment")
     public String assess(
             @Valid @ModelAttribute("form") UniversityAssessmentForm form,

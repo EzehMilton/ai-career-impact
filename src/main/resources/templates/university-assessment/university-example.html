@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('University assessment example')}"></head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('university')}"></header>
+
+<main class="page-shell university-example-page" id="main">
+  <div class="page-header">
+    <p class="eyebrow">University assessment example</p>
+    <h1>What a useful completed course form can look like</h1>
+    <p class="intro">This example shows the kind of detail that helps us assess what a course actually teaches. Use the official course page or prospectus where possible, and describe your own course rather than copying this example.</p>
+  </div>
+
+  <section class="alert alert-info university-example-note" aria-labelledby="example-note-heading">
+    <h2 id="example-note-heading">Use this as a guide, not a template</h2>
+    <p>Courses with the same title can differ considerably between universities. Your assessment works best when the description, modules and skills reflect the specific course you are considering or studying.</p>
+  </section>
+
+  <section class="panel university-example-panel" aria-labelledby="example-heading">
+    <div class="university-example-heading">
+      <div>
+        <p class="eyebrow">Completed example</p>
+        <h2 id="example-heading">BSc Computer Science</h2>
+      </div>
+      <span class="university-example-badge">Example only</span>
+    </div>
+
+    <div class="university-example-field"><h3>Course or degree title</h3><div class="university-example-value">BSc Computer Science</div></div>
+
+    <div class="university-example-field">
+      <h3>What does the course cover?</h3>
+      <div class="university-example-value">The course covers programming, software engineering, databases, algorithms, computer systems, artificial intelligence and data analysis. Students learn through lectures, practical laboratory sessions, individual programming assignments and group software projects. The course also includes a final-year project where students research, design and build a substantial technical solution.</div>
+    </div>
+
+    <div class="university-example-field">
+      <h3>Key modules or topics</h3>
+      <div class="university-example-value university-example-lines">Programming and Software Development
+Algorithms and Data Structures
+Databases
+Software Engineering
+Computer Systems
+Artificial Intelligence
+Machine Learning
+Cybersecurity
+Data Science
+Final-Year Project</div>
+    </div>
+
+    <div class="university-example-field">
+      <h3>Skills the course develops</h3>
+      <div class="university-example-value university-example-lines">Programming
+Problem solving
+Analytical reasoning
+Software design
+Data analysis
+Research
+Teamwork
+Technical communication
+Independent learning
+Project work</div>
+    </div>
+
+    <div class="university-example-field">
+      <h3>Career areas you're considering</h3>
+      <div class="university-example-value university-example-lines">Software development
+AI and machine learning
+Cybersecurity
+Technology consulting</div>
+    </div>
+
+    <div class="university-example-field"><h3>University or college</h3><div class="university-example-value">University of Manchester</div></div>
+
+    <div class="university-example-field university-example-field-short"><h3>Country</h3><div class="university-example-value">United Kingdom</div></div>
+  </section>
+
+  <div class="page-action university-example-actions">
+    <a class="button-link" th:href="@{/university-assessment}" href="/university-assessment">&#8592; Back to University assessment</a>
+  </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
+</body>
+</html>

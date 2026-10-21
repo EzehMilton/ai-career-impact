@@ -22,6 +22,11 @@
     <section class="panel work-form" aria-labelledby="form-heading">
         <h2 id="form-heading">Tell us about your work</h2>
         <p class="helper">Focus on what you actually do, rather than just your job title. The prompts and examples below are there to help you give enough detail for a useful assessment.</p>
+        <p class="professional-example-link">
+            <a class="text-link" th:href="@{/professional-assessment/example}" href="/professional-assessment/example">
+                See a completed example <span aria-hidden="true">&#8594;</span>
+            </a>
+        </p>
 
         <form th:action="@{/professional-assessment}" th:object="${form}" method="post" novalidate>
             <div class="field">

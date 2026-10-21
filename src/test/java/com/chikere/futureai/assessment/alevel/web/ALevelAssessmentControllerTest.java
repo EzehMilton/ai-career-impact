@@ -90,6 +90,15 @@ class ALevelAssessmentControllerTest {
     }
 
     @Test
+    void theExamplePageIsPublicAndInformationalOnly() throws Exception {
+        mvc.perform(get("/a-level-assessment/example")).andExpect(status().isOk())
+                .andExpect(view().name("a-level-assessment/a-level-example"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "What a useful completed A-level form can look like")));
+        verifyNoInteractions(workflow, reportService, purchaseService);
+    }
+
+    @Test
     void validationOrMissingCsrfNeverReachesTheWorkflow() throws Exception {
         mvc.perform(validPost()).andExpect(status().isForbidden());
         mvc.perform(post("/a-level-assessment").with(csrf()).param("selectedSubjects", " "))

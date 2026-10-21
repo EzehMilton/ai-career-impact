@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Professional assessment example')}"></head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('professional')}"></header>
+
+<main class="page-shell professional-example-page" id="main">
+    <div class="page-header">
+        <p class="eyebrow">Professional assessment example</p>
+        <h1>What a useful completed form can look like</h1>
+        <p class="intro">This example shows the level of detail that helps us understand what someone actually does at work. Your answers do not need to use the same wording or be this exact length.</p>
+    </div>
+
+    <section class="alert alert-info professional-example-note" aria-labelledby="example-note-heading">
+        <h2 id="example-note-heading">Use this as a guide, not a template</h2>
+        <p>Describe your own work in your own words. Two people with the same job title may do very different things, so the assessment works best when your answers reflect your real day-to-day responsibilities.</p>
+    </section>
+
+    <section class="panel professional-example-panel" aria-labelledby="example-heading">
+        <div class="professional-example-heading">
+            <div>
+                <p class="eyebrow">Completed example</p>
+                <h2 id="example-heading">Java Software Developer</h2>
+            </div>
+            <span class="professional-example-badge">Example only</span>
+        </div>
+
+        <div class="professional-example-field">
+            <h3>Job title</h3>
+            <div class="professional-example-value">Java Software Developer</div>
+        </div>
+
+        <div class="professional-example-field">
+            <h3>Describe your day-to-day work</h3>
+            <div class="professional-example-value">I design and build backend services using Java and Spring Boot. I discuss requirements with product managers and business analysts, review existing code, implement new features, fix defects and investigate production issues. I also review code written by other developers, make technical decisions about APIs and data models, and work with DevOps engineers when deploying services.</div>
+        </div>
+
+        <div class="professional-example-field">
+            <h3>Main responsibilities</h3>
+            <div class="professional-example-value professional-example-lines">Design and develop backend services
+Review pull requests and technical designs
+Investigate and resolve production incidents
+Discuss requirements with product and business teams
+Make decisions about APIs, integrations and data models
+Mentor less experienced developers
+Support releases and deployments
+Improve automated tests and code quality</div>
+        </div>
+
+        <div class="professional-example-field">
+            <h3>Skills you use in your job</h3>
+            <div class="professional-example-value professional-example-lines">Java
+Spring Boot
+REST APIs
+SQL
+AWS
+Problem solving
+Software design
+Code review
+Communication
+Technical decision making
+Mentoring</div>
+        </div>
+
+        <div class="professional-example-field professional-example-field-short">
+            <h3>Years of experience</h3>
+            <div class="professional-example-value">12</div>
+        </div>
+    </section>
+
+    <div class="page-action professional-example-actions">
+        <a class="button-link" th:href="@{/professional-assessment}" href="/professional-assessment">&#8592; Back to Professional assessment</a>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
+</body>
+</html>

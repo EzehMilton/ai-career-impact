@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('A-level assessment example')}"></head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('a-level')}"></header>
+
+<main class="page-shell a-level-example-page" id="main">
+  <div class="page-header">
+    <p class="eyebrow">A-level assessment example</p>
+    <h1>What a useful completed A-level form can look like</h1>
+    <p class="intro">This example shows how much information you might provide. Only your subject list is required, so don't worry if you are still unsure about grades, university courses or careers.</p>
+  </div>
+
+  <section class="alert alert-info a-level-example-note" aria-labelledby="example-note-heading">
+    <h2 id="example-note-heading">Use this as a guide, not a template</h2>
+    <p>Your interests and plans can be completely different from this example. Give us what you know now and leave optional fields blank when you genuinely do not know yet.</p>
+  </section>
+
+  <section class="panel a-level-example-panel" aria-labelledby="example-heading">
+    <div class="a-level-example-heading">
+      <div>
+        <p class="eyebrow">Completed example</p>
+        <h2 id="example-heading">Mathematics, Economics and Geography</h2>
+      </div>
+      <span class="a-level-example-badge">Example only</span>
+    </div>
+
+    <div class="a-level-example-field">
+      <h3>Your A-level subjects</h3>
+      <div class="a-level-example-value a-level-example-lines">Mathematics
+Economics
+Geography</div>
+    </div>
+
+    <div class="a-level-example-field">
+      <h3>Predicted grades</h3>
+      <div class="a-level-example-value a-level-example-lines">Mathematics: A
+Economics: B
+Geography: A</div>
+    </div>
+
+    <div class="a-level-example-field">
+      <h3>What do you enjoy or feel confident doing?</h3>
+      <div class="a-level-example-value a-level-example-lines">Solving maths problems
+Understanding how businesses and economies work
+Working with data and graphs
+Researching environmental and global issues
+Explaining ideas in written arguments</div>
+    </div>
+
+    <div class="a-level-example-field">
+      <h3>University subjects or degree areas you're considering</h3>
+      <div class="a-level-example-value a-level-example-lines">Economics
+Geography
+Business and Management
+Data-related courses</div>
+    </div>
+
+    <div class="a-level-example-field">
+      <h3>Careers you might be interested in</h3>
+      <div class="a-level-example-value a-level-example-lines">Finance
+Economic analysis
+Environmental consulting
+Business
+Technology</div>
+    </div>
+
+    <div class="a-level-example-field a-level-example-field-short">
+      <h3>Country</h3>
+      <div class="a-level-example-value">United Kingdom</div>
+    </div>
+
+    <div class="a-level-example-field">
+      <h3>Anything else you'd like us to know?</h3>
+      <div class="a-level-example-value">I'm interested in keeping both business and environmental options open. I'm also considering Computer Science, but I'm not yet sure whether I want to take it instead of Geography.</div>
+    </div>
+  </section>
+
+  <div class="page-action a-level-example-actions">
+    <a class="button-link" th:href="@{/a-level-assessment}" href="/a-level-assessment">
+      &#8592; Back to A-level assessment
+    </a>
+  </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
+</body>
+</html>

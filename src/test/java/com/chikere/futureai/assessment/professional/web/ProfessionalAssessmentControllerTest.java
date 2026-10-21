@@ -54,6 +54,15 @@ class ProfessionalAssessmentControllerTest {
     }
 
     @Test
+    void examplePageIsPublicAndInformationalOnly() throws Exception {
+        mvc.perform(get("/professional-assessment/example")).andExpect(status().isOk())
+                .andExpect(view().name("professional-assessment/professional-example"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "What a useful completed form can look like")));
+        verifyNoInteractions(workflow, reportService, purchaseService);
+    }
+
+    @Test
     void validPostUsesWorkflowOnceAndRedirects() throws Exception {
         when(workflow.submit(any(), any())).thenReturn(ID);
         mvc.perform(validPost().with(csrf())).andExpect(status().is3xxRedirection())

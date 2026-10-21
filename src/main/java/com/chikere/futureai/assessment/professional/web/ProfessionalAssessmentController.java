@@ -54,6 +54,11 @@ public final class ProfessionalAssessmentController {
         return FORM_VIEW;
     }
 
+    @GetMapping("/professional-assessment/example")
+    public String showExample() {
+        return "professional-assessment/professional-example";
+    }
+
     @PostMapping("/professional-assessment")
     public String assess(
             @Valid @ModelAttribute("form") ProfessionalAssessmentForm form,

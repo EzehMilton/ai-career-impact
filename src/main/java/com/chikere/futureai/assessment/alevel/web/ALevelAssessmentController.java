@@ -51,6 +51,11 @@ public final class ALevelAssessmentController {
         return FORM_VIEW;
     }
 
+    @GetMapping("/a-level-assessment/example")
+    public String showExample() {
+        return "a-level-assessment/a-level-example";
+    }
+
     @PostMapping("/a-level-assessment")
     public String assess(@Valid @ModelAttribute("form") ALevelAssessmentForm form,
             BindingResult bindingResult, Model model, HttpServletResponse response) {

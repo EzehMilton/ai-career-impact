@@ -23,6 +23,11 @@
   <section class="panel work-form a-level-form-panel" aria-labelledby="form-heading">
     <h2 id="form-heading">Tell us about your A-level choices</h2>
     <p class="helper">Start with your subjects. Add any other information you'd like us to consider, but don't worry if you haven't decided on a degree or career.</p>
+    <p class="a-level-example-link">
+      <a class="text-link" th:href="@{/a-level-assessment/example}" href="/a-level-assessment/example">
+        See a completed example <span aria-hidden="true">&#8594;</span>
+      </a>
+    </p>
 
     <form th:action="@{/a-level-assessment}" th:object="${form}" method="post" novalidate>
       <div class="field">

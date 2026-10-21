@@ -1652,3 +1652,120 @@ dd { margin: 0; font-weight: 700; text-align: right; }
     grid-template-columns: 1fr;
   }
 }
+
+/* Professional assessment example page only. */
+.professional-assessment-page .professional-example-link { margin: .85rem 0 0; }
+
+.professional-example-page .professional-example-note,
+.professional-example-page .professional-example-panel { max-width: 58rem; }
+
+.professional-example-page .professional-example-panel { margin-top: var(--space-4); }
+
+.professional-example-page .professional-example-heading {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--rule);
+}
+
+.professional-example-page .professional-example-heading .eyebrow { margin-bottom: .45rem; }
+.professional-example-page .professional-example-heading h2 { margin-bottom: 0; }
+
+.professional-example-page .professional-example-badge {
+  flex: 0 0 auto; padding: .35rem .6rem; border: 1px solid var(--border-strong);
+  border-radius: 999px; background: rgba(132,149,255,.08); color: var(--brand-accent);
+  font: 650 .72rem var(--font-mono);
+}
+
+.professional-example-page .professional-example-field { margin-top: var(--space-4); }
+.professional-example-page .professional-example-field h3 { margin-bottom: .5rem; font-size: .95rem; }
+
+.professional-example-page .professional-example-value {
+  padding: .9rem 1rem; border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm); background: #0b111d; color: var(--ink-strong); line-height: 1.65;
+}
+
+.professional-example-page .professional-example-lines { white-space: pre-line; }
+.professional-example-page .professional-example-field-short { max-width: 17rem; }
+.professional-example-page .professional-example-actions { margin-top: var(--space-4); }
+
+@media (max-width: 42rem) {
+  .professional-example-page .professional-example-heading { flex-direction: column; }
+  .professional-example-page .professional-example-actions a { width: 100%; }
+}
+
+/* University assessment example page only. */
+.university-assessment-page .university-example-link { margin: .85rem 0 0; }
+
+.university-example-page .university-example-note,
+.university-example-page .university-example-panel { max-width: 58rem; }
+
+.university-example-page .university-example-panel { margin-top: var(--space-4); }
+
+.university-example-page .university-example-heading {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--rule);
+}
+
+.university-example-page .university-example-heading .eyebrow { margin-bottom: .45rem; }
+.university-example-page .university-example-heading h2 { margin-bottom: 0; }
+
+.university-example-page .university-example-badge {
+  flex: 0 0 auto; padding: .35rem .6rem; border: 1px solid var(--border-strong);
+  border-radius: 999px; background: rgba(104,182,238,.08); color: #9fd2f5;
+  font: 650 .72rem var(--font-mono);
+}
+
+.university-example-page .university-example-field { margin-top: var(--space-4); }
+.university-example-page .university-example-field h3 { margin-bottom: .5rem; font-size: .95rem; }
+
+.university-example-page .university-example-value {
+  padding: .9rem 1rem; border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm); background: #0b111d; color: var(--ink-strong); line-height: 1.65;
+}
+
+.university-example-page .university-example-lines { white-space: pre-line; }
+.university-example-page .university-example-field-short { max-width: 17rem; }
+.university-example-page .university-example-actions { margin-top: var(--space-4); }
+
+@media (max-width: 42rem) {
+  .university-example-page .university-example-heading { flex-direction: column; }
+  .university-example-page .university-example-actions a { width: 100%; }
+}
+
+/* A-level assessment example page only. */
+.a-level-assessment-page .a-level-example-link { margin: .85rem 0 0; }
+
+.a-level-example-page .a-level-example-note,
+.a-level-example-page .a-level-example-panel { max-width: 58rem; }
+
+.a-level-example-page .a-level-example-panel { margin-top: var(--space-4); }
+
+.a-level-example-page .a-level-example-heading {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--rule);
+}
+
+.a-level-example-page .a-level-example-heading .eyebrow { margin-bottom: .45rem; }
+.a-level-example-page .a-level-example-heading h2 { margin-bottom: 0; }
+
+.a-level-example-page .a-level-example-badge {
+  flex: 0 0 auto; padding: .35rem .6rem; border: 1px solid var(--border-strong);
+  border-radius: 999px; background: rgba(188,141,244,.08); color: #d4b5f8;
+  font: 650 .72rem var(--font-mono);
+}
+
+.a-level-example-page .a-level-example-field { margin-top: var(--space-4); }
+.a-level-example-page .a-level-example-field h3 { margin-bottom: .5rem; font-size: .95rem; }
+
+.a-level-example-page .a-level-example-value {
+  padding: .9rem 1rem; border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm); background: #0b111d; color: var(--ink-strong); line-height: 1.65;
+}
+
+.a-level-example-page .a-level-example-lines { white-space: pre-line; }
+.a-level-example-page .a-level-example-field-short { max-width: 17rem; }
+.a-level-example-page .a-level-example-actions { margin-top: var(--space-4); }
+
+@media (max-width: 42rem) {
+  .a-level-example-page .a-level-example-heading { flex-direction: column; }
+  .a-level-example-page .a-level-example-actions a { width: 100%; }
+}
