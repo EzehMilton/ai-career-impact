@@ -58,31 +58,6 @@ A-level subjects keep their existing domain rule of **2 to 5** distinct subjects
 | Setting | Value | Property |
 | --- | --- | --- |
 | Ordinary form post | 256 KB | `server.tomcat.max-http-form-post-size` |
-| Upload, per file | 5 MB | `spring.servlet.multipart.max-file-size` |
-| Upload, whole request | 6 MB | `spring.servlet.multipart.max-request-size` |
-| Read-and-discard headroom | 8 MB | `server.tomcat.max-swallow-size` |
-
-The swallow headroom matters: without room above the request limit, Tomcat resets the connection instead of replying, and someone uploading a large file sees a broken connection rather than the page explaining the limit.
-
-### CV extraction
-
-Upload size bounds the download, not the work. A DOCX is a ZIP, so a small file can inflate enormously. These bound the work:
-
-| Setting | Default | Property |
-| --- | --- | --- |
-| Extracted characters | 100,000 | `app.professional.cv.maximum-extracted-characters` |
-| PDF pages | 50 | `app.professional.cv.maximum-pages` |
-| Largest single DOCX entry after inflation | 16 MiB | `app.professional.cv.maximum-entry-bytes` |
-| Smallest allowed compression ratio | 0.01 | `app.professional.cv.minimum-inflate-ratio` |
-
-Both parsers stop early rather than building an unbounded string and rejecting it afterwards. A PDF is read one page at a time and abandoned as soon as the text passes the cap, so peak cost is the cap plus one page. A DOCX is bounded by Apache POI's own ZIP guards, which abort during inflation.
-
-**Known limitation:** POI's guards are JVM-wide statics, not per-document settings. They are applied once at startup and are identical for every upload. That is POI's API, not a choice made here.
-
-PDF and DOCX parsing is deterministic and separate from structured profile extraction. Extension,
-MIME and magic-signature checks, filename sanitisation, no OCR, and all existing resource limits
-remain. Raw CV bytes and extracted text are never persisted or logged. OpenAI performs typed
-information extraction only; confirmed data then enters the unchanged Java/Jev assessment pipeline.
 
 ## Rate limiting
 
@@ -91,7 +66,6 @@ In-process, fixed window, no Redis.
 | Group | Routes | Default permits | Window |
 | --- | --- | --- | --- |
 | `assessment-submission` | POST on the three assessment start routes | 10 | 1 minute |
-| `cv-upload` | POST `/professional-assessment/cv` | 5 | 1 minute |
 | `checkout-start` | POST on the three checkout routes | 10 | 1 minute |
 
 Configurable through `app.rate-limit.enabled`, `app.rate-limit.window`, and `app.rate-limit.<group>.permits`.
@@ -121,13 +95,10 @@ The filter runs first in the chain, so a request rejected by security still gets
 | 400 | Input could not be understood | Field-level messages on the form |
 | 403 | CSRF token missing or stale, or no ACTIVE entitlement | `error/403.html` |
 | 404 | Unknown route, unknown or malformed assessment id | `error/404.html` or the journey's not-found page |
-| 413 | Upload larger than the limit | `error/413.html` |
 | 429 | Rate limit reached | `error/429.html`, with `Retry-After` |
 | 500 | Unexpected failure | `error/5xx.html` |
 
 No page exposes an exception class, a stack trace, SQL, a provider name, a configuration value or a file path. 403 and 404 are kept distinct on purpose: a refused resource and a missing one are different facts.
-
-**Note:** an upload that exceeds the size limit is rejected by the multipart parser before a handler is chosen, so it is answered by the shared 413 page rather than by the upload form. The page says what happened and what to do instead.
 
 ## Cache control
 
@@ -162,7 +133,7 @@ Unchanged in this phase and re-confirmed: an ACTIVE entitlement is required; the
 
 ## Logging safety
 
-Audited line by line. No log statement records CV text, form content, assessment descriptions, contact details, API keys, webhook secrets or Stripe payloads. What is logged is an assessment UUID, an exception class name, a rate-limit group name, or a fixture-mode warning. Stack traces are written for genuinely unexpected failures only, and no exception message in the codebase interpolates user-submitted text — every interpolated value is a configuration key, question id, dimension id or report version.
+Audited line by line. No log statement records form content, assessment descriptions, contact details, API keys, webhook secrets or Stripe payloads. What is logged is an assessment UUID, an exception class name, a rate-limit group name, or a fixture-mode warning. Stack traces are written for genuinely unexpected failures only, and no exception message in the codebase interpolates user-submitted text — every interpolated value is a configuration key, question id, dimension id or report version.
 
 ## Profiles
 
@@ -227,10 +198,8 @@ Under `prod`, `server.forward-headers-strategy=framework`. Spring handles `X-For
 
 Local development is unaffected — these apply only under `prod`, so plain HTTP still works.
 
-**What the session contains:** after a successful CV upload, only the structured
-`ProfessionalProfile` and `ProfessionalAssessmentInputMetadata` (sanitised filename, content type,
-parser version and timestamp). Both are removed on confirmation or when manual entry starts. No raw
-CV bytes, extracted CV text, secret, payment payload or AI prompt is placed in the session.
+**What the session contains:** the CSRF token. No assessment input, secret, payment payload or AI
+prompt is placed in the session.
 
 ## Actuator
 
@@ -274,7 +243,7 @@ Recording is never load-bearing. `JourneyMetrics` swallows its own failures, and
 
 `checkout.failures` and `pdf.generation.failures` are incremented by the checkout and PDF controllers whenever they answer 503. `judgment.failures` is incremented by each assessment service when the judgment provider throws.
 
-Every call that leaves the process is also timed as `external.calls`, tagged `operation` (`judgment`, `narrative`, `evidence`, `cv-extraction`, `checkout`), `journey` and `outcome` (`success` or `failure`, meaning returned or threw). The operation names a step, not a vendor, so fixture-backed development runs are not mislabelled as Jev or OpenAI. A narrative that returns but fails validation counts as a timer success and a `narrative.failures` increment.
+Every call that leaves the process is also timed as `external.calls`, tagged `operation` (`judgment`, `narrative`, `evidence`, `checkout`), `journey` and `outcome` (`success` or `failure`, meaning returned or threw). The operation names a step, not a vendor, so fixture-backed development runs are not mislabelled as Jev or OpenAI. A narrative that returns but fails validation counts as a timer success and a `narrative.failures` increment.
 
 Failure log lines on checkout, PDF and Stripe webhook paths describe the failure by its cause chain of class names, for example `PaymentUnavailableException<-ApiConnectionException`, via `FailureDescription`. Messages are never logged, since a provider message can echo request content.
 
@@ -288,9 +257,8 @@ Every assessment that makes a real Jev or OpenAI call logs one line when its sub
 Estimated provider cost operation=assessment journey=professional assessmentId=… outcome=completed jevCalls=1 jevInputTokens=2140 jevOutputTokens=0 jevCost=0.000090 openaiCalls=1 openaiInputTokens=3012 openaiOutputTokens=774 openaiCost=0.000916 totalCost=0.001006 currency=USD
 ```
 
-- **Tokens are the providers' own counts.** Jev's come from `SystemOneResponse.usage()`. OpenAI's come from the chat response metadata, read by `OpenAiUsageAdvisor`, which is added to Spring AI's shared `ChatClient.Builder` and so covers all three narrative generators and the CV extractor.
+- **Tokens are the providers' own counts.** Jev's come from `SystemOneResponse.usage()`. OpenAI's come from the chat response metadata, read by `OpenAiUsageAdvisor`, which is added to Spring AI's shared `ChatClient.Builder` and so covers all three narrative generators.
 - **Cost is tokens × configured list price.** It is an estimate to plan with, not an invoice. Rates are per million tokens and are set with `COST_OPENAI_INPUT_PER_MILLION_TOKENS`, `COST_OPENAI_OUTPUT_PER_MILLION_TOKENS`, `COST_JEV_INPUT_PER_MILLION_TOKENS`, `COST_JEV_OUTPUT_PER_MILLION_TOKENS` and `COST_CURRENCY`. The defaults are `gpt-4o-mini` standard pricing (0.15 / 0.60 USD) and the Jev early-access figure reported by third-party trackers (0.042 / 0 USD), because TypeSafe publishes no pricing page. Confirm both against your own terms, and change the OpenAI rates whenever `OPENAI_MODEL` changes.
-- **The CV path costs two lines.** Extraction happens in its own request before an assessment exists, so it logs `operation=cv-extraction assessmentId=none`. The cost of a CV-based assessment is that line plus the assessment's own line. Extractions that are never confirmed still cost money, and are counted that way.
 - **Failures are still reported.** If a submission fails after Jev has answered, for example on save, the line reads `outcome=failed assessmentId=none` and still shows what was spent.
 - **What is not counted:** provider-side retries of failed attempts (the SDKs do not expose them), Nomis evidence (free), and Stripe fees (charged only on purchase). A call whose response carried no usage is shown as `…CallsWithoutUsage=1` and priced at zero rather than guessed.
 - **Nothing is logged without a billable call**, so `local-fixture` runs stay quiet. The line carries no submitted content.
@@ -382,7 +350,7 @@ Webhook paths: `/payments/stripe/webhook`, `/payments/stripe/university-webhook`
 | --- | --- |
 | `PROFESSIONAL_FIXTURE_ID`, `UNIVERSITY_FIXTURE_ID`, `A_LEVEL_FIXTURE_ID` | Which fixture each journey serves under `local-fixture` |
 
-Rate-limit, CV and PDF settings are listed in their own sections above; all are optional and all have working defaults.
+Rate-limit and PDF settings are listed in their own sections above; all are optional and all have working defaults.
 
 ## Running it
 
@@ -428,7 +396,7 @@ If anything required is missing, the application names it and refuses to start. 
 
 ## Build-time analysis
 
-`mvn dependency:tree` shows no artifact resolved at two versions. PDFBox is 3.0.8, POI 5.5.1 across all three of its artifacts, Stripe 33.4.2, Spring AI 2.0.1 and TypeSafe 0.2.0 all aligned with their BOMs. One observation, not a conflict: `xmpbox` arrives at 3.0.7 through OpenHTMLToPDF while the rest of PDFBox is 3.0.8. Different artifacts, no duplication, and pinning it would mean adding a dependency to solve a cosmetic skew, so it was left alone and recorded here.
+`mvn dependency:tree` shows no artifact resolved at two versions. PDFBox is 3.0.8, Stripe 33.4.2, Spring AI 2.0.1 and TypeSafe 0.2.0 all aligned with their BOMs. One observation, not a conflict: `xmpbox` arrives at 3.0.7 through OpenHTMLToPDF while the rest of PDFBox is 3.0.8. Different artifacts, no duplication, and pinning it would mean adding a dependency to solve a cosmetic skew, so it was left alone and recorded here.
 
 No static-analysis or dependency-scanning plugin is configured — no SpotBugs, Checkstyle, PMD, JaCoCo, Enforcer or OWASP Dependency-Check. None was added: each is a standing build cost, and adding several at the end of a hardening phase would produce a backlog of findings nobody has budget to triage. Choosing one deliberately is a better next step than inheriting four.
 

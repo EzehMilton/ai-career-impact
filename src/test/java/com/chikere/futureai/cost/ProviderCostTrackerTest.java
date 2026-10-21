@@ -48,17 +48,6 @@ class ProviderCostTrackerTest {
     }
 
     @Test
-    void cvExtractionIsReportedAsItsOwnOperation(CapturedOutput output) {
-        tracker.trackCvExtraction(() -> {
-            tracker.record(ProviderUsage.of(ProviderUsage.OPENAI, "gpt-4o-mini", 8_000, 1_000));
-            return "profile";
-        });
-
-        assertThat(output).contains("operation=cv-extraction journey=professional assessmentId=none "
-                + "outcome=completed openaiCalls=1");
-    }
-
-    @Test
     void writesNothingWhenNoBillableCallWasMade(CapturedOutput output) {
         tracker.trackAssessment("a-level", UUID::randomUUID);
 

@@ -45,12 +45,10 @@ public class RequestHardeningConfiguration {
             @Value("${app.rate-limit.enabled:true}") boolean enabled,
             @Value("${app.rate-limit.window:PT1M}") Duration window,
             @Value("${app.rate-limit.assessment-submission.permits:10}") int assessmentPermits,
-            @Value("${app.rate-limit.cv-upload.permits:5}") int cvUploadPermits,
             @Value("${app.rate-limit.checkout-start.permits:10}") int checkoutPermits,
             Clock clock, JourneyMetrics metrics) {
         Map<String, RequestRateLimiter> limiters = new LinkedHashMap<>();
         limiters.put("assessment-submission", new RequestRateLimiter(assessmentPermits, window, clock));
-        limiters.put("cv-upload", new RequestRateLimiter(cvUploadPermits, window, clock));
         limiters.put("checkout-start", new RequestRateLimiter(checkoutPermits, window, clock));
 
         var registration = new FilterRegistrationBean<>(new RateLimitFilter(limiters, metrics));

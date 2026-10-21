@@ -102,7 +102,7 @@ public class StartupConfigurationValidator {
         }
         if (environment.getProperty("OPENAI_API_KEY", "").isBlank()) {
             problems.add("Missing required configuration: OPENAI_API_KEY "
-                    + "(required by profile 'prod': real OpenAI narrative and CV extraction)");
+                    + "(required by profile 'prod': real OpenAI narrative)");
         }
         problems.addAll(missing(environment, STRIPE_SETTINGS, PROD));
         problems.addAll(missing(environment, EVIDENCE_SETTINGS, PROD));
@@ -131,7 +131,7 @@ public class StartupConfigurationValidator {
         List<String> problems = new ArrayList<>();
         if (environment.getProperty("OPENAI_API_KEY", "").isBlank()) {
             problems.add("Missing required configuration: OPENAI_API_KEY "
-                    + "(required by profile 'dev-no-jev': real OpenAI narrative and CV extraction)");
+                    + "(required by profile 'dev-no-jev': real OpenAI narrative)");
         }
         problems.addAll(missing(environment, STRIPE_SETTINGS, DEV_NO_JEV));
         return problems;

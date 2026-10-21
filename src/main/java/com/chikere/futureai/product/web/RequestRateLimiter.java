@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * to be worth protecting.
  *
  * <p>Per instance, deliberately. A shared limiter would mean Redis, and the thing being defended
- * against here — one client repeatedly submitting assessments or uploading CVs — is adequately
+ * against here — one client repeatedly submitting assessments or starting checkouts — is adequately
  * blunted by a per-process limit. With more than one instance behind a load balancer the effective
  * limit is the configured one multiplied by the instance count, which is a known and documented
  * property rather than a surprise.</p>

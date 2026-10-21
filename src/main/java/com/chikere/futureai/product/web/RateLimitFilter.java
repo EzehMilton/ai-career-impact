@@ -15,8 +15,8 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Applies a rate limit to the few operations that cost real work: starting an assessment, uploading
- * a CV, and creating a checkout. Reading a page, a past result or a stylesheet is never limited —
+ * Applies a rate limit to the few operations that cost real work: starting an assessment and
+ * creating a checkout. Reading a page, a past result or a stylesheet is never limited —
  * those are cheap, and someone re-reading their own result is not abuse.
  *
  * <p>This filter sits <em>after</em> Spring Security in the chain, which matters: a POST with a
@@ -40,8 +40,7 @@ public final class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private static final List<Group> GROUPS = List.of(
-            new Group("assessment-submission", List.of("-assessment", "-assessment/cv/confirm")),
-            new Group("cv-upload", List.of("-assessment/cv")),
+            new Group("assessment-submission", List.of("-assessment")),
             new Group("checkout-start", List.of("/checkout")));
 
     private final Map<String, RequestRateLimiter> limiters;
@@ -89,7 +88,7 @@ public final class RateLimitFilter extends OncePerRequestFilter {
         if (path.startsWith("/payments/stripe/")) {
             return Optional.empty();
         }
-        // Most specific first: a CV upload is not an assessment submission.
+        // Most specific first.
         return GROUPS.stream()
                 .sorted((left, right) -> Integer.compare(longest(right), longest(left)))
                 .filter(group -> group.matches(path))

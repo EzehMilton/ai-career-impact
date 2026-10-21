@@ -15,7 +15,7 @@ import java.util.Objects;
 
 /**
  * Records the token usage OpenAI reports on every chat response, for every {@code ChatClient} built
- * from the application's builder — the three narrative generators and the CV profile extractor.
+ * from the application's builder — the three narrative generators.
  *
  * <p>Ordered immediately before Spring AI's terminal model advisor, so it sees each actual model
  * response rather than only the last one an outer advisor might return. A call that throws is not

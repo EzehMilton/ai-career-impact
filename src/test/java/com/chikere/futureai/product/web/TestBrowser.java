@@ -69,26 +69,6 @@ final class TestBrowser {
                 .POST(HttpRequest.BodyPublishers.ofString(body.toString())).build());
     }
 
-    /** Posts a single file as multipart/form-data, the way the CV upload form does. */
-    HttpResponse<String> postFile(String path, String csrfToken, String field, String filename,
-            byte[] content) throws IOException, InterruptedException {
-        String boundary = "----TestBrowser" + System.nanoTime();
-        var body = new java.io.ByteArrayOutputStream();
-        if (csrfToken != null) {
-            body.write(("--" + boundary + "\r\nContent-Disposition: form-data; name=\"_csrf\"\r\n\r\n"
-                    + csrfToken + "\r\n").getBytes(StandardCharsets.UTF_8));
-        }
-        body.write(("--" + boundary + "\r\nContent-Disposition: form-data; name=\"" + field
-                + "\"; filename=\"" + filename + "\"\r\nContent-Type: application/pdf\r\n\r\n")
-                .getBytes(StandardCharsets.UTF_8));
-        body.write(content);
-        body.write(("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
-
-        return send(request(path)
-                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
-                .POST(HttpRequest.BodyPublishers.ofByteArray(body.toByteArray())).build());
-    }
-
     private HttpRequest.Builder request(String path) {
         return HttpRequest.newBuilder(URI.create(base + path))
                 .header("Accept", "text/html,application/xhtml+xml");

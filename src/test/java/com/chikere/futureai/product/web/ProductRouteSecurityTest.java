@@ -73,6 +73,24 @@ class ProductRouteSecurityTest {
     }
 
     @Test
+    void theRemovedCvUploadRouteIsNoDifferentFromAPathThatNeverExisted() throws Exception {
+        var browser = new TestBrowser(port);
+        String token = browser.csrfTokenFrom("/professional-assessment");
+
+        HttpResponse<String> viewed = browser.get("/professional-assessment/cv");
+        assertThat(viewed.statusCode()).isEqualTo(404);
+        assertThat(viewed.body()).doesNotContain("Whitelabel", "Exception", "java.lang");
+
+        // A POST lands on the GET-only result pattern, exactly as any unknown sibling path does.
+        HttpResponse<String> uploaded = browser.postForm("/professional-assessment/cv", token);
+        HttpResponse<String> neverExisted = browser.postForm("/professional-assessment/no-such-route", token);
+        assertThat(uploaded.statusCode()).isEqualTo(neverExisted.statusCode()).isNotEqualTo(200);
+        assertThat(uploaded.body()).doesNotContain("Whitelabel", "Exception", "java.lang");
+        // CSRF still applies to it like any other browser POST.
+        assertThat(browser.postForm("/professional-assessment/cv", null).statusCode()).isEqualTo(403);
+    }
+
+    @Test
     void thereIsNoGeneratedLoginPageAndNoBasicAuthenticationChallenge() throws Exception {
         for (String path : List.of("/login", "/logout", "/login?error")) {
             HttpResponse<String> response = get(path);
@@ -103,7 +121,6 @@ class ProductRouteSecurityTest {
     void everyBrowserPostStillRequiresACsrfTokenAndIsRefusedWith403() throws Exception {
         List<String> browserPosts = List.of(
                 "/professional-assessment",
-                "/professional-assessment/cv",
                 "/professional-assessment/" + UNISSUED + "/checkout",
                 "/professional-assessment/" + UNISSUED + "/checkout/local/confirm",
                 "/university-assessment",
