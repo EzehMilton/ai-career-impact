@@ -1769,3 +1769,12 @@ dd { margin: 0; font-weight: 700; text-align: right; }
   .a-level-example-page .a-level-example-heading { flex-direction: column; }
   .a-level-example-page .a-level-example-actions a { width: 100%; }
 }
+
+/* Home hero sample interaction hint. */
+.hero-preview .preview-interaction-hint {
+  margin: .7rem 0 0;
+  text-align: center;
+  font-size: .78rem;
+  line-height: 1.4;
+  color: var(--ink-subtle);
+}
