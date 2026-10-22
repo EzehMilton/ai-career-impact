@@ -186,6 +186,7 @@
     <div class="section-heading">
       <p class="eyebrow">Three distinct assessments</p>
       <h2 id="journey-heading">Choose the assessment that fits you.</h2>
+      <p class="journey-section-reassurance"><span class="journey-free-dot" aria-hidden="true"></span>All three assessments are free. You can choose to buy a detailed report afterwards.</p>
     </div>
 
     <div class="journey-grid">
@@ -199,9 +200,8 @@
           <div><dt>You'll tell us</dt><dd>Your job title, a description of your day-to-day work, your main responsibilities and the skills you use.</dd></div>
           <div><dt>You'll get</dt><dd>Four measures, each scored out of 10, with what raises your exposure and what protects your role.</dd></div>
         </dl>
-        <div class="journey-pricing" aria-label="Professional assessment pricing">
-          <p class="journey-free"><span class="journey-free-dot" aria-hidden="true"></span>Free assessment</p>
-          <p class="journey-paid">Optional detailed report <strong>£4.99</strong></p>
+        <div class="journey-pricing" aria-label="Professional detailed report price">
+          <p class="journey-paid">Detailed report <strong>£4.99</strong></p>
         </div>
         <p class="journey-cta">
           <a class="button-link button-secondary" th:href="@{/professional-assessment}" href="/professional-assessment">Assess my job <span aria-hidden="true">&#8594;</span></a>
@@ -220,9 +220,8 @@
           <div><dt>You'll tell us</dt><dd>The course title, what it covers, its key modules and the skills it develops. Keep the course page or prospectus handy.</dd></div>
           <div><dt>You'll get</dt><dd>Five measures, each scored out of 10, on how well the course builds skills that stay valuable as AI improves.</dd></div>
         </dl>
-        <div class="journey-pricing" aria-label="University assessment pricing">
-          <p class="journey-free"><span class="journey-free-dot" aria-hidden="true"></span>Free assessment</p>
-          <p class="journey-paid">Optional detailed report <strong>£2.99</strong></p>
+        <div class="journey-pricing" aria-label="University detailed report price">
+          <p class="journey-paid">Detailed report <strong>£2.99</strong></p>
         </div>
         <p class="journey-cta">
           <a class="button-link button-secondary" th:href="@{/university-assessment}" href="/university-assessment">Assess a course <span aria-hidden="true">&#8594;</span></a>
@@ -239,9 +238,8 @@
           <div><dt>You'll tell us</dt><dd>Your subjects, plus any interests, predicted grades, degree ideas or career areas you want us to consider. The extra details are optional.</dd></div>
           <div><dt>You'll get</dt><dd>Six measures, each scored out of 10, on how many next steps your subjects keep open and the strengths they build.</dd></div>
         </dl>
-        <div class="journey-pricing" aria-label="A-level assessment pricing">
-          <p class="journey-free"><span class="journey-free-dot" aria-hidden="true"></span>Free assessment</p>
-          <p class="journey-paid">Optional detailed report <strong>£1.99</strong></p>
+        <div class="journey-pricing" aria-label="A-level detailed report price">
+          <p class="journey-paid">Detailed report <strong>£1.99</strong></p>
         </div>
         <p class="journey-cta">
           <a class="button-link button-secondary" th:href="@{/a-level-assessment}" href="/a-level-assessment">Assess my choices <span aria-hidden="true">&#8594;</span></a>
@@ -251,60 +249,60 @@
   </section>
 
   <!--/* ============ WHAT YOU'LL GET: the real measures ============ */-->
-  <section class="home-section measures-section" id="measures" aria-labelledby="measures-heading">
-    <div class="section-heading">
-      <p class="eyebrow">What you'll see</p>
-      <h2 id="measures-heading">Clear measures, each with the reasons behind it.</h2>
-      <p class="section-intro">Every measure is scored from 0 to 10, given a band and explained in plain English. Each assessment answers a different question, so their scores aren't comparable with each other.</p>
-    </div>
+<!--  <section class="home-section measures-section" id="measures" aria-labelledby="measures-heading">-->
+<!--    <div class="section-heading">-->
+<!--      <p class="eyebrow">What you'll see</p>-->
+<!--      <h2 id="measures-heading">Clear measures, each with the reasons behind it.</h2>-->
+<!--      <p class="section-intro">Every measure is scored from 0 to 10, given a band and explained in plain English. Each assessment answers a different question, so their scores aren't comparable with each other.</p>-->
+<!--    </div>-->
 
-    <div class="measures-grid">
-      <article class="panel measures-card journey-professional">
-        <p class="measures-tag">Professional</p>
-        <h3>AI Exposure</h3>
-        <p class="measures-lead">How readily the work you do might be performed, automated or changed by AI.</p>
-        <p class="measures-not">Not a probability of job loss.</p>
-        <p class="measures-bands" aria-label="Bands">Low <span aria-hidden="true">&middot;</span> Moderate <span aria-hidden="true">&middot;</span> High</p>
-        <p class="measures-also-label">Also measured</p>
-        <ul class="measures-also">
-          <li>Human Advantage</li>
-          <li>AI Complementarity</li>
-          <li>Role Adaptability</li>
-        </ul>
-      </article>
+<!--    <div class="measures-grid">-->
+<!--      <article class="panel measures-card journey-professional">-->
+<!--        <p class="measures-tag">Professional</p>-->
+<!--        <h3>AI Exposure</h3>-->
+<!--        <p class="measures-lead">How readily the work you do might be performed, automated or changed by AI.</p>-->
+<!--        <p class="measures-not">Not a probability of job loss.</p>-->
+<!--        <p class="measures-bands" aria-label="Bands">Low <span aria-hidden="true">&middot;</span> Moderate <span aria-hidden="true">&middot;</span> High</p>-->
+<!--        <p class="measures-also-label">Also measured</p>-->
+<!--        <ul class="measures-also">-->
+<!--          <li>Human Advantage</li>-->
+<!--          <li>AI Complementarity</li>-->
+<!--          <li>Role Adaptability</li>-->
+<!--        </ul>-->
+<!--      </article>-->
 
-      <article class="panel measures-card journey-university">
-        <p class="measures-tag">University</p>
-        <h3>Future Readiness</h3>
-        <p class="measures-lead">How well a course builds skills that remain valuable as AI advances.</p>
-        <p class="measures-not">Not a guarantee of employability.</p>
-        <p class="measures-bands" aria-label="Bands">Limited <span aria-hidden="true">&middot;</span> Developing <span aria-hidden="true">&middot;</span> Strong</p>
-        <p class="measures-also-label">Also measured</p>
-        <ul class="measures-also">
-          <li>Human Differentiation</li>
-          <li>AI Complementarity</li>
-          <li>Skill Transferability</li>
-          <li>Career Adaptability</li>
-        </ul>
-      </article>
+<!--      <article class="panel measures-card journey-university">-->
+<!--        <p class="measures-tag">University</p>-->
+<!--        <h3>Future Readiness</h3>-->
+<!--        <p class="measures-lead">How well a course builds skills that remain valuable as AI advances.</p>-->
+<!--        <p class="measures-not">Not a guarantee of employability.</p>-->
+<!--        <p class="measures-bands" aria-label="Bands">Limited <span aria-hidden="true">&middot;</span> Developing <span aria-hidden="true">&middot;</span> Strong</p>-->
+<!--        <p class="measures-also-label">Also measured</p>-->
+<!--        <ul class="measures-also">-->
+<!--          <li>Human Differentiation</li>-->
+<!--          <li>AI Complementarity</li>-->
+<!--          <li>Skill Transferability</li>-->
+<!--          <li>Career Adaptability</li>-->
+<!--        </ul>-->
+<!--      </article>-->
 
-      <article class="panel measures-card journey-a-level">
-        <p class="measures-tag">A-level</p>
-        <h3>Future Optionality</h3>
-        <p class="measures-lead">How wide a range of next steps your subject combination keeps open.</p>
-        <p class="measures-not">A focused combination can be the right choice.</p>
-        <p class="measures-bands" aria-label="Bands">Focused <span aria-hidden="true">&middot;</span> Balanced <span aria-hidden="true">&middot;</span> Broad</p>
-        <p class="measures-also-label">Also measured</p>
-        <ul class="measures-also">
-          <li>Degree Pathway Breadth</li>
-          <li>Analytical Foundation</li>
-          <li>Human and Creative Strength</li>
-          <li>Skill Transferability</li>
-          <li>AI-Era Adaptability</li>
-        </ul>
-      </article>
-    </div>
-  </section>
+<!--      <article class="panel measures-card journey-a-level">-->
+<!--        <p class="measures-tag">A-level</p>-->
+<!--        <h3>Future Optionality</h3>-->
+<!--        <p class="measures-lead">How wide a range of next steps your subject combination keeps open.</p>-->
+<!--        <p class="measures-not">A focused combination can be the right choice.</p>-->
+<!--        <p class="measures-bands" aria-label="Bands">Focused <span aria-hidden="true">&middot;</span> Balanced <span aria-hidden="true">&middot;</span> Broad</p>-->
+<!--        <p class="measures-also-label">Also measured</p>-->
+<!--        <ul class="measures-also">-->
+<!--          <li>Degree Pathway Breadth</li>-->
+<!--          <li>Analytical Foundation</li>-->
+<!--          <li>Human and Creative Strength</li>-->
+<!--          <li>Skill Transferability</li>-->
+<!--          <li>AI-Era Adaptability</li>-->
+<!--        </ul>-->
+<!--      </article>-->
+<!--    </div>-->
+<!--  </section>-->
 
   <!--/* ============ PROCESS ============ */-->
   <section class="home-section process-section" aria-labelledby="process-heading">
@@ -316,7 +314,7 @@
       <li><span class="step-index">01</span><h3>Choose an assessment</h3><p>Pick the one that fits: your job, a university course or your A-level subjects.</p></li>
       <li><span class="step-index">02</span><h3>Describe it in your own words</h3><p>No name or email needed. For the Professional assessment, focus on what you actually do day to day rather than just your job title.</p></li>
       <li><span class="step-index">03</span><h3>Get your free result</h3><p>Your measures, the main factors behind them and what they mean, saved at a private link you can come back to.</p></li>
-      <li><span class="step-index">04</span><h3>Go deeper if you want</h3><p>An optional report with a fuller explanation, practical next steps and a downloadable PDF.</p></li>
+      <li><span class="step-index">04</span><h3>Go from insight to action</h3><p>A detailed report with prioritised skills, practical next steps and a downloadable PDF. From £1.99.</p></li>
     </ol>
   </section>
 
@@ -324,41 +322,41 @@
   <section class="home-section offer-section" aria-labelledby="offer-heading">
     <div class="section-heading">
       <p class="eyebrow">Free or detailed</p>
-      <h2 id="offer-heading">What's included in your assessment?</h2>
+      <h2 id="offer-heading">Free result, or the full picture?</h2>
     </div>
     <div class="tier-grid home-tier-grid">
       <article class="tier tier-included">
         <p class="eyebrow">Free assessment</p>
         <!--/*        <h3>Free assessment</h3>*/-->
         <ul>
-          <li>Every measure, with its score and band</li>
+          <li>Your score and band for every measure</li>
           <li>What each measure means</li>
           <li>The main factors behind your result</li>
-          <li>A short personalised interpretation</li>
+          <li>A short personalised summary</li>
         </ul>
       </article>
       <article class="tier tier-paid">
-        <p class="eyebrow">Optional &middot; Detailed report &middot; one-off payment</p>
-        <h5>Everything in the free assessment</h5>
+        <p class="eyebrow">Detailed report &middot; one-off payment</p>
         <ul>
           <!--/*          <li>Everything in the free assessment</li>*/-->
-          <li>A deeper explanation of each measure</li>
-          <li>Practical next steps and prioritised skills to build</li>
-          <li>Sourced external context, where we have it</li>
+          <li>Everything in the free assessment, plus:</li>
+          <li>A fuller explanation of every measure</li>
+          <li>Practical next steps based on your result</li>
+          <li>The skills to build, and how</li>
+          <li>Sourced job-market context, where applicable</li>
           <li>A downloadable PDF to keep or share</li>
         </ul>
-        <p class="tier-prices">£4.99 professional <span aria-hidden="true">&middot;</span> £2.99 university <span aria-hidden="true">&middot;</span> £1.99 A-level</p>
-        <!--/* Enable once a sample generated with live providers exists. The current example PDF is a
-               development-fixture report (it says so on the cover) and isn't suitable to publish.
+        <br>
         <p class="sample-report-link">
           <a th:href="@{/samples/sample-report.pdf}" href="/samples/sample-report.pdf" target="_blank" rel="noopener noreferrer">
-            View a sample report <span aria-hidden="true">&#8599;</span>
+            View a detailed sample report <span aria-hidden="true">&#8599;</span>
           </a>
         </p>
-        */-->
+        <p class="tier-prices">£4.99 professional <span aria-hidden="true">&middot;</span> £2.99 university <span aria-hidden="true">&middot;</span> £1.99 A-level</p>
+
       </article>
     </div>
-    <p class="same-assessment-note">Your scores are the same either way. Paying adds depth and explanation. It doesn't buy a more accurate or more favourable result.</p>
+<!--    <p class="same-assessment-note">Start free. You only decide about the report once you’ve seen your result.</p>-->
   </section>
 
   <!--/* ============ TRUST ============ */-->
@@ -367,22 +365,22 @@
     <div>
       <p class="eyebrow">How results are produced</p>
       <h2 id="trust-heading">Structured reasoning, not a single AI verdict.</h2>
-      <p>Our assessments explore how AI may influence jobs, university courses and subject choices. They can help you make informed decisions, but cannot predict your individual future or guarantee particular outcomes.</p>
+      <p>Your scores come from a fixed method, not a chatbot’s opinion, so you can see exactly why you got them. They’re a guide to help you decide, and cannot predict your individual future or guarantee particular outcomes.</p>
       <ul class="trust-points">
         <li>
-          <h3>AI answers narrow questions</h3>
-          <p>An AI model rates what you described against a fixed set of specific questions, each with a scale written out in advance. It never gives an overall verdict.</p>
+          <h3>AI answers specific questions</h3>
+          <p>AI rates what you told us against a fixed set of clear questions. It doesn’t decide your overall result. One big AI judgement can vary and is hard to explain, so we keep its job small and checkable.</p>
         </li>
         <li>
-          <h3>Fixed rules produce the scores</h3>
-          <p>Ordinary code combines those ratings using published, versioned weights. The written explanation comes afterwards and can't change a number.</p>
+          <h3>Fixed rules set your scores</h3>
+          <p>The same published rules turn those ratings into your scores, every time. The written explanation is added afterwards and can’t change them.</p>
         </li>
         <li>
           <h3>What we won't do</h3>
-          <p>Predict job loss or admission, rank courses or universities, invent statistics, or tell you to change your subjects or career.</p>
+          <p>We won’t predict whether you’ll lose your job or get a place, rank courses or universities, make up statistics, or tell you to change your subjects or career.</p>
         </li>
       </ul>
-      <a class="text-link" th:href="@{/methodology}" href="/methodology">Read the full methodology <span aria-hidden="true">&#8594;</span></a>
+      <a class="text-link" th:href="@{/methodology}" href="/methodology">See exactly how it works <span aria-hidden="true">&#8594;</span></a>
     </div>
   </section>
 
@@ -391,25 +389,25 @@
     <div>
       <p class="eyebrow">For parents, carers and advisers</p>
       <h2 id="parents-heading">Helping a young person choose?</h2>
-      <p>The A-level assessment works well completed together. It only needs a list of subjects and asks for no name or email. It describes the subjects, not the student's ability, and never tells anyone to change their choices. Use it as a starting point for conversations, alongside advice from teachers and careers advisers.</p>
+      <p>Sit down and do it together. All it needs is a list of subjects, with no name or email. It looks at the subjects, not the student’s ability, and never tells anyone to change their choices. For £1.99, the detailed report adds practical next steps and a PDF you can take to teachers and careers advisers.</p>
     </div>
-    <a class="button-link button-secondary" th:href="@{/a-level-assessment}" href="/a-level-assessment">Try the A-level assessment <span aria-hidden="true">&#8594;</span></a>
+    <a class="button-link button-secondary" th:href="@{/a-level-assessment}" href="/a-level-assessment">Check their subjects together <span aria-hidden="true">&#8594;</span></a>
   </section>
 
   <!--/* ============ FAQ ============ */-->
   <section class="home-section faq-section" aria-labelledby="faq-heading">
     <div class="section-heading">
       <p class="eyebrow">Common questions</p>
-      <h2 id="faq-heading">Before you start.</h2>
+      <h2 id="faq-heading">Anything else you’d like to know?</h2>
     </div>
     <div class="faq-list">
       <details>
         <summary>Will it tell me whether I'll lose my job?</summary>
-        <p>No. Nobody can predict that for an individual. AI Exposure describes characteristics of your work, such as how much of it is digital or repetitive. It sits alongside measures of where human skills remain important and how your role could adapt.</p>
+        <p>No. Nobody can predict that for an individual. We show how much of your work AI could change, where your human skills still matter, and how your role could adapt, so you can plan ahead.</p>
       </details>
       <details>
         <summary>Is this just a chatbot's opinion?</summary>
-        <p>No. AI is used for narrow, structured ratings, not a verdict. Your scores come from fixed weights applied in code, and every result records the methodology version that produced it. The weights are our own: a transparent starting point, not validated economic or educational science. <a class="text-link" th:href="@{/methodology}" href="/methodology">See exactly how it works</a>.</p>
+        <p>No. AI answers specific questions, and fixed rules turn those answers into your scores. <a class="text-link" th:href="@{/methodology}" href="/methodology">See exactly how it works</a>.</p>
       </details>
       <details>
         <summary>Do I need an account?</summary>
@@ -422,6 +420,10 @@
       <details>
         <summary>How do I pay for a detailed report?</summary>
         <p>It's a one-off payment, made after you've seen your free result, through Stripe's secure checkout. We never see your card details, and there's no subscription.</p>
+      </details>
+      <details>
+        <summary>What’s in the detailed report?</summary>
+        <p>Practical next steps based on your result, the skills to build first, a fuller explanation of every measure and a PDF to keep. Prices are £4.99 for professional, £2.99 for university and £1.99 for A-level. You decide after seeing your free result.</p>
       </details>
     </div>
   </section>

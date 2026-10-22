@@ -1328,7 +1328,7 @@ dd { margin: 0; font-weight: 700; text-align: right; }
 }
 
 /* AI Career Impact — home page pricing enhancements.
-   Append after the existing home-page styles. Scoped to .home-shell. */
+   Shared free reassurance plus compact report pricing inside each journey card. */
 
 .home-shell .journey-grid > .journey-card {
   display: flex;
@@ -1340,53 +1340,54 @@ dd { margin: 0; font-weight: 700; text-align: right; }
   margin-bottom: 1.2rem;
 }
 
+.home-shell .journey-section-reassurance {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  margin: .35rem 0 0;
+  color: var(--ink-muted);
+  font-size: .9rem;
+  line-height: 1.5;
+}
+
+.home-shell .journey-free-dot {
+  width: .43rem;
+  height: .43rem;
+  border-radius: 50%;
+  background: #b8ead4;
+  box-shadow: 0 0 .7rem rgba(184, 234, 212, .28);
+  flex: none;
+}
+
 .home-shell .journey-card .journey-pricing {
   margin-top: auto;
-  padding: 1.05rem 0 0;
-  border-top: 1px solid rgba(201, 211, 239, 0.17);
-  display: flex;
-  flex-direction: column;
-  gap: 0.48rem;
+  padding: 1rem 0 0;
+  border-top: 1px solid rgba(201, 211, 239, .17);
 }
 
 .home-shell .journey-pricing p {
   margin: 0;
 }
 
-.home-shell .journey-free {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  color: #b8ead4;
-  font-size: 0.89rem;
-  font-weight: 650;
-  line-height: 1.45;
-}
-
-.home-shell .journey-free-dot {
-  width: 0.43rem;
-  height: 0.43rem;
-  border-radius: 50%;
-  background: currentColor;
-  flex: none;
-}
-
 .home-shell .journey-paid {
-  color: #cbd3e8;
-  font-size: 0.9rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .8rem;
+  color: var(--ink-subtle);
+  font-size: .88rem;
   line-height: 1.5;
 }
 
 .home-shell .journey-paid strong {
-  margin-left: 0.35rem;
-  color: #fff;
+  color: var(--ink-strong);
+  font-size: 1.12rem;
   font-weight: 750;
-  font-size: 1.17rem;
   white-space: nowrap;
 }
 
 .home-shell .journey-card .journey-cta {
-  margin-top: 1.1rem;
+  margin-top: 1rem;
   margin-bottom: 0;
 }
 
@@ -1396,10 +1397,15 @@ dd { margin: 0; font-weight: 700; text-align: right; }
 }
 
 @media (max-width: 700px) {
+  .home-shell .journey-section-reassurance {
+    align-items: flex-start;
+  }
+
   .home-shell .journey-card .journey-pricing {
-    padding-top: 0.9rem;
+    padding-top: .9rem;
   }
 }
+
 
 
 /* ---------- home: content-led sections ----------
@@ -1768,13 +1774,4 @@ dd { margin: 0; font-weight: 700; text-align: right; }
 @media (max-width: 42rem) {
   .a-level-example-page .a-level-example-heading { flex-direction: column; }
   .a-level-example-page .a-level-example-actions a { width: 100%; }
-}
-
-/* Home hero sample interaction hint. */
-.hero-preview .preview-interaction-hint {
-  margin: .7rem 0 0;
-  text-align: center;
-  font-size: .78rem;
-  line-height: 1.4;
-  color: var(--ink-subtle);
 }
