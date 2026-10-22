@@ -10,19 +10,18 @@
   <div class="page-header">
     <p class="eyebrow">A-level subject assessment</p>
     <h1>What opportunities could your A-level choices open up?</h1>
-    <p class="intro">Explore how your chosen subjects could support future university courses, careers and skills that may remain valuable as AI develops. You don't need to have your future planned out to get started.</p>
+    <p class="intro">See which university courses, careers and lasting skills your subjects could lead to as AI develops. You don’t need your future planned out to start.</p>
   </div>
 
   <section class="alert alert-info a-level-before" aria-labelledby="who-heading">
     <h2 id="who-heading">Before you begin</h2>
-    <p>This assessment is for students choosing or reviewing their A-level subjects, including those exploring options with a parent or adviser.</p>
-    <p><strong>All you need is your subject list.</strong> Your interests, possible degree choices and career ideas are optional. You can leave those fields blank if you're unsure.</p>
-    <p class="helper">This assessment explores possible pathways; it doesn't judge your abilities or guarantee entry to a course. Always check a university's published entry and subject requirements before making decisions.</p>
+    <p>For students choosing or reviewing their A-level subjects, on their own or with a parent or adviser.</p>
+    <p><strong>All you need is your subject list. Everything else is optional. Deciding between subjects? Check each combination separately, then compare the results.</p>
+    <p class="helper">This looks at your subjects, not your abilities, and can’t guarantee a place on a course. Always check a university’s entry requirements before deciding. Please don’t include your name or school.</p>
   </section>
 
   <section class="panel work-form a-level-form-panel" aria-labelledby="form-heading">
     <h2 id="form-heading">Tell us about your A-level choices</h2>
-    <p class="helper">Start with your subjects. Add any other information you'd like us to consider, but don't worry if you haven't decided on a degree or career.</p>
     <p class="a-level-example-link">
       <a class="text-link" th:href="@{/a-level-assessment/example}" href="/a-level-assessment/example">
         See a completed example <span aria-hidden="true">&#8594;</span>
@@ -32,7 +31,7 @@
     <form th:action="@{/a-level-assessment}" th:object="${form}" method="post" novalidate>
       <div class="field">
         <label for="selectedSubjects">Your A-level subjects <span class="required">Required</span></label>
-        <p id="selectedSubjects-help" class="helper">Enter each subject on a separate line, or separate them with commas. Include subjects you're seriously considering if you haven't started yet.</p>
+        <p id="selectedSubjects-help" class="helper">One subject per line, or separated by commas. Haven’t started yet? Enter the subjects you’re seriously considering.</p>
         <textarea id="selectedSubjects" th:field="*{selectedSubjects}" rows="3" maxlength="500"
                   placeholder="Mathematics&#10;Economics&#10;Geography"
                   aria-describedby="selectedSubjects-help selectedSubjects-error" th:attr="aria-invalid=${#fields.hasErrors('selectedSubjects')}"></textarea>
@@ -59,7 +58,7 @@
 
       <div class="field">
         <label for="preferredDegreeAreas">University subjects or degree areas you're considering <span class="optional">Optional</span></label>
-        <p id="preferredDegreeAreas-help" class="helper">List any degree subjects that interest you, one per line. Leave this blank if you're still exploring.</p>
+        <p id="preferredDegreeAreas-help" class="helper">Any degree subjects that interest you, one per line.</p>
         <textarea id="preferredDegreeAreas" th:field="*{preferredDegreeAreas}" rows="2" maxlength="1000"
                   placeholder="Economics&#10;Geography&#10;Business management"
                   aria-describedby="preferredDegreeAreas-help preferredDegreeAreas-error" th:attr="aria-invalid=${#fields.hasErrors('preferredDegreeAreas')}"></textarea>
@@ -68,7 +67,7 @@
 
       <div class="field">
         <label for="preferredCareerAreas">Careers you might be interested in <span class="optional">Optional</span></label>
-        <p id="preferredCareerAreas-help" class="helper">You can enter jobs or broad areas of work, one per line. It's fine if you have no career ideas yet.</p>
+        <p id="preferredCareerAreas-help" class="helper">Jobs or broad areas of work, one per line.</p>
         <textarea id="preferredCareerAreas" th:field="*{preferredCareerAreas}" rows="2" maxlength="1000"
                   placeholder="Finance&#10;Environmental consulting&#10;Technology"
                   aria-describedby="preferredCareerAreas-help preferredCareerAreas-error" th:attr="aria-invalid=${#fields.hasErrors('preferredCareerAreas')}"></textarea>
@@ -94,7 +93,7 @@
 
       <div class="a-level-submit">
         <button type="submit">Check my A-level choices</button>
-        <p class="helper">Your assessment is free. A more detailed PDF report is available afterwards if you want it.</p>
+        <p class="helper">Your assessment is free. You can choose to buy a more detailed report after seeing your results.</p>
       </div>
     </form>
   </section>

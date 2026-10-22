@@ -10,18 +10,17 @@
     <div class="page-header">
         <p class="eyebrow">Professional assessment</p>
         <h1>How will AI affect the work you do?</h1>
-        <p class="intro">AI may affect people with the same job title differently. Tell us what you do in your day-to-day work so we can assess which activities AI could change and where your skills may remain valuable.</p>
+        <p class="intro">Two people with the same job title can be affected by AI very differently. Tell us what you actually do, and we’ll show how AI could affect your work and where your skills stay valuable.</p>
     </div>
 
     <section class="alert alert-info professional-before" aria-labelledby="who-heading">
-        <h2 id="who-heading">Before you begin</h2>
-        <p>This assessment is for people who are working or have a role they can describe. You'll need to tell us about your job, day-to-day work, main responsibilities and the skills you use.</p>
-        <p>The more specific you can be about what you actually do, the more useful your assessment can be. Focus on your real work rather than what someone with your job title might usually do.</p>
+        <h2 id="who-heading">Tips for a useful result</h2>
+        <p>Be specific. “I review contracts and advise clients on risk” tells us far more than “legal work”. Your result is based only on what you write here.</p>
+        <p>The more specific you can be about what you actually do, the more useful your assessment can be. Please don’t include names of colleagues, clients or your employer. We don’t need them.</p>
     </section>
 
     <section class="panel work-form" aria-labelledby="form-heading">
         <h2 id="form-heading">Tell us about your work</h2>
-        <p class="helper">Focus on what you actually do, rather than just your job title. The prompts and examples below are there to help you give enough detail for a useful assessment.</p>
         <p class="professional-example-link">
             <a class="text-link" th:href="@{/professional-assessment/example}" href="/professional-assessment/example">
                 See a completed example <span aria-hidden="true">&#8594;</span>
@@ -38,14 +37,14 @@
 
             <div class="field">
                 <label for="workDescription">Describe your day-to-day work <span class="required">Required</span></label>
-                <p id="workDescription-help" class="helper">Describe what you spend your time doing, the decisions you make and the people you work with. For example: “I discuss requirements with clients, develop and review software, help colleagues solve problems and make technical decisions.”</p>
+                <p id="workDescription-help" class="helper">How do you spend a typical week? Include the decisions you make and who you work with. For example: “I discuss requirements with clients, develop and review software, help colleagues solve problems and make technical decisions.”</p>
                 <textarea id="workDescription" th:field="*{workDescription}" rows="4" minlength="40" maxlength="4000" placeholder="Describe a typical working day in your own words..." aria-describedby="workDescription-help workDescription-error" th:attr="aria-invalid=${#fields.hasErrors('workDescription')}"></textarea>
                 <p id="workDescription-error" class="field-error" th:if="${#fields.hasErrors('workDescription')}" th:errors="*{workDescription}"></p>
             </div>
 
             <div class="field">
                 <label for="responsibilities">Main responsibilities <span class="required">Required</span></label>
-                <p id="responsibilities-help" class="helper">List your main responsibilities, one per line. Include recurring work, responsibilities that require judgement, and anything where you are responsible for an outcome. For example: Review technical designs; Meet clients to discuss requirements; Resolve production issues.</p>
+                <p id="responsibilities-help" class="helper">List your main responsibilities, one per line. Include recurring work, responsibilities that require judgement, and anything where you are responsible for an outcome.</p>
                 <textarea id="responsibilities" th:field="*{responsibilities}" rows="4" maxlength="4000" placeholder="Write one responsibility on each line" aria-describedby="responsibilities-help responsibilities-error" th:attr="aria-invalid=${#fields.hasErrors('responsibilities')}"></textarea>
                 <p id="responsibilities-error" class="field-error" th:if="${#fields.hasErrors('responsibilities')}" th:errors="*{responsibilities}"></p>
             </div>

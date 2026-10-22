@@ -10,100 +10,113 @@
   <header class="page-header privacy-hero">
     <p class="eyebrow">Your information</p>
     <h1>How we handle your information</h1>
-    <p class="intro">A straightforward explanation of what the application saves and when external services are involved.</p>
+    <p class="intro">A simple explanation of what the application saves, when information is sent to other services and how you can access your results.</p>
   </header>
 
-  <aside class="privacy-notice" aria-labelledby="privacy-notice-title">
-    <div class="privacy-notice-icon" aria-hidden="true">i</div>
+  <section class="panel privacy-summary" aria-labelledby="summary-heading">
     <div>
-      <h2 id="privacy-notice-title">About this notice</h2>
-      <p>This is a product information notice, not a legal privacy policy. It describes the application's stated current behaviour; it is not legal advice or a complete privacy notice for a live service. Before launch, the operator must verify these claims and publish the required information about the controller, purposes and lawful bases, providers, international transfers, retention, rights and contact details.</p>
+      <p class="eyebrow">At a glance</p>
+      <h2 id="summary-heading">The essentials</h2>
     </div>
-  </aside>
+    <ul>
+      <li>You do not need an account, name or email address to complete an assessment.</li>
+      <li>We save your assessment and result so you can return to it later.</li>
+      <li>Stripe handles card payments. We do not see or store your card details.</li>
+      <li>Your result is available through a long private link, so keep that link private.</li>
+    </ul>
+  </section>
 
-  <nav class="privacy-contents" aria-label="On this page">
-    <strong>On this page</strong>
-    <a href="#stored">What we save</a>
-    <a href="#payment">Payments</a>
-    <a href="#providers">External services</a>
-    <a href="#access">Access to results</a>
-    <a href="#promises">What we don't do</a>
-  </nav>
-
-  <section class="privacy-section" id="stored" aria-labelledby="stored-heading">
+  <section class="privacy-section" aria-labelledby="saved-heading">
     <div class="privacy-section-heading">
-      <p class="eyebrow">01 / Your assessment</p>
-      <h2 id="stored-heading">What we save</h2>
-      <p>The application saves the information needed to return to your assessment and, if purchased, your detailed report.</p>
+      <p class="eyebrow">What we keep</p>
+      <h2 id="saved-heading">What we save</h2>
+      <p>We save the information needed to show your assessment again and provide a detailed report if you buy one.</p>
     </div>
-    <div class="privacy-cards privacy-three">
-      <article class="panel privacy-card">
-        <span class="privacy-card-symbol" aria-hidden="true">01</span>
-        <h3>Your assessment</h3>
-        <p>What you entered, the AI judgments and the resulting measures. Saving these means an existing assessment does not silently change.</p>
+
+    <div class="panel privacy-list-panel">
+      <dl class="privacy-data-list">
+        <div>
+          <dt>Your assessment</dt>
+          <dd>What you entered, the structured AI ratings and the scores produced from them.</dd>
+        </div>
+        <div>
+          <dt>Your explanation and context</dt>
+          <dd>The written explanation and any outside data shown with your result.</dd>
+        </div>
+        <div>
+          <dt>Your report purchase</dt>
+          <dd>If you buy a report, we save the purchase record, the report and its PDF.</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="privacy-section" aria-labelledby="services-heading">
+    <div class="privacy-section-heading">
+      <p class="eyebrow">Other services</p>
+      <h2 id="services-heading">When information leaves the application</h2>
+      <p>Some features use external services. Only the information relevant to the task is sent as part of the described flow.</p>
+    </div>
+
+    <div class="panel privacy-service-list">
+      <div class="privacy-service">
+        <h3>AI assessment and explanation</h3>
+        <p>Receives relevant information about the work, course or subjects you described so it can provide structured judgments and explanations.</p>
+      </div>
+      <div class="privacy-service">
+        <h3>Published data sources</h3>
+        <p>May receive an occupation or subject reference when the application looks up external statistics or factual context.</p>
+      </div>
+      <div class="privacy-service">
+        <h3>Stripe</h3>
+        <p>Handles hosted checkout and payment processing when you buy a detailed report.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="privacy-section" aria-labelledby="access-heading">
+    <div class="privacy-section-heading">
+      <p class="eyebrow">Access and payments</p>
+      <h2 id="access-heading">How results and purchases work</h2>
+    </div>
+
+    <div class="privacy-two-column">
+      <article class="panel privacy-simple-card">
+        <h3>Your result link</h3>
+        <p>There are no accounts. Each result has its own long private link and results are not listed publicly.</p>
+        <p class="privacy-emphasis">Anyone with the link may be able to open the assessment, so keep it private.</p>
       </article>
-      <article class="panel privacy-card">
-        <span class="privacy-card-symbol" aria-hidden="true">02</span>
-        <h3>Explanations and context</h3>
-        <p>The written explanation and any external context gathered for that assessment.</p>
-      </article>
-      <article class="panel privacy-card">
-        <span class="privacy-card-symbol" aria-hidden="true">03</span>
-        <h3>Full-report purchases</h3>
-        <p>If you purchase a report, the purchase record, the exact report you bought and the PDF generated from it.</p>
+
+      <article class="panel privacy-simple-card">
+        <h3>Payments</h3>
+        <p>You pay on Stripe's secure checkout page rather than on this site.</p>
+        <p class="privacy-emphasis">We receive a payment reference to confirm the purchase, but do not see or store your card details.</p>
       </article>
     </div>
   </section>
 
-  <div class="privacy-split">
-    <section class="panel privacy-section privacy-compact" id="payment" aria-labelledby="payment-heading">
-      <p class="eyebrow">02 / Purchases</p>
-      <h2 id="payment-heading">How payments work</h2>
-      <p>Card details are entered on Stripe's hosted checkout page, rather than into this application. The application keeps payment references from Stripe to confirm purchases; it does not receive or store card details.</p>
-      <p>In the described development mode, payments are simulated and no card details are requested.</p>
-    </section>
-    <section class="panel privacy-section privacy-compact" id="access" aria-labelledby="access-heading">
-      <p class="eyebrow">03 / Your results</p>
-      <h2 id="access-heading">How you access your results</h2>
-      <p>There are currently no user accounts. Each assessment can be reopened using its long, hard-to-guess link; there is no public page listing assessments.</p>
-      <p><strong>Keep your result link private.</strong> Anyone who has the link may be able to open your assessment. Link-only access is a current limitation, not a substitute for all account and security controls.</p>
-    </section>
-  </div>
-
-  <section class="privacy-section" id="providers" aria-labelledby="providers-heading">
+  <section class="privacy-section" aria-labelledby="boundaries-heading">
     <div class="privacy-section-heading">
-      <p class="eyebrow">04 / Other services</p>
-      <h2 id="providers-heading">When external services are involved</h2>
-      <p>When live integrations are enabled, the application sends relevant information to providers that perform particular tasks. It does not send a result-page link or an entire saved assessment record as part of the described flow.</p>
+      <p class="eyebrow">Boundaries</p>
+      <h2 id="boundaries-heading">What we don't do</h2>
     </div>
-    <div class="panel privacy-provider-wrap">
-      <div class="privacy-provider-row privacy-provider-head" aria-hidden="true"><span>Service</span><span>Why it's used and what it receives</span></div>
-      <div class="privacy-provider-row"><strong>AI assessment and explanation</strong><p>Receives relevant information about the work, course or subjects you described, so it can provide structured judgments and explanations.</p></div>
-      <div class="privacy-provider-row"><strong>Published-data sources</strong><p>May receive an occupation or subject reference to look up external statistics or factual context.</p></div>
-      <div class="privacy-provider-row"><strong>Stripe</strong><p>Handles hosted checkout and payment processing when you buy a full report.</p></div>
-    </div>
-    <p class="privacy-supporting-note">According to the application's current description, development mode does not contact external providers. Actual provider identities, their retention practices and any international transfers need to be verified and documented before launch.</p>
-  </section>
 
-  <section class="privacy-section" id="promises" aria-labelledby="promises-heading">
-    <div class="privacy-section-heading">
-      <p class="eyebrow">05 / Boundaries</p>
-      <h2 id="promises-heading">What we don't do</h2>
-    </div>
-    <div class="panel privacy-boundaries">
+    <div class="panel privacy-boundaries-simple">
       <ul>
-        <li>We do not require your name, email address or date of birth to complete an assessment. Free-text answers may still contain personal information.</li>
+        <li>We do not require your name, email address or date of birth to complete an assessment.</li>
         <li>The application is described as having no advertising, analytics or third-party tracking.</li>
-        <li>We do not sell assessment information. Relevant information may be shared with service providers as described above.</li>
+        <li>We do not sell assessment information.</li>
         <li>API keys and provider credentials are not stored with assessment data or shown in the interface.</li>
       </ul>
+      <p class="privacy-small-note">Free-text answers can still contain personal information if you choose to include it.</p>
     </div>
   </section>
 
-  <aside class="privacy-launch-note" aria-labelledby="launch-heading">
-    <h2 id="launch-heading">Information still needed for a live privacy notice</h2>
-    <p>Before accepting real users' data, this page needs verified details of who operates the service and how to contact them, processing purposes and lawful bases, retention and deletion, named providers, international transfers, individual rights and how to contact the UK Information Commissioner's Office. These details have not been invented here.</p>
-  </aside>
+<!--  <aside class="privacy-launch-note" aria-labelledby="launch-heading">-->
+<!--    <p class="eyebrow">Before public launch</p>-->
+<!--    <h2 id="launch-heading">This is currently a product information notice</h2>-->
+<!--    <p>It describes the application's current stated behaviour, but it is not yet a complete legal privacy notice. Before accepting real users' data, the operator should verify and publish the required details about the controller, purposes and lawful bases, providers, international transfers, retention, rights and contact information.</p>-->
+<!--  </aside>-->
 
   <nav class="privacy-bottom-nav" aria-label="More information">
     <a class="button-link button-secondary" th:href="@{/}" href="/">Back to home</a>
