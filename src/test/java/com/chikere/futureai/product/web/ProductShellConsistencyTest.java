@@ -58,7 +58,8 @@ class ProductShellConsistencyTest {
             // Strip parser comments (<!--/* ... */-->) — they are never sent to the browser,
             // so a sample link placeholder inside one is not a real download offer.
             String live = page.getValue().replaceAll("(?s)<!--/\\*.*?\\*/-->", "");
-            assertThat(live.contains("report.pdf"))
+            // The paid download is per assessment. A static sample PDF is not a paid download.
+            assertThat(live.contains("/{id}/report.pdf"))
                     .as("%s offers a PDF download", page.getKey()).isEqualTo(paidReport);
         }
     }

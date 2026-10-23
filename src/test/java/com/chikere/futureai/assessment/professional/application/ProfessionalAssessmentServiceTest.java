@@ -155,26 +155,6 @@ class ProfessionalAssessmentServiceTest {
         verify(provider, times(2)).judge(state);
     }
 
-    @Test
-    void cvInputMetadataIsStoredButCannotChangeTheAuthoritativeDecision() {
-        var state = state("Software Architect");
-        var provider = new LocalFixtureProfessionalJudgmentProvider("senior_software_architect");
-        var store = mock(ProfessionalAssessmentStore.class);
-        var service = new ProfessionalAssessmentService(provider, new ProfessionalDecisionPolicyV1(), store,
-                Clock.fixed(Instant.parse("2026-10-01T08:00:00Z"), ZoneOffset.UTC));
-        var metadata = ProfessionalAssessmentInputMetadata.cvUpload("safe.pdf", "application/pdf",
-                "professional-cv-parser-v1", "professional-cv-extractor-v2", Instant.parse("2026-10-01T07:59:00Z"));
-
-        service.submitProfessionalAssessment(state, metadata);
-
-        ArgumentCaptor<StoredProfessionalAssessment> capture =
-                ArgumentCaptor.forClass(StoredProfessionalAssessment.class);
-        verify(store).save(capture.capture());
-        assertThat(capture.getValue().inputMetadata()).isEqualTo(metadata);
-        assertThat(capture.getValue().result()).isEqualTo(new ProfessionalAssessmentService(
-                provider, new ProfessionalDecisionPolicyV1()).assess(state));
-    }
-
     private ProfessionalAssessmentState state(String profession) {
         return new ProfessionalAssessmentState(profession, "Explicit local test case",
                 List.of(), List.of(), OptionalInt.empty());

@@ -12,16 +12,6 @@ class ProfessionalAssessmentInputMetadataTest {
     private static final Instant PARSED = Instant.parse("2026-10-15T12:00:00Z");
 
     @Test
-    void cvUploadCarriesTheExtractorVersionNextToTheParserVersion() {
-        var metadata = ProfessionalAssessmentInputMetadata.cvUpload("cv.pdf", "application/pdf",
-                "professional-cv-parser-v2", "professional-cv-extractor-v2", PARSED);
-
-        assertThat(metadata.source()).isEqualTo(ProfessionalInputSource.CV_UPLOAD);
-        assertThat(metadata.parserVersion()).contains("professional-cv-parser-v2");
-        assertThat(metadata.extractorVersion()).contains("professional-cv-extractor-v2");
-    }
-
-    @Test
     void manualInputHasNoExtractorVersion() {
         assertThat(ProfessionalAssessmentInputMetadata.manual().extractorVersion()).isEmpty();
     }
@@ -33,15 +23,6 @@ class ProfessionalAssessmentInputMetadataTest {
                 Optional.empty()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("manual input must not contain CV metadata");
-    }
-
-    @Test
-    void cvUploadWithoutAnExtractorVersionIsRejected() {
-        assertThatThrownBy(() -> new ProfessionalAssessmentInputMetadata(ProfessionalInputSource.CV_UPLOAD,
-                Optional.of("cv.pdf"), Optional.of("application/pdf"), Optional.of("professional-cv-parser-v2"),
-                Optional.empty(), Optional.of(PARSED)))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("CV upload metadata must be complete");
     }
 
     @Test

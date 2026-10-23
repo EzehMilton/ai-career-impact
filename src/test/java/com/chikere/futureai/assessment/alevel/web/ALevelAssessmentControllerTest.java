@@ -80,9 +80,8 @@ class ALevelAssessmentControllerTest {
 
         assertThat(html).contains("Your A-level subjects", "Predicted grades",
                 "What do you enjoy or feel confident doing?", "degree areas you're considering",
-                "Leave this blank if you're still exploring",
-                "doesn't judge your abilities",
-                "you haven't decided on a degree or career");
+                "not your abilities",
+                "You don’t need your future planned out to start.");
         // "no good or bad subjects here" is deliberate reassurance, so only verdict phrasing is banned.
         assertThat(html).doesNotContain("AI Exposure", "Future Readiness", "future-proof",
                 "wrong subjects", "will limit your future", "you won't get");
