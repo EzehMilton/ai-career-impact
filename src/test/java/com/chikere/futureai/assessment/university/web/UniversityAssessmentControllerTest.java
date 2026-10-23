@@ -80,7 +80,7 @@ class UniversityAssessmentControllerTest {
 
         assertThat(html).contains("What does the course cover?", "Key modules or topics",
                 "Skills the course develops", "Career areas you're considering",
-                "does not generate a career recommendation");
+                "not your ability or your chances of getting a job");
         assertThat(html).doesNotContain("Years of experience", "job title", "your work",
                 "AI Exposure", "future-proof");
         verifyNoInteractions(workflow, reportService);

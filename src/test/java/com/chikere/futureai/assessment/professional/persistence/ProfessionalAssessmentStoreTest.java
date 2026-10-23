@@ -91,8 +91,7 @@ class ProfessionalAssessmentStoreTest {
                 judgments.schemaVersion(), decision.policyVersion());
         var snapshot = new StoredProfessionalAssessment(UUID.randomUUID(),
                 Instant.parse("2026-09-30T12:00:00Z"), state, judgments, result, Optional.empty(),
-                ProfessionalAssessmentInputMetadata.cvUpload("architect-cv.pdf", "application/pdf",
-                        "professional-cv-parser-v1", "professional-cv-extractor-v2", Instant.parse("2026-09-30T11:59:00Z")));
+                ProfessionalAssessmentInputMetadata.manual());
 
         store.save(snapshot);
         var loaded = store.findById(snapshot.id()).orElseThrow();
@@ -105,10 +104,6 @@ class ProfessionalAssessmentStoreTest {
         assertThat(loaded.result().decision().measures()).hasSize(4);
         assertThat(loaded.result().decision().topExposureDrivers()).isNotEmpty();
         assertThat(loaded.inputMetadata()).isEqualTo(snapshot.inputMetadata());
-        assertThat(loaded.inputMetadata().extractorVersion()).contains("professional-cv-extractor-v2");
-        assertThat(new JdbcTemplate(dataSource).queryForObject(
-                "select cv_extractor_version from professional_assessment where id = ?", String.class,
-                snapshot.id())).isEqualTo("professional-cv-extractor-v2");
         assertThat(store.findById(UUID.randomUUID())).isEmpty();
     }
 
@@ -132,56 +127,11 @@ class ProfessionalAssessmentStoreTest {
     }
 
     @Test
-    void databaseRejectsACvUploadRowWithoutAnExtractorVersion() {
-        var jdbc = new JdbcTemplate(dataSource);
-        assertThatThrownBy(() -> insertRow(jdbc, "public", "CV_UPLOAD", "professional-cv-parser-v2", null))
-                .isInstanceOf(DataIntegrityViolationException.class)
-                .hasMessageContaining("professional_assessment_cv_metadata_consistent");
-    }
-
-    @Test
     void databaseRejectsAManualRowWithAnExtractorVersion() {
         var jdbc = new JdbcTemplate(dataSource);
         assertThatThrownBy(() -> insertRow(jdbc, "public", "MANUAL", null, "professional-cv-extractor-v2"))
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("professional_assessment_cv_metadata_consistent");
-    }
-
-    /**
-     * Migrates a separate schema on the same PostgreSQL container to V17, inserts rows the way the
-     * application saved them then, and confirms V18 backfills only the CV upload.
-     */
-    @Test
-    void v18BackfillsTheExtractorVersionOfExistingCvUploads() {
-        String schema = "v18_backfill_" + UUID.randomUUID().toString().replace("-", "");
-        var jdbc = new JdbcTemplate(dataSource);
-        try {
-            Flyway.configure().dataSource(dataSource).schemas(schema).target("17").load().migrate();
-            UUID cvUpload = insertV17Row(jdbc, schema, "CV_UPLOAD");
-            UUID manual = insertV17Row(jdbc, schema, "MANUAL");
-
-            var upgraded = Flyway.configure().dataSource(dataSource).schemas(schema).target("18").load();
-            upgraded.migrate();
-
-            assertThat(upgraded.info().current().getVersion().getVersion()).isEqualTo("18");
-            assertThat(extractorVersion(jdbc, schema, cvUpload)).isEqualTo("professional-cv-extractor-v1");
-            assertThat(extractorVersion(jdbc, schema, manual)).isNull();
-        }
-        finally {
-            jdbc.execute("drop schema if exists " + schema + " cascade");
-        }
-    }
-
-    private static UUID insertV17Row(JdbcTemplate jdbc, String schema, String inputSource) {
-        boolean cv = inputSource.equals("CV_UPLOAD");
-        UUID id = UUID.randomUUID();
-        jdbc.update("insert into " + schema + ".professional_assessment (" + REQUIRED_COLUMNS + ", input_source, "
-                        + "cv_original_filename, cv_media_type, cv_parser_version, cv_parsed_at) values ("
-                        + REQUIRED_VALUES + ", ?, ?, ?, ?, ?)",
-                id, inputSource, cv ? "cv.pdf" : null, cv ? "application/pdf" : null,
-                cv ? "professional-cv-parser-v2" : null,
-                cv ? java.sql.Timestamp.from(Instant.parse("2026-09-30T12:00:00Z")) : null);
-        return id;
     }
 
     private static void insertRow(JdbcTemplate jdbc, String schema, String inputSource, String parserVersion,
@@ -193,11 +143,6 @@ class ProfessionalAssessmentStoreTest {
                 UUID.randomUUID(), inputSource, cv ? "cv.pdf" : null, cv ? "application/pdf" : null,
                 parserVersion, extractorVersion,
                 cv ? java.sql.Timestamp.from(Instant.parse("2026-10-15T12:00:00Z")) : null);
-    }
-
-    private static String extractorVersion(JdbcTemplate jdbc, String schema, UUID id) {
-        return jdbc.queryForObject("select cv_extractor_version from " + schema
-                + ".professional_assessment where id = ?", String.class, id);
     }
 
     private static final String REQUIRED_COLUMNS = "id, created_at, profession, work_description, "

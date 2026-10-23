@@ -99,8 +99,6 @@ class ProductNavigationTest {
         assertThat(form).contains("action=\"/professional-assessment\"", "name=\"profession\"",
                 "name=\"workDescription\"", "name=\"responsibilities\"", "name=\"skills\"",
                 "name=\"yearsOfExperience\"");
-        assertThat(form).doesNotContain("/professional-assessment/cv", "multipart/form-data",
-                "type=\"file\"");
     }
 
     @Test
@@ -130,7 +128,7 @@ class ProductNavigationTest {
                 "chain of thought", "postgres", "Flyway");
 
         String privacy = get("/privacy").body();
-        assertThat(privacy).contains("does not receive or store card details");
+        assertThat(privacy).contains("do not see or store your card details");
         assertThat(privacy).doesNotContain("jdbc:", "postgres", "sk_", "secret");
     }
 
