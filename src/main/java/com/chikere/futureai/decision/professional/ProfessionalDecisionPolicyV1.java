@@ -4,8 +4,13 @@ import com.chikere.futureai.assessment.domain.AssessmentConfidence;
 import com.chikere.futureai.assessment.domain.AssessmentDecision;
 import com.chikere.futureai.assessment.domain.AssessmentStatus;
 import com.chikere.futureai.assessment.domain.JourneyType;
+import com.chikere.futureai.decision.DecisionTracePayloads;
+import com.chikere.futureai.decision.FactorCandidate;
+import com.chikere.futureai.decision.WeightedContribution;
 import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
 import com.chikere.futureai.judgment.domain.DimensionJudgment;
+import com.chikere.futureai.trace.AssessmentTrace;
+import com.chikere.futureai.trace.TraceStage;
 
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -58,6 +63,8 @@ public final class ProfessionalDecisionPolicyV1 {
     private static final double HIGH_MINIMUM_CONFIDENCE_THRESHOLD = 0.60;
     private static final double MODERATE_BAND_THRESHOLD = 3.50;
     private static final double HIGH_BAND_THRESHOLD = 7.00;
+    private static final int MAXIMUM_DISPLAYED_FACTORS = 3;
+    private static final Map<String, String> BAND_THRESHOLDS = bandThresholds();
 
     private static final Map<String, WeightedDimension> EXPOSURE_WEIGHTS = weightedDimensions(
             new WeightedDimension(TASK_REPEATABILITY, 0.25, false),
@@ -83,11 +90,24 @@ public final class ProfessionalDecisionPolicyV1 {
             new WeightedDimension(ACCOUNTABILITY_RESPONSIBILITY, 0.10, false),
             new WeightedDimension(TASK_REPEATABILITY, 0.05, true));
 
+    private final AssessmentTrace trace;
+
+    public ProfessionalDecisionPolicyV1() {
+        this(AssessmentTrace.disabled());
+    }
+
+    /** The trace only observes the values this policy computes; it never changes a decision. */
+    public ProfessionalDecisionPolicyV1(AssessmentTrace trace) {
+        this.trace = Objects.requireNonNull(trace, "trace must not be null");
+    }
+
     public ProfessionalDecisionResult decide(AssessmentJudgmentSet judgmentSet) {
         ValidatedJudgments judgments = validate(judgmentSet);
         double informationSufficiency = judgments.informationSufficiency();
 
         if (informationSufficiency < INFORMATION_REQUIRED_THRESHOLD) {
+            traceInformationSufficiency(informationSufficiency, AssessmentStatus.MORE_INFORMATION_REQUIRED,
+                    AssessmentConfidence.LOW, false);
             AssessmentDecision headline = new AssessmentDecision(
                     JourneyType.PROFESSIONAL,
                     OptionalDouble.empty(),
@@ -105,21 +125,34 @@ public final class ProfessionalDecisionPolicyV1 {
                     List.of());
         }
 
-        AssessmentConfidence assessmentConfidence = assessmentConfidence(judgments);
+        ConfidenceAssessment confidenceAssessment = assessmentConfidence(judgments);
+        AssessmentConfidence assessmentConfidence = confidenceAssessment.confidence();
         AssessmentStatus status = assessmentStatus(informationSufficiency, assessmentConfidence);
+        traceInformationSufficiency(informationSufficiency, status, assessmentConfidence, true);
+        traceConfidence(informationSufficiency, confidenceAssessment);
         EnumMap<ProfessionalMeasure, ProfessionalMeasureResult> measures = calculateMeasures(judgments);
         ProfessionalMeasureResult exposure = measures.get(ProfessionalMeasure.AI_EXPOSURE);
-        List<ProfessionalDecisionFactor> factors = exposureFactors(judgments);
-        List<ProfessionalDecisionFactor> drivers = factors.stream()
+        List<FactorCandidate> candidates = exposureCandidates(judgments);
+        List<ProfessionalDecisionFactor> factors = exposureFactors(candidates);
+        List<ProfessionalDecisionFactor> rankedDrivers = factors.stream()
                 .filter(factor -> factor.signedEffect() > 0.0)
                 .sorted(Comparator.comparingDouble(ProfessionalDecisionFactor::signedEffect).reversed())
-                .limit(3)
                 .toList();
-        List<ProfessionalDecisionFactor> protectiveFactors = factors.stream()
+        List<ProfessionalDecisionFactor> drivers = rankedDrivers.stream()
+                .limit(MAXIMUM_DISPLAYED_FACTORS)
+                .toList();
+        List<ProfessionalDecisionFactor> rankedProtective = factors.stream()
                 .filter(factor -> factor.signedEffect() < 0.0)
                 .sorted(Comparator.comparingDouble(ProfessionalDecisionFactor::signedEffect))
-                .limit(3)
                 .toList();
+        List<ProfessionalDecisionFactor> protectiveFactors = rankedProtective.stream()
+                .limit(MAXIMUM_DISPLAYED_FACTORS)
+                .toList();
+        trace.event(JourneyType.PROFESSIONAL, TraceStage.FACTOR_SELECTION, () -> DecisionTracePayloads.factorSelection(
+                POLICY_VERSION, "AI Exposure weights", candidates,
+                rankedDrivers.stream().map(ProfessionalDecisionFactor::dimensionId).toList(),
+                rankedProtective.stream().map(ProfessionalDecisionFactor::dimensionId).toList(),
+                MAXIMUM_DISPLAYED_FACTORS, "whatIncreasesAiExposure", "whereHumanSkillsRemainImportant"));
 
         AssessmentDecision headline = new AssessmentDecision(
                 JourneyType.PROFESSIONAL,
@@ -198,15 +231,21 @@ public final class ProfessionalDecisionPolicyV1 {
                 compositeMeasure(ProfessionalMeasure.HUMAN_ADVANTAGE, HUMAN_ADVANTAGE_WEIGHTS, judgments));
 
         ScoreValue complementarity = judgments.score(AI_COMPLEMENTARITY);
-        double complementarityIndicator = ProfessionalScoreScale.toIndicator(
-                ProfessionalScoreScale.normalise(complementarity.score()));
-        results.put(
+        double normalisedComplementarity = ProfessionalScoreScale.normalise(complementarity.score());
+        double complementarityIndicator = ProfessionalScoreScale.toIndicator(normalisedComplementarity);
+        ProfessionalMeasureResult complementarityResult = new ProfessionalMeasureResult(
                 ProfessionalMeasure.AI_COMPLEMENTARITY,
-                new ProfessionalMeasureResult(
-                        ProfessionalMeasure.AI_COMPLEMENTARITY,
-                        complementarityIndicator,
-                        indicatorBand(complementarityIndicator),
-                        complementarity.confidence()));
+                complementarityIndicator,
+                indicatorBand(complementarityIndicator),
+                complementarity.confidence());
+        results.put(ProfessionalMeasure.AI_COMPLEMENTARITY, complementarityResult);
+        trace.event(JourneyType.PROFESSIONAL, TraceStage.SCORE_CALCULATION, () -> DecisionTracePayloads.measure(
+                POLICY_VERSION, ProfessionalMeasure.AI_COMPLEMENTARITY,
+                "DIRECT: the single ai_complementarity judgment, normalised",
+                List.of(WeightedContribution.of(AI_COMPLEMENTARITY, complementarity.score(), "normalise: score / 4",
+                        normalisedComplementarity, 1.0, complementarity.confidence())),
+                normalisedComplementarity, complementarityResult.indicator(), complementarityResult.band(),
+                BAND_THRESHOLDS, complementarityResult.confidence()));
         results.put(
                 ProfessionalMeasure.ROLE_ADAPTABILITY,
                 compositeMeasure(ProfessionalMeasure.ROLE_ADAPTABILITY, ROLE_ADAPTABILITY_WEIGHTS, judgments));
@@ -217,17 +256,52 @@ public final class ProfessionalDecisionPolicyV1 {
             ProfessionalMeasure measure,
             Map<String, WeightedDimension> weights,
             ValidatedJudgments judgments) {
-        double composite = weights.values().stream()
-                .mapToDouble(weighted -> weighted.weight() * weighted.value(judgments.score(weighted.dimensionId())))
-                .sum();
-        double confidence = weights.values().stream()
-                .mapToDouble(weighted -> weighted.weight() * judgments.score(weighted.dimensionId()).confidence())
-                .sum();
+        List<WeightedContribution> contributions = weights.values().stream()
+                .map(weighted -> {
+                    ScoreValue score = judgments.score(weighted.dimensionId());
+                    return WeightedContribution.of(weighted.dimensionId(), score.score(), weighted.transformation(),
+                            weighted.value(score), weighted.weight(), score.confidence());
+                })
+                .toList();
+        double composite = contributions.stream().mapToDouble(WeightedContribution::contribution).sum();
+        double confidence = contributions.stream().mapToDouble(WeightedContribution::weightedConfidence).sum();
         double indicator = ProfessionalScoreScale.toIndicator(composite);
-        return new ProfessionalMeasureResult(measure, indicator, indicatorBand(indicator), confidence);
+        ProfessionalMeasureResult result =
+                new ProfessionalMeasureResult(measure, indicator, indicatorBand(indicator), confidence);
+        trace.event(JourneyType.PROFESSIONAL, TraceStage.SCORE_CALCULATION, () -> DecisionTracePayloads.measure(
+                POLICY_VERSION, measure, "WEIGHTED_COMPOSITE", contributions, composite, result.indicator(),
+                result.band(), BAND_THRESHOLDS, result.confidence()));
+        return result;
     }
 
-    private AssessmentConfidence assessmentConfidence(ValidatedJudgments judgments) {
+    private void traceInformationSufficiency(double informationSufficiency, AssessmentStatus status,
+            AssessmentConfidence confidence, boolean scoresProduced) {
+        trace.event(JourneyType.PROFESSIONAL, TraceStage.INFORMATION_SUFFICIENCY,
+                () -> DecisionTracePayloads.informationSufficiency(POLICY_VERSION, informationSufficiency,
+                        INFORMATION_REQUIRED_THRESHOLD, READY_INFORMATION_THRESHOLD, status, confidence,
+                        scoresProduced));
+    }
+
+    private void traceConfidence(double informationSufficiency, ConfidenceAssessment assessment) {
+        trace.event(JourneyType.PROFESSIONAL, TraceStage.ASSESSMENT_CONFIDENCE, () -> DecisionTracePayloads.confidence(
+                POLICY_VERSION, informationSufficiency, assessment.mean(), assessment.minimum(), Map.of(
+                        "highRequiresInformationAtLeast", HIGH_INFORMATION_THRESHOLD,
+                        "highRequiresMeanAtLeast", HIGH_MEAN_CONFIDENCE_THRESHOLD,
+                        "highRequiresMinimumAtLeast", HIGH_MINIMUM_CONFIDENCE_THRESHOLD,
+                        "moderateRequiresInformationAtLeast", INFORMATION_REQUIRED_THRESHOLD,
+                        "moderateRequiresMeanAtLeast", MODERATE_MEAN_CONFIDENCE_THRESHOLD),
+                assessment.confidence()));
+    }
+
+    private static Map<String, String> bandThresholds() {
+        LinkedHashMap<String, String> thresholds = new LinkedHashMap<>();
+        thresholds.put(IndicatorBand.LOW.name(), "score < " + MODERATE_BAND_THRESHOLD);
+        thresholds.put(IndicatorBand.MODERATE.name(), MODERATE_BAND_THRESHOLD + " <= score < " + HIGH_BAND_THRESHOLD);
+        thresholds.put(IndicatorBand.HIGH.name(), "score >= " + HIGH_BAND_THRESHOLD);
+        return java.util.Collections.unmodifiableMap(thresholds);
+    }
+
+    private ConfidenceAssessment assessmentConfidence(ValidatedJudgments judgments) {
         double mean = SCORE_DIMENSIONS.stream()
                 .map(judgments::score)
                 .mapToDouble(ScoreValue::confidence)
@@ -242,13 +316,13 @@ public final class ProfessionalDecisionPolicyV1 {
         if (judgments.informationSufficiency() >= HIGH_INFORMATION_THRESHOLD
                 && mean >= HIGH_MEAN_CONFIDENCE_THRESHOLD
                 && minimum >= HIGH_MINIMUM_CONFIDENCE_THRESHOLD) {
-            return AssessmentConfidence.HIGH;
+            return new ConfidenceAssessment(mean, minimum, AssessmentConfidence.HIGH);
         }
         if (judgments.informationSufficiency() >= INFORMATION_REQUIRED_THRESHOLD
                 && mean >= MODERATE_MEAN_CONFIDENCE_THRESHOLD) {
-            return AssessmentConfidence.MODERATE;
+            return new ConfidenceAssessment(mean, minimum, AssessmentConfidence.MODERATE);
         }
-        return AssessmentConfidence.LOW;
+        return new ConfidenceAssessment(mean, minimum, AssessmentConfidence.LOW);
     }
 
     private AssessmentStatus assessmentStatus(
@@ -260,24 +334,32 @@ public final class ProfessionalDecisionPolicyV1 {
         return AssessmentStatus.READY;
     }
 
-    private List<ProfessionalDecisionFactor> exposureFactors(ValidatedJudgments judgments) {
+    private List<FactorCandidate> exposureCandidates(ValidatedJudgments judgments) {
         return EXPOSURE_WEIGHTS.values().stream().map(weighted -> {
             ScoreValue score = judgments.score(weighted.dimensionId());
             double exposureComponent = weighted.value(score);
             double signedEffect = weighted.weight() * (exposureComponent - 0.5);
+            return new FactorCandidate(weighted.dimensionId(), score.score(), exposureComponent,
+                    weighted.weight(), signedEffect);
+        }).toList();
+    }
+
+    private List<ProfessionalDecisionFactor> exposureFactors(List<FactorCandidate> candidates) {
+        return candidates.stream().map(candidate -> {
+            double signedEffect = candidate.signedEffect();
             if (signedEffect == 0.0) {
                 return null;
             }
             return new ProfessionalDecisionFactor(
-                    weighted.dimensionId(),
+                    candidate.dimensionId(),
                     signedEffect > 0.0
                             ? DecisionFactorEffect.INCREASES_AI_EXPOSURE
                             : DecisionFactorEffect.REDUCES_AI_EXPOSURE,
-                    ProfessionalFactorDirection.valueOf((score.score() > 2.0 ? "HIGH_" : "LOW_")
-                            + weighted.dimensionId().toUpperCase(Locale.ROOT)),
-                    score.score(),
-                    exposureComponent,
-                    weighted.weight(),
+                    ProfessionalFactorDirection.valueOf((candidate.rawScore() > 2.0 ? "HIGH_" : "LOW_")
+                            + candidate.dimensionId().toUpperCase(Locale.ROOT)),
+                    candidate.rawScore(),
+                    candidate.transformedValue(),
+                    candidate.weight(),
                     signedEffect);
         })
                 .filter(Objects::nonNull)
@@ -328,6 +410,9 @@ public final class ProfessionalDecisionPolicyV1 {
     private record ScoreValue(double score, double confidence) {
     }
 
+    private record ConfidenceAssessment(double mean, double minimum, AssessmentConfidence confidence) {
+    }
+
     private record ValidatedJudgments(double informationSufficiency, Map<String, ScoreValue> scores) {
 
         ScoreValue score(String dimensionId) {
@@ -342,6 +427,10 @@ public final class ProfessionalDecisionPolicyV1 {
                     ? ProfessionalScoreScale::inverse
                     : ProfessionalScoreScale::normalise;
             return operation.applyAsDouble(score.score());
+        }
+
+        String transformation() {
+            return inverse ? "inverse: 1 - score / 4" : "normalise: score / 4";
         }
     }
 }

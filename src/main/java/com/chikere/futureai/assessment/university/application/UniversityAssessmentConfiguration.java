@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import com.chikere.futureai.configuration.JourneyMetrics;
 import com.chikere.futureai.cost.ProviderCostTracker;
 import org.springframework.beans.factory.ObjectProvider;
+import com.chikere.futureai.trace.AssessmentTrace;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -31,8 +32,8 @@ import java.util.Optional;
 public class UniversityAssessmentConfiguration {
 
     @Bean
-    UniversityDecisionPolicyV1 universityDecisionPolicyV1() {
-        return new UniversityDecisionPolicyV1();
+    UniversityDecisionPolicyV1 universityDecisionPolicyV1(ObjectProvider<AssessmentTrace> trace) {
+        return new UniversityDecisionPolicyV1(trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean
@@ -40,9 +41,11 @@ public class UniversityAssessmentConfiguration {
             UniversityJudgmentProvider judgmentProvider,
             UniversityDecisionPolicyV1 decisionPolicy,
             UniversityAssessmentStore store,
-            ObjectProvider<JourneyMetrics> metrics) {
+            ObjectProvider<JourneyMetrics> metrics,
+            ObjectProvider<AssessmentTrace> trace) {
         return new UniversityAssessmentService(judgmentProvider, decisionPolicy, store, Clock.systemUTC(),
-                metrics.getIfAvailable(JourneyMetrics::disabled));
+                metrics.getIfAvailable(JourneyMetrics::disabled),
+                trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean
@@ -50,10 +53,14 @@ public class UniversityAssessmentConfiguration {
             UniversityAssessmentStore assessmentStore,
             UniversityNarrativeStore narrativeStore,
             UniversityNarrativeGenerator generator,
-            ObjectProvider<JourneyMetrics> metrics) {
+            ObjectProvider<JourneyMetrics> metrics,
+            ObjectProvider<AssessmentTrace> trace) {
         return new UniversityNarrativeService(assessmentStore, narrativeStore, generator,
-                new UniversityNarrativeContextFactory(), new UniversityNarrativeValidator(), Clock.systemUTC(),
-                metrics.getIfAvailable(JourneyMetrics::disabled));
+                new UniversityNarrativeContextFactory(),
+                new UniversityNarrativeValidator(trace.getIfAvailable(AssessmentTrace::disabled)),
+                Clock.systemUTC(),
+                metrics.getIfAvailable(JourneyMetrics::disabled),
+                trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean
@@ -62,9 +69,12 @@ public class UniversityAssessmentConfiguration {
             UniversityEvidenceStore evidenceStore,
             Optional<UniversityEvidenceProvider> evidenceProvider,
             @Value("${app.university.evidence.geography:United Kingdom}") String geography,
-            ObjectProvider<JourneyMetrics> metrics) {
+            ObjectProvider<JourneyMetrics> metrics,
+            ObjectProvider<AssessmentTrace> trace) {
         return new UniversityEvidenceService(assessmentStore, evidenceStore, evidenceProvider,
-                new UniversityEvidenceRequestFactory(geography), Clock.systemUTC(), metrics.getIfAvailable(JourneyMetrics::disabled));
+                new UniversityEvidenceRequestFactory(geography), Clock.systemUTC(),
+                metrics.getIfAvailable(JourneyMetrics::disabled),
+                trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean
@@ -72,17 +82,21 @@ public class UniversityAssessmentConfiguration {
             UniversityAssessmentService assessmentService,
             UniversityNarrativeService narrativeService,
             UniversityEvidenceService evidenceService, ObjectProvider<JourneyMetrics> metrics,
-            ObjectProvider<ProviderCostTracker> costs) {
+            ObjectProvider<ProviderCostTracker> costs,
+            ObjectProvider<AssessmentTrace> trace) {
         return new UniversityAssessmentWorkflow(assessmentService, narrativeService, evidenceService,
                 metrics.getIfAvailable(JourneyMetrics::disabled),
-                costs.getIfAvailable(ProviderCostTracker::disabled));
+                costs.getIfAvailable(ProviderCostTracker::disabled),
+                trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean
     UniversityReportService universityReportService(UniversityAssessmentStore assessmentStore,
-            UniversityNarrativeStore narrativeStore, UniversityEvidenceStore evidenceStore) {
+            UniversityNarrativeStore narrativeStore, UniversityEvidenceStore evidenceStore,
+            ObjectProvider<AssessmentTrace> trace) {
         return new UniversityReportService(assessmentStore, narrativeStore, evidenceStore,
-                new UniversityReportAssembler());
+                new UniversityReportAssembler(),
+                trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean

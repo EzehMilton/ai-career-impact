@@ -1,6 +1,7 @@
 package com.chikere.futureai.judgment.typesafe.professional;
 
 import com.chikere.futureai.cost.ProviderCostTracker;
+import com.chikere.futureai.trace.AssessmentTrace;
 import org.springaicommunity.typesafe.TypeSafeClient;
 import org.springaicommunity.typesafe.autoconfigure.TypeSafeAutoConfiguration;
 
@@ -34,9 +35,11 @@ public class ProfessionalJevAutoConfiguration {
             ProfessionalJudgmentSchema schema,
             ProfessionalJevStateMapper stateMapper,
             @Value("${spring.ai.typesafe.model:}") String configuredModelIdentifier,
-            ObjectProvider<ProviderCostTracker> costs) {
+            ObjectProvider<ProviderCostTracker> costs,
+            ObjectProvider<AssessmentTrace> trace) {
         return new ProfessionalJevJudgmentService(typeSafeClient, schema, stateMapper,
                 configuredModelIdentifier,
-                costs.getIfAvailable(ProviderCostTracker::disabled));
+                costs.getIfAvailable(ProviderCostTracker::disabled),
+                trace.getIfAvailable(AssessmentTrace::disabled));
     }
 }

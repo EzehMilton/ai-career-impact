@@ -4,8 +4,13 @@ import com.chikere.futureai.assessment.domain.AssessmentConfidence;
 import com.chikere.futureai.assessment.domain.AssessmentDecision;
 import com.chikere.futureai.assessment.domain.AssessmentStatus;
 import com.chikere.futureai.assessment.domain.JourneyType;
+import com.chikere.futureai.decision.DecisionTracePayloads;
+import com.chikere.futureai.decision.FactorCandidate;
+import com.chikere.futureai.decision.WeightedContribution;
 import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
 import com.chikere.futureai.judgment.domain.DimensionJudgment;
+import com.chikere.futureai.trace.AssessmentTrace;
+import com.chikere.futureai.trace.TraceStage;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -68,6 +73,8 @@ public final class UniversityDecisionPolicyV1 {
     private static final double HIGH_MINIMUM_CONFIDENCE_THRESHOLD = 0.60;
     private static final double DEVELOPING_BAND_THRESHOLD = 3.50;
     private static final double STRONG_BAND_THRESHOLD = 7.00;
+    private static final int MAXIMUM_DISPLAYED_FACTORS = 3;
+    private static final Map<String, String> BAND_THRESHOLDS = bandThresholds();
 
     private static final Map<String, WeightedDimension> FUTURE_READINESS_WEIGHTS = weightedDimensions(
             new WeightedDimension(ANALYTICAL_REASONING, 0.20),
@@ -119,11 +126,24 @@ public final class UniversityDecisionPolicyV1 {
             new WeightedDimension(SKILL_TRANSFERABILITY, 0.10),
             new WeightedDimension(CAREER_BREADTH, 0.08));
 
+    private final AssessmentTrace trace;
+
+    public UniversityDecisionPolicyV1() {
+        this(AssessmentTrace.disabled());
+    }
+
+    /** The trace only observes the values this policy computes; it never changes a decision. */
+    public UniversityDecisionPolicyV1(AssessmentTrace trace) {
+        this.trace = Objects.requireNonNull(trace, "trace must not be null");
+    }
+
     public UniversityDecisionResult decide(AssessmentJudgmentSet judgmentSet) {
         ValidatedJudgments judgments = validate(judgmentSet);
         double informationSufficiency = judgments.informationSufficiency();
 
         if (informationSufficiency < INFORMATION_REQUIRED_THRESHOLD) {
+            traceInformationSufficiency(informationSufficiency, AssessmentStatus.MORE_INFORMATION_REQUIRED,
+                    AssessmentConfidence.LOW, false);
             AssessmentDecision headline = new AssessmentDecision(
                     JourneyType.UNIVERSITY,
                     OptionalDouble.empty(),
@@ -136,22 +156,35 @@ public final class UniversityDecisionPolicyV1 {
                     POLICY_VERSION, informationSufficiency, headline, Map.of(), List.of(), List.of());
         }
 
-        AssessmentConfidence assessmentConfidence = assessmentConfidence(judgments);
+        ConfidenceAssessment confidenceAssessment = assessmentConfidence(judgments);
+        AssessmentConfidence assessmentConfidence = confidenceAssessment.confidence();
         AssessmentStatus status = assessmentStatus(informationSufficiency, assessmentConfidence);
+        traceInformationSufficiency(informationSufficiency, status, assessmentConfidence, true);
+        traceConfidence(informationSufficiency, confidenceAssessment);
         EnumMap<UniversityMeasure, UniversityMeasureResult> measures = calculateMeasures(judgments);
         UniversityMeasureResult futureReadiness = measures.get(UniversityMeasure.FUTURE_READINESS);
 
-        List<UniversityDecisionFactor> factors = explanationFactors(judgments);
-        List<UniversityDecisionFactor> strengths = factors.stream()
+        List<FactorCandidate> candidates = explanationCandidates(judgments);
+        List<UniversityDecisionFactor> factors = explanationFactors(candidates);
+        List<UniversityDecisionFactor> rankedStrengths = factors.stream()
                 .filter(factor -> factor.signedEffect() > 0.0)
                 .sorted(Comparator.comparingDouble(UniversityDecisionFactor::signedEffect).reversed())
-                .limit(3)
                 .toList();
-        List<UniversityDecisionFactor> opportunities = factors.stream()
+        List<UniversityDecisionFactor> strengths = rankedStrengths.stream()
+                .limit(MAXIMUM_DISPLAYED_FACTORS)
+                .toList();
+        List<UniversityDecisionFactor> rankedOpportunities = factors.stream()
                 .filter(factor -> factor.signedEffect() < 0.0)
                 .sorted(Comparator.comparingDouble(UniversityDecisionFactor::signedEffect))
-                .limit(3)
                 .toList();
+        List<UniversityDecisionFactor> opportunities = rankedOpportunities.stream()
+                .limit(MAXIMUM_DISPLAYED_FACTORS)
+                .toList();
+        trace.event(JourneyType.UNIVERSITY, TraceStage.FACTOR_SELECTION, () -> DecisionTracePayloads.factorSelection(
+                POLICY_VERSION, "explanation-only weights (never part of a measure)", candidates,
+                rankedStrengths.stream().map(UniversityDecisionFactor::dimensionId).toList(),
+                rankedOpportunities.stream().map(UniversityDecisionFactor::dimensionId).toList(),
+                MAXIMUM_DISPLAYED_FACTORS, "strengths", "developmentOpportunities"));
 
         AssessmentDecision headline = new AssessmentDecision(
                 JourneyType.UNIVERSITY,
@@ -246,18 +279,53 @@ public final class UniversityDecisionPolicyV1 {
 
     private UniversityMeasureResult compositeMeasure(
             UniversityMeasure measure, Map<String, WeightedDimension> weights, ValidatedJudgments judgments) {
-        double composite = weights.values().stream()
-                .mapToDouble(weighted -> weighted.weight()
-                        * UniversityScoreScale.normalise(judgments.score(weighted.dimensionId()).score()))
-                .sum();
-        double confidence = weights.values().stream()
-                .mapToDouble(weighted -> weighted.weight() * judgments.score(weighted.dimensionId()).confidence())
-                .sum();
+        List<WeightedContribution> contributions = weights.values().stream()
+                .map(weighted -> {
+                    ScoreValue score = judgments.score(weighted.dimensionId());
+                    return WeightedContribution.of(weighted.dimensionId(), score.score(), "normalise: score / 4",
+                            UniversityScoreScale.normalise(score.score()), weighted.weight(), score.confidence());
+                })
+                .toList();
+        double composite = contributions.stream().mapToDouble(WeightedContribution::contribution).sum();
+        double confidence = contributions.stream().mapToDouble(WeightedContribution::weightedConfidence).sum();
         double indicator = UniversityScoreScale.toIndicator(composite);
-        return new UniversityMeasureResult(measure, indicator, readinessBand(indicator), confidence);
+        UniversityMeasureResult result = new UniversityMeasureResult(measure, indicator, readinessBand(indicator),
+                confidence);
+        trace.event(JourneyType.UNIVERSITY, TraceStage.SCORE_CALCULATION, () -> DecisionTracePayloads.measure(
+                POLICY_VERSION, measure, "WEIGHTED_COMPOSITE", contributions, composite, result.indicator(),
+                result.band(), BAND_THRESHOLDS, result.confidence()));
+        return result;
     }
 
-    private AssessmentConfidence assessmentConfidence(ValidatedJudgments judgments) {
+    private void traceInformationSufficiency(double informationSufficiency, AssessmentStatus status,
+            AssessmentConfidence confidence, boolean scoresProduced) {
+        trace.event(JourneyType.UNIVERSITY, TraceStage.INFORMATION_SUFFICIENCY,
+                () -> DecisionTracePayloads.informationSufficiency(POLICY_VERSION, informationSufficiency,
+                        INFORMATION_REQUIRED_THRESHOLD, READY_INFORMATION_THRESHOLD, status, confidence,
+                        scoresProduced));
+    }
+
+    private void traceConfidence(double informationSufficiency, ConfidenceAssessment assessment) {
+        trace.event(JourneyType.UNIVERSITY, TraceStage.ASSESSMENT_CONFIDENCE, () -> DecisionTracePayloads.confidence(
+                POLICY_VERSION, informationSufficiency, assessment.mean(), assessment.minimum(), Map.of(
+                        "highRequiresInformationAtLeast", HIGH_INFORMATION_THRESHOLD,
+                        "highRequiresMeanAtLeast", HIGH_MEAN_CONFIDENCE_THRESHOLD,
+                        "highRequiresMinimumAtLeast", HIGH_MINIMUM_CONFIDENCE_THRESHOLD,
+                        "moderateRequiresInformationAtLeast", INFORMATION_REQUIRED_THRESHOLD,
+                        "moderateRequiresMeanAtLeast", MODERATE_MEAN_CONFIDENCE_THRESHOLD),
+                assessment.confidence()));
+    }
+
+    private static Map<String, String> bandThresholds() {
+        LinkedHashMap<String, String> thresholds = new LinkedHashMap<>();
+        thresholds.put(ReadinessBand.LIMITED.name(), "score < " + DEVELOPING_BAND_THRESHOLD);
+        thresholds.put(ReadinessBand.DEVELOPING.name(),
+                DEVELOPING_BAND_THRESHOLD + " <= score < " + STRONG_BAND_THRESHOLD);
+        thresholds.put(ReadinessBand.STRONG.name(), "score >= " + STRONG_BAND_THRESHOLD);
+        return Collections.unmodifiableMap(thresholds);
+    }
+
+    private ConfidenceAssessment assessmentConfidence(ValidatedJudgments judgments) {
         double mean = SCORE_DIMENSIONS.stream()
                 .map(judgments::score).mapToDouble(ScoreValue::confidence).average().orElseThrow();
         double minimum = SCORE_DIMENSIONS.stream()
@@ -266,13 +334,13 @@ public final class UniversityDecisionPolicyV1 {
         if (judgments.informationSufficiency() >= HIGH_INFORMATION_THRESHOLD
                 && mean >= HIGH_MEAN_CONFIDENCE_THRESHOLD
                 && minimum >= HIGH_MINIMUM_CONFIDENCE_THRESHOLD) {
-            return AssessmentConfidence.HIGH;
+            return new ConfidenceAssessment(mean, minimum, AssessmentConfidence.HIGH);
         }
         if (judgments.informationSufficiency() >= INFORMATION_REQUIRED_THRESHOLD
                 && mean >= MODERATE_MEAN_CONFIDENCE_THRESHOLD) {
-            return AssessmentConfidence.MODERATE;
+            return new ConfidenceAssessment(mean, minimum, AssessmentConfidence.MODERATE);
         }
-        return AssessmentConfidence.LOW;
+        return new ConfidenceAssessment(mean, minimum, AssessmentConfidence.LOW);
     }
 
     private AssessmentStatus assessmentStatus(double informationSufficiency, AssessmentConfidence confidence) {
@@ -282,22 +350,30 @@ public final class UniversityDecisionPolicyV1 {
         return AssessmentStatus.READY;
     }
 
-    private List<UniversityDecisionFactor> explanationFactors(ValidatedJudgments judgments) {
+    private List<FactorCandidate> explanationCandidates(ValidatedJudgments judgments) {
         return EXPLANATION_WEIGHTS.values().stream().map(weighted -> {
             ScoreValue score = judgments.score(weighted.dimensionId());
             double readinessComponent = UniversityScoreScale.normalise(score.score());
             double signedEffect = weighted.weight() * (readinessComponent - 0.5);
+            return new FactorCandidate(weighted.dimensionId(), score.score(), readinessComponent,
+                    weighted.weight(), signedEffect);
+        }).toList();
+    }
+
+    private List<UniversityDecisionFactor> explanationFactors(List<FactorCandidate> candidates) {
+        return candidates.stream().map(candidate -> {
+            double signedEffect = candidate.signedEffect();
             if (signedEffect == 0.0) {
                 return null;
             }
             return new UniversityDecisionFactor(
-                    weighted.dimensionId(),
+                    candidate.dimensionId(),
                     signedEffect > 0.0
                             ? UniversityFactorEffect.STRENGTH
                             : UniversityFactorEffect.DEVELOPMENT_OPPORTUNITY,
-                    UniversityFactorDirection.valueOf((score.score() > 2.0 ? "HIGH_" : "LOW_")
-                            + weighted.dimensionId().toUpperCase(Locale.ROOT)),
-                    score.score(), readinessComponent, weighted.weight(), signedEffect);
+                    UniversityFactorDirection.valueOf((candidate.rawScore() > 2.0 ? "HIGH_" : "LOW_")
+                            + candidate.dimensionId().toUpperCase(Locale.ROOT)),
+                    candidate.rawScore(), candidate.transformedValue(), candidate.weight(), signedEffect);
         }).filter(Objects::nonNull).toList();
     }
 
@@ -345,6 +421,9 @@ public final class UniversityDecisionPolicyV1 {
     }
 
     private record ScoreValue(double score, double confidence) {
+    }
+
+    private record ConfidenceAssessment(double mean, double minimum, AssessmentConfidence confidence) {
     }
 
     private record ValidatedJudgments(double informationSufficiency, Map<String, ScoreValue> scores) {

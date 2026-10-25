@@ -1,6 +1,9 @@
 package com.chikere.futureai.judgment.typesafe.professional;
 
 import com.chikere.futureai.assessment.domain.JourneyType;
+import com.chikere.futureai.judgment.typesafe.JevTraceRendering;
+import com.chikere.futureai.trace.AssessmentTrace;
+import com.chikere.futureai.trace.TraceStage;
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.assessment.professional.application.AssessmentSource;
 import com.chikere.futureai.assessment.professional.application.ProfessionalJudgmentProvider;
@@ -38,6 +41,7 @@ public final class ProfessionalJevJudgmentService implements ProfessionalJudgmen
     private final ProfessionalJevStateMapper stateMapper;
     private final String configuredModelIdentifier;
     private final ProviderCostTracker costs;
+    private final AssessmentTrace trace;
 
     public ProfessionalJevJudgmentService(
             TypeSafeClient typeSafeClient,
@@ -57,6 +61,13 @@ public final class ProfessionalJevJudgmentService implements ProfessionalJudgmen
     public ProfessionalJevJudgmentService(TypeSafeClient typeSafeClient, ProfessionalJudgmentSchema schema,
             ProfessionalJevStateMapper stateMapper, String configuredModelIdentifier,
             ProviderCostTracker costs) {
+        this(typeSafeClient, schema, stateMapper, configuredModelIdentifier, costs, AssessmentTrace.disabled());
+    }
+
+    public ProfessionalJevJudgmentService(TypeSafeClient typeSafeClient, ProfessionalJudgmentSchema schema,
+            ProfessionalJevStateMapper stateMapper, String configuredModelIdentifier,
+            ProviderCostTracker costs, AssessmentTrace trace) {
+        this.trace = Objects.requireNonNull(trace, "trace must not be null");
         this.typeSafeClient = Objects.requireNonNull(typeSafeClient, "typeSafeClient must not be null");
         this.schema = Objects.requireNonNull(schema, "schema must not be null");
         this.stateMapper = Objects.requireNonNull(stateMapper, "stateMapper must not be null");
@@ -67,7 +78,11 @@ public final class ProfessionalJevJudgmentService implements ProfessionalJudgmen
     @Override
     public AssessmentJudgmentSet judge(ProfessionalAssessmentState assessmentState) {
         Map<String, Object> state = stateMapper.map(assessmentState);
-        SystemOneResponse response = typeSafeClient.systemOne(state, schema.questions());
+        trace.event(JourneyType.PROFESSIONAL, TraceStage.DECISION_MODEL_PROVIDER_REQUEST,
+                () -> JevTraceRendering.request(state, schema.questions(), schema.version(),
+                        configuredModelIdentifier, typeSafeClient));
+        SystemOneResponse response = trace.timed(JourneyType.PROFESSIONAL, TraceStage.DECISION_MODEL_PROVIDER_RESPONSE,
+                null, () -> typeSafeClient.systemOne(state, schema.questions()), JevTraceRendering::response);
         recordUsage(response);
 
         List<DimensionJudgment> judgments = schema.questions().keySet().stream()

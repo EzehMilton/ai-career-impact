@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import com.chikere.futureai.configuration.JourneyMetrics;
 import com.chikere.futureai.cost.ProviderCostTracker;
 import org.springframework.beans.factory.ObjectProvider;
+import com.chikere.futureai.trace.AssessmentTrace;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -27,8 +28,8 @@ import java.util.Optional;
 public class ProfessionalAssessmentConfiguration {
 
     @Bean
-    ProfessionalDecisionPolicyV1 professionalDecisionPolicyV1() {
-        return new ProfessionalDecisionPolicyV1();
+    ProfessionalDecisionPolicyV1 professionalDecisionPolicyV1(ObjectProvider<AssessmentTrace> trace) {
+        return new ProfessionalDecisionPolicyV1(trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean
@@ -36,9 +37,11 @@ public class ProfessionalAssessmentConfiguration {
             ProfessionalJudgmentProvider judgmentProvider,
             ProfessionalDecisionPolicyV1 decisionPolicy,
             ProfessionalAssessmentStore store,
-            ObjectProvider<JourneyMetrics> metrics) {
+            ObjectProvider<JourneyMetrics> metrics,
+            ObjectProvider<AssessmentTrace> trace) {
         return new ProfessionalAssessmentService(judgmentProvider, decisionPolicy, store, Clock.systemUTC(),
-                metrics.getIfAvailable(JourneyMetrics::disabled));
+                metrics.getIfAvailable(JourneyMetrics::disabled),
+                trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean
@@ -46,10 +49,13 @@ public class ProfessionalAssessmentConfiguration {
             ProfessionalAssessmentStore assessmentStore,
             ProfessionalNarrativeStore narrativeStore,
             ProfessionalNarrativeGenerator generator,
-            ObjectProvider<JourneyMetrics> metrics) {
+            ObjectProvider<JourneyMetrics> metrics,
+            ObjectProvider<AssessmentTrace> trace) {
         return new ProfessionalNarrativeService(assessmentStore, narrativeStore, generator,
-                new ProfessionalNarrativeContextFactory(), new ProfessionalNarrativeValidator(),
-                Clock.systemUTC(), metrics.getIfAvailable(JourneyMetrics::disabled));
+                new ProfessionalNarrativeContextFactory(),
+                new ProfessionalNarrativeValidator(trace.getIfAvailable(AssessmentTrace::disabled)),
+                Clock.systemUTC(), metrics.getIfAvailable(JourneyMetrics::disabled),
+                trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean
@@ -58,11 +64,13 @@ public class ProfessionalAssessmentConfiguration {
             ProfessionalNarrativeService narrativeService,
             ProfessionalOccupationClassificationService classificationService,
             ProfessionalEvidenceService evidenceService, ObjectProvider<JourneyMetrics> metrics,
-            ObjectProvider<ProviderCostTracker> costs) {
+            ObjectProvider<ProviderCostTracker> costs,
+            ObjectProvider<AssessmentTrace> trace) {
         return new ProfessionalAssessmentWorkflow(assessmentService, narrativeService,
                 classificationService, evidenceService,
                 metrics.getIfAvailable(JourneyMetrics::disabled),
-                costs.getIfAvailable(ProviderCostTracker::disabled));
+                costs.getIfAvailable(ProviderCostTracker::disabled),
+                trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean
@@ -70,9 +78,11 @@ public class ProfessionalAssessmentConfiguration {
             ProfessionalAssessmentStore assessmentStore,
             ProfessionalOccupationClassificationStore classificationStore,
             Optional<ProfessionalOccupationClassifier> classifier,
-            @Value("${app.professional.evidence.geography:United Kingdom}") String geography) {
+            @Value("${app.professional.evidence.geography:United Kingdom}") String geography,
+            ObjectProvider<AssessmentTrace> trace) {
         return new ProfessionalOccupationClassificationService(assessmentStore, classificationStore,
-                classifier, geography, Clock.systemUTC());
+                classifier, geography, Clock.systemUTC(),
+                trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean
@@ -82,17 +92,21 @@ public class ProfessionalAssessmentConfiguration {
             Optional<ProfessionalEvidenceProvider> evidenceProvider,
             ProfessionalOccupationClassificationStore classificationStore,
             @Value("${app.professional.evidence.geography:United Kingdom}") String geography,
-            ObjectProvider<JourneyMetrics> metrics) {
+            ObjectProvider<JourneyMetrics> metrics,
+            ObjectProvider<AssessmentTrace> trace) {
         return new ProfessionalEvidenceService(assessmentStore, evidenceStore, evidenceProvider,
                 classificationStore, new ProfessionalEvidenceRequestFactory(geography),
-                Clock.systemUTC(), metrics.getIfAvailable(JourneyMetrics::disabled));
+                Clock.systemUTC(), metrics.getIfAvailable(JourneyMetrics::disabled),
+                trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean
     ProfessionalReportService professionalReportService(ProfessionalAssessmentStore assessmentStore,
             ProfessionalNarrativeStore narrativeStore, ProfessionalEvidenceStore evidenceStore,
-            ProfessionalOccupationClassificationStore classificationStore) {
+            ProfessionalOccupationClassificationStore classificationStore,
+            ObjectProvider<AssessmentTrace> trace) {
         return new ProfessionalReportService(assessmentStore, narrativeStore, evidenceStore,
-                classificationStore, new ProfessionalReportAssembler());
+                classificationStore, new ProfessionalReportAssembler(),
+                trace.getIfAvailable(AssessmentTrace::disabled));
     }
 }

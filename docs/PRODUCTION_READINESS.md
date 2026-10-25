@@ -133,7 +133,9 @@ Unchanged in this phase and re-confirmed: an ACTIVE entitlement is required; the
 
 ## Logging safety
 
-Audited line by line. No log statement records form content, assessment descriptions, contact details, API keys, webhook secrets or Stripe payloads. What is logged is an assessment UUID, an exception class name, a rate-limit group name, or a fixture-mode warning. Stack traces are written for genuinely unexpected failures only, and no exception message in the codebase interpolates user-submitted text — every interpolated value is a configuration key, question id, dimension id or report version.
+Audited line by line. With the opt-in assessment trace off, which is the default, no log statement records form content, assessment descriptions, contact details, API keys, webhook secrets or Stripe payloads. What is logged is an assessment UUID, an exception class name, a rate-limit group name, or a fixture-mode warning. Stack traces are written for genuinely unexpected failures only, and no exception message in the codebase interpolates user-submitted text — every interpolated value is a configuration key, question id, dimension id or report version.
+
+The one deliberate exception is the [assessment trace](ASSESSMENT_TRACE.md) (`ASSESSMENT_TRACE_ENABLED`, default `false`). When enabled it logs user-entered assessment data and complete AI prompts and responses, but never credentials, payment data, cookies, headers or PDF bytes. It is for controlled development and diagnosis and should not be enabled routinely in production.
 
 ## Profiles
 
@@ -265,6 +267,12 @@ Estimated provider cost operation=assessment journey=professional assessmentId=�
 
 Under `prod` the line is an ECS JSON object whose `message` holds these fields. To get an average cost per assessment, sum `totalCost` over the period and divide by the number of `operation=assessment outcome=completed` lines.
 
+## Assessment trace
+
+Opt-in, off by default, and controlled only by `ASSESSMENT_TRACE_ENABLED` (`app.assessment-trace.enabled`), never by a profile. When on, it logs one `[ASSESSMENT-TRACE]` event per stage of an assessment: form input, the decision-model request and response, every score calculation and factor selection, the deterministic result, the narrative request, response and guardrail outcomes, evidence, the assembled free and detailed reports, and a timing summary. Events from one submission share an `assessmentTraceId`. See [ASSESSMENT_TRACE.md](ASSESSMENT_TRACE.md) for the stages, an example and its limits.
+
+**Assessment tracing may include user-entered assessment data and complete AI prompts/responses. It is intended for controlled development and diagnostic use and should not be enabled routinely in production.**
+
 ## Datasource
 
 Spring Boot defaults, with hooks so an operator can change them without a rebuild. These are deliberately close to the defaults: they exist to be adjustable, not because a number has been measured as correct.
@@ -295,6 +303,7 @@ Under `prod` the console log is structured JSON in Elastic Common Schema (`loggi
 | `app.public-base-url-allow-http` | Deliberate escape hatch when TLS terminates elsewhere | optional | no | `true` |
 | `app.<journey>.report.base-url` | Per-journey override of the above | optional | no | `https://example.com` |
 | `app.<journey>.report.display-price` | Price shown on the result page | optional; no price is shown if unset | no | `£12.00` |
+| `app.assessment-trace.enabled` / `ASSESSMENT_TRACE_ENABLED` | Opt-in diagnostic trace of each assessment; logs assessment data and AI prompts | optional; default `false` | no, but its output is sensitive | `true` |
 
 ### Database
 

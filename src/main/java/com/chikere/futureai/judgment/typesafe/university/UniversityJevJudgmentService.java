@@ -1,6 +1,9 @@
 package com.chikere.futureai.judgment.typesafe.university;
 
 import com.chikere.futureai.assessment.domain.JourneyType;
+import com.chikere.futureai.judgment.typesafe.JevTraceRendering;
+import com.chikere.futureai.trace.AssessmentTrace;
+import com.chikere.futureai.trace.TraceStage;
 import com.chikere.futureai.assessment.domain.UniversityAssessmentState;
 import com.chikere.futureai.assessment.university.application.AssessmentSource;
 import com.chikere.futureai.assessment.university.application.UniversityJudgmentProvider;
@@ -28,6 +31,7 @@ public final class UniversityJevJudgmentService implements UniversityJudgmentPro
     private final UniversityJevStateMapper stateMapper;
     private final String configuredModelIdentifier;
     private final ProviderCostTracker costs;
+    private final AssessmentTrace trace;
 
     public UniversityJevJudgmentService(
             TypeSafeClient typeSafeClient,
@@ -47,6 +51,13 @@ public final class UniversityJevJudgmentService implements UniversityJudgmentPro
     public UniversityJevJudgmentService(TypeSafeClient typeSafeClient, UniversityJudgmentSchema schema,
             UniversityJevStateMapper stateMapper, String configuredModelIdentifier,
             ProviderCostTracker costs) {
+        this(typeSafeClient, schema, stateMapper, configuredModelIdentifier, costs, AssessmentTrace.disabled());
+    }
+
+    public UniversityJevJudgmentService(TypeSafeClient typeSafeClient, UniversityJudgmentSchema schema,
+            UniversityJevStateMapper stateMapper, String configuredModelIdentifier,
+            ProviderCostTracker costs, AssessmentTrace trace) {
+        this.trace = Objects.requireNonNull(trace, "trace must not be null");
         this.typeSafeClient = Objects.requireNonNull(typeSafeClient, "typeSafeClient must not be null");
         this.schema = Objects.requireNonNull(schema, "schema must not be null");
         this.stateMapper = Objects.requireNonNull(stateMapper, "stateMapper must not be null");
@@ -57,7 +68,11 @@ public final class UniversityJevJudgmentService implements UniversityJudgmentPro
     @Override
     public AssessmentJudgmentSet judge(UniversityAssessmentState assessmentState) {
         Map<String, Object> state = stateMapper.map(assessmentState);
-        SystemOneResponse response = typeSafeClient.systemOne(state, schema.questions());
+        trace.event(JourneyType.UNIVERSITY, TraceStage.DECISION_MODEL_PROVIDER_REQUEST,
+                () -> JevTraceRendering.request(state, schema.questions(), schema.version(),
+                        configuredModelIdentifier, typeSafeClient));
+        SystemOneResponse response = trace.timed(JourneyType.UNIVERSITY, TraceStage.DECISION_MODEL_PROVIDER_RESPONSE,
+                null, () -> typeSafeClient.systemOne(state, schema.questions()), JevTraceRendering::response);
         recordUsage(response);
 
         List<DimensionJudgment> judgments = schema.questions().keySet().stream()

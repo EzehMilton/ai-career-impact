@@ -1,6 +1,8 @@
 package com.chikere.futureai.assessment.university.application;
 
 import com.chikere.futureai.assessment.domain.UniversityAssessmentState;
+import com.chikere.futureai.assessment.domain.JourneyType;
+import com.chikere.futureai.trace.AssessmentTrace;
 import com.chikere.futureai.evidence.university.application.UniversityEvidenceGathering;
 import com.chikere.futureai.narrative.university.application.UniversityNarrativeGeneration;
 import com.chikere.futureai.narrative.university.application.NarrativeStatus;
@@ -22,6 +24,7 @@ public final class UniversityAssessmentWorkflow implements UniversityAssessmentU
     private final UniversityEvidenceGathering evidenceService;
     private final JourneyMetrics metrics;
     private final ProviderCostTracker costs;
+    private final AssessmentTrace trace;
 
     public UniversityAssessmentWorkflow(UniversityAssessmentSubmission assessmentService,
             UniversityNarrativeGeneration narrativeService, UniversityEvidenceGathering evidenceService) {
@@ -37,6 +40,13 @@ public final class UniversityAssessmentWorkflow implements UniversityAssessmentU
     public UniversityAssessmentWorkflow(UniversityAssessmentSubmission assessmentService,
             UniversityNarrativeGeneration narrativeService, UniversityEvidenceGathering evidenceService,
             JourneyMetrics metrics, ProviderCostTracker costs) {
+        this(assessmentService, narrativeService, evidenceService, metrics, costs, AssessmentTrace.disabled());
+    }
+
+    public UniversityAssessmentWorkflow(UniversityAssessmentSubmission assessmentService,
+            UniversityNarrativeGeneration narrativeService, UniversityEvidenceGathering evidenceService,
+            JourneyMetrics metrics, ProviderCostTracker costs, AssessmentTrace trace) {
+        this.trace = Objects.requireNonNull(trace, "trace must not be null");
         this.assessmentService = Objects.requireNonNull(assessmentService);
         this.narrativeService = Objects.requireNonNull(narrativeService);
         this.evidenceService = Objects.requireNonNull(evidenceService);
@@ -46,7 +56,8 @@ public final class UniversityAssessmentWorkflow implements UniversityAssessmentU
 
     @Override
     public UUID submit(UniversityAssessmentState state) {
-        return costs.trackAssessment("university", () -> submitAndEnrich(state));
+        return trace.assessment(JourneyType.UNIVERSITY,
+                () -> costs.trackAssessment("university", () -> submitAndEnrich(state)));
     }
 
     private UUID submitAndEnrich(UniversityAssessmentState state) {

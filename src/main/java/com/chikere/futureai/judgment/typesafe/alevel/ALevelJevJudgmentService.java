@@ -1,6 +1,9 @@
 package com.chikere.futureai.judgment.typesafe.alevel;
 
 import com.chikere.futureai.assessment.alevel.application.ALevelJudgmentProvider;
+import com.chikere.futureai.judgment.typesafe.JevTraceRendering;
+import com.chikere.futureai.trace.AssessmentTrace;
+import com.chikere.futureai.trace.TraceStage;
 import com.chikere.futureai.assessment.alevel.application.AssessmentSource;
 import com.chikere.futureai.assessment.domain.ALevelAssessmentState;
 import com.chikere.futureai.assessment.domain.JourneyType;
@@ -28,6 +31,7 @@ public final class ALevelJevJudgmentService implements ALevelJudgmentProvider {
     private final ALevelJevStateMapper stateMapper;
     private final String configuredModelIdentifier;
     private final ProviderCostTracker costs;
+    private final AssessmentTrace trace;
 
     public ALevelJevJudgmentService(TypeSafeClient typeSafeClient, ALevelJudgmentSchema schema,
             ALevelJevStateMapper stateMapper) {
@@ -42,6 +46,13 @@ public final class ALevelJevJudgmentService implements ALevelJudgmentProvider {
     public ALevelJevJudgmentService(TypeSafeClient typeSafeClient, ALevelJudgmentSchema schema,
             ALevelJevStateMapper stateMapper, String configuredModelIdentifier,
             ProviderCostTracker costs) {
+        this(typeSafeClient, schema, stateMapper, configuredModelIdentifier, costs, AssessmentTrace.disabled());
+    }
+
+    public ALevelJevJudgmentService(TypeSafeClient typeSafeClient, ALevelJudgmentSchema schema,
+            ALevelJevStateMapper stateMapper, String configuredModelIdentifier,
+            ProviderCostTracker costs, AssessmentTrace trace) {
+        this.trace = Objects.requireNonNull(trace, "trace must not be null");
         this.typeSafeClient = Objects.requireNonNull(typeSafeClient, "typeSafeClient must not be null");
         this.schema = Objects.requireNonNull(schema, "schema must not be null");
         this.stateMapper = Objects.requireNonNull(stateMapper, "stateMapper must not be null");
@@ -52,7 +63,11 @@ public final class ALevelJevJudgmentService implements ALevelJudgmentProvider {
     @Override
     public AssessmentJudgmentSet judge(ALevelAssessmentState assessmentState) {
         Map<String, Object> state = stateMapper.map(assessmentState);
-        SystemOneResponse response = typeSafeClient.systemOne(state, schema.questions());
+        trace.event(JourneyType.A_LEVEL, TraceStage.DECISION_MODEL_PROVIDER_REQUEST,
+                () -> JevTraceRendering.request(state, schema.questions(), schema.version(),
+                        configuredModelIdentifier, typeSafeClient));
+        SystemOneResponse response = trace.timed(JourneyType.A_LEVEL, TraceStage.DECISION_MODEL_PROVIDER_RESPONSE,
+                null, () -> typeSafeClient.systemOne(state, schema.questions()), JevTraceRendering::response);
         recordUsage(response);
 
         List<DimensionJudgment> judgments = schema.questions().keySet().stream()

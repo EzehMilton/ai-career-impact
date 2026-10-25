@@ -1,7 +1,12 @@
 package com.chikere.futureai.narrative.university.application;
 
+import com.chikere.futureai.assessment.domain.JourneyType;
+import com.chikere.futureai.trace.AssessmentTrace;
+import com.chikere.futureai.trace.NarrativeRuleChecks;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -11,6 +16,10 @@ import java.util.regex.Pattern;
  * the narrative attempt; it can never change the saved assessment.</p>
  */
 public final class UniversityNarrativeValidator {
+
+    private static final List<String> RULES = List.of("NARRATIVE_PRESENT", "WELL_FORMED_STRUCTURED_OUTPUT",
+            "NO_NUMERIC_SCORES_OR_PERCENTAGES", "NO_SALARY_OR_PAY_FIGURES",
+            "NO_UNSUPPORTED_EMPLOYMENT_OR_QUALITY_CLAIMS");
 
     // No trailing \\b: a percent sign is not a word character, so "92%" would otherwise slip through.
     private static final Pattern NUMERIC_CLAIM = Pattern.compile(
@@ -31,10 +40,22 @@ public final class UniversityNarrativeValidator {
                     + "|bad\\s+degree|worthless\\s+degree"
                     + "|you\\s+will\\s+struggle\\s+to\\s+find\\s+work)\\b");
 
+    private final AssessmentTrace trace;
+
+    public UniversityNarrativeValidator() {
+        this(AssessmentTrace.disabled());
+    }
+
+    /** The trace records each rule's outcome; the rules and their order are unchanged. */
+    public UniversityNarrativeValidator(AssessmentTrace trace) {
+        this.trace = Objects.requireNonNull(trace, "trace must not be null");
+    }
+
     public UniversityNarrative validate(UniversityNarrative narrative) {
-        if (narrative == null) {
-            throw new IllegalArgumentException("generated narrative must not be null");
-        }
+        NarrativeRuleChecks checks = NarrativeRuleChecks.start(trace, JourneyType.UNIVERSITY, RULES);
+        checks.check("NARRATIVE_PRESENT", narrative == null, () -> null, "generated narrative must not be null");
+        checks.check("WELL_FORMED_STRUCTURED_OUTPUT", false, () -> null,
+                "enforced when the provider response was mapped onto the narrative record");
         List<String> text = new ArrayList<>(List.of(
                 narrative.headline(), narrative.summary(), narrative.whatThisMeans(),
                 narrative.futureReadinessExplanation(), narrative.strengthsExplanation(),
@@ -42,15 +63,18 @@ public final class UniversityNarrativeValidator {
                 narrative.transferableSkillsExplanation(), narrative.careerAdaptabilityExplanation(),
                 narrative.cautionOrLimitations()));
         text.addAll(narrative.practicalActions());
-        if (text.stream().anyMatch(value -> NUMERIC_CLAIM.matcher(value).find())) {
-            throw new IllegalArgumentException("narrative must not repeat numeric scores or percentage claims");
-        }
-        if (text.stream().anyMatch(value -> CURRENCY_CLAIM.matcher(value).find())) {
-            throw new IllegalArgumentException("narrative must not state salary or pay figures");
-        }
-        if (text.stream().anyMatch(value -> UNSUPPORTED_CLAIM.matcher(value).find())) {
-            throw new IllegalArgumentException("narrative must not make unsupported employment or quality claims");
-        }
+        checks.check("NO_NUMERIC_SCORES_OR_PERCENTAGES",
+                text.stream().anyMatch(value -> NUMERIC_CLAIM.matcher(value).find()),
+                () -> NarrativeRuleChecks.firstMatch(NUMERIC_CLAIM, text),
+                "narrative must not repeat numeric scores or percentage claims");
+        checks.check("NO_SALARY_OR_PAY_FIGURES", text.stream().anyMatch(value -> CURRENCY_CLAIM.matcher(value).find()),
+                () -> NarrativeRuleChecks.firstMatch(CURRENCY_CLAIM, text),
+                "narrative must not state salary or pay figures");
+        checks.check("NO_UNSUPPORTED_EMPLOYMENT_OR_QUALITY_CLAIMS",
+                text.stream().anyMatch(value -> UNSUPPORTED_CLAIM.matcher(value).find()),
+                () -> NarrativeRuleChecks.firstMatch(UNSUPPORTED_CLAIM, text),
+                "narrative must not make unsupported employment or quality claims");
+        checks.accepted();
         return narrative;
     }
 }

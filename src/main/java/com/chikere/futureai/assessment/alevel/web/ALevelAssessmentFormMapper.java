@@ -2,6 +2,10 @@ package com.chikere.futureai.assessment.alevel.web;
 
 import com.chikere.futureai.assessment.domain.ALevelAssessmentState;
 import com.chikere.futureai.assessment.domain.ALevelSubjects;
+import com.chikere.futureai.assessment.domain.JourneyType;
+import com.chikere.futureai.trace.AssessmentTrace;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -25,8 +29,40 @@ import java.util.Optional;
 @Component
 public final class ALevelAssessmentFormMapper {
 
+    private final AssessmentTrace trace;
+
+    public ALevelAssessmentFormMapper() {
+        this(AssessmentTrace.disabled());
+    }
+
+    @Autowired
+    public ALevelAssessmentFormMapper(ObjectProvider<AssessmentTrace> trace) {
+        this(trace.getIfAvailable(AssessmentTrace::disabled));
+    }
+
+    ALevelAssessmentFormMapper(AssessmentTrace trace) {
+        this.trace = Objects.requireNonNull(trace, "trace must not be null");
+    }
+
     public ALevelAssessmentState toState(ALevelAssessmentForm form) {
         Objects.requireNonNull(form, "form must not be null");
+        return trace.formMapping(JourneyType.A_LEVEL, () -> submitted(form), () -> map(form), state -> state);
+    }
+
+    /** The form exactly as submitted, before trimming, splitting and validation-driven mapping. */
+    private Map<String, Object> submitted(ALevelAssessmentForm form) {
+        Map<String, Object> submitted = new LinkedHashMap<>();
+        submitted.put("selectedSubjects", form.getSelectedSubjects());
+        submitted.put("predictedGrades", form.getPredictedGrades());
+        submitted.put("strengthsAndInterests", form.getStrengthsAndInterests());
+        submitted.put("preferredDegreeAreas", form.getPreferredDegreeAreas());
+        submitted.put("preferredCareerAreas", form.getPreferredCareerAreas());
+        submitted.put("country", form.getCountry());
+        submitted.put("additionalContext", form.getAdditionalContext());
+        return submitted;
+    }
+
+    private ALevelAssessmentState map(ALevelAssessmentForm form) {
         List<String> canonicalSubjects = subjects(form.getSelectedSubjects());
         return new ALevelAssessmentState(canonicalSubjects,
                 grades(form.getPredictedGrades(), canonicalSubjects),

@@ -13,4 +13,9 @@ public interface ProfessionalJudgmentProvider {
     default Optional<String> modelIdentifier() {
         return Optional.empty();
     }
+
+    /** The configured fixture, for a local fixture provider; used only to label diagnostic traces. */
+    default Optional<String> fixtureId() {
+        return Optional.empty();
+    }
 }

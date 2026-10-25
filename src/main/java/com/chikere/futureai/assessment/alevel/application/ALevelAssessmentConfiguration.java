@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import com.chikere.futureai.configuration.JourneyMetrics;
 import com.chikere.futureai.cost.ProviderCostTracker;
 import org.springframework.beans.factory.ObjectProvider;
+import com.chikere.futureai.trace.AssessmentTrace;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -31,51 +32,64 @@ import java.util.Optional;
 public class ALevelAssessmentConfiguration {
 
     @Bean
-    ALevelDecisionPolicyV1 aLevelDecisionPolicyV1() {
-        return new ALevelDecisionPolicyV1();
+    ALevelDecisionPolicyV1 aLevelDecisionPolicyV1(ObjectProvider<AssessmentTrace> trace) {
+        return new ALevelDecisionPolicyV1(trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean
     ALevelAssessmentService aLevelAssessmentService(ALevelJudgmentProvider judgmentProvider,
             ALevelDecisionPolicyV1 decisionPolicy, ALevelAssessmentStore store,
-            ObjectProvider<JourneyMetrics> metrics) {
+            ObjectProvider<JourneyMetrics> metrics,
+            ObjectProvider<AssessmentTrace> trace) {
         return new ALevelAssessmentService(judgmentProvider, decisionPolicy, store, Clock.systemUTC(),
-                metrics.getIfAvailable(JourneyMetrics::disabled));
+                metrics.getIfAvailable(JourneyMetrics::disabled),
+                trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean
     ALevelNarrativeService aLevelNarrativeService(ALevelAssessmentStore assessmentStore,
             ALevelNarrativeStore narrativeStore, ALevelNarrativeGenerator generator,
-            ObjectProvider<JourneyMetrics> metrics) {
+            ObjectProvider<JourneyMetrics> metrics,
+            ObjectProvider<AssessmentTrace> trace) {
         return new ALevelNarrativeService(assessmentStore, narrativeStore, generator,
-                new ALevelNarrativeContextFactory(), new ALevelNarrativeValidator(), Clock.systemUTC(),
-                metrics.getIfAvailable(JourneyMetrics::disabled));
+                new ALevelNarrativeContextFactory(),
+                new ALevelNarrativeValidator(trace.getIfAvailable(AssessmentTrace::disabled)),
+                Clock.systemUTC(),
+                metrics.getIfAvailable(JourneyMetrics::disabled),
+                trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean
     ALevelEvidenceService aLevelEvidenceService(ALevelAssessmentStore assessmentStore,
             ALevelEvidenceStore evidenceStore, Optional<ALevelEvidenceProvider> evidenceProvider,
             @Value("${app.a-level.evidence.geography:United Kingdom}") String geography,
-            ObjectProvider<JourneyMetrics> metrics) {
+            ObjectProvider<JourneyMetrics> metrics,
+            ObjectProvider<AssessmentTrace> trace) {
         return new ALevelEvidenceService(assessmentStore, evidenceStore, evidenceProvider,
-                new ALevelEvidenceRequestFactory(geography), Clock.systemUTC(), metrics.getIfAvailable(JourneyMetrics::disabled));
+                new ALevelEvidenceRequestFactory(geography), Clock.systemUTC(),
+                metrics.getIfAvailable(JourneyMetrics::disabled),
+                trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean
     ALevelAssessmentWorkflow aLevelAssessmentWorkflow(ALevelAssessmentService assessmentService,
             ALevelNarrativeService narrativeService, ALevelEvidenceService evidenceService,
             ObjectProvider<JourneyMetrics> metrics,
-            ObjectProvider<ProviderCostTracker> costs) {
+            ObjectProvider<ProviderCostTracker> costs,
+            ObjectProvider<AssessmentTrace> trace) {
         return new ALevelAssessmentWorkflow(assessmentService, narrativeService, evidenceService,
                 metrics.getIfAvailable(JourneyMetrics::disabled),
-                costs.getIfAvailable(ProviderCostTracker::disabled));
+                costs.getIfAvailable(ProviderCostTracker::disabled),
+                trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean
     ALevelReportService aLevelReportService(ALevelAssessmentStore assessmentStore,
-            ALevelNarrativeStore narrativeStore, ALevelEvidenceStore evidenceStore) {
+            ALevelNarrativeStore narrativeStore, ALevelEvidenceStore evidenceStore,
+            ObjectProvider<AssessmentTrace> trace) {
         return new ALevelReportService(assessmentStore, narrativeStore, evidenceStore,
-                new ALevelReportAssembler());
+                new ALevelReportAssembler(),
+                trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean

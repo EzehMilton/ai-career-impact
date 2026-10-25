@@ -1,6 +1,7 @@
 package com.chikere.futureai.judgment.typesafe.university;
 
 import com.chikere.futureai.cost.ProviderCostTracker;
+import com.chikere.futureai.trace.AssessmentTrace;
 import org.springaicommunity.typesafe.TypeSafeClient;
 import org.springaicommunity.typesafe.autoconfigure.TypeSafeAutoConfiguration;
 import org.springframework.beans.factory.ObjectProvider;
@@ -33,8 +34,10 @@ public class UniversityJevAutoConfiguration {
             UniversityJudgmentSchema schema,
             UniversityJevStateMapper stateMapper,
             @Value("${spring.ai.typesafe.model:}") String configuredModelIdentifier,
-            ObjectProvider<ProviderCostTracker> costs) {
+            ObjectProvider<ProviderCostTracker> costs,
+            ObjectProvider<AssessmentTrace> trace) {
         return new UniversityJevJudgmentService(typeSafeClient, schema, stateMapper, configuredModelIdentifier,
-                costs.getIfAvailable(ProviderCostTracker::disabled));
+                costs.getIfAvailable(ProviderCostTracker::disabled),
+                trace.getIfAvailable(AssessmentTrace::disabled));
     }
 }
