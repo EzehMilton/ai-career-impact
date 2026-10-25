@@ -1,6 +1,8 @@
 package com.chikere.futureai.report.alevel.application;
 
 import com.chikere.futureai.assessment.alevel.application.ALevelAssessmentStore;
+import com.chikere.futureai.assessment.domain.JourneyType;
+import com.chikere.futureai.trace.AssessmentTrace;
 import com.chikere.futureai.evidence.alevel.application.ALevelEvidenceStore;
 import com.chikere.futureai.narrative.alevel.application.ALevelNarrativeStore;
 
@@ -14,10 +16,18 @@ public final class ALevelReportService implements ALevelReportQuery {
     private final ALevelNarrativeStore narrativeStore;
     private final ALevelEvidenceStore evidenceStore;
     private final ALevelReportAssembler assembler;
+    private final AssessmentTrace trace;
 
     public ALevelReportService(ALevelAssessmentStore assessmentStore,
             ALevelNarrativeStore narrativeStore, ALevelEvidenceStore evidenceStore,
             ALevelReportAssembler assembler) {
+        this(assessmentStore, narrativeStore, evidenceStore, assembler, AssessmentTrace.disabled());
+    }
+
+    public ALevelReportService(ALevelAssessmentStore assessmentStore,
+            ALevelNarrativeStore narrativeStore, ALevelEvidenceStore evidenceStore,
+            ALevelReportAssembler assembler, AssessmentTrace trace) {
+        this.trace = Objects.requireNonNull(trace, "trace must not be null");
         this.assessmentStore = Objects.requireNonNull(assessmentStore);
         this.narrativeStore = Objects.requireNonNull(narrativeStore);
         this.evidenceStore = Objects.requireNonNull(evidenceStore);
@@ -28,8 +38,9 @@ public final class ALevelReportService implements ALevelReportQuery {
     public Optional<ALevelReport> assemble(UUID assessmentId, ALevelReportTier tier) {
         Objects.requireNonNull(assessmentId);
         Objects.requireNonNull(tier);
-        return assessmentStore.findById(assessmentId).map(assessment -> assembler.assemble(
+        return trace.report(JourneyType.A_LEVEL, assessmentId, tier == ALevelReportTier.PAID,
+                () -> assessmentStore.findById(assessmentId).map(assessment -> assembler.assemble(
                 new ALevelReportSource(assessment, narrativeStore.findByAssessmentId(assessmentId),
-                        evidenceStore.findByAssessmentId(assessmentId)), tier));
+                        evidenceStore.findByAssessmentId(assessmentId)), tier)));
     }
 }

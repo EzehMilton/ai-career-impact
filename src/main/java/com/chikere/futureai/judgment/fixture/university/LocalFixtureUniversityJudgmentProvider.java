@@ -48,10 +48,12 @@ public final class LocalFixtureUniversityJudgmentProvider implements UniversityJ
     }
 
     private final Fixture fixture;
+    private final String fixtureId;
 
     public LocalFixtureUniversityJudgmentProvider(String fixtureId) {
         String selectedId = Objects.requireNonNull(fixtureId, "fixtureId must not be null").strip();
         this.fixture = FIXTURES.get(selectedId);
+        this.fixtureId = selectedId;
         if (fixture == null) {
             throw new IllegalArgumentException("Unsupported app.university.fixture-id '" + selectedId
                     + "'. Supported fixture IDs: " + supportedFixtureIds());
@@ -78,6 +80,11 @@ public final class LocalFixtureUniversityJudgmentProvider implements UniversityJ
     @Override
     public AssessmentSource source() {
         return AssessmentSource.LOCAL_FIXTURE;
+    }
+
+    @Override
+    public Optional<String> fixtureId() {
+        return Optional.of(fixtureId);
     }
 
     public static List<String> supportedFixtureIds() {

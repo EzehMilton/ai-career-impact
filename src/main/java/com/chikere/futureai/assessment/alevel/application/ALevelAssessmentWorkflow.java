@@ -1,6 +1,8 @@
 package com.chikere.futureai.assessment.alevel.application;
 
 import com.chikere.futureai.assessment.domain.ALevelAssessmentState;
+import com.chikere.futureai.assessment.domain.JourneyType;
+import com.chikere.futureai.trace.AssessmentTrace;
 import com.chikere.futureai.evidence.alevel.application.ALevelEvidenceGathering;
 import com.chikere.futureai.narrative.alevel.application.ALevelNarrativeGeneration;
 import com.chikere.futureai.narrative.alevel.application.NarrativeStatus;
@@ -22,6 +24,7 @@ public final class ALevelAssessmentWorkflow implements ALevelAssessmentUseCase {
     private final ALevelEvidenceGathering evidenceService;
     private final JourneyMetrics metrics;
     private final ProviderCostTracker costs;
+    private final AssessmentTrace trace;
 
     public ALevelAssessmentWorkflow(ALevelAssessmentSubmission assessmentService,
             ALevelNarrativeGeneration narrativeService, ALevelEvidenceGathering evidenceService) {
@@ -37,6 +40,13 @@ public final class ALevelAssessmentWorkflow implements ALevelAssessmentUseCase {
     public ALevelAssessmentWorkflow(ALevelAssessmentSubmission assessmentService,
             ALevelNarrativeGeneration narrativeService, ALevelEvidenceGathering evidenceService,
             JourneyMetrics metrics, ProviderCostTracker costs) {
+        this(assessmentService, narrativeService, evidenceService, metrics, costs, AssessmentTrace.disabled());
+    }
+
+    public ALevelAssessmentWorkflow(ALevelAssessmentSubmission assessmentService,
+            ALevelNarrativeGeneration narrativeService, ALevelEvidenceGathering evidenceService,
+            JourneyMetrics metrics, ProviderCostTracker costs, AssessmentTrace trace) {
+        this.trace = Objects.requireNonNull(trace, "trace must not be null");
         this.assessmentService = Objects.requireNonNull(assessmentService);
         this.narrativeService = Objects.requireNonNull(narrativeService);
         this.evidenceService = Objects.requireNonNull(evidenceService);
@@ -46,7 +56,8 @@ public final class ALevelAssessmentWorkflow implements ALevelAssessmentUseCase {
 
     @Override
     public UUID submit(ALevelAssessmentState state) {
-        return costs.trackAssessment("a-level", () -> submitAndEnrich(state));
+        return trace.assessment(JourneyType.A_LEVEL,
+                () -> costs.trackAssessment("a-level", () -> submitAndEnrich(state)));
     }
 
     private UUID submitAndEnrich(ALevelAssessmentState state) {

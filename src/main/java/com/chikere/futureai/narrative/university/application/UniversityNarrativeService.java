@@ -1,12 +1,17 @@
 package com.chikere.futureai.narrative.university.application;
 
 import com.chikere.futureai.configuration.JourneyMetrics;
+import com.chikere.futureai.assessment.domain.JourneyType;
+import com.chikere.futureai.trace.AssessmentTrace;
+import com.chikere.futureai.trace.TraceStage;
 import com.chikere.futureai.assessment.university.application.UniversityAssessmentStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,6 +30,7 @@ public final class UniversityNarrativeService implements UniversityNarrativeGene
     private final UniversityNarrativeValidator validator;
     private final Clock clock;
     private final JourneyMetrics metrics;
+    private final AssessmentTrace trace;
 
     public UniversityNarrativeService(
             UniversityAssessmentStore assessmentStore,
@@ -44,6 +50,19 @@ public final class UniversityNarrativeService implements UniversityNarrativeGene
             UniversityNarrativeValidator validator,
             Clock clock,
             JourneyMetrics metrics) {
+        this(assessmentStore, narrativeStore, generator, contextFactory, validator, clock, metrics,
+                AssessmentTrace.disabled());
+    }
+
+    public UniversityNarrativeService(
+            UniversityAssessmentStore assessmentStore,
+            UniversityNarrativeStore narrativeStore,
+            UniversityNarrativeGenerator generator,
+            UniversityNarrativeContextFactory contextFactory,
+            UniversityNarrativeValidator validator,
+            Clock clock,
+            JourneyMetrics metrics, AssessmentTrace trace) {
+        this.trace = Objects.requireNonNull(trace, "trace must not be null");
         this.assessmentStore = Objects.requireNonNull(assessmentStore);
         this.narrativeStore = Objects.requireNonNull(narrativeStore);
         this.generator = Objects.requireNonNull(generator);
@@ -68,7 +87,12 @@ public final class UniversityNarrativeService implements UniversityNarrativeGene
                 attemptedAt, Optional.empty()));
         try {
             UniversityNarrativeContext context = contextFactory.create(assessment);
-            UniversityNarrative narrative = validator.validate(metrics.timed("narrative", "university", () -> generator.generate(context)));
+            trace.event(JourneyType.UNIVERSITY, TraceStage.NARRATIVE_REQUEST, () -> narrativeRequest(context));
+            UniversityNarrative generated = metrics.timed("narrative", "university",
+                    () -> trace.timed(JourneyType.UNIVERSITY,
+                    TraceStage.NARRATIVE_RESPONSE, "narrativeModelMs", () -> generator.generate(context),
+                    value -> value));
+            UniversityNarrative narrative = validator.validate(generated);
             var available = stored(assessmentId, NarrativeStatus.AVAILABLE, Optional.of(narrative),
                     attemptedAt, Optional.of(Instant.now(clock)));
             narrativeStore.save(available);
@@ -94,5 +118,21 @@ public final class UniversityNarrativeService implements UniversityNarrativeGene
         return new StoredUniversityNarrative(assessmentId, status, narrative, generator.source(),
                 generator.providerIdentifier(), generator.modelIdentifier(),
                 UniversityNarrativeVersions.PROMPT_AND_SCHEMA, attemptedAt, generatedAt);
+    }
+
+    private Map<String, Object> narrativeRequest(UniversityNarrativeContext context) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("purpose", "ASSESSMENT_NARRATIVE");
+        payload.put("purposeNote", "The only narrative AI call for an assessment. Its fields feed both the free "
+                + "interpretation and the detailed report; the detailed report makes no further AI call.");
+        payload.put("provider", generator.source());
+        payload.put("providerIdentifier", generator.providerIdentifier());
+        payload.put("model", generator.modelIdentifier().orElse(null));
+        payload.put("promptAndSchemaVersion", UniversityNarrativeVersions.PROMPT_AND_SCHEMA);
+        payload.put("outputType", UniversityNarrative.class.getSimpleName());
+        payload.put("context", context);
+        payload.put("note", "For the OpenAI provider the exact system and user messages and the output schema "
+                + "follow as NARRATIVE_PROVIDER_REQUEST.");
+        return payload;
     }
 }

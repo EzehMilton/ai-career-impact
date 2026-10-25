@@ -3,8 +3,13 @@ package com.chikere.futureai.narrative.alevel.application;
 import com.chikere.futureai.decision.alevel.ALevelMeasure;
 import com.chikere.futureai.decision.alevel.OptionalityBand;
 
+import com.chikere.futureai.assessment.domain.JourneyType;
+import com.chikere.futureai.trace.AssessmentTrace;
+import com.chikere.futureai.trace.NarrativeRuleChecks;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -18,6 +23,12 @@ import java.util.regex.Pattern;
  * that states one has invented it.</p>
  */
 public final class ALevelNarrativeValidator {
+
+    private static final List<String> TEXT_RULES = List.of("NARRATIVE_PRESENT", "WELL_FORMED_STRUCTURED_OUTPUT",
+            "NO_NUMERIC_SCORES_OR_PERCENTAGES", "NO_SALARY_OR_PAY_FIGURES", "NO_UNIVERSITY_ENTRY_REQUIREMENTS",
+            "NO_UNSUPPORTED_ADMISSION_EMPLOYMENT_OR_SUBJECT_VERDICT_CLAIMS");
+    private static final List<String> CONTEXT_RULES = java.util.stream.Stream.concat(TEXT_RULES.stream(),
+            java.util.stream.Stream.of("PRESERVES_BALANCED_HUMAN_AND_CREATIVE_BAND")).toList();
 
     /** No trailing \b: a percent sign is not a word character, so "92%" would otherwise slip through. */
     private static final Pattern NUMERIC_CLAIM = Pattern.compile(
@@ -52,21 +63,43 @@ public final class ALevelNarrativeValidator {
                     + "|human\\s+(?:and|&)\\s+creative\\s+(?:aspect|strength|capabilit(?:y|ies))"
                     + "\\s+(?:is|are|appears?\\s+to\\s+be)\\s+strong)\\b");
 
+    private final AssessmentTrace trace;
+
+    public ALevelNarrativeValidator() {
+        this(AssessmentTrace.disabled());
+    }
+
+    /** The trace records each rule's outcome; the rules and their order are unchanged. */
+    public ALevelNarrativeValidator(AssessmentTrace trace) {
+        this.trace = Objects.requireNonNull(trace, "trace must not be null");
+    }
+
     public ALevelNarrative validate(ALevelNarrative narrative, ALevelNarrativeContext context) {
-        validate(narrative);
-        if (context != null && context.measures().stream().anyMatch(measure ->
-                measure.measure() == ALevelMeasure.HUMAN_AND_CREATIVE_STRENGTH
-                        && measure.band() == OptionalityBand.BALANCED)
-                && STRONG_HUMAN_CREATIVE.matcher(narrative.humanAndCreativeExplanation()).find()) {
-            throw new IllegalArgumentException("narrative must preserve the BALANCED human and creative band");
-        }
+        NarrativeRuleChecks checks = NarrativeRuleChecks.start(trace, JourneyType.A_LEVEL, CONTEXT_RULES);
+        validateText(narrative, checks);
+        checks.check("PRESERVES_BALANCED_HUMAN_AND_CREATIVE_BAND", context != null
+                        && context.measures().stream().anyMatch(measure ->
+                                measure.measure() == ALevelMeasure.HUMAN_AND_CREATIVE_STRENGTH
+                                        && measure.band() == OptionalityBand.BALANCED)
+                        && STRONG_HUMAN_CREATIVE.matcher(narrative.humanAndCreativeExplanation()).find(),
+                () -> NarrativeRuleChecks.firstMatch(STRONG_HUMAN_CREATIVE,
+                        List.of(narrative.humanAndCreativeExplanation())),
+                "narrative must preserve the BALANCED human and creative band");
+        checks.accepted();
         return narrative;
     }
 
     public ALevelNarrative validate(ALevelNarrative narrative) {
-        if (narrative == null) {
-            throw new IllegalArgumentException("generated narrative must not be null");
-        }
+        NarrativeRuleChecks checks = NarrativeRuleChecks.start(trace, JourneyType.A_LEVEL, TEXT_RULES);
+        validateText(narrative, checks);
+        checks.accepted();
+        return narrative;
+    }
+
+    private void validateText(ALevelNarrative narrative, NarrativeRuleChecks checks) {
+        checks.check("NARRATIVE_PRESENT", narrative == null, () -> null, "generated narrative must not be null");
+        checks.check("WELL_FORMED_STRUCTURED_OUTPUT", false, () -> null,
+                "enforced when the provider response was mapped onto the narrative record");
         List<String> text = new ArrayList<>(List.of(
                 narrative.headline(), narrative.summary(), narrative.whatThisMeans(),
                 narrative.futureOptionalityExplanation(), narrative.strengthsExplanation(),
@@ -75,20 +108,20 @@ public final class ALevelNarrativeValidator {
                 narrative.adaptabilityExplanation(), narrative.developmentOpportunitiesExplanation(),
                 narrative.cautionOrLimitations()));
         text.addAll(narrative.practicalActions());
-        if (text.stream().anyMatch(value -> NUMERIC_CLAIM.matcher(value).find())) {
-            throw new IllegalArgumentException("narrative must not repeat numeric scores or percentage claims");
-        }
-        if (text.stream().anyMatch(value -> CURRENCY_CLAIM.matcher(value).find())) {
-            throw new IllegalArgumentException("narrative must not state salary or pay figures");
-        }
-        if (text.stream().anyMatch(value -> PREREQUISITE_CLAIM.matcher(value).find())) {
-            throw new IllegalArgumentException(
-                    "narrative must not state university entry requirements; those belong in evidence");
-        }
-        if (text.stream().anyMatch(value -> UNSUPPORTED_CLAIM.matcher(value).find())) {
-            throw new IllegalArgumentException(
-                    "narrative must not make unsupported admission, employment or subject-verdict claims");
-        }
-        return narrative;
+        checks.check("NO_NUMERIC_SCORES_OR_PERCENTAGES",
+                text.stream().anyMatch(value -> NUMERIC_CLAIM.matcher(value).find()),
+                () -> NarrativeRuleChecks.firstMatch(NUMERIC_CLAIM, text),
+                "narrative must not repeat numeric scores or percentage claims");
+        checks.check("NO_SALARY_OR_PAY_FIGURES", text.stream().anyMatch(value -> CURRENCY_CLAIM.matcher(value).find()),
+                () -> NarrativeRuleChecks.firstMatch(CURRENCY_CLAIM, text),
+                "narrative must not state salary or pay figures");
+        checks.check("NO_UNIVERSITY_ENTRY_REQUIREMENTS",
+                text.stream().anyMatch(value -> PREREQUISITE_CLAIM.matcher(value).find()),
+                () -> NarrativeRuleChecks.firstMatch(PREREQUISITE_CLAIM, text),
+                "narrative must not state university entry requirements; those belong in evidence");
+        checks.check("NO_UNSUPPORTED_ADMISSION_EMPLOYMENT_OR_SUBJECT_VERDICT_CLAIMS",
+                text.stream().anyMatch(value -> UNSUPPORTED_CLAIM.matcher(value).find()),
+                () -> NarrativeRuleChecks.firstMatch(UNSUPPORTED_CLAIM, text),
+                "narrative must not make unsupported admission, employment or subject-verdict claims");
     }
 }

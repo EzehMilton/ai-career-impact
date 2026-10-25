@@ -1,6 +1,9 @@
 package com.chikere.futureai.evidence.university.application;
 
 import com.chikere.futureai.configuration.JourneyMetrics;
+import com.chikere.futureai.assessment.domain.JourneyType;
+import com.chikere.futureai.trace.AssessmentTrace;
+import com.chikere.futureai.trace.TraceStage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,6 +12,8 @@ import com.chikere.futureai.assessment.university.application.UniversityAssessme
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,6 +33,7 @@ public final class UniversityEvidenceService implements UniversityEvidenceGather
     private final UniversityEvidenceRequestFactory requestFactory;
     private final Clock clock;
     private final JourneyMetrics metrics;
+    private final AssessmentTrace trace;
 
     public UniversityEvidenceService(UniversityAssessmentStore assessmentStore,
             UniversityEvidenceStore evidenceStore, Optional<UniversityEvidenceProvider> provider,
@@ -39,6 +45,14 @@ public final class UniversityEvidenceService implements UniversityEvidenceGather
             UniversityEvidenceStore evidenceStore, Optional<UniversityEvidenceProvider> provider,
             UniversityEvidenceRequestFactory requestFactory, Clock clock,
             JourneyMetrics metrics) {
+        this(assessmentStore, evidenceStore, provider, requestFactory, clock, metrics, AssessmentTrace.disabled());
+    }
+
+    public UniversityEvidenceService(UniversityAssessmentStore assessmentStore,
+            UniversityEvidenceStore evidenceStore, Optional<UniversityEvidenceProvider> provider,
+            UniversityEvidenceRequestFactory requestFactory, Clock clock,
+            JourneyMetrics metrics, AssessmentTrace trace) {
+        this.trace = Objects.requireNonNull(trace, "trace must not be null");
         this.assessmentStore = Objects.requireNonNull(assessmentStore);
         this.evidenceStore = Objects.requireNonNull(evidenceStore);
         this.provider = Objects.requireNonNull(provider);
@@ -52,10 +66,11 @@ public final class UniversityEvidenceService implements UniversityEvidenceGather
         Objects.requireNonNull(assessmentId);
         Optional<UniversityEvidenceBundle> existing = evidenceStore.findByAssessmentId(assessmentId);
         if (existing.isPresent()) {
-            // Historical evidence, including FAILED, PARTIAL and older versions, is never refreshed here.
+            traceSkipped("evidence already stored for this assessment; never refreshed here");
             return existing;
         }
         if (provider.isEmpty()) {
+            traceSkipped("no evidence provider is configured, so no external evidence exists for this assessment");
             return Optional.empty();
         }
         var configuredProvider = provider.orElseThrow();
@@ -67,8 +82,11 @@ public final class UniversityEvidenceService implements UniversityEvidenceGather
                 configuredProvider.providerIdentifier(), EvidenceStatus.PENDING, attemptedAt, List.of()));
         try {
             var request = requestFactory.create(assessment);
+            trace.event(JourneyType.UNIVERSITY, TraceStage.EVIDENCE_REQUEST,
+                    () -> evidenceRequest(configuredProvider, request));
             UniversityEvidenceBundle gathered = metrics.timed("evidence", "university",
-                    () -> configuredProvider.gather(request));
+                    () -> trace.timed(JourneyType.UNIVERSITY, TraceStage.EVIDENCE_RESPONSE, "evidenceMs",
+                            () -> configuredProvider.gather(request), bundle -> bundle));
             validateProviderResult(assessmentId, configuredProvider, gathered);
             evidenceStore.save(gathered);
             LOGGER.info("Evidence journey=university assessmentId={} outcome={} itemCount={}",
@@ -80,6 +98,9 @@ public final class UniversityEvidenceService implements UniversityEvidenceGather
                     UniversityEvidenceVersions.EVIDENCE_SCHEMA, configuredProvider.source(),
                     configuredProvider.providerIdentifier(), EvidenceStatus.FAILED, attemptedAt, List.of());
             evidenceStore.save(failed);
+            trace.event(JourneyType.UNIVERSITY, TraceStage.EVIDENCE_RESPONSE, () -> Map.of(
+                    "status", "STORED_AS_FAILED", "errorType", failure.getClass().getName(),
+                    "errorMessage", AssessmentTrace.safeMessage(failure)));
             LOGGER.warn("Evidence journey=university assessmentId={} outcome=FAILED failureType={}",
                     assessmentId, failure.getClass().getSimpleName());
             return Optional.of(failed);
@@ -100,5 +121,20 @@ public final class UniversityEvidenceService implements UniversityEvidenceGather
                 || (bundle.status() != EvidenceStatus.AVAILABLE && bundle.status() != EvidenceStatus.PARTIAL)) {
             throw new IllegalArgumentException("provider returned inconsistent evidence metadata");
         }
+    }
+
+    private Map<String,
+            Object> evidenceRequest(UniversityEvidenceProvider provider, UniversityEvidenceRequest request) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("source", provider.source());
+        payload.put("providerIdentifier", provider.providerIdentifier());
+        payload.put("providerImplementation", provider.getClass().getName());
+        payload.put("request", request);
+        return payload;
+    }
+
+    private void traceSkipped(String reason) {
+        trace.event(JourneyType.UNIVERSITY, TraceStage.EVIDENCE_RESPONSE,
+                () -> Map.of("status", "SKIPPED", "reason", reason));
     }
 }

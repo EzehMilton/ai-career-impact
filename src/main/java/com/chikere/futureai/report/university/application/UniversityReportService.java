@@ -1,6 +1,8 @@
 package com.chikere.futureai.report.university.application;
 
 import com.chikere.futureai.assessment.university.application.UniversityAssessmentStore;
+import com.chikere.futureai.assessment.domain.JourneyType;
+import com.chikere.futureai.trace.AssessmentTrace;
 import com.chikere.futureai.evidence.university.application.UniversityEvidenceStore;
 import com.chikere.futureai.narrative.university.application.UniversityNarrativeStore;
 
@@ -14,10 +16,18 @@ public final class UniversityReportService implements UniversityReportQuery {
     private final UniversityNarrativeStore narrativeStore;
     private final UniversityEvidenceStore evidenceStore;
     private final UniversityReportAssembler assembler;
+    private final AssessmentTrace trace;
 
     public UniversityReportService(UniversityAssessmentStore assessmentStore,
             UniversityNarrativeStore narrativeStore, UniversityEvidenceStore evidenceStore,
             UniversityReportAssembler assembler) {
+        this(assessmentStore, narrativeStore, evidenceStore, assembler, AssessmentTrace.disabled());
+    }
+
+    public UniversityReportService(UniversityAssessmentStore assessmentStore,
+            UniversityNarrativeStore narrativeStore, UniversityEvidenceStore evidenceStore,
+            UniversityReportAssembler assembler, AssessmentTrace trace) {
+        this.trace = Objects.requireNonNull(trace, "trace must not be null");
         this.assessmentStore = Objects.requireNonNull(assessmentStore);
         this.narrativeStore = Objects.requireNonNull(narrativeStore);
         this.evidenceStore = Objects.requireNonNull(evidenceStore);
@@ -28,8 +38,9 @@ public final class UniversityReportService implements UniversityReportQuery {
     public Optional<UniversityReport> assemble(UUID assessmentId, UniversityReportTier tier) {
         Objects.requireNonNull(assessmentId);
         Objects.requireNonNull(tier);
-        return assessmentStore.findById(assessmentId).map(assessment -> assembler.assemble(
+        return trace.report(JourneyType.UNIVERSITY, assessmentId, tier == UniversityReportTier.PAID,
+                () -> assessmentStore.findById(assessmentId).map(assessment -> assembler.assemble(
                 new UniversityReportSource(assessment, narrativeStore.findByAssessmentId(assessmentId),
-                        evidenceStore.findByAssessmentId(assessmentId)), tier));
+                        evidenceStore.findByAssessmentId(assessmentId)), tier)));
     }
 }

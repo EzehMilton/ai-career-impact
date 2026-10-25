@@ -1,6 +1,8 @@
 package com.chikere.futureai.assessment.professional.application;
 
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
+import com.chikere.futureai.assessment.domain.JourneyType;
+import com.chikere.futureai.trace.AssessmentTrace;
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeGeneration;
 import com.chikere.futureai.narrative.professional.application.NarrativeStatus;
 import com.chikere.futureai.evidence.professional.application.ProfessionalEvidenceGathering;
@@ -23,6 +25,7 @@ public final class ProfessionalAssessmentWorkflow implements ProfessionalAssessm
     private final ProfessionalOccupationClassificationUseCase classificationService;
     private final JourneyMetrics metrics;
     private final ProviderCostTracker costs;
+    private final AssessmentTrace trace;
 
     public ProfessionalAssessmentWorkflow(
             ProfessionalAssessmentSubmission assessmentService,
@@ -50,6 +53,18 @@ public final class ProfessionalAssessmentWorkflow implements ProfessionalAssessm
             ProfessionalEvidenceGathering evidenceService,
             JourneyMetrics metrics,
             ProviderCostTracker costs) {
+        this(assessmentService, narrativeService, classificationService, evidenceService, metrics, costs,
+                AssessmentTrace.disabled());
+    }
+
+    public ProfessionalAssessmentWorkflow(
+            ProfessionalAssessmentSubmission assessmentService,
+            ProfessionalNarrativeGeneration narrativeService,
+            ProfessionalOccupationClassificationUseCase classificationService,
+            ProfessionalEvidenceGathering evidenceService,
+            JourneyMetrics metrics,
+            ProviderCostTracker costs, AssessmentTrace trace) {
+        this.trace = Objects.requireNonNull(trace, "trace must not be null");
         this.assessmentService = Objects.requireNonNull(assessmentService);
         this.narrativeService = Objects.requireNonNull(narrativeService);
         this.classificationService = Objects.requireNonNull(classificationService);
@@ -60,14 +75,14 @@ public final class ProfessionalAssessmentWorkflow implements ProfessionalAssessm
 
     @Override
     public UUID submit(ProfessionalAssessmentState state) {
-        return costs.trackAssessment("professional",
-                () -> enrich(assessmentService.submitProfessionalAssessment(state)));
+        return trace.assessment(JourneyType.PROFESSIONAL, () -> costs.trackAssessment("professional",
+                () -> enrich(assessmentService.submitProfessionalAssessment(state))));
     }
 
     @Override
     public UUID submit(ProfessionalAssessmentState state, ProfessionalAssessmentInputMetadata inputMetadata) {
-        return costs.trackAssessment("professional",
-                () -> enrich(assessmentService.submitProfessionalAssessment(state, inputMetadata)));
+        return trace.assessment(JourneyType.PROFESSIONAL, () -> costs.trackAssessment("professional",
+                () -> enrich(assessmentService.submitProfessionalAssessment(state, inputMetadata))));
     }
 
     private UUID enrich(UUID id) {

@@ -4,8 +4,13 @@ import com.chikere.futureai.assessment.domain.AssessmentConfidence;
 import com.chikere.futureai.assessment.domain.AssessmentDecision;
 import com.chikere.futureai.assessment.domain.AssessmentStatus;
 import com.chikere.futureai.assessment.domain.JourneyType;
+import com.chikere.futureai.decision.DecisionTracePayloads;
+import com.chikere.futureai.decision.FactorCandidate;
+import com.chikere.futureai.decision.WeightedContribution;
 import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
 import com.chikere.futureai.judgment.domain.DimensionJudgment;
+import com.chikere.futureai.trace.AssessmentTrace;
+import com.chikere.futureai.trace.TraceStage;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -72,6 +77,8 @@ public final class ALevelDecisionPolicyV1 {
     private static final double HIGH_MINIMUM_CONFIDENCE_THRESHOLD = 0.60;
     private static final double BALANCED_BAND_THRESHOLD = 3.50;
     private static final double BROAD_BAND_THRESHOLD = 7.00;
+    private static final int MAXIMUM_DISPLAYED_FACTORS = 3;
+    private static final Map<String, String> BAND_THRESHOLDS = bandThresholds();
 
     /**
      * Future Optionality weights.
@@ -142,11 +149,24 @@ public final class ALevelDecisionPolicyV1 {
             new WeightedDimension(TECHNICAL_DIGITAL_FOUNDATION, 0.07),
             new WeightedDimension(AI_ERA_COMPLEMENTARITY, 0.06));
 
+    private final AssessmentTrace trace;
+
+    public ALevelDecisionPolicyV1() {
+        this(AssessmentTrace.disabled());
+    }
+
+    /** The trace only observes the values this policy computes; it never changes a decision. */
+    public ALevelDecisionPolicyV1(AssessmentTrace trace) {
+        this.trace = Objects.requireNonNull(trace, "trace must not be null");
+    }
+
     public ALevelDecisionResult decide(AssessmentJudgmentSet judgmentSet) {
         ValidatedJudgments judgments = validate(judgmentSet);
         double informationSufficiency = judgments.informationSufficiency();
 
         if (informationSufficiency < INFORMATION_REQUIRED_THRESHOLD) {
+            traceInformationSufficiency(informationSufficiency, AssessmentStatus.MORE_INFORMATION_REQUIRED,
+                    AssessmentConfidence.LOW, false);
             AssessmentDecision headline = new AssessmentDecision(
                     JourneyType.A_LEVEL,
                     OptionalDouble.empty(),
@@ -159,22 +179,35 @@ public final class ALevelDecisionPolicyV1 {
                     POLICY_VERSION, informationSufficiency, headline, Map.of(), List.of(), List.of());
         }
 
-        AssessmentConfidence assessmentConfidence = assessmentConfidence(judgments);
+        ConfidenceAssessment confidenceAssessment = assessmentConfidence(judgments);
+        AssessmentConfidence assessmentConfidence = confidenceAssessment.confidence();
         AssessmentStatus status = assessmentStatus(informationSufficiency, assessmentConfidence);
+        traceInformationSufficiency(informationSufficiency, status, assessmentConfidence, true);
+        traceConfidence(informationSufficiency, confidenceAssessment);
         EnumMap<ALevelMeasure, ALevelMeasureResult> measures = calculateMeasures(judgments);
         ALevelMeasureResult optionality = measures.get(ALevelMeasure.FUTURE_OPTIONALITY);
 
-        List<ALevelDecisionFactor> factors = explanationFactors(judgments);
-        List<ALevelDecisionFactor> strengths = factors.stream()
+        List<FactorCandidate> candidates = explanationCandidates(judgments);
+        List<ALevelDecisionFactor> factors = explanationFactors(candidates);
+        List<ALevelDecisionFactor> rankedStrengths = factors.stream()
                 .filter(factor -> factor.signedEffect() > 0.0)
                 .sorted(Comparator.comparingDouble(ALevelDecisionFactor::signedEffect).reversed())
-                .limit(3)
                 .toList();
-        List<ALevelDecisionFactor> opportunities = factors.stream()
+        List<ALevelDecisionFactor> strengths = rankedStrengths.stream()
+                .limit(MAXIMUM_DISPLAYED_FACTORS)
+                .toList();
+        List<ALevelDecisionFactor> rankedOpportunities = factors.stream()
                 .filter(factor -> factor.signedEffect() < 0.0)
                 .sorted(Comparator.comparingDouble(ALevelDecisionFactor::signedEffect))
-                .limit(3)
                 .toList();
+        List<ALevelDecisionFactor> opportunities = rankedOpportunities.stream()
+                .limit(MAXIMUM_DISPLAYED_FACTORS)
+                .toList();
+        trace.event(JourneyType.A_LEVEL, TraceStage.FACTOR_SELECTION, () -> DecisionTracePayloads.factorSelection(
+                POLICY_VERSION, "explanation-only weights (never part of a measure)", candidates,
+                rankedStrengths.stream().map(ALevelDecisionFactor::dimensionId).toList(),
+                rankedOpportunities.stream().map(ALevelDecisionFactor::dimensionId).toList(),
+                MAXIMUM_DISPLAYED_FACTORS, "strengths", "developmentOpportunities"));
 
         AssessmentDecision headline = new AssessmentDecision(
                 JourneyType.A_LEVEL,
@@ -274,18 +307,53 @@ public final class ALevelDecisionPolicyV1 {
 
     private ALevelMeasureResult compositeMeasure(ALevelMeasure measure,
             Map<String, WeightedDimension> weights, ValidatedJudgments judgments) {
-        double composite = weights.values().stream()
-                .mapToDouble(weighted -> weighted.weight()
-                        * ALevelScoreScale.normalise(judgments.score(weighted.dimensionId()).score()))
-                .sum();
-        double confidence = weights.values().stream()
-                .mapToDouble(weighted -> weighted.weight() * judgments.score(weighted.dimensionId()).confidence())
-                .sum();
+        List<WeightedContribution> contributions = weights.values().stream()
+                .map(weighted -> {
+                    ScoreValue score = judgments.score(weighted.dimensionId());
+                    return WeightedContribution.of(weighted.dimensionId(), score.score(), "normalise: score / 4",
+                            ALevelScoreScale.normalise(score.score()), weighted.weight(), score.confidence());
+                })
+                .toList();
+        double composite = contributions.stream().mapToDouble(WeightedContribution::contribution).sum();
+        double confidence = contributions.stream().mapToDouble(WeightedContribution::weightedConfidence).sum();
         double indicator = ALevelScoreScale.toIndicator(composite);
-        return new ALevelMeasureResult(measure, indicator, optionalityBand(indicator), confidence);
+        ALevelMeasureResult result = new ALevelMeasureResult(measure, indicator, optionalityBand(indicator),
+                confidence);
+        trace.event(JourneyType.A_LEVEL, TraceStage.SCORE_CALCULATION, () -> DecisionTracePayloads.measure(
+                POLICY_VERSION, measure, "WEIGHTED_COMPOSITE", contributions, composite, result.indicator(),
+                result.band(), BAND_THRESHOLDS, result.confidence()));
+        return result;
     }
 
-    private AssessmentConfidence assessmentConfidence(ValidatedJudgments judgments) {
+    private void traceInformationSufficiency(double informationSufficiency, AssessmentStatus status,
+            AssessmentConfidence confidence, boolean scoresProduced) {
+        trace.event(JourneyType.A_LEVEL, TraceStage.INFORMATION_SUFFICIENCY,
+                () -> DecisionTracePayloads.informationSufficiency(POLICY_VERSION, informationSufficiency,
+                        INFORMATION_REQUIRED_THRESHOLD, READY_INFORMATION_THRESHOLD, status, confidence,
+                        scoresProduced));
+    }
+
+    private void traceConfidence(double informationSufficiency, ConfidenceAssessment assessment) {
+        trace.event(JourneyType.A_LEVEL, TraceStage.ASSESSMENT_CONFIDENCE, () -> DecisionTracePayloads.confidence(
+                POLICY_VERSION, informationSufficiency, assessment.mean(), assessment.minimum(), Map.of(
+                        "highRequiresInformationAtLeast", HIGH_INFORMATION_THRESHOLD,
+                        "highRequiresMeanAtLeast", HIGH_MEAN_CONFIDENCE_THRESHOLD,
+                        "highRequiresMinimumAtLeast", HIGH_MINIMUM_CONFIDENCE_THRESHOLD,
+                        "moderateRequiresInformationAtLeast", INFORMATION_REQUIRED_THRESHOLD,
+                        "moderateRequiresMeanAtLeast", MODERATE_MEAN_CONFIDENCE_THRESHOLD),
+                assessment.confidence()));
+    }
+
+    private static Map<String, String> bandThresholds() {
+        LinkedHashMap<String, String> thresholds = new LinkedHashMap<>();
+        thresholds.put(OptionalityBand.FOCUSED.name(), "score < " + BALANCED_BAND_THRESHOLD);
+        thresholds.put(OptionalityBand.BALANCED.name(),
+                BALANCED_BAND_THRESHOLD + " <= score < " + BROAD_BAND_THRESHOLD);
+        thresholds.put(OptionalityBand.BROAD.name(), "score >= " + BROAD_BAND_THRESHOLD);
+        return Collections.unmodifiableMap(thresholds);
+    }
+
+    private ConfidenceAssessment assessmentConfidence(ValidatedJudgments judgments) {
         double mean = SCORE_DIMENSIONS.stream()
                 .map(judgments::score).mapToDouble(ScoreValue::confidence).average().orElseThrow();
         double minimum = SCORE_DIMENSIONS.stream()
@@ -294,13 +362,13 @@ public final class ALevelDecisionPolicyV1 {
         if (judgments.informationSufficiency() >= HIGH_INFORMATION_THRESHOLD
                 && mean >= HIGH_MEAN_CONFIDENCE_THRESHOLD
                 && minimum >= HIGH_MINIMUM_CONFIDENCE_THRESHOLD) {
-            return AssessmentConfidence.HIGH;
+            return new ConfidenceAssessment(mean, minimum, AssessmentConfidence.HIGH);
         }
         if (judgments.informationSufficiency() >= INFORMATION_REQUIRED_THRESHOLD
                 && mean >= MODERATE_MEAN_CONFIDENCE_THRESHOLD) {
-            return AssessmentConfidence.MODERATE;
+            return new ConfidenceAssessment(mean, minimum, AssessmentConfidence.MODERATE);
         }
-        return AssessmentConfidence.LOW;
+        return new ConfidenceAssessment(mean, minimum, AssessmentConfidence.LOW);
     }
 
     private AssessmentStatus assessmentStatus(double informationSufficiency, AssessmentConfidence confidence) {
@@ -310,22 +378,30 @@ public final class ALevelDecisionPolicyV1 {
         return AssessmentStatus.READY;
     }
 
-    private List<ALevelDecisionFactor> explanationFactors(ValidatedJudgments judgments) {
+    private List<FactorCandidate> explanationCandidates(ValidatedJudgments judgments) {
         return EXPLANATION_WEIGHTS.values().stream().map(weighted -> {
             ScoreValue score = judgments.score(weighted.dimensionId());
             double optionalityComponent = ALevelScoreScale.normalise(score.score());
             double signedEffect = weighted.weight() * (optionalityComponent - 0.5);
+            return new FactorCandidate(weighted.dimensionId(), score.score(), optionalityComponent,
+                    weighted.weight(), signedEffect);
+        }).toList();
+    }
+
+    private List<ALevelDecisionFactor> explanationFactors(List<FactorCandidate> candidates) {
+        return candidates.stream().map(candidate -> {
+            double signedEffect = candidate.signedEffect();
             if (signedEffect == 0.0) {
                 return null;
             }
             return new ALevelDecisionFactor(
-                    weighted.dimensionId(),
+                    candidate.dimensionId(),
                     signedEffect > 0.0
                             ? ALevelFactorEffect.STRENGTH
                             : ALevelFactorEffect.DEVELOPMENT_OPPORTUNITY,
-                    ALevelFactorDirection.valueOf((score.score() > 2.0 ? "HIGH_" : "LOW_")
-                            + weighted.dimensionId().toUpperCase(Locale.ROOT)),
-                    score.score(), optionalityComponent, weighted.weight(), signedEffect);
+                    ALevelFactorDirection.valueOf((candidate.rawScore() > 2.0 ? "HIGH_" : "LOW_")
+                            + candidate.dimensionId().toUpperCase(Locale.ROOT)),
+                    candidate.rawScore(), candidate.transformedValue(), candidate.weight(), signedEffect);
         }).filter(Objects::nonNull).toList();
     }
 
@@ -373,6 +449,9 @@ public final class ALevelDecisionPolicyV1 {
     }
 
     private record ScoreValue(double score, double confidence) {
+    }
+
+    private record ConfidenceAssessment(double mean, double minimum, AssessmentConfidence confidence) {
     }
 
     private record ValidatedJudgments(double informationSufficiency, Map<String, ScoreValue> scores) {

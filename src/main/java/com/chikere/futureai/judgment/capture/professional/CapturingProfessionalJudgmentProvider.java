@@ -61,6 +61,11 @@ final class CapturingProfessionalJudgmentProvider implements ProfessionalJudgmen
         return delegate.modelIdentifier();
     }
 
+    @Override
+    public Optional<String> fixtureId() {
+        return delegate.fixtureId();
+    }
+
     ProfessionalJudgmentProvider delegate() {
         return delegate;
     }
