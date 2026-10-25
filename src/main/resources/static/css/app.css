@@ -1927,3 +1927,11 @@ dd { margin: 0; font-weight: 700; text-align: right; }
   .a-level-example-page .a-level-example-heading { flex-direction: column; }
   .a-level-example-page .a-level-example-actions a { width: 100%; }
 }
+
+/* Professional result: the access-code form is secondary, behind a native disclosure. */
+.access-code-disclosure { margin-top: var(--space-3); }
+.access-code-disclosure > summary { cursor: pointer; color: var(--brand-accent); font-weight: 650; width: fit-content; }
+.access-code-disclosure > summary:hover { color: var(--ink-strong); text-decoration: underline; text-underline-offset: .25em; }
+/* The summary already asks the question, so the shared form's own heading would repeat it. */
+.access-code-disclosure .complimentary-access > h3 { display: none; }
+.access-code-disclosure[open] .complimentary-access { margin-top: var(--space-2); }

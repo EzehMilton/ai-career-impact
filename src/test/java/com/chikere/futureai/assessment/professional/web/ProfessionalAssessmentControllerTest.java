@@ -83,15 +83,69 @@ class ProfessionalAssessmentControllerTest {
                 .andExpect(view().name("professional-assessment/result"))
                 .andReturn().getResponse().getContentAsString();
         assertThat(html).contains("Free professional assessment", "Software Architect", "AI Exposure",
-                "Human Advantage", "AI Complementarity", "Role Adaptability", "What increases AI exposure",
-                "Where human skills remain important", "A useful saved summary",
+                "Human Advantage", "AI Complementarity", "Role Adaptability", "What increases AI Exposure",
+                "What reduces AI Exposure", "A useful saved summary",
                 "not a probability that you will lose your job",
                 "Go further with your personalised report", "Paid report checkout is not currently available",
                 "&lt;script&gt;meaning&lt;/script&gt;");
         assertThat(html).doesNotContain("Why AI may affect your work", "What to focus on next",
                 "Skill-development priorities", "Illustrative evidence title", "Premium action one",
                 "secret-provider", "/report.pdf", "Download PDF");
+        // Customer-facing copy: a plain status, "Score" rather than "Indicator", natural band labels, the
+        // neutral measure descriptions, and no confidence values or generated caution while confidence is redesigned.
+        assertThat(html).contains("Your results at a glance", "Your assessment scores", "Why you received these scores",
+                "Each score describes a different characteristic of your work.",
+                "<dd>Assessment complete</dd>", "<dt>Score</dt>",
+                ">Moderate<", ">High<",
+                "How much the work overlaps with characteristics AI can perform through digital systems.");
+        assertThat(html).doesNotContain("Assessment confidence", "<dt>Confidence</dt>", "Confidence describes",
+                "<dt>Indicator</dt>", "Each indicator", ">MODERATE<", ">HIGH<", ">Ready<", "Premium caution",
+                "protective factors", "Where human skills remain important", "ratings</", "rating describes",
+                "What increases AI exposure");
+        assertThat(html).doesNotContainPattern("<dd>\\d+%</dd>");
+        // The free-versus-paid comparison promises only what the detailed report contains today.
+        assertThat(html).containsSubsequence("Free assessment", "Your four assessment scores",
+                "The main factors behind them", "A short explanation of what they mean", "Detailed report — £4.99",
+                "Everything in your free assessment", "A deeper explanation of your results", "Practical next steps",
+                "Skills to prioritise", "Guidance for your work", "Downloadable PDF");
+        assertThat(html).doesNotContain("career context", "Verified career context", "External career context",
+                "Free assessment — included");
         verify(reportService).assemble(ID, ProfessionalReportTier.FREE);
+    }
+
+    @Test
+    void theCheckoutButtonShowsTheProfessionalPriceAndTheAccessCodeIsASecondaryDisclosure() throws Exception {
+        when(purchaseService.accessFor(any())).thenReturn(new ProfessionalPurchaseAccess(
+                Optional.empty(), true, Optional.empty(), true));
+        when(reportService.assemble(ID, ProfessionalReportTier.FREE)).thenReturn(Optional.of(report(
+                ProfessionalReportTier.FREE, true, true)));
+
+        String html = mvc.perform(get("/professional-assessment/" + ID)).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("<button type=\"submit\">Get my detailed report — £4.99</button>");
+        // Collapsed by default behind "Have an access code?"; the form itself, its field and route are unchanged.
+        assertThat(html).containsSubsequence("<details class=\"access-code-disclosure\">",
+                "<summary>Have an access code?</summary>",
+                "action=\"/professional-assessment/" + ID + "/complimentary-access\"", "name=\"_csrf\"",
+                "name=\"accessCode\"", "</details>");
+        assertThat(html).doesNotContain("Price:");
+    }
+
+    @Test
+    void aReadyWithCautionAssessmentIsShownToTheVisitorSimplyAsComplete() throws Exception {
+        var source = com.chikere.futureai.report.professional.application.ProfessionalReportAssemblerTest.source(
+                true, true, true, Map.of("information_sufficient", 0.7));
+        assertThat(source.assessment().result().decision().assessmentDecision().status())
+                .isEqualTo(AssessmentStatus.READY_WITH_CAUTION);
+        when(reportService.assemble(source.assessment().id(), ProfessionalReportTier.FREE)).thenReturn(Optional.of(
+                new ProfessionalReportAssembler().assemble(source, ProfessionalReportTier.FREE)));
+
+        String html = mvc.perform(get("/professional-assessment/" + source.assessment().id()))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("<dd>Assessment complete</dd>");
+        assertThat(html).doesNotContain("Ready with caution", "READY_WITH_CAUTION", "Assessment confidence");
     }
 
     @Test

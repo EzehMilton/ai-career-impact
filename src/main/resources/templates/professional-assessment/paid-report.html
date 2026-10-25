@@ -25,7 +25,7 @@
 
   <section class="panel paid-overview" aria-labelledby="paid-overview-heading">
     <p class="eyebrow">The big picture</p>
-    <h2 id="paid-overview-heading">Your career outlook at a glance</h2>
+    <h2 id="paid-overview-heading">Your results at a glance</h2>
     <p class="narrative-summary" th:text="${report.interpretation}">Overall interpretation</p>
     <div class="paid-rating-overview" th:if="${!report.measures.isEmpty()}">
       <div class="paid-rating-overview-item" th:each="measure : ${report.measures}">
@@ -37,8 +37,7 @@
       <summary>Assessment information</summary>
       <p class="helper" th:text="${report.headline}">Original report headline</p>
       <dl class="summary-list">
-        <div><dt>Status</dt><dd th:text="${report.status}">Ready</dd></div>
-        <div><dt>Assessment confidence</dt><dd th:text="${report.confidence}">High</dd></div>
+        <div><dt>Status</dt><dd th:text="${report.status}">Assessment complete</dd></div>
       </dl>
     </details>
     <p class="notice paid-disclaimer" th:text="${report.jobLossDisclaimer}">AI Exposure is not a probability of job loss.</p>
@@ -46,8 +45,8 @@
 
   <section class="results-section" th:if="${!report.measures.isEmpty()}" aria-labelledby="paid-measures-heading">
     <div class="paid-section-heading">
-      <h2 id="paid-measures-heading">Your four assessment ratings</h2>
-      <p class="helper">Each rating describes a different characteristic of your work. A higher rating is not automatically better or worse.</p>
+      <h2 id="paid-measures-heading">Your four assessment scores</h2>
+      <p class="helper">Each score describes a different characteristic of your work. A higher score is not automatically better or worse.</p>
     </div>
     <div class="measure-grid paid-measure-grid">
       <article class="panel measure-card paid-measure-card" th:each="measure : ${report.measures}">
@@ -55,42 +54,36 @@
         <p class="paid-measure-band" th:text="${measure.band}">Moderate</p>
         <p class="paid-measure-explanation" th:text="${measure.conciseExplanation}">Concise explanation</p>
         <dl class="measure-details">
-          <div><dt>Assessment indicator</dt><dd><span th:text="${measure.indicator}">0.00</span> / 10</dd></div>
-          <div><dt>Confidence indicator</dt><dd th:text="${measure.confidence}">80%</dd></div>
+          <div><dt>Score</dt><dd><span th:text="${measure.indicator}">0.00</span> / 10</dd></div>
         </dl>
         <p class="paid-measure-detail" th:if="${measure.detailedExplanation != null}" th:text="${measure.detailedExplanation}">Detailed explanation</p>
       </article>
     </div>
     <details class="paid-scale-details">
-      <summary>How to read the 0–10 indicators</summary>
-      <p>These are structured indicators of the work described, not probabilities of job loss or predictions of personal outcomes. The rating describes the level of each characteristic.</p>
+      <summary>How to read the 0–10 scores</summary>
+      <p>These scores are structured measures of the work described, not probabilities of job loss or predictions of personal outcomes. Each score describes the level of one characteristic.</p>
     </details>
   </section>
 
   <section class="factor-grid paid-factor-grid" aria-label="Factors behind your assessment">
     <div class="panel">
-      <h2>What increases AI exposure</h2>
-      <p class="helper">Characteristics of the work that contribute to its AI Exposure rating.</p>
+      <h2>What increases AI Exposure</h2>
+      <p class="helper">Characteristics of the work that contribute to its AI Exposure score.</p>
       <ul th:if="${!report.exposureDrivers.isEmpty()}"><li th:each="factor : ${report.exposureDrivers}" th:text="${factor}">Factor</li></ul>
       <p th:if="${report.exposureDrivers.isEmpty()}">No strong exposure drivers were identified.</p>
     </div>
     <div class="panel">
-      <h2>Where human skills remain important</h2>
-      <p class="helper">Characteristics that support meaningful human contribution.</p>
+      <h2>What reduces AI Exposure</h2>
+      <p class="helper">Characteristics of the work you described that lower its AI Exposure score.</p>
       <ul th:if="${!report.protectiveFactors.isEmpty()}"><li th:each="factor : ${report.protectiveFactors}" th:text="${factor}">Factor</li></ul>
-      <p th:if="${report.protectiveFactors.isEmpty()}">No strong protective factors were identified.</p>
+      <p th:if="${report.protectiveFactors.isEmpty()}">No strong factors reducing AI Exposure were identified.</p>
     </div>
   </section>
 
   <section class="narrative-section paid-narrative-section" aria-labelledby="paid-narrative-heading">
     <h2 id="paid-narrative-heading">What your results mean for your work</h2>
     <article class="panel narrative-panel paid-narrative-panel" th:if="${report.narrative.available}">
-      <h3>What these results mean for your role</h3><p th:text="${report.narrative.whatThisMeans}">Meaning</p>
-      <h3>Which parts of your work AI may affect</h3><p th:text="${report.narrative.exposureExplanation}">Exposure</p>
-      <h3>Where your human strengths remain valuable</h3><p th:text="${report.narrative.humanAdvantageExplanation}">Human advantage</p>
-      <h3>How AI could complement your work</h3><p th:text="${report.narrative.complementarityExplanation}">Complementarity</p>
-      <h3>How your role may evolve</h3><p th:text="${report.narrative.adaptabilityExplanation}">Adaptability</p>
-      <p class="narrative-caution" th:text="${report.narrative.caution}">Caution</p>
+      <p th:text="${report.narrative.whatThisMeans}">Meaning</p>
     </article>
     <div class="panel narrative-unavailable" th:unless="${report.narrative.available}"><p>The assessment is available, but its personalised explanation is currently unavailable.</p></div>
   </section>
@@ -116,25 +109,26 @@
     </div>
   </section>
 
-  <section class="results-section" aria-labelledby="paid-work-heading">
+  <section class="results-section" th:if="${!report.workFocus.isEmpty()}" aria-labelledby="paid-work-heading">
     <h2 id="paid-work-heading">Guidance for your day-to-day work</h2>
     <div class="paid-work-grid">
       <article class="panel paid-work-card" th:each="focus : ${report.workFocus}">
-        <p class="evidence-category" th:text="${focus.category == 'USER_REVIEW_REQUIRED' or focus.category == 'User review required' ? 'YOUR RESPONSIBILITIES TO REVIEW' : focus.category}">Category</p>
-        <h3 th:text="${focus.title == 'Review your submitted responsibilities individually' ? 'Review your day-to-day responsibilities' : focus.title}">Focus</h3>
+        <p class="evidence-category" th:text="${focus.category}">Category</p>
+        <h3 th:text="${focus.title}">Focus</h3>
         <p th:text="${focus.guidance}">Guidance</p>
-        <ul th:if="${!focus.relatedResponsibilities.isEmpty()}"><li th:each="responsibility : ${focus.relatedResponsibilities}" th:text="${responsibility}">Responsibility</li></ul>
       </article>
     </div>
-    <p class="helper" th:text="${report.workFocusLimitation}">Limitation</p>
   </section>
 
-  <section class="evidence-section" aria-labelledby="paid-evidence-heading">
-    <h2 id="paid-evidence-heading">External career context</h2>
-    <p class="helper">Supporting information about the wider labour market, where available. This information provides context; it does not change your assessment results.</p>
-    <p class="helper">Only the sourced items shown are verified here. Other evidence categories may be unavailable.</p>
+  <section class="panel paid-guidance-note" aria-labelledby="paid-guidance-heading">
+    <h2 id="paid-guidance-heading">About this guidance</h2>
+    <p>These suggestions are based on the assessment you completed. They are intended to help you decide what to explore next, not to predict your career.</p>
+  </section>
+
+  <section class="evidence-section" th:if="${!report.evidence.items.isEmpty()}" aria-labelledby="paid-evidence-heading">
+    <h2 id="paid-evidence-heading">Career context</h2>
+    <p class="helper">Where reliable public information is available, we show it separately from your assessment scores.</p>
     <div class="fixture-evidence-label" th:if="${report.developmentFixture}">Local development evidence — not live official data</div>
-    <p class="panel" th:if="${report.evidence.items.isEmpty()}" th:text="${report.evidence.message}">Unavailable</p>
     <p class="notice" th:if="${report.evidence.status == 'Partial'}" th:text="${report.evidence.message}">Partial</p>
     <div class="paid-evidence-grid">
       <article class="panel evidence-card paid-evidence-card" th:each="item : ${report.evidence.items}">
@@ -159,30 +153,14 @@
   <section class="panel report-caveat paid-methodology" aria-labelledby="paid-methodology-heading">
     <h2 id="paid-methodology-heading">About your assessment</h2>
     <p>This report provides structured insights into characteristics of the work you described. It is not a prediction of job loss or a guarantee of future career outcomes.</p>
-    <ul><li th:each="limitation : ${report.methodology.limitations}" th:text="${limitation}">Limitation</li></ul>
-    <details class="paid-technical-details">
-      <summary>Assessment methodology and technical details</summary>
-      <dl class="summary-list">
-        <div><dt>Decision policy</dt><dd th:text="${report.methodology.decisionPolicyVersion}">Version</dd></div>
-        <div><dt>Judgement schema</dt><dd th:text="${report.methodology.judgmentSchemaVersion}">Version</dd></div>
-        <div><dt>Report composition</dt><dd th:text="${report.methodology.reportVersion}">Version</dd></div>
-      </dl>
-      <div class="paid-classification" th:if="${report.classification != null}">
-        <h3>Occupation classification</h3>
-        <dl class="summary-list">
-          <div><dt>Canonical occupation</dt><dd th:text="${report.classification.canonicalOccupation}">Occupation</dd></div>
-          <div><dt>System and code</dt><dd><span th:text="${report.classification.system}">SOC 2020</span> <span th:text="${report.classification.code}">0000</span></dd></div>
-          <div><dt>Mapping quality</dt><dd th:text="${report.classification.quality}">Fixture</dd></div>
-        </dl>
-      </div>
-    </details>
+    <p class="helper" th:if="${report.evidence.items.isEmpty()}">Verified external career information was not available for this assessment.</p>
     <p><a th:href="@{/methodology}" href="/methodology">Read how this works</a></p>
   </section>
 
   <nav class="page-action paid-report-bottom-actions" aria-label="Report actions">
     <a class="button-link" th:href="@{/professional-assessment/{id}/report.pdf(id=${assessmentId})}">Download PDF</a>
-    <a class="button-link button-secondary" th:href="@{/professional-assessment/{id}(id=${assessmentId})}">Back to your free result</a>
-    <a class="button-link button-secondary" th:href="@{/}" href="/">Back to home</a>
+    <a class="button-link button-secondary" th:href="@{/professional-assessment/{id}(id=${assessmentId})}">Back to my assessment</a>
+    <a class="text-link" th:href="@{/}" href="/">Back to home</a>
   </nav>
 </main>
 

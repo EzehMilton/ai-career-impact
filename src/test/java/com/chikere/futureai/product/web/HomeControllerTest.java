@@ -42,7 +42,8 @@ class HomeControllerTest {
         assertThat(html).contains("Choose the assessment that fits you.");
         // Each distinct journey carries its question, description and route-specific action.
         assertThat(html).contains("Professional", "How could AI affect my current job or tasks?",
-                "what you actually do, your tasks, not just the title", "Assess my job");
+                "We assess the work you describe, using your responsibilities and skills, not just your job title.",
+                "Assess my job");
         assertThat(html).contains("University",
                 "Is my university course preparing me for an AI-driven future?",
                 "Applying?", "Studying?", "Assess a course");

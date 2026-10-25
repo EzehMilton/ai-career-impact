@@ -2,24 +2,33 @@ package com.chikere.futureai.report.professional.web;
 
 import com.chikere.futureai.assessment.domain.AssessmentStatus;
 import com.chikere.futureai.report.professional.application.ProfessionalReport;
+import com.chikere.futureai.report.professional.application.WorkFocusCategory;
 import org.springframework.stereotype.Component;
 
+import java.util.Comparator;
 import java.util.Locale;
 
 @Component
 public final class ProfessionalReportViewMapper {
+    /**
+     * Display order only: HIGH_PRIORITY before USEFUL (declaration order), otherwise as selected, since the
+     * sort is stable. The responsibility-review guidance only repeats the visitor's own list back to them, so
+     * it is not shown; it remains in the stored report.
+     */
+    static final Comparator<ProfessionalReport.SkillDevelopmentPriority> HIGH_PRIORITY_FIRST =
+            Comparator.comparing(ProfessionalReport.SkillDevelopmentPriority::priority);
+
     public ProfessionalReportViewModel toView(ProfessionalReport report) {
         var summary = report.assessmentSummary();
         var narrative = report.narrative();
         var evidence = report.evidence();
         return new ProfessionalReportViewModel(report.profession(), report.headline(),
-                label(summary.status().name()), label(summary.confidence().name()),
+                customerStatus(summary.status()),
                 summary.status() == AssessmentStatus.MORE_INFORMATION_REQUIRED,
                 report.developmentFixture(), summary.interpretation(), summary.jobLossDisclaimer(),
                 summary.methodologyCaveat(), report.measures().stream().map(value ->
                     new ProfessionalReportViewModel.MeasureView(measureLabel(value.measure().name()),
                             String.format(Locale.ROOT, "%.2f", value.indicator()), label(value.band().name()),
-                            String.format(Locale.ROOT, "%.0f%%", value.confidence() * 100.0),
                             value.conciseExplanation(), value.detailedExplanation().orElse(null))).toList(),
                 report.exposureDrivers(), report.protectiveFactors(),
                 new ProfessionalReportViewModel.NarrativeView(narrative.available(),
@@ -27,12 +36,14 @@ public final class ProfessionalReportViewMapper {
                         narrative.exposureExplanation().orElse(null),
                         narrative.humanAdvantageExplanation().orElse(null),
                         narrative.complementarityExplanation().orElse(null),
-                        narrative.adaptabilityExplanation().orElse(null),
-                        narrative.cautionOrLimitations().orElse(null)),
-                report.practicalActions(), report.skillPriorities().stream().map(value ->
-                    new ProfessionalReportViewModel.SkillView(label(value.priority().name()),
+                        narrative.adaptabilityExplanation().orElse(null)),
+                report.practicalActions(), report.skillPriorities().stream()
+                        .sorted(HIGH_PRIORITY_FIRST)
+                        .map(value -> new ProfessionalReportViewModel.SkillView(label(value.priority().name()),
                             value.title(), value.rationale())).toList(),
-                report.workFocus().areas().stream().map(value ->
+                report.workFocus().areas().stream()
+                        .filter(value -> value.category() != WorkFocusCategory.USER_REVIEW_REQUIRED)
+                        .map(value ->
                     new ProfessionalReportViewModel.WorkFocusView(label(value.category().name()), value.title(),
                             value.guidance(), value.relatedResponsibilities())).toList(),
                 report.workFocus().limitation(),
@@ -59,6 +70,14 @@ public final class ProfessionalReportViewMapper {
         return new ProfessionalReportViewModel.EvidenceItemView(label(item.category()), item.title(), item.summary(),
                 source, item.sourceUrl().map(Object::toString).orElse(null), item.geography().orElse(null),
                 date, label(item.sourceQuality().name()), metric, item.relevanceNote());
+    }
+
+    /**
+     * The status a visitor sees. Confidence and caution are being redesigned, so both READY statuses read
+     * simply as complete; the stored status and its calculation are unchanged.
+     */
+    private String customerStatus(AssessmentStatus status) {
+        return status == AssessmentStatus.MORE_INFORMATION_REQUIRED ? label(status.name()) : "Assessment complete";
     }
 
     private String measureLabel(String name) {
