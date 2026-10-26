@@ -1,7 +1,9 @@
 package com.chikere.futureai.pdf.professional.openhtml;
 
+import com.chikere.futureai.assessment.domain.AssessmentStatus;
 import com.chikere.futureai.pdf.professional.application.*;
 import com.chikere.futureai.report.professional.application.ProfessionalReport;
+import com.chikere.futureai.report.professional.application.WorkFocusCategory;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import org.springframework.stereotype.Component;
 
@@ -64,71 +66,76 @@ public final class OpenHtmlProfessionalReportPdfRenderer implements Professional
         heading(out, "Executive summary");
         out.append("<div class=\"card\"><h3>").append(escape(report.headline())).append("</h3><p>")
                 .append(escape(report.assessmentSummary().interpretation())).append("</p><p><span class=\"pill\">Status:</span> ")
-                .append(label(report.assessmentSummary().status().name())).append(" &#160; <span class=\"pill\">Assessment confidence:</span> ")
-                .append(label(report.assessmentSummary().confidence().name())).append("</p></div><div class=\"warning\">")
+                .append(customerStatus(report.assessmentSummary().status())).append("</p></div><div class=\"warning\">")
                 .append(escape(report.assessmentSummary().jobLossDisclaimer())).append("</div>");
 
         heading(out, "Your four measures");
         for (var measure : report.measures()) {
             out.append("<article class=\"card measure\"><h3>").append(measureName(measure.measure().name()))
-                    .append("</h3><div class=\"score\">").append(String.format(Locale.ROOT, "%.2f", measure.indicator()))
+                    .append("</h3><div class=\"score\">Score: ").append(String.format(Locale.ROOT, "%.2f", measure.indicator()))
                     .append(" / 10</div><p><span class=\"pill\">Band:</span> ").append(label(measure.band().name()))
-                    .append("<br /><span class=\"pill\">Confidence:</span> ")
-                    .append(String.format(Locale.ROOT, "%.0f%%", measure.confidence() * 100)).append("</p><p>")
+                    .append("</p><p>")
                     .append(escape(measure.conciseExplanation())).append("</p>");
             measure.detailedExplanation().ifPresent(value -> out.append("<p>").append(escape(value)).append("</p>"));
             out.append("</article>");
         }
 
         heading(out, "Why you received this result");
-        listBlock(out, "Key exposure drivers", report.exposureDrivers(), "column");
-        listBlock(out, "Key protective factors", report.protectiveFactors(), "column");
+        listBlock(out, "What increases AI Exposure", report.exposureDrivers(), "column");
+        listBlock(out, "What reduces AI Exposure", report.protectiveFactors(), "column");
 
-        heading(out, "Full personalised interpretation");
+        // Each measure's detailed explanation is already in its card above; only the overall meaning is new here.
+        heading(out, "What your results mean for your work");
         var narrative = report.narrative();
         if (narrative.available()) {
-            narrativeSection(out, "What this means", narrative.whatThisMeans().orElse(null));
-            narrativeSection(out, "Why AI may affect your work", narrative.exposureExplanation().orElse(null));
-            narrativeSection(out, "Where human advantage remains", narrative.humanAdvantageExplanation().orElse(null));
-            narrativeSection(out, "How AI could complement the role", narrative.complementarityExplanation().orElse(null));
-            narrativeSection(out, "How the role may adapt", narrative.adaptabilityExplanation().orElse(null));
-            narrativeSection(out, "Caution and limitations", narrative.cautionOrLimitations().orElse(null));
+            narrative.whatThisMeans().ifPresent(value -> out.append("<div class=\"card\"><p>").append(escape(value))
+                    .append("</p></div>"));
         } else out.append("<div class=\"card\">The purchased report does not contain a personalised narrative.</div>");
 
         heading(out, "What to focus on next");
         listBlock(out, "Practical actions", report.practicalActions(), "");
-        for (var skill : report.skillPriorities()) out.append("<article class=\"card\"><h3>")
+        for (var skill : report.skillPriorities().stream()
+                .sorted(java.util.Comparator.comparing(ProfessionalReport.SkillDevelopmentPriority::priority)).toList())
+            out.append("<article class=\"card\"><h3>")
                 .append(escape(skill.title())).append("</h3><p class=\"small\">").append(label(skill.priority().name()))
                 .append(" · ").append(label(skill.category().name())).append("</p><p>")
                 .append(escape(skill.rationale())).append("</p></article>");
 
-        heading(out, "Work guidance");
-        for (var focus : report.workFocus().areas()) {
-            out.append("<article class=\"card\"><h3>").append(escape(focus.title())).append("</h3><p class=\"small\">")
-                    .append(label(focus.category().name())).append("</p><p>").append(escape(focus.guidance())).append("</p>");
-            if (!focus.relatedResponsibilities().isEmpty()) list(out, focus.relatedResponsibilities());
-            out.append("</article>");
+        // The responsibility-review card only repeats the visitor's own list, so it is not presented.
+        var guidance = report.workFocus().areas().stream()
+                .filter(focus -> focus.category() != WorkFocusCategory.USER_REVIEW_REQUIRED).toList();
+        if (!guidance.isEmpty()) {
+            heading(out, "Work guidance");
+            for (var focus : guidance) {
+                out.append("<article class=\"card\"><h3>").append(escape(focus.title())).append("</h3><p class=\"small\">")
+                        .append(label(focus.category().name())).append("</p><p>").append(escape(focus.guidance()))
+                        .append("</p></article>");
+            }
         }
-        out.append("<p class=\"small\">").append(escape(report.workFocus().limitation())).append("</p>");
+        heading(out, "About this guidance");
+        out.append("<p>These suggestions are based on the assessment you completed. They are intended to help you ")
+                .append("decide what to explore next, not to predict your career.</p>");
 
-        heading(out, "External career context");
-        out.append("<p>").append(escape(report.evidence().message())).append("</p>");
-        for (var item : report.evidence().items()) evidence(out, item);
+        if (!report.evidence().items().isEmpty()) {
+            heading(out, "Career context");
+            out.append("<p>Where reliable public information is available, we show it separately from your ")
+                    .append("assessment scores.</p>");
+            for (var item : report.evidence().items()) evidence(out, item);
+        }
 
-        report.occupationClassification().ifPresent(value -> {
-            heading(out, "Occupation classification");
-            out.append("<div class=\"card\"><strong>").append(escape(value.canonicalOccupation())).append("</strong><p>")
-                    .append(escape(value.classificationSystem().replace('_', ' '))).append(" · ")
-                    .append(escape(value.classificationCode())).append("</p></div>");
-        });
-
-        heading(out, "Methodology and limitations");
-        list(out, report.methodology().limitations());
-        out.append("<div class=\"small\"><p>Judgement schema: ").append(escape(report.methodology().judgmentSchemaVersion()))
-                .append("<br />Decision policy: ").append(escape(report.methodology().decisionPolicyVersion()))
-                .append("<br />Purchased report: ").append(escape(model.purchasedReportVersion()))
-                .append("<br />PDF presentation: ").append(escape(model.pdfTemplateVersion())).append("</p></div></body></html>");
+        heading(out, "About your assessment");
+        out.append("<p>This report provides structured insights into characteristics of the work you described. ")
+                .append("It is not a prediction of job loss or a guarantee of future career outcomes.</p>");
+        if (report.evidence().items().isEmpty()) {
+            out.append("<p class=\"small\">Verified external career information was not available for this assessment.</p>");
+        }
+        out.append("</body></html>");
         return out.toString();
+    }
+
+    /** Both READY statuses read as complete while confidence is redesigned; the stored status is unchanged. */
+    private String customerStatus(AssessmentStatus status) {
+        return status == AssessmentStatus.MORE_INFORMATION_REQUIRED ? label(status.name()) : "Assessment complete";
     }
 
     private void evidence(StringBuilder out, ProfessionalReport.EvidenceItem item) {
@@ -147,10 +154,6 @@ public final class OpenHtmlProfessionalReportPdfRenderer implements Professional
                 .append(escape(item.relevanceNote())).append("</p></article>");
     }
 
-    private void narrativeSection(StringBuilder out, String title, String value) {
-        if (value != null) out.append("<article class=\"card\"><h3>").append(title).append("</h3><p>")
-                .append(escape(value)).append("</p></article>");
-    }
     private void listBlock(StringBuilder out, String title, java.util.List<String> values, String css) {
         out.append("<div class=\"card ").append(css).append("\"><h3>").append(title).append("</h3>"); list(out, values); out.append("</div>");
     }

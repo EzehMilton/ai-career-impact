@@ -88,7 +88,7 @@ public final class ProfessionalNarrativeService implements ProfessionalNarrative
                     () -> trace.timed(JourneyType.PROFESSIONAL,
                     TraceStage.NARRATIVE_RESPONSE, "narrativeModelMs", () -> generator.generate(context),
                     value -> value));
-            ProfessionalNarrative narrative = validator.validate(generated);
+            ProfessionalNarrative narrative = validator.validate(generated, context);
             var available = stored(assessmentId, NarrativeStatus.AVAILABLE, Optional.of(narrative),
                     attemptedAt, Optional.of(Instant.now(clock)));
             narrativeStore.save(available);

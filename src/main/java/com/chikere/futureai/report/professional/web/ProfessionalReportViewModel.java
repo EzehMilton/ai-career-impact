@@ -6,7 +6,6 @@ public record ProfessionalReportViewModel(
         String profession,
         String headline,
         String status,
-        String confidence,
         boolean moreInformationRequired,
         boolean developmentFixture,
         String interpretation,
@@ -24,12 +23,12 @@ public record ProfessionalReportViewModel(
         ClassificationView classification,
         MethodologyView methodology) {
 
-    public record MeasureView(String name, String indicator, String band, String confidence,
+    public record MeasureView(String name, String indicator, String band,
             String conciseExplanation, String detailedExplanation) { }
 
     public record NarrativeView(boolean available, String summary, String whatThisMeans,
             String exposureExplanation, String humanAdvantageExplanation,
-            String complementarityExplanation, String adaptabilityExplanation, String caution) { }
+            String complementarityExplanation, String adaptabilityExplanation) { }
 
     public record SkillView(String priority, String title, String rationale) { }
 

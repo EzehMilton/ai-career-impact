@@ -212,10 +212,11 @@ public final class ProfessionalReportAssembler {
 
     private String conciseExplanation(ProfessionalMeasure measure) {
         return switch (measure) {
-            case AI_EXPOSURE -> "How strongly the work overlaps with characteristics AI can increasingly perform.";
-            case HUMAN_ADVANTAGE -> "How strongly the role relies on trust, context, presence, judgement and accountability.";
-            case AI_COMPLEMENTARITY -> "How much scope there is for AI assistance while human contribution remains meaningful.";
-            case ROLE_ADAPTABILITY -> "How much the role structure supports continued human value and AI-enabled evolution.";
+            case AI_EXPOSURE -> "How much the work overlaps with characteristics AI can perform through digital systems.";
+            case HUMAN_ADVANTAGE -> "How strongly the work relies on human trust, context, physical presence, judgement and accountability.";
+            case AI_COMPLEMENTARITY -> "How much scope there is for AI assistance while meaningful human contribution remains.";
+            case ROLE_ADAPTABILITY -> "How much the structure of the role can accommodate technological change "
+                    + "while retaining meaningful human contribution.";
         };
     }
 
@@ -238,22 +239,7 @@ public final class ProfessionalReportAssembler {
     }
 
     private String factorLabel(ProfessionalDecisionFactor factor) {
-        return switch (factor.direction()) {
-            case HIGH_TASK_REPEATABILITY -> "A significant part of the work is repetitive or standardised";
-            case LOW_TASK_REPEATABILITY -> "The work is less repetitive or standardised";
-            case HIGH_DIGITAL_EXECUTABILITY -> "Much of the work can be performed digitally";
-            case LOW_DIGITAL_EXECUTABILITY -> "The work cannot be done entirely through digital systems";
-            case HIGH_HUMAN_TRUST_DEPENDENCY -> "Trust, persuasion or relationships matter to successful performance";
-            case LOW_HUMAN_TRUST_DEPENDENCY -> "The work depends less on human trust or relationships";
-            case HIGH_PHYSICAL_WORLD_DEPENDENCY -> "The work relies on skilled physical-world presence";
-            case LOW_PHYSICAL_WORLD_DEPENDENCY -> "The work requires little physical-world presence";
-            case HIGH_CONTEXTUAL_COMPLEXITY -> "The work depends on understanding complex or changing situations";
-            case LOW_CONTEXTUAL_COMPLEXITY -> "The work usually follows clear and predictable patterns";
-            case HIGH_ORIGINAL_JUDGMENT -> "The role relies on original judgement and synthesis";
-            case LOW_ORIGINAL_JUDGMENT -> "The work relies more on established methods than original judgement";
-            case HIGH_ACCOUNTABILITY_RESPONSIBILITY -> "The role carries responsibility for consequential decisions";
-            case LOW_ACCOUNTABILITY_RESPONSIBILITY -> "The role carries limited responsibility for consequential decisions";
-        };
+        return ProfessionalFactorDescriptions.describe(factor.direction());
     }
 
     private String lower(String value) {

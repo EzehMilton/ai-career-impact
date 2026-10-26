@@ -30,9 +30,9 @@ public final class LocalFixtureProfessionalNarrativeGenerator implements Profess
                 "A practical interpretation of your " + context.profession() + " assessment",
                 "This local fixture explanation reflects the saved assessment: AI exposure is "
                         + exposureBand + " while scope for AI complementarity is " + complementarityBand + ".",
-                "Your current work appears likely to change as AI tools become more capable, but exposure and "
-                        + "human value can exist at the same time.",
-                "The assessment identifies " + driver + " as an important reason AI may affect parts of the work.",
+                "These measures describe the work you described as it is today; exposure and human value can "
+                        + "exist at the same time.",
+                exposureExplanation(context, driver),
                 "Human value remains visible where the work depends on " + protection + ".",
                 "There may be scope to use AI for repeatable or information-heavy tasks while keeping human "
                         + "judgement, context and accountability in the loop.",
@@ -76,7 +76,17 @@ public final class LocalFixtureProfessionalNarrativeGenerator implements Profess
     private String band(ProfessionalNarrativeContext context, ProfessionalMeasure measure) {
         return context.measures().stream()
                 .filter(item -> item.measure() == measure)
-                .findFirst().orElseThrow().band().name().toLowerCase().replace('_', ' ');
+                .findFirst().orElseThrow().band().toLowerCase();
+    }
+
+    /** Explains AI Exposure from Java's selected factors: the strongest raising factor, else the strongest lowering one. */
+    private String exposureExplanation(ProfessionalNarrativeContext context, String driver) {
+        if (context.exposureDrivers().isEmpty() && !context.protectiveFactors().isEmpty()) {
+            return "The assessment identifies " + describe(context.protectiveFactors().getFirst().direction())
+                    + " as an important reason the work has relatively little overlap with what AI can do "
+                    + "through digital systems.";
+        }
+        return "The assessment identifies " + driver + " as an important reason AI may affect parts of the work.";
     }
 
     private String describe(ProfessionalFactorDirection direction) {

@@ -1,12 +1,10 @@
 package com.chikere.futureai.trace;
 
-import com.chikere.futureai.assessment.domain.AssessmentConfidence;
 import com.chikere.futureai.assessment.domain.AssessmentStatus;
 import com.chikere.futureai.assessment.domain.JourneyType;
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.assessment.professional.application.AssessmentSource;
 import com.chikere.futureai.decision.professional.DecisionFactorEffect;
-import com.chikere.futureai.decision.professional.IndicatorBand;
 import com.chikere.futureai.decision.professional.ProfessionalFactorDirection;
 import com.chikere.futureai.decision.professional.ProfessionalMeasure;
 import com.chikere.futureai.judgment.typesafe.professional.ProfessionalJevJudgmentService;
@@ -143,9 +141,11 @@ class ProviderTraceTest {
                 .isEqualTo(OpenAiProfessionalNarrativeGenerator.SYSTEM_INSTRUCTIONS);
         assertThat(messages.get(1).get("role").asText()).isEqualTo("USER");
         assertThat(messages.get(1).get("text").asText())
-                .startsWith("Explain this saved assessment context:")
+                .startsWith(OpenAiProfessionalNarrativeGenerator.USER_PROMPT_PREFIX)
                 .contains("Software Architect", "AI_EXPOSURE", "digital_executability");
         assertThat(request.at("/payload/model").asText()).isEqualTo("gpt-4o-mini");
+        // The Professional narrative's low temperature reaches the model; the configured model is kept.
+        assertThat(request.at("/payload/temperature").asDouble()).isEqualTo(0.2);
         assertThat(request.at("/payload/outputSchema").asText()).contains("\"practicalActions\"", "\"headline\"");
         JsonNode response = log.only(TraceStage.NARRATIVE_PROVIDER_RESPONSE).get("payload");
         assertThat(response.get("status").asText()).isEqualTo("SUCCEEDED");
@@ -197,14 +197,14 @@ class ProviderTraceTest {
     private static ProfessionalNarrativeContext context() {
         return new ProfessionalNarrativeContext("Software Architect", "I design complex systems.",
                 List.of("Design platforms"), List.of("Architecture"), OptionalInt.of(14),
-                AssessmentStatus.READY, AssessmentConfidence.HIGH,
+                AssessmentStatus.READY,
                 java.util.Arrays.stream(ProfessionalMeasure.values())
-                        .map(measure -> new ProfessionalNarrativeContext.MeasureContext(measure, 6.5,
-                                IndicatorBand.MODERATE, 0.8))
+                        .map(measure -> new ProfessionalNarrativeContext.MeasureContext(measure, measure.name(), 6.5,
+                                "Moderate"))
                         .toList(),
-                List.of(new ProfessionalNarrativeContext.FactorContext("digital_executability",
-                        DecisionFactorEffect.INCREASES_AI_EXPOSURE,
-                        ProfessionalFactorDirection.HIGH_DIGITAL_EXECUTABILITY)),
+                List.of(new ProfessionalNarrativeContext.FactorContext("digital_executability", "Digital executability",
+                        "Much of the work can be performed digitally", DecisionFactorEffect.INCREASES_AI_EXPOSURE,
+                        ProfessionalFactorDirection.HIGH_DIGITAL_EXECUTABILITY, 1, 3.5, 0.1)),
                 List.of(), AssessmentSource.JEV, "professional-v1", "professional-decision-v1");
     }
 
