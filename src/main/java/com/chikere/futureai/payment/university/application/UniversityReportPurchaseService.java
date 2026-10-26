@@ -243,8 +243,26 @@ public final class UniversityReportPurchaseService implements UniversityReportPu
         return result;
     }
 
+    /**
+     * The same complimentary grant as a redeemed code, without a code: the frozen PAID report and an ACTIVE
+     * COMPLIMENTARY entitlement, never a payment-provider record. Idempotent: an assessment that already has
+     * ACTIVE access is left as it is. For trusted in-process callers only, such as the live-smoke entitlement
+     * adapter, which exists only under that profile; it is deliberately not part of the web-facing use case.
+     */
+    public ComplimentaryRedemptionResult grantComplimentaryAccess(UUID assessmentId) {
+        Objects.requireNonNull(assessmentId);
+        ComplimentaryRedemptionResult result = grant(assessmentId);
+        LOGGER.info("University complimentary access granted without a code assessmentId={} outcome={}",
+                assessmentId, result);
+        return result;
+    }
+
     private ComplimentaryRedemptionResult redeem(UUID assessmentId, String submittedCode) {
         if (!complimentaryAccess.accepts(submittedCode)) return ComplimentaryRedemptionResult.INVALID_CODE;
+        return grant(assessmentId);
+    }
+
+    private ComplimentaryRedemptionResult grant(UUID assessmentId) {
         var existing = purchaseStore.findEntitlementByAssessmentId(assessmentId);
         if (existing.isPresent()) return redemptionFor(existing.orElseThrow());
         UniversityReport paidReport = reportService.assemble(assessmentId, UniversityReportTier.PAID)

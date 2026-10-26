@@ -11,6 +11,7 @@ import java.util.Set;
 
 import static com.chikere.futureai.configuration.ApplicationProfiles.DEV;
 import static com.chikere.futureai.configuration.ApplicationProfiles.DEV_NO_JEV;
+import static com.chikere.futureai.configuration.ApplicationProfiles.LIVE_SMOKE;
 import static com.chikere.futureai.configuration.ApplicationProfiles.PROD;
 
 /**
@@ -20,11 +21,13 @@ import static com.chikere.futureai.configuration.ApplicationProfiles.PROD;
  *
  * <ul>
  *   <li><strong>Contradictory profiles.</strong> The application supports exactly one of
- *       {@code dev}, {@code dev-no-jev}, or {@code prod}. Combining any two is refused at
- *       startup rather than silently picking a winner.</li>
+ *       {@code dev}, {@code dev-no-jev}, {@code live-smoke} or {@code prod}. Combining any two is
+ *       refused at startup rather than silently picking a winner.</li>
  *   <li><strong>Missing configuration for an enabled capability.</strong> Checks are scoped to what
  *       is actually switched on: {@code dev} needs no external-service credentials; {@code prod}
- *       needs all of them and is refused if any are absent.</li>
+ *       needs all of them and is refused if any are absent. {@code live-smoke} also needs the
+ *       explicit {@code APP_LIVE_SMOKE_ENABLED=true} switch, so the profile alone never bypasses
+ *       payment.</li>
  * </ul>
  *
  * <p>No message ever contains a configuration value. Startup failures are pasted into tickets.</p>
@@ -80,6 +83,19 @@ public class StartupConfigurationValidator {
             conflicts.add("Profiles 'dev-no-jev' and 'prod' are contradictory: choose exactly one "
                     + "profile.");
         }
+        if (active.contains(LIVE_SMOKE)) {
+            // The prod profile is this application's one reliable signal of a real deployment.
+            if (active.contains(PROD)) {
+                conflicts.add("Profiles 'live-smoke' and 'prod' are contradictory: live smoke testing bypasses "
+                        + "payment and must never run as a production deployment.");
+            }
+            for (String other : List.of(DEV, DEV_NO_JEV)) {
+                if (active.contains(other)) {
+                    conflicts.add("Profiles 'live-smoke' and '" + other + "' are contradictory: live smoke "
+                            + "testing uses real providers, so choose exactly one profile.");
+                }
+            }
+        }
         return conflicts;
     }
 
@@ -90,6 +106,9 @@ public class StartupConfigurationValidator {
         }
         if (active.contains(DEV_NO_JEV)) {
             problems.addAll(devNoJevSettings(environment));
+        }
+        if (active.contains(LIVE_SMOKE)) {
+            problems.addAll(liveSmokeSettings(environment));
         }
         return problems;
     }
@@ -134,6 +153,23 @@ public class StartupConfigurationValidator {
                     + "(required by profile 'dev-no-jev': real OpenAI narrative)");
         }
         problems.addAll(missing(environment, STRIPE_SETTINGS, DEV_NO_JEV));
+        return problems;
+    }
+
+    private static List<String> liveSmokeSettings(Environment environment) {
+        List<String> problems = new ArrayList<>();
+        if (!environment.getProperty("app.live-smoke.enabled", Boolean.class, false)) {
+            problems.add("live-smoke profile requires APP_LIVE_SMOKE_ENABLED=true "
+                    + "(real Jev and OpenAI calls are made and payments are bypassed)");
+        }
+        if (environment.getProperty("TYPESAFE_API_KEY", "").isBlank()) {
+            problems.add("Missing required configuration: TYPESAFE_API_KEY "
+                    + "(required by profile 'live-smoke': real Jev / TypeSafe judgments)");
+        }
+        if (environment.getProperty("OPENAI_API_KEY", "").isBlank()) {
+            problems.add("Missing required configuration: OPENAI_API_KEY "
+                    + "(required by profile 'live-smoke': real OpenAI narrative)");
+        }
         return problems;
     }
 

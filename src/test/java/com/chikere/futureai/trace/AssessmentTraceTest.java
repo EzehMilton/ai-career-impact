@@ -53,6 +53,24 @@ class AssessmentTraceTest {
     }
 
     @Test
+    void anExecutionModeLabelsEveryEventAndIsAbsentByDefault() {
+        AssessmentTrace.enabled("LIVE_SMOKE").event(JourneyType.PROFESSIONAL, TraceStage.START, () -> Map.of("a", 1));
+        assertThat(log.only(TraceStage.START).get("executionMode").asText()).isEqualTo("LIVE_SMOKE");
+
+        log.clear();
+        AssessmentTrace.enabled().event(JourneyType.PROFESSIONAL, TraceStage.START, () -> Map.of("a", 1));
+        assertThat(log.only(TraceStage.START).has("executionMode")).isFalse();
+
+        new ApplicationContextRunner().withUserConfiguration(AssessmentTraceConfiguration.class)
+                .withPropertyValues("app.assessment-trace.enabled=true", "app.assessment-trace.execution-mode=LIVE_SMOKE")
+                .run(context -> {
+                    log.clear();
+                    context.getBean(AssessmentTrace.class).event(JourneyType.UNIVERSITY, TraceStage.START, Map::of);
+                    assertThat(log.only(TraceStage.START).get("executionMode").asText()).isEqualTo("LIVE_SMOKE");
+                });
+    }
+
+    @Test
     void aDisabledTraceEmitsNothingAndNeverBuildsAPayload() {
         AssessmentTrace trace = AssessmentTrace.disabled();
         AtomicBoolean built = new AtomicBoolean();

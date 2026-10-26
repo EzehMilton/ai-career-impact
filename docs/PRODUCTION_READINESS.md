@@ -269,7 +269,7 @@ Under `prod` the line is an ECS JSON object whose `message` holds these fields. 
 
 ## Assessment trace
 
-Opt-in, off by default, and controlled only by `ASSESSMENT_TRACE_ENABLED` (`app.assessment-trace.enabled`), never by a profile. When on, it logs one `[ASSESSMENT-TRACE]` event per stage of an assessment: form input, the decision-model request and response, every score calculation and factor selection, the deterministic result, the narrative request, response and guardrail outcomes, evidence, the assembled free and detailed reports, and a timing summary. Events from one submission share an `assessmentTraceId`. See [ASSESSMENT_TRACE.md](ASSESSMENT_TRACE.md) for the stages, an example and its limits.
+Opt-in, off by default, and controlled only by `ASSESSMENT_TRACE_ENABLED` (`app.assessment-trace.enabled`); the only profile that changes its default is the local `live-smoke` profile ([LIVE_SMOKE_TESTING.md](LIVE_SMOKE_TESTING.md)), which must never be deployed. When on, it logs one `[ASSESSMENT-TRACE]` event per stage of an assessment: form input, the decision-model request and response, every score calculation and factor selection, the deterministic result, the narrative request, response and guardrail outcomes, evidence, the assembled free and detailed reports, and a timing summary. Events from one submission share an `assessmentTraceId`. See [ASSESSMENT_TRACE.md](ASSESSMENT_TRACE.md) for the stages, an example and its limits.
 
 **Assessment tracing may include user-entered assessment data and complete AI prompts/responses. It is intended for controlled development and diagnostic use and should not be enabled routinely in production.**
 

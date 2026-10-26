@@ -1,0 +1,27 @@
+<!doctype html>
+<!--/*
+  Live smoke test mode only. `liveSmokeMode`, `liveSmokeRuns` and `liveSmokeTraces` are supplied by
+  LiveSmokeShellAdvice, which exists only under the live-smoke profile, so outside it this fragment renders
+  nothing. All three journeys have a normal paid PDF route, so Download PDF is offered for each. Run Again is
+  offered only for unedited saved cases.
+*/-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<aside class="live-smoke-panel" th:fragment="resultPanel(basePath)"
+       th:if="${liveSmokeMode == true and assessmentId != null}" aria-label="Live smoke test controls">
+  <strong>Live smoke test controls</strong>
+  <ul th:with="smokeCase=${liveSmokeRuns.caseFor(assessmentId).orElse(null)}">
+    <li><a th:href="@{${basePath} + '/' + ${assessmentId} + '/report'}" href="#">Detailed Report</a></li>
+    <li><a th:href="@{${basePath} + '/' + ${assessmentId} + '/report.pdf'}" href="#">Download PDF</a></li>
+    <li th:if="${liveSmokeTraces.fileFor(assessmentId).isPresent()}">
+      <a th:href="@{/dev/live-smoke/traces/{id}(id=${assessmentId})}" href="#">Download Trace</a>
+    </li>
+    <li th:if="${smokeCase != null}">
+      <a th:href="@{/dev/live-smoke/{journey}/{id}(journey=${smokeCase.journey().slug()},id=${smokeCase.id()})}"
+         href="#" th:text="'Run Again (' + ${smokeCase.label()} + ')'">Run Again</a>
+    </li>
+    <li><a th:href="@{/dev/live-smoke}" href="/dev/live-smoke">Back to Live Smoke Dashboard</a></li>
+  </ul>
+</aside>
+</body>
+</html>

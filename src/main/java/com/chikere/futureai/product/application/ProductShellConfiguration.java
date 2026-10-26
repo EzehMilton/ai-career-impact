@@ -27,7 +27,7 @@ public class ProductShellConfiguration {
     }
 
     @Bean
-    @Profile({"prod", "dev-no-jev"})
+    @Profile({"prod", "dev-no-jev", "live-smoke"})
     DevelopmentModeStatus productionDevelopmentModeStatus() {
         return DevelopmentModeStatus.inactive();
     }

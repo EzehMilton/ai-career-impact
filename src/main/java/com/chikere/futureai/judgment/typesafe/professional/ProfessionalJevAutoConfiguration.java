@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 @AutoConfiguration(after = TypeSafeAutoConfiguration.class)
 @ConditionalOnClass(TypeSafeClient.class)
-@Profile("prod")
+@Profile({"prod", "live-smoke"})
 public class ProfessionalJevAutoConfiguration {
 
     @Bean
