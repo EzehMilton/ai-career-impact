@@ -45,10 +45,12 @@
 </header>
 
 <!--/*
-  Global development-mode banner. `developmentMode` is supplied by DevelopmentModeAdvice and is
-  false in every profile except dev, so this renders nothing in normal operation.
+  Global development banners. `developmentMode` is supplied by ProductShellAdvice and is false in every
+  profile except dev. `liveSmokeMode` is supplied only by LiveSmokeShellAdvice, which exists only under the
+  live-smoke profile, so in normal operation neither renders anything.
 */-->
-<div th:fragment="devBanner" th:if="${developmentMode}">
+<th:block th:fragment="devBanner">
+<div th:if="${developmentMode}">
   <div class="dev-banner" role="status">
     <div class="dev-banner-inner">
       <strong>Development mode</strong>
@@ -58,6 +60,17 @@
     </div>
   </div>
 </div>
+<div th:if="${liveSmokeMode == true}">
+  <div class="dev-banner live-smoke-banner" role="alert">
+    <div class="dev-banner-inner">
+      <strong>LIVE SMOKE TEST MODE — real Jev and OpenAI calls are being made. Payments are bypassed.</strong>
+      <span>Each assessment calls the real providers and may incur provider cost. Assessment trace logs may
+        contain the test data you submit. Stripe is not charged: detailed reports are unlocked without payment.</span>
+      <a th:href="@{/dev/live-smoke}" href="/dev/live-smoke">Live smoke dashboard</a>
+    </div>
+  </div>
+</div>
+</th:block>
 
 <!--/* Per-assessment fixture notice, driven by the saved assessment's own provenance. */-->
 <aside class="alert alert-dev" th:fragment="fixtureNotice" role="status">

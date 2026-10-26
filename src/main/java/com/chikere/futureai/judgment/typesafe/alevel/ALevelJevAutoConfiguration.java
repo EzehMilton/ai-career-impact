@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Profile;
 
 @AutoConfiguration(after = TypeSafeAutoConfiguration.class)
 @ConditionalOnClass(TypeSafeClient.class)
-@Profile("prod")
+@Profile({"prod", "live-smoke"})
 public class ALevelJevAutoConfiguration {
 
     @Bean

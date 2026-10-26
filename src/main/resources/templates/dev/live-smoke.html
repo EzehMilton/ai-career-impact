@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Live smoke testing')}"></head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('')}"></header>
+<main class="page-shell" id="main">
+  <meta name="robots" content="noindex,nofollow">
+  <div class="page-header">
+    <p class="eyebrow">Development only</p>
+    <h1>Live smoke testing</h1>
+    <p class="lead">Open a pre-filled form, review the inputs, then submit it yourself. Opening a form never submits
+      anything. Each submission makes real Jev and OpenAI calls.</p>
+  </div>
+
+  <section class="panel" aria-labelledby="status-heading">
+    <h2 id="status-heading">This run</h2>
+    <table class="live-smoke-table">
+      <tbody>
+      <tr th:each="row : ${status.rows()}">
+        <th scope="row" th:text="${row.name()}">Jev</th>
+        <td th:text="${row.value()}" th:classappend="${row.ok()} ? '' : 'live-smoke-status-bad'">LIVE</td>
+        <td th:text="${row.detail()}">Detail</td>
+      </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel" aria-labelledby="custom-heading">
+    <h2 id="custom-heading">Custom assessments</h2>
+    <p>Open a journey's normal blank form and enter any profession, course or subject combination. It runs with
+      the same real providers, detailed-report access and trace as a saved case.</p>
+    <ul class="live-smoke-actions">
+      <li th:each="journey : ${journeys}">
+        <a class="button-link button-secondary" th:href="@{/dev/live-smoke/{slug}/new(slug=${journey.slug()})}"
+           href="#" th:text="'New custom ' + ${journey.label()} + ' assessment'">New custom assessment</a>
+      </li>
+    </ul>
+  </section>
+
+  <section class="panel" th:each="entry : ${casesByJourney}" th:attr="aria-label=${entry.key.label()} + ' smoke cases'">
+    <h2 th:text="${entry.key.label()}">Professional</h2>
+    <table class="live-smoke-table">
+      <tbody>
+      <tr th:each="smokeCase : ${entry.value}">
+        <th scope="row" th:text="${smokeCase.label()}">Case</th>
+        <td class="small" th:text="${smokeCase.source()}">Source</td>
+        <td><a class="button-link button-secondary"
+               th:href="@{/dev/live-smoke/{journey}/{id}(journey=${entry.key.slug()},id=${smokeCase.id()})}"
+               href="#">Open pre-filled form</a></td>
+      </tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
+</body>
+</html>

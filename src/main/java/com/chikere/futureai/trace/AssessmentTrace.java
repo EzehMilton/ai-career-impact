@@ -52,27 +52,49 @@ public final class AssessmentTrace {
     private static final String REQUEST_ID = "requestId";
 
     private final boolean enabled;
+    /** A label added to every event, such as LIVE_SMOKE; absent for ordinary operation. */
+    private final String executionMode;
+    /** Receives every event as well as the log, for example the live-smoke trace files; usually absent. */
+    private final AssessmentTraceSink sink;
     private final ObjectWriter writer;
+    private final ObjectWriter lineWriter;
     private final ThreadLocal<Context> current = new ThreadLocal<>();
 
-    private AssessmentTrace(boolean enabled) {
+    private AssessmentTrace(boolean enabled, String executionMode, AssessmentTraceSink sink) {
         this.enabled = enabled;
-        this.writer = enabled
+        this.executionMode = executionMode;
+        this.sink = sink;
+        ObjectMapper mapper = enabled
                 ? new ObjectMapper().findAndRegisterModules()
                         .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
                         .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-                        .writerWithDefaultPrettyPrinter()
                 : null;
+        this.writer = enabled ? mapper.writerWithDefaultPrettyPrinter() : null;
+        this.lineWriter = enabled && sink != null ? mapper.writer() : null;
     }
 
     /** A trace that records nothing. */
     public static AssessmentTrace disabled() {
-        return new AssessmentTrace(false);
+        return new AssessmentTrace(false, null, null);
     }
 
     /** A trace that writes every event to the {@code AssessmentTrace} logger at INFO. */
     public static AssessmentTrace enabled() {
-        return new AssessmentTrace(true);
+        return new AssessmentTrace(true, null, null);
+    }
+
+    /**
+     * As {@link #enabled()}, with every event labelled {@code executionMode}, for example LIVE_SMOKE. The label
+     * is diagnostic provenance only; nothing reads it to make a decision.
+     */
+    public static AssessmentTrace enabled(String executionMode) {
+        return enabled(executionMode, null);
+    }
+
+    /** As {@link #enabled(String)}, also handing every event to {@code sink} when one is supplied. */
+    public static AssessmentTrace enabled(String executionMode, AssessmentTraceSink sink) {
+        String mode = executionMode == null || executionMode.isBlank() ? null : executionMode.strip();
+        return new AssessmentTrace(true, mode, sink);
     }
 
     public boolean isEnabled() {
@@ -326,6 +348,9 @@ public final class AssessmentTrace {
         Map<String, Object> envelope = new LinkedHashMap<>();
         envelope.put("stage", stage);
         envelope.put("journey", journey);
+        if (executionMode != null) {
+            envelope.put("executionMode", executionMode);
+        }
         envelope.put("assessmentTraceId", context == null ? null : context.traceId);
         envelope.put("assessmentId", context == null ? null : context.assessmentId);
         envelope.put("sequence", context == null ? null : ++context.sequence);
@@ -348,6 +373,15 @@ public final class AssessmentTrace {
                 .addKeyValue("traceStage", stage)
                 .log("{} {} journey={} assessmentTraceId={} assessmentId={}\n{}",
                         PREFIX, stage, journey, traceId, assessmentId, json);
+        if (sink != null) {
+            try {
+                sink.accept(context == null ? null : context.traceId, context == null ? null : context.assessmentId,
+                        TraceRedactor.redact(lineWriter.writeValueAsString(envelope)));
+            }
+            catch (com.fasterxml.jackson.core.JsonProcessingException serialisationFailure) {
+                throw new IllegalStateException("trace payload could not be serialised", serialisationFailure);
+            }
+        }
     }
 
     private static Map<String, Object> start(Context context, String origin) {

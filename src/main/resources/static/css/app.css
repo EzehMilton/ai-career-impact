@@ -1935,3 +1935,13 @@ dd { margin: 0; font-weight: 700; text-align: right; }
 /* The summary already asks the question, so the shared form's own heading would repeat it. */
 .access-code-disclosure .complimentary-access > h3 { display: none; }
 .access-code-disclosure[open] .complimentary-access { margin-top: var(--space-2); }
+
+/* Live smoke test mode (live-smoke profile only). */
+.live-smoke-banner { background: #fde8e8; border-bottom: 3px solid #b42318; color: #7a1a12; }
+.live-smoke-banner a { color: inherit; font-weight: 600; }
+.live-smoke-panel { border: 2px dashed #b42318; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+.live-smoke-panel ul { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; list-style: none; margin: .5rem 0 0; padding: 0; }
+.live-smoke-table { border-collapse: collapse; width: 100%; }
+.live-smoke-table th, .live-smoke-table td { border-bottom: 1px solid #ddd; padding: .4rem .6rem; text-align: left; vertical-align: top; }
+.live-smoke-status-bad { color: #b42318; font-weight: 700; }
+.live-smoke-actions { display: flex; flex-wrap: wrap; gap: .75rem; list-style: none; padding: 0; }

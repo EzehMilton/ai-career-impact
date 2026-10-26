@@ -15,6 +15,13 @@ public final class ApplicationProfiles {
     /** Production: every real provider active. */
     public static final String PROD = "prod";
 
+    /**
+     * Local live regression testing: real Jev, OpenAI, persistence, reports and PDFs, with payment bypassed
+     * through the complimentary entitlement path. Requires {@code APP_LIVE_SMOKE_ENABLED=true} as well and
+     * must never be used as a deployment profile.
+     */
+    public static final String LIVE_SMOKE = "live-smoke";
+
     private ApplicationProfiles() {
     }
 }

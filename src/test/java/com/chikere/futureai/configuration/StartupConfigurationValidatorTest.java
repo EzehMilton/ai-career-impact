@@ -40,6 +40,53 @@ class StartupConfigurationValidatorTest {
                 .doesNotThrowAnyException();
     }
 
+    // ── live-smoke ───────────────────────────────────────────────────────────────────────────────
+
+    @Test
+    void liveSmokeWithoutTheExplicitSwitchRefusesToStart() {
+        MockEnvironment env = environment("live-smoke")
+                .withProperty("TYPESAFE_API_KEY", "test-only-key")
+                .withProperty("OPENAI_API_KEY", "test-only-key");
+
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(env))
+                .isInstanceOf(ConfigurationProblemException.class)
+                .hasMessageContaining("live-smoke profile requires APP_LIVE_SMOKE_ENABLED=true")
+                .hasMessageNotContaining("test-only-key");
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(
+                env.withProperty("app.live-smoke.enabled", "false")))
+                .hasMessageContaining("APP_LIVE_SMOKE_ENABLED=true");
+    }
+
+    @Test
+    void liveSmokeWithTheSwitchAndBothProviderKeysStartsWithoutStripeOrEvidenceSettings() {
+        MockEnvironment env = environment("live-smoke")
+                .withProperty("app.live-smoke.enabled", "true")
+                .withProperty("TYPESAFE_API_KEY", "test-only-key")
+                .withProperty("OPENAI_API_KEY", "test-only-key");
+
+        assertThatCode(() -> StartupConfigurationValidator.validate(env)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void liveSmokeRequiresBothRealProviderKeys() {
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment("live-smoke")
+                .withProperty("app.live-smoke.enabled", "true")))
+                .hasMessageContaining("TYPESAFE_API_KEY").hasMessageContaining("OPENAI_API_KEY");
+    }
+
+    @Test
+    void liveSmokeIsRefusedAlongsideProductionOrAnotherProfile() {
+        for (String other : new String[] {"prod", "dev", "dev-no-jev"}) {
+            MockEnvironment env = environment("live-smoke", other)
+                    .withProperty("app.live-smoke.enabled", "true")
+                    .withProperty("TYPESAFE_API_KEY", "test-only-key")
+                    .withProperty("OPENAI_API_KEY", "test-only-key");
+            assertThatThrownBy(() -> StartupConfigurationValidator.validate(env)).as(other)
+                    .isInstanceOf(ConfigurationProblemException.class)
+                    .hasMessageContaining("Profiles 'live-smoke' and '" + other + "' are contradictory");
+        }
+    }
+
     // ── dev-no-jev ───────────────────────────────────────────────────────────────────────────────
 
     @Test
