@@ -36,6 +36,7 @@ public final class ProfessionalNarrativeValidator {
     static final String ADAPTABILITY = "ROLE_ADAPTABILITY_IS_ROLE_LEVEL";
     static final String GROUNDED = "EXPOSURE_EXPLANATION_GROUNDED_IN_FACTORS";
     static final String DIRECTIONS = "EXPOSURE_FACTOR_DIRECTIONS_MATCH";
+    static final String LEVELS = "EXPOSURE_FACTOR_LEVELS_MATCH";
     static final String OCCUPATION = "NO_OCCUPATION_WIDE_CLAIMS";
     static final String BAND_WORDS = "NO_ENUM_STYLE_BAND_WORDS";
     static final String SPELLING = "BRITISH_ENGLISH_SPELLING";
@@ -47,7 +48,7 @@ public final class ProfessionalNarrativeValidator {
     private static final List<String> TEXT_RULES = List.of("NARRATIVE_PRESENT", "WELL_FORMED_STRUCTURED_OUTPUT",
             NUMERIC, FUTURE, CAPABILITY, TASK_AUTOMATION, JOB_LOSS, ADAPTABILITY, JARGON, UNSAFE_PROCEDURE, BAND_WORDS, SPELLING);
     private static final List<String> CONTEXT_RULES = Stream.concat(TEXT_RULES.stream(),
-            Stream.of(GROUNDED, DOMINANT, DIRECTIONS, OCCUPATION, RESPONSIBILITY_SCORING)).toList();
+            Stream.of(GROUNDED, DOMINANT, DIRECTIONS, LEVELS, OCCUPATION, RESPONSIBILITY_SCORING)).toList();
 
     // No trailing \\b: a percent sign is not a word character, so "92%" would otherwise slip through.
     private static final Pattern NUMERIC_CLAIM = Pattern.compile(
@@ -200,12 +201,41 @@ public final class ProfessionalNarrativeValidator {
      */
     private static final Map<String, Pattern> DIMENSION_LANGUAGE = dimensionLanguage();
 
-    private static final Pattern RAISES_EXPOSURE = Pattern.compile("(?i)\\b(?:increas\\w*|rais\\w*|adds?\\s+to"
-            + "|adding\\s+to|push\\w*\\s+up|drives?\\s+up|heighten\\w*|boost\\w*|(?:more|higher|greater)\\s+(?:AI\\s+)?"
-            + "exposure)\\b");
-    private static final Pattern LOWERS_EXPOSURE = Pattern.compile("(?i)\\b(?:reduc\\w*|lowers?|lowering|decreas\\w*"
-            + "|offset\\w*|dampen\\w*|(?:less|lower|reduced)\\s+(?:AI\\s+)?exposure)\\b");
+    /**
+     * A claim about a factor's effect on AI Exposure: an effect verb whose object, within a few words of the same
+     * clause, is AI Exposure ("raises your AI Exposure", "reduces exposure"), or a direct "higher/lower AI Exposure"
+     * phrase. A word describing the level of a factor itself, such as "lower dependency on human trust" or
+     * "increased use of digital systems", is not a claim about AI Exposure.
+     */
+    private static final Pattern RAISES_EXPOSURE = Pattern.compile("(?i)\\b(?:(?:increas(?:es|e|ing)|rais(?:es|e|ing)"
+            + "|adds?\\s+to|adding\\s+to|push(?:es|ing)?\\s+up|drives?\\s+up|driving\\s+up|heighten(?:s|ing)?"
+            + "|boost(?:s|ing)?)\\s+(?:\\w+\\s+){0,3}?(?:AI\\s+)?exposure|(?:more|higher|greater|increased)\\s+"
+            + "(?:AI\\s+)?exposure)\\b");
+    private static final Pattern LOWERS_EXPOSURE = Pattern.compile("(?i)\\b(?:(?:reduc(?:es|e|ing)|lower(?:s|ing)?"
+            + "|decreas(?:es|e|ing)|offset(?:s|ting)?|dampen(?:s|ing)?|limit(?:s|ing)?)\\s+(?:\\w+\\s+){0,3}?(?:AI\\s+)?"
+            + "exposure|(?:less|lower|reduced|decreased)\\s+(?:AI\\s+)?exposure)\\b");
     private static final Pattern NEGATION = Pattern.compile("(?i)\\b(?:not|never|no)\\b|n't\\b");
+
+    /**
+     * Words that say which state of a factor a phrase describes. "Little physical presence" is the low state of
+     * physical-world dependency; "strong reliance on trust" the high state of human-trust dependency. An unqualified
+     * mention ("physical presence", "human trust") describes the characteristic being present: the high state.
+     */
+    private static final java.util.Set<String> LOW_LEVEL_WORDS = java.util.Set.of("little", "less", "lower", "low",
+            "limited", "minimal", "few", "fewer", "reduced", "rarely", "seldom", "cannot", "unable", "without",
+            "hardly", "modest", "slight", "lesser");
+    private static final java.util.Set<String> HIGH_LEVEL_WORDS = java.util.Set.of("much", "most", "more", "high",
+            "higher", "strong", "strongly", "substantial", "substantially", "heavily", "heavy", "significant",
+            "significantly", "considerable", "important", "importance", "central", "essential", "great", "greater",
+            "extensive", "extensively", "largely", "mainly", "mostly", "deeply", "deep", "core", "crucial", "critical",
+            "skilled", "increased", "considerably");
+    /** Terms that themselves name a factor's low state, such as predictable work for contextual complexity. */
+    private static final Map<String, Pattern> INHERENTLY_LOW = Map.of(
+            "contextual_complexity", Pattern.compile("(?i)predictab\\w*|straightforward|simple|clear"),
+            "task_repeatability", Pattern.compile("(?i)varied|variab\\w*|non-routine"));
+    /** Phrase boundaries within a sentence; a qualifier only describes a factor inside the same phrase. */
+    private static final Pattern PHRASE_BREAK = Pattern.compile(
+            "(?i)[,;:]|\\b(?:while|whereas|but|which|although|though|because)\\b");
 
     private final AssessmentTrace trace;
 
@@ -298,6 +328,13 @@ public final class ProfessionalNarrativeValidator {
         Optional<String> contradiction = directionContradiction(explanation, supplied);
         checks.check(DIRECTIONS, contradiction.isPresent(), () -> contradiction.orElse(null),
                 "the AI Exposure explanation must not reverse the direction of a factor Java selected");
+
+        List<ProfessionalNarrativeContext.FactorContext> selected = Stream.concat(context.exposureDrivers().stream(),
+                context.protectiveFactors().stream()).toList();
+        Optional<String> wrongLevel = levelContradiction(explanation, selected);
+        checks.check(LEVELS, wrongLevel.isPresent(), () -> wrongLevel.orElse(null),
+                "the AI Exposure explanation must describe the same level of a factor that Java selected, for example "
+                        + "little physical presence rather than physical presence");
 
         Optional<Pattern> occupationWide = occupationWideClaim(context.profession());
         List<String> text = new ArrayList<>(List.of(narrative.headline(), narrative.summary(),
@@ -447,6 +484,81 @@ public final class ProfessionalNarrativeValidator {
     /** A crude shared stem, so "monitoring", "monitor" and "monitored" all match. */
     private static String stem(String word) {
         return word.length() <= 5 ? word : word.substring(0, 5);
+    }
+
+    /**
+     * A sentence that claims an effect on AI Exposure while describing a selected factor at the opposite level from
+     * the one Java selected, for example "physical presence raises AI Exposure" when Java selected little
+     * physical-world presence. Java's level is read from the factor's own direction (HIGH_ or LOW_), which the
+     * decision policy produced, so no knowledge of which dimensions are inverse is duplicated here. Sentences
+     * without an effect claim, or that negate or mix effects, are not judged.
+     */
+    private static Optional<String> levelContradiction(String explanation,
+            List<ProfessionalNarrativeContext.FactorContext> selected) {
+        for (String sentence : NarrativeClaimMatcher.sentences(explanation)) {
+            boolean raises = RAISES_EXPOSURE.matcher(sentence).find();
+            boolean lowers = LOWERS_EXPOSURE.matcher(sentence).find();
+            if (raises == lowers || NEGATION.matcher(sentence).find()) {
+                continue;
+            }
+            // The effect phrase itself ("higher AI Exposure") says nothing about a factor's level.
+            String withoutEffect = LOWERS_EXPOSURE.matcher(RAISES_EXPOSURE.matcher(sentence).replaceAll(" "))
+                    .replaceAll(" ");
+            String[] phrases = PHRASE_BREAK.split(withoutEffect);
+            for (var factor : selected) {
+                Pattern language = DIMENSION_LANGUAGE.get(factor.dimensionId());
+                if (language == null) {
+                    continue;
+                }
+                boolean selectedHigh = factor.direction().name().startsWith("HIGH_");
+                boolean mentioned = false;
+                boolean sameLevel = false;
+                for (String phrase : phrases) {
+                    var mention = language.matcher(phrase);
+                    while (mention.find()) {
+                        mentioned = true;
+                        sameLevel |= describesHigh(phrase, mention.start(), mention.end(), mention.group(),
+                                factor.dimensionId()) == selectedHigh;
+                    }
+                }
+                if (mentioned && !sameLevel) {
+                    return Optional.of(sentence.strip());
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    /** Whether a mention describes the high state: the nearest level word in its phrase decides, else it is present. */
+    private static boolean describesHigh(String phrase, int start, int end, String word, String dimensionId) {
+        Pattern low = INHERENTLY_LOW.get(dimensionId);
+        if (low != null && low.matcher(word).matches()) {
+            return false;
+        }
+        String[] before = phrase.substring(0, start).toLowerCase(Locale.ROOT).split("[^a-z']+");
+        for (int index = before.length - 1; index >= 0; index--) {
+            String token = before[index].replace("can't", "cannot");
+            if (LOW_LEVEL_WORDS.contains(token)) {
+                return false;
+            }
+            if (HIGH_LEVEL_WORDS.contains(token)) {
+                return true;
+            }
+        }
+        String[] after = phrase.substring(end).toLowerCase(Locale.ROOT).split("[^a-z']+");
+        for (int index = 0, seen = 0; index < after.length && seen < 4; index++) {
+            if (after[index].isEmpty()) {
+                continue;
+            }
+            seen++;
+            if (LOW_LEVEL_WORDS.contains(after[index])) {
+                return false;
+            }
+            if (HIGH_LEVEL_WORDS.contains(after[index])) {
+                return true;
+            }
+        }
+        return true;
     }
 
     private static boolean mentions(String text, String dimensionId) {

@@ -118,6 +118,62 @@ class ProfessionalLiveSmokeRegressionTest {
                 "EXPOSURE_EXPLANATION_LEADS_WITH_DOMINANT_FACTOR");
     }
 
+    // ---- Java Software Developer: the exact live EXPOSURE_FACTOR_DIRECTIONS_MATCH false positive ----
+
+    private static final String JAVA_LIVE_REPAIRED_EXPLANATION = "Your work has a moderate AI Exposure result, primarily "
+            + "due to the fact that much of it can be performed digitally. This is supported by the requirement for little "
+            + "physical-world presence and a lower dependency on human trust or relationships.";
+
+    @Test
+    void theLiveJavaDeveloperExplanationDescribingFactorLevelsPassesTheDirectionRule() {
+        var context = liveJavaDirectionContext();
+        var narrative = narrative(JAVA_LIVE_REPAIRED_EXPLANATION);
+
+        assertThat(validator.validate(narrative, context)).isSameAs(narrative);
+    }
+
+    @Test
+    void claimsThatReverseTheLiveJavaDeveloperFactorDirectionsStillFail() {
+        var context = liveJavaDirectionContext();
+        // Java selected lower dependency on human trust, and little physical-world presence, as raising AI Exposure.
+        rejects(narrative("Much of the work can be performed digitally. Lower dependency on human trust lowers your "
+                + "AI Exposure."), context, "EXPOSURE_FACTOR_DIRECTIONS_MATCH");
+        rejects(narrative("Much of the work can be performed digitally. The requirement for little physical-world "
+                + "presence lowers your AI Exposure."), context, "EXPOSURE_FACTOR_DIRECTIONS_MATCH");
+        // Java selected the LOW levels of physical-world and human-trust dependency as raising exposure, so an
+        // unqualified mention (their high state) misdescribes the factor even with the right effect.
+        rejects(narrative("Physical presence raises your AI Exposure."), context, "EXPOSURE_FACTOR_LEVELS_MATCH");
+        rejects(narrative("Human trust raises your AI Exposure."), context, "EXPOSURE_FACTOR_LEVELS_MATCH");
+    }
+
+    /**
+     * Only what the live run supplied: Moderate AI Exposure and the three factors Java selected as raising it, with
+     * their visitor-facing descriptions, signed effects and ranks. No responsibilities, skills or judgements are
+     * invented; the other three measures' bands are placeholders that this rule does not read.
+     */
+    private static ProfessionalNarrativeContext liveJavaDirectionContext() {
+        var raising = com.chikere.futureai.decision.professional.DecisionFactorEffect.INCREASES_AI_EXPOSURE;
+        var measures = java.util.Arrays.stream(com.chikere.futureai.decision.professional.ProfessionalMeasure.values())
+                .map(measure -> new ProfessionalNarrativeContext.MeasureContext(measure, measure.name(), 5.0, "Moderate"))
+                .toList();
+        return new ProfessionalNarrativeContext("Java Software Developer", "Work described.", List.of(), List.of(),
+                OptionalInt.empty(), com.chikere.futureai.assessment.domain.AssessmentStatus.READY, measures,
+                List.of(
+                        new ProfessionalNarrativeContext.FactorContext("digital_executability", "Digital executability",
+                                "Much of the work can be performed digitally", raising,
+                                com.chikere.futureai.decision.professional.ProfessionalFactorDirection.HIGH_DIGITAL_EXECUTABILITY,
+                                1, 0.0, 0.124375),
+                        new ProfessionalNarrativeContext.FactorContext("physical_world_dependency", "Physical-world dependency",
+                                "The work requires little physical-world presence", raising,
+                                com.chikere.futureai.decision.professional.ProfessionalFactorDirection.LOW_PHYSICAL_WORLD_DEPENDENCY,
+                                2, 0.0, 0.074625),
+                        new ProfessionalNarrativeContext.FactorContext("human_trust_dependency", "Human trust dependency",
+                                "The work depends less on human trust or relationships", raising,
+                                com.chikere.futureai.decision.professional.ProfessionalFactorDirection.LOW_HUMAN_TRUST_DEPENDENCY,
+                                3, 0.0, 0.00375)),
+                List.of(), AssessmentSource.JEV, "professional-v1", "professional-decision-v1");
+    }
+
     // ---- Management Accountant: no task-automation claims ----
 
     @Test

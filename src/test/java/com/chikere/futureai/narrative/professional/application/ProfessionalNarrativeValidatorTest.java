@@ -278,6 +278,154 @@ class ProfessionalNarrativeValidatorTest {
         assertThat(validator.validate(anything, none)).isSameAs(anything);
     }
 
+    // ---- A factor's level is not a claim about its effect on AI Exposure ----
+
+    @Test
+    void aWordDescribingAFactorsLevelIsNotAClaimAboutItsEffectOnAiExposure() {
+        // Supplied direction only: lower dependency on human trust raises AI Exposure.
+        var trustRaises = manualContext("High",
+                List.of(factor("human_trust_dependency", DecisionFactorEffect.INCREASES_AI_EXPOSURE, 0.05)), List.of());
+        for (String level : List.of(
+                "The work involves lower dependency on human trust, which raises your AI Exposure.",
+                "Lower dependency on human trust is part of the work you described.")) {
+            var narrative = safe(n -> with(n, Field.EXPOSURE, level));
+            assertThat(validator.validate(narrative, trustRaises)).as(level).isSameAs(narrative);
+        }
+        for (String reversed : List.of("Human trust lowers your AI Exposure.",
+                "Lower dependency on human trust lowers your AI Exposure.")) {
+            rejects(trustRaises, safe(n -> with(n, Field.EXPOSURE, reversed)), "must not reverse the direction");
+        }
+
+        // The same principle in the other direction, for another factor.
+        var physicalLowers = manualContext("Low", List.of(),
+                List.of(factor("physical_world_dependency", DecisionFactorEffect.REDUCES_AI_EXPOSURE, -0.05)));
+        for (String level : List.of("Increased reliance on physical presence lowers your AI Exposure.",
+                "The work involves increased physical presence.")) {
+            var narrative = safe(n -> with(n, Field.EXPOSURE, level));
+            assertThat(validator.validate(narrative, physicalLowers)).as(level).isSameAs(narrative);
+        }
+        rejects(physicalLowers, safe(n -> with(n, Field.EXPOSURE, "Physical presence raises your AI Exposure.")),
+                "must not reverse the direction");
+    }
+
+    private void rejects(ProfessionalNarrativeContext context, ProfessionalNarrative narrative, String reason) {
+        assertThatThrownBy(() -> validator.validate(narrative, context)).as(narrative.exposureExplanation())
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining(reason);
+    }
+
+    // ---- The level Java selected must be the level the narrative describes ----
+
+    private static final String LEVEL = "EXPOSURE_FACTOR_LEVELS_MATCH";
+    private static final String DIRECTION = "EXPOSURE_FACTOR_DIRECTIONS_MATCH";
+
+    /** One selected factor, in the list its effect belongs to, with the band that makes it dominant. */
+    private static ProfessionalNarrativeContext only(String id, DecisionFactorEffect effect) {
+        var factor = factor(id, effect, effect == DecisionFactorEffect.INCREASES_AI_EXPOSURE ? 0.05 : -0.05);
+        return effect == DecisionFactorEffect.INCREASES_AI_EXPOSURE
+                ? manualContext("High", List.of(factor), List.of()) : manualContext("Low", List.of(), List.of(factor));
+    }
+
+    private void levelCase(ProfessionalNarrativeContext context, List<String> pass, List<String> wrongLevel,
+            List<String> reversedEffect) {
+        for (String text : pass) {
+            var narrative = safe(n -> with(n, Field.EXPOSURE, text));
+            assertThat(validator.validate(narrative, context)).as(text).isSameAs(narrative);
+        }
+        for (String text : wrongLevel) {
+            assertThatThrownBy(() -> validator.validate(safe(n -> with(n, Field.EXPOSURE, text)), context)).as(text)
+                    .isInstanceOfSatisfying(com.chikere.futureai.trace.NarrativeRuleViolation.class, violation ->
+                            assertThat(violation.rule()).isIn(LEVEL, "NO_INTERNAL_DIMENSION_JARGON"));
+        }
+        for (String text : reversedEffect) {
+            assertThatThrownBy(() -> validator.validate(safe(n -> with(n, Field.EXPOSURE, text)), context)).as(text)
+                    .isInstanceOfSatisfying(com.chikere.futureai.trace.NarrativeRuleViolation.class, violation ->
+                            assertThat(violation.rule()).isEqualTo(DIRECTION));
+        }
+    }
+
+    @Test
+    void directDigitalExecutabilityMustBeDescribedAtTheSelectedLevel() {
+        levelCase(only("digital_executability", DecisionFactorEffect.INCREASES_AI_EXPOSURE),
+                List.of("Much of the work can be performed digitally, which raises AI Exposure.",
+                        "Digital work is one characteristic considered by the assessment."),
+                List.of("Limited digital work raises AI Exposure."),
+                List.of("Much of the work can be performed digitally, which lowers AI Exposure."));
+    }
+
+    @Test
+    void directTaskRepeatabilityMustBeDescribedAtTheSelectedLevel() {
+        levelCase(only("task_repeatability", DecisionFactorEffect.INCREASES_AI_EXPOSURE),
+                List.of("Much of the work follows set routines, which raises AI Exposure.",
+                        "Routine work is one characteristic considered by the assessment."),
+                List.of("The work is less repetitive, which raises AI Exposure."),
+                List.of("Much of the work follows set routines, which lowers AI Exposure."));
+    }
+
+    @Test
+    void inversePhysicalWorldDependencyMustBeDescribedAtTheSelectedLevel() {
+        // Java selected little physical-world presence as raising exposure.
+        levelCase(only("physical_world_dependency", DecisionFactorEffect.INCREASES_AI_EXPOSURE),
+                List.of("The work requires little physical-world presence, which contributes to higher AI Exposure.",
+                        "Limited need for physical presence contributes to the exposure result.",
+                        "Because relatively little of the work requires physical presence, this raises AI Exposure.",
+                        "Physical presence is one characteristic considered by the assessment."),
+                List.of("Physical presence raises AI Exposure.",
+                        "Strong physical-world dependency increases AI Exposure.",
+                        "The role's substantial physical presence contributes to higher exposure."),
+                List.of("Little physical presence lowers AI Exposure."));
+    }
+
+    @Test
+    void inverseHumanTrustDependencyMustBeDescribedAtTheSelectedLevelInBothDirections() {
+        // Java selected lower dependency on human trust as raising exposure.
+        levelCase(only("human_trust_dependency", DecisionFactorEffect.INCREASES_AI_EXPOSURE),
+                List.of("Lower reliance on human trust contributes to higher AI Exposure.",
+                        "The work depends less on trust and relationships, which raises the exposure result.",
+                        "Human trust is one characteristic considered by the assessment."),
+                List.of("Human trust raises AI Exposure.",
+                        "Strong reliance on human relationships increases AI Exposure."),
+                List.of("Lower reliance on human trust reduces AI Exposure."));
+        // Java selected high dependency on human trust as lowering exposure.
+        levelCase(only("human_trust_dependency", DecisionFactorEffect.REDUCES_AI_EXPOSURE),
+                List.of("The importance of trust and relationships reduces AI Exposure.",
+                        "Strong reliance on human trust contributes to lower AI Exposure."),
+                List.of("Low reliance on human trust reduces AI Exposure."),
+                List.of("Strong reliance on human trust raises AI Exposure."));
+    }
+
+    @Test
+    void inverseContextualComplexityMustBeDescribedAtTheSelectedLevelInBothDirections() {
+        // Java selected high contextual complexity as lowering exposure.
+        levelCase(only("contextual_complexity", DecisionFactorEffect.REDUCES_AI_EXPOSURE),
+                List.of("The work depends on understanding complex and changing situations, which lowers AI Exposure.",
+                        "Changing situations are part of the work you described."),
+                List.of("The work usually follows clear and predictable patterns, which lowers AI Exposure."),
+                List.of("Complex and changing situations raise AI Exposure."));
+        // Java selected low contextual complexity as raising exposure.
+        levelCase(only("contextual_complexity", DecisionFactorEffect.INCREASES_AI_EXPOSURE),
+                List.of("The work usually follows clear and predictable patterns, which raises AI Exposure."),
+                List.of("Complex and changing situations raise AI Exposure."),
+                List.of("The work usually follows clear and predictable patterns, which lowers AI Exposure."));
+    }
+
+    @Test
+    void theSelectedLevelAndEffectPairingIsTheDecisionPolicysOwn() {
+        // The validator reads HIGH_/LOW_ from the policy's factors; this documents that pairing for every fixture.
+        for (String fixture : LocalFixtureProfessionalJudgmentProvider.supportedFixtureIds()) {
+            var decision = new ProfessionalDecisionPolicyV1().decide(
+                    new LocalFixtureProfessionalJudgmentProvider(fixture).judge(new ProfessionalAssessmentState(
+                            "Role", "Work described.", List.of(), List.of(), OptionalInt.empty())));
+            java.util.stream.Stream.concat(decision.topExposureDrivers().stream(), decision.topProtectiveFactors().stream())
+                    .forEach(factor -> {
+                        boolean highRaises = factor.dimensionId().equals("task_repeatability")
+                                || factor.dimensionId().equals("digital_executability");
+                        boolean high = factor.direction().name().startsWith("HIGH_");
+                        boolean raises = factor.effect() == DecisionFactorEffect.INCREASES_AI_EXPOSURE;
+                        assertThat(high == raises).as(fixture + " " + factor.direction()).isEqualTo(highRaises);
+                    });
+        }
+    }
+
     // ---- Internal dimension labels never reach the visitor ----
 
     @Test
@@ -494,7 +642,7 @@ class ProfessionalNarrativeValidatorTest {
                     "NO_UNSUPPORTED_TASK_AUTOMATION_CLAIMS", "NO_JOB_LOSS_OR_SECURITY_INFERENCE", "ROLE_ADAPTABILITY_IS_ROLE_LEVEL", "NO_INTERNAL_DIMENSION_JARGON",
                     "NO_UNSAFE_PROCEDURE_DEVIATION", "NO_ENUM_STYLE_BAND_WORDS", "BRITISH_ENGLISH_SPELLING",
                     "EXPOSURE_EXPLANATION_GROUNDED_IN_FACTORS", "EXPOSURE_EXPLANATION_LEADS_WITH_DOMINANT_FACTOR",
-                    "EXPOSURE_FACTOR_DIRECTIONS_MATCH", "NO_OCCUPATION_WIDE_CLAIMS",
+                    "EXPOSURE_FACTOR_DIRECTIONS_MATCH", "EXPOSURE_FACTOR_LEVELS_MATCH", "NO_OCCUPATION_WIDE_CLAIMS",
                     "NO_RESPONSIBILITY_LEVEL_SCORING");
             assertThat(validation.at("/rules/7/triggeringText").asText()).isEqualTo(sentence);
             assertThat(validation.at("/rules/8/reason").asText()).startsWith("NOT_EVALUATED");
@@ -546,11 +694,11 @@ class ProfessionalNarrativeValidatorTest {
 
     private static ProfessionalNarrativeContext.FactorContext factor(String id, DecisionFactorEffect effect,
             double signedEffect) {
+        // Task repeatability and digital executability raise exposure when high; the other dimensions when low.
+        boolean highRaises = id.equals("task_repeatability") || id.equals("digital_executability");
+        boolean high = (effect == DecisionFactorEffect.INCREASES_AI_EXPOSURE) == highRaises;
         var direction = com.chikere.futureai.decision.professional.ProfessionalFactorDirection.valueOf(
-                (effect == DecisionFactorEffect.INCREASES_AI_EXPOSURE ? "HIGH_" : "LOW_") + id.toUpperCase());
-        if (id.equals("physical_world_dependency")) {
-            direction = com.chikere.futureai.decision.professional.ProfessionalFactorDirection.HIGH_PHYSICAL_WORLD_DEPENDENCY;
-        }
+                (high ? "HIGH_" : "LOW_") + id.toUpperCase());
         return new ProfessionalNarrativeContext.FactorContext(id, id, "description", effect, direction, 1, 2.0,
                 signedEffect);
     }

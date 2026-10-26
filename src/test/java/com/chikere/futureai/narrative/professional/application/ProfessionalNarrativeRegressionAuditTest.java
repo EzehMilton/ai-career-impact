@@ -209,7 +209,7 @@ class ProfessionalNarrativeRegressionAuditTest {
         String verb = factor.effect() == DecisionFactorEffect.INCREASES_AI_EXPOSURE ? "raises" : "lowers";
         return new ProfessionalNarrative("Your assessment", "Your result reflects the work you described.",
                 "The measures describe the work as you described it today.",
-                "In the work you described, " + PLAIN.get(factor.dimensionId()) + " " + verb + " your AI Exposure.",
+                "In the work you described, " + plain(factor) + " " + verb + " your AI Exposure.",
                 "The work relies on trust, physical presence and accountable decisions.",
                 "There may be scope for assistance with some tasks while you stay responsible for the outcome.",
                 "The structure of the role combines contextual work and human responsibility.",
@@ -223,7 +223,7 @@ class ProfessionalNarrativeRegressionAuditTest {
     private static String contradiction(ProfessionalNarrativeContext context) {
         var factor = dominant(context);
         String verb = factor.effect() == DecisionFactorEffect.INCREASES_AI_EXPOSURE ? "lowers" : "raises";
-        return "In the work you described, " + PLAIN.get(factor.dimensionId()) + " " + verb + " your AI Exposure.";
+        return "In the work you described, " + plain(factor) + " " + verb + " your AI Exposure.";
     }
 
     private static ProfessionalNarrativeContext.FactorContext dominant(ProfessionalNarrativeContext context) {
@@ -232,7 +232,22 @@ class ProfessionalNarrativeRegressionAuditTest {
                 .filter(factor -> factor.dimensionId().equals(id)).findFirst().orElseThrow();
     }
 
-    /** Plain wording for each factor, as the visitor-facing narrative should use. */
+    /** Plain wording for the factor at the level Java selected: "limited physical presence" for a low selection. */
+    private static String plain(ProfessionalNarrativeContext.FactorContext factor) {
+        return factor.direction().name().startsWith("LOW_")
+                ? PLAIN_LOW.get(factor.dimensionId()) : PLAIN.get(factor.dimensionId());
+    }
+
+    private static final Map<String, String> PLAIN_LOW = Map.of(
+            "task_repeatability", "limited routine work",
+            "digital_executability", "limited digital work",
+            "human_trust_dependency", "limited reliance on trust and relationships",
+            "physical_world_dependency", "limited physical presence",
+            "contextual_complexity", "predictable situations",
+            "original_judgment", "limited original judgement",
+            "accountability_responsibility", "limited accountability for decisions");
+
+    /** Plain wording for each factor's high state, as the visitor-facing narrative should use. */
     private static final Map<String, String> PLAIN = Map.of(
             "task_repeatability", "routine work",
             "digital_executability", "digital work",
