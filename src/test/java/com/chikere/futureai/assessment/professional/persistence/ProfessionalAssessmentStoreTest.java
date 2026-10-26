@@ -332,7 +332,7 @@ class ProfessionalAssessmentStoreTest {
             assertThat(active.status()).isEqualTo(ProfessionalEntitlementStatus.ACTIVE);
             assertThat(active.providerCheckoutSessionId()).isEqualTo("cs_test_roundtrip");
             assertThat(active.providerPaymentReference()).contains("pi_roundtrip");
-            assertThat(active.purchasedReportVersion()).contains("professional-report-v1");
+            assertThat(active.purchasedReportVersion()).contains("professional-report-v2");
             assertThat(active.confirmedAt()).contains(Instant.parse("2026-09-30T12:02:01Z"));
         });
         assertThat(purchaseStore.isEventProcessed(ProfessionalPaymentProvider.STRIPE, "evt_roundtrip")).isTrue();
@@ -351,8 +351,8 @@ class ProfessionalAssessmentStoreTest {
             assertThat(reloaded.sha256()).isEqualTo("a".repeat(64));
             assertThat(reloaded.fileSize()).isEqualTo(pdfBytes.length);
             assertThat(reloaded.generatedAt()).isEqualTo(Instant.parse("2026-09-30T12:03:00Z"));
-            assertThat(reloaded.purchasedReportVersion()).isEqualTo("professional-report-v1");
-            assertThat(reloaded.pdfTemplateVersion()).isEqualTo("professional-report-pdf-v1");
+            assertThat(reloaded.purchasedReportVersion()).isEqualTo("professional-report-v2");
+            assertThat(reloaded.pdfTemplateVersion()).isEqualTo("professional-report-pdf-v2");
         });
         byte[] losingBytes = "%PDF-different-racing-candidate".getBytes(java.nio.charset.StandardCharsets.US_ASCII);
         var losingCandidate = new PurchasedProfessionalReportPdf(entitlementId, assessmentId, report.reportVersion(),

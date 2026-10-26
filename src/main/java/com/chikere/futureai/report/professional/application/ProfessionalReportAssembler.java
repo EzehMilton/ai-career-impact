@@ -28,7 +28,7 @@ public final class ProfessionalReportAssembler {
         String headline = tier == ProfessionalReportTier.PAID
                 ? savedNarrative.map(ProfessionalNarrative::headline).orElse("Your detailed professional report")
                 : "Your professional assessment";
-        return new ProfessionalReport(ProfessionalReportVersions.V1, tier,
+        return new ProfessionalReport(ProfessionalReportVersions.CURRENT, tier,
                 assessment.result().source() == AssessmentSource.LOCAL_FIXTURE, assessment.createdAt(),
                 assessment.state().profession(), headline,
                 new ProfessionalReport.AssessmentSummary(decision.assessmentDecision().status(),
@@ -185,7 +185,7 @@ public final class ProfessionalReportAssembler {
                 source.narrative().map(value -> value.promptSchemaVersion()),
                 source.evidence().map(ProfessionalEvidenceBundle::evidenceVersion),
                 source.classification().map(value -> value.classification().classifierVersion()),
-                ProfessionalReportVersions.V1,
+                ProfessionalReportVersions.CURRENT,
                 List.of(JOB_LOSS_DISCLAIMER, METHODOLOGY_CAVEAT,
                         "External evidence is contextual and does not validate or determine the assessment scores.",
                         "Work-focus and skill guidance is deterministic presentation guidance, not a separate assessment."));

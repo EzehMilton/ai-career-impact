@@ -2,10 +2,11 @@ package com.chikere.futureai.narrative.professional.application;
 
 public final class ProfessionalNarrativeVersions {
     /**
-     * v3: the explanation-only contract, measure definitions, factor grounding, no forecasts, second person and
-     * low temperature. v2 remains the identifier of narratives saved under the previous prompt.
+     * v4: leads the AI Exposure explanation with the dominant factor, plain language instead of internal dimension
+     * names, safety and regulated-procedure guardrails, a narrower provider input, and one validated repair attempt.
+     * v3 and v2 remain the identifiers of narratives saved under earlier prompts.
      */
-    public static final String PROMPT_AND_SCHEMA = "professional-narrative-v3";
+    public static final String PROMPT_AND_SCHEMA = "professional-narrative-v4";
 
     private ProfessionalNarrativeVersions() {
     }

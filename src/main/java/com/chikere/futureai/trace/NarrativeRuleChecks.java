@@ -13,8 +13,8 @@ import java.util.regex.Pattern;
 /**
  * Applies a narrative validator's rules in its own order and, while tracing, records each outcome.
  *
- * <p>The validator still decides: {@link #check} throws exactly the {@link IllegalArgumentException}
- * the validator always threw, at the same rule. Tracing only adds the record of which rules passed,
+ * <p>The validator still decides: {@link #check} throws the same rejection at the same rule, as a
+ * {@link NarrativeRuleViolation} (an {@link IllegalArgumentException}) that also names the rule. Tracing only adds the record of which rules passed,
  * which one rejected the narrative, the text that triggered it, and which rules were never reached.</p>
  */
 public final class NarrativeRuleChecks {
@@ -35,21 +35,22 @@ public final class NarrativeRuleChecks {
         return new NarrativeRuleChecks(trace, journey, rules);
     }
 
-    /** Records one rule and throws the validator's rejection if it was violated. */
+    /** Records one rule and throws the validator's rejection, naming the rule, if it was violated. */
     public void check(String rule, boolean violated, Supplier<String> trigger, String rejection) {
+        String triggeringText = violated ? trigger.get() : null;
         if (trace.isEnabled()) {
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("rule", rule);
             result.put("passed", !violated);
             if (violated) {
                 result.put("reason", rejection);
-                result.put("triggeringText", trigger.get());
+                result.put("triggeringText", triggeringText);
             }
             results.add(result);
         }
         if (violated) {
             emit(false, rule);
-            throw new IllegalArgumentException(rejection);
+            throw new NarrativeRuleViolation(rule, rejection, triggeringText);
         }
     }
 

@@ -162,13 +162,18 @@ class ProfessionalNarrativeRegressionAuditTest {
         try (TraceLogCapture log = TraceLogCapture.start()) {
             var stored = new ProfessionalNarrativeService(assessments, narrativeStore, generator,
                     new ProfessionalNarrativeContextFactory(), new ProfessionalNarrativeValidator(trace),
-                    Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC)).generateFor(assessment.id());
+                    Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC),
+                    com.chikere.futureai.configuration.JourneyMetrics.disabled(), trace).generateFor(assessment.id());
 
             assertThat(stored.status()).isEqualTo(NarrativeStatus.FAILED);
             assertThat(stored.narrative()).isEmpty();
-            var validation = log.only(TraceStage.NARRATIVE_VALIDATION).get("payload");
-            assertThat(validation.get("rejectedBy").asText()).isEqualTo("ROLE_ADAPTABILITY_IS_ROLE_LEVEL");
-            assertThat(validation.at("/rules/6/triggeringText").asText()).isEqualTo(NURSE_ADAPTABILITY);
+            // The single repair attempt (this generator regenerates the same draft) is rejected too, then fallback.
+            var validations = log.events(TraceStage.NARRATIVE_VALIDATION);
+            assertThat(validations).hasSize(2).allSatisfy(validation -> {
+                assertThat(validation.at("/payload/rejectedBy").asText()).isEqualTo("ROLE_ADAPTABILITY_IS_ROLE_LEVEL");
+                assertThat(validation.at("/payload/rules/6/triggeringText").asText()).isEqualTo(NURSE_ADAPTABILITY);
+            });
+            assertThat(log.only(TraceStage.NARRATIVE_OUTCOME).at("/payload/status").asText()).isEqualTo("FAILED");
         }
 
         var source = new ProfessionalReportSource(assessment, narrativeStore.findByAssessmentId(assessment.id()),
@@ -198,14 +203,13 @@ class ProfessionalNarrativeRegressionAuditTest {
         return LocalFixtureProfessionalJudgmentProvider.supportedFixtureIds();
     }
 
-    /** A safe narrative whose AI Exposure explanation follows the strongest factor Java selected. */
+    /** A safe narrative whose AI Exposure explanation names, in plain language, the dominant factor Java selected. */
     private static ProfessionalNarrative grounded(ProfessionalNarrativeContext context) {
-        var factor = context.exposureDrivers().isEmpty() ? context.protectiveFactors().getFirst()
-                : context.exposureDrivers().getFirst();
+        var factor = dominant(context);
         String verb = factor.effect() == DecisionFactorEffect.INCREASES_AI_EXPOSURE ? "raises" : "lowers";
         return new ProfessionalNarrative("Your assessment", "Your result reflects the work you described.",
                 "The measures describe the work as you described it today.",
-                "In the work you described, " + displayName(factor) + " " + verb + " your AI Exposure.",
+                "In the work you described, " + PLAIN.get(factor.dimensionId()) + " " + verb + " your AI Exposure.",
                 "The work relies on trust, physical presence and accountable decisions.",
                 "There may be scope for assistance with some tasks while you stay responsible for the outcome.",
                 "The structure of the role combines contextual work and human responsibility.",
@@ -215,17 +219,28 @@ class ProfessionalNarrativeRegressionAuditTest {
                 "This explains a structured assessment of the work described, not a prediction.");
     }
 
-    /** The same strongest factor, claimed in the opposite direction. */
+    /** The same dominant factor, claimed in the opposite direction. */
     private static String contradiction(ProfessionalNarrativeContext context) {
-        var factor = context.exposureDrivers().isEmpty() ? context.protectiveFactors().getFirst()
-                : context.exposureDrivers().getFirst();
+        var factor = dominant(context);
         String verb = factor.effect() == DecisionFactorEffect.INCREASES_AI_EXPOSURE ? "lowers" : "raises";
-        return "In the work you described, " + displayName(factor) + " " + verb + " your AI Exposure.";
+        return "In the work you described, " + PLAIN.get(factor.dimensionId()) + " " + verb + " your AI Exposure.";
     }
 
-    private static String displayName(ProfessionalNarrativeContext.FactorContext factor) {
-        return factor.dimension().toLowerCase(Locale.ROOT).replace("judgment", "judgement");
+    private static ProfessionalNarrativeContext.FactorContext dominant(ProfessionalNarrativeContext context) {
+        String id = DominantExposureFactor.of(context).getFirst();
+        return java.util.stream.Stream.concat(context.exposureDrivers().stream(), context.protectiveFactors().stream())
+                .filter(factor -> factor.dimensionId().equals(id)).findFirst().orElseThrow();
     }
+
+    /** Plain wording for each factor, as the visitor-facing narrative should use. */
+    private static final Map<String, String> PLAIN = Map.of(
+            "task_repeatability", "routine work",
+            "digital_executability", "digital work",
+            "human_trust_dependency", "the importance of trust and relationships",
+            "physical_world_dependency", "physical presence",
+            "contextual_complexity", "changing situations",
+            "original_judgment", "original judgement",
+            "accountability_responsibility", "accountability for decisions");
 
     private static ProfessionalNarrative with(ProfessionalNarrative n, String field, String text) {
         return new ProfessionalNarrative(n.headline(),

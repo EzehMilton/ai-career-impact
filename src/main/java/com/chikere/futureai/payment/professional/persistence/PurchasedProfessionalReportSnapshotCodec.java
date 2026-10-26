@@ -15,20 +15,22 @@ final class PurchasedProfessionalReportSnapshotCodec {
         this.objectMapper = objectMapper;
     }
 
+    /** Only a report assembled under the current composition is frozen into a new purchase. */
     JsonNode write(ProfessionalReport report) {
-        if (!ProfessionalReportVersions.V1.equals(report.reportVersion())) {
+        if (!ProfessionalReportVersions.CURRENT.equals(report.reportVersion())) {
             throw new IllegalArgumentException("unsupported purchased report version: " + report.reportVersion());
         }
         return objectMapper.valueToTree(report);
     }
 
+    /** Any version ever written is read back unchanged; v1 and v2 share the same JSON shape. */
     ProfessionalReport read(String reportVersion, JsonNode json) {
-        if (!ProfessionalReportVersions.V1.equals(reportVersion)) {
+        if (!ProfessionalReportVersions.READABLE.contains(reportVersion)) {
             throw new IllegalStateException("unsupported purchased report version: " + reportVersion);
         }
         try { return objectMapper.treeToValue(json, ProfessionalReport.class); }
         catch (JsonProcessingException invalid) {
-            throw new IllegalStateException("stored professional-report-v1 snapshot is invalid", invalid);
+            throw new IllegalStateException("stored " + reportVersion + " snapshot is invalid", invalid);
         }
     }
 }

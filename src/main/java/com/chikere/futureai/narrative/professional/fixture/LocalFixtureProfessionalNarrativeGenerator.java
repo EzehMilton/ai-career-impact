@@ -79,14 +79,25 @@ public final class LocalFixtureProfessionalNarrativeGenerator implements Profess
                 .findFirst().orElseThrow().band().toLowerCase();
     }
 
-    /** Explains AI Exposure from Java's selected factors: the strongest raising factor, else the strongest lowering one. */
+    /**
+     * Explains AI Exposure from Java's selected factors: the strongest factor raising it and the strongest lowering
+     * it, so whichever of them is dominant for the result is always included.
+     */
     private String exposureExplanation(ProfessionalNarrativeContext context, String driver) {
-        if (context.exposureDrivers().isEmpty() && !context.protectiveFactors().isEmpty()) {
-            return "The assessment identifies " + describe(context.protectiveFactors().getFirst().direction())
-                    + " as an important reason the work has relatively little overlap with what AI can do "
-                    + "through digital systems.";
+        boolean drivers = !context.exposureDrivers().isEmpty();
+        boolean protective = !context.protectiveFactors().isEmpty();
+        StringBuilder explanation = new StringBuilder();
+        if (drivers || !protective) {
+            explanation.append("The assessment identifies ").append(driver)
+                    .append(" as an important reason AI may affect parts of the work.");
         }
-        return "The assessment identifies " + driver + " as an important reason AI may affect parts of the work.";
+        if (protective) {
+            explanation.append(drivers ? " It also identifies " : "The assessment identifies ")
+                    .append(describe(context.protectiveFactors().getFirst().direction()))
+                    .append(" as an important reason the work has relatively little overlap with what AI can do "
+                            + "through digital systems.");
+        }
+        return explanation.toString();
     }
 
     private String describe(ProfessionalFactorDirection direction) {

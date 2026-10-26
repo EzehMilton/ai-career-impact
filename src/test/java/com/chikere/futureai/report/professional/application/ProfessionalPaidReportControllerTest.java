@@ -55,7 +55,8 @@ class ProfessionalPaidReportControllerTest {
         assertThat(html).doesNotContain("YOUR RESPONSIBILITIES TO REVIEW", "Review your day-to-day responsibilities",
                 "did not judge each responsibility", "does not assign task-level scores", "Design systems",
                 "deterministic presentation guidance", "does not validate or determine", "technical details",
-                "Occupation classification", "professional-report-v1", "External career context");
+                "Occupation classification", "professional-report-v1", "professional-report-v2",
+                "External career context");
         // Skill cards: high priority first, otherwise in their selected order.
         assertThat(html).containsSubsequence("AI-tool fluency", "Domain expertise", "Human communication",
                 "Process automation", "Complementary technical depth");
