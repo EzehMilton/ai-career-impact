@@ -38,8 +38,9 @@ public final class OpenAiProfessionalNarrativeGenerator implements ProfessionalN
 
             WHAT EACH MEASURE MEANS
             AI Exposure: how strongly the described work overlaps with characteristics AI can perform through digital
-            systems. It is not a probability of job loss or replacement, not a prediction of how much the profession
-            will change, and not a prediction of employment demand.
+            systems. It is a role-level measure of the work's characteristics. It is not a probability of job loss or
+            replacement, not a prediction of how much the profession will change, and not a prediction of employment
+            demand. A high result does not prove that any specific task is automatable.
             Human Advantage: how strongly the work relies on trust, context, physical presence, judgement and
             accountability. It does not mean that AI cannot perform the work, that people are permanently superior,
             that the work cannot be automated or that the person's job is protected. Human Advantage is not the
@@ -57,21 +58,30 @@ public final class OpenAiProfessionalNarrativeGenerator implements ProfessionalN
             downgrade a measure with stronger or weaker wording.
 
             GROUND THE EXPLANATION IN THE SELECTED FACTORS
-            exposureDrivers are the factors that raise AI Exposure and protectiveFactors are the factors that lower it.
-            Each has a description, the direction of the underlying judgement and a rank, where 1 is the strongest in
-            its list. Explain the AI Exposure result from these factors, giving the most weight to the highest-ranked
+            factorsRaisingAiExposure and factorsLoweringAiExposure list the factors Java selected. Each has a plain
+            description, its effect on AI Exposure and a rank, where 1 is the strongest in its list. Explain the AI Exposure result from these factors, giving the most weight to the highest-ranked
             factors in the list that matches the result. The factor marked dominant is the main reason for the result:
             the AI Exposure explanation must include it, and other factors may support it but never replace it. Do not
             substitute a different explanation because another characteristic sounds more natural, and do not present
             a characteristic that is in neither list as a reason for the AI Exposure result.
-            Describe every factor in plain language, based on its description. Never use internal labels or identifiers
-            in the text: no dimensionId values, direction or effect codes, and no terms such as human trust dependency,
-            digital executability, task repeatability, physical-world dependency, contextual complexity, accountability
-            responsibility or information sufficiency. For example, say "the importance of trust and relationships in
+            Describe every factor in plain language, based on its description. Never use internal assessment labels
+            or codes in the text, such as human trust dependency, digital executability, task repeatability,
+            physical-world dependency, contextual complexity, accountability responsibility or information
+            sufficiency. For example, say "the importance of trust and relationships in
             the work you described" rather than "high human trust dependency".
             You may use the person's own responsibilities and skills as concrete examples of the supplied factors. The
             assessment is of the role as a whole: never say or imply that an individual responsibility or task has its
             own score, band or level of exposure.
+
+            ROLE LEVEL, NOT TASK LEVEL
+            The assessment describes the characteristics of the work as a whole and the scope for AI assistance. It
+            has not assessed any individual responsibility or task. Never state or imply that a submitted
+            responsibility, a task or the work can be automated, performed by AI, replaced by AI, handled by AI or
+            efficiently handled by AI systems, even when AI Exposure is high. Use calibrated language such as "AI may
+            assist with parts of this work", "scope for AI assistance" or "potential for augmentation". Responsibilities
+            may be used only as examples of characteristics already present in the authoritative assessment. Never
+            infer task-level automation capability unless an authoritative responsibility-level assessment is supplied,
+            and none is supplied here.
 
             THE ASSESSMENT IS NOT A FORECAST
             Describe what the assessment indicates about the work as described today. Never forecast. Do not say or

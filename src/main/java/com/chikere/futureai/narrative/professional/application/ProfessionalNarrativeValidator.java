@@ -31,6 +31,7 @@ public final class ProfessionalNarrativeValidator {
     static final String NUMERIC = "NO_NUMERIC_SCORES_OR_PERCENTAGES";
     static final String FUTURE = "NO_UNSUPPORTED_FUTURE_PREDICTIONS";
     static final String CAPABILITY = "NO_CATEGORICAL_AI_CAPABILITY_CLAIMS";
+    static final String TASK_AUTOMATION = "NO_UNSUPPORTED_TASK_AUTOMATION_CLAIMS";
     static final String JOB_LOSS = "NO_JOB_LOSS_OR_SECURITY_INFERENCE";
     static final String ADAPTABILITY = "ROLE_ADAPTABILITY_IS_ROLE_LEVEL";
     static final String GROUNDED = "EXPOSURE_EXPLANATION_GROUNDED_IN_FACTORS";
@@ -44,7 +45,7 @@ public final class ProfessionalNarrativeValidator {
     static final String UNSAFE_PROCEDURE = "NO_UNSAFE_PROCEDURE_DEVIATION";
 
     private static final List<String> TEXT_RULES = List.of("NARRATIVE_PRESENT", "WELL_FORMED_STRUCTURED_OUTPUT",
-            NUMERIC, FUTURE, CAPABILITY, JOB_LOSS, ADAPTABILITY, JARGON, UNSAFE_PROCEDURE, BAND_WORDS, SPELLING);
+            NUMERIC, FUTURE, CAPABILITY, TASK_AUTOMATION, JOB_LOSS, ADAPTABILITY, JARGON, UNSAFE_PROCEDURE, BAND_WORDS, SPELLING);
     private static final List<String> CONTEXT_RULES = Stream.concat(TEXT_RULES.stream(),
             Stream.of(GROUNDED, DOMINANT, DIRECTIONS, OCCUPATION, RESPONSIBILITY_SCORING)).toList();
 
@@ -90,6 +91,22 @@ public final class ProfessionalNarrativeValidator {
             "\\bimpossible\\s+(?:for\\s+(?:AI|machines?|technology)|to\\s+(?:automate|replicate|replace))\\b",
             "\\bbeyond\\s+(?:the\\s+)?(?:reach|capabilit\\w*|abilit\\w*)\\s+of\\s+(?:AI|machines?|technology)\\b",
             "\\birreplaceable\\b");
+
+    /**
+     * Claims that tasks or the work can be automated, performed, handled or replaced by AI. The assessment is
+     * role-level: it describes characteristics of the work and scope for assistance, and has not established that any
+     * task is automatable, however high the exposure. "AI may assist…" and "scope for assistance" are untouched.
+     */
+    private static final List<Pattern> TASK_AUTOMATION_CLAIMS = patterns(
+            "\\b(?:can|could|will|would)\\s+(?:\\w+\\s+){0,2}?be\\s+(?:\\w+\\s+)?(?:automated|handled|performed|done"
+                    + "|replaced|taken\\s+over|carried\\s+out|completed|managed)\\s+(?:\\w+\\s+){0,3}?(?:by|with|using)\\s+"
+                    + "(?:AI|artificial\\s+intelligence|machines?|automation|software|algorithms?|automated)\\b",
+            "\\b(?:can|could|will|would)\\s+(?:\\w+\\s+){0,2}?be\\s+(?:\\w+ly\\s+)?automated\\b",
+            "\\b(?:is|are|seems?|appears?)\\s+(?:\\w+\\s+)?automatable\\b",
+            // Not when describing AI capability in general, as the measure's definition does ("what AI can do").
+            "(?<!what\\s)(?<!characteristics\\s)(?<!things\\s)(?<!activities\\s)"
+                    + "\\bAI(?:\\s+(?:systems?|tools?|models?|software))?\\s+(?:can|could|will|would)\\s+(?:\\w+\\s+)?(?:perform"
+                    + "|handle|do|take\\s+over|complete|replace|run|carry\\s+out|automate|manage)\\b");
 
     /** AI Exposure turned into risk of losing the job, replacement or job security. */
     private static final List<Pattern> JOB_LOSS_CLAIMS = patterns(
@@ -236,6 +253,9 @@ public final class ProfessionalNarrativeValidator {
                 "narrative must describe the work as assessed today, not forecast its future");
         claim(checks, CAPABILITY, text, CAPABILITY_CLAIMS,
                 "narrative must not make categorical claims about what AI can or cannot do");
+        claim(checks, TASK_AUTOMATION, text, TASK_AUTOMATION_CLAIMS,
+                "narrative must not claim that tasks or the work can be automated or performed by AI; the assessment "
+                        + "is role-level and describes scope for assistance");
         claim(checks, JOB_LOSS, text, JOB_LOSS_CLAIMS,
                 "narrative must not turn AI Exposure into job loss, replacement or job security");
         claim(checks, ADAPTABILITY, List.of(narrative.adaptabilityExplanation()), PERSONAL_ADAPTABILITY_CLAIMS,
@@ -291,7 +311,7 @@ public final class ProfessionalNarrativeValidator {
 
         List<String> everything = new ArrayList<>(text);
         everything.add(narrative.cautionOrLimitations());
-        Optional<String> scored = responsibilityScored(everything, context.responsibilities());
+        Optional<String> scored = responsibilityScored(everything, context.responsibilities(), context.profession());
         checks.check(RESPONSIBILITY_SCORING, scored.isPresent(), () -> scored.orElse(null),
                 "narrative must not present a submitted responsibility as separately scored; the assessment is role-level");
     }
@@ -323,13 +343,22 @@ public final class ProfessionalNarrativeValidator {
      * A sentence that names one of the person's submitted responsibilities and attaches an assessed classification
      * to it, for example "Monitoring patients is highly exposed to AI". A responsibility mentioned as an example of
      * the role-level result, or followed by a new clause, is left alone.
+     *
+     * <p>A responsibility is recognised by what it acts on, not by its action verb: "backend services" in "Design and
+     * develop backend services", not "develop". Words of the person's own job title are never evidence, so "your role
+     * as a Java Software Developer has moderate AI Exposure" is a role-level statement even when a responsibility
+     * shares a stem with the title.</p>
      */
-    private static Optional<String> responsibilityScored(List<String> texts, List<String> responsibilities) {
+    private static Optional<String> responsibilityScored(List<String> texts, List<String> responsibilities,
+            String profession) {
+        java.util.Set<String> titleWords = new java.util.HashSet<>();
+        WORD.matcher(profession).results().map(match -> match.group().toLowerCase(Locale.ROOT)).forEach(word -> {
+            titleWords.add(word);
+            titleWords.add(word + "s");
+        });
         java.util.Set<String> stems = new java.util.HashSet<>();
         for (String responsibility : responsibilities) {
-            WORD.matcher(responsibility).results().map(match -> match.group().toLowerCase(Locale.ROOT))
-                    .filter(word -> word.length() >= 4 && !GENERIC_WORDS.contains(word))
-                    .forEach(word -> stems.add(stem(word)));
+            responsibilitySubjects(responsibility).forEach(word -> stems.add(stem(word)));
         }
         if (stems.isEmpty()) {
             return Optional.empty();
@@ -339,7 +368,7 @@ public final class ProfessionalNarrativeValidator {
                 var words = WORD.matcher(sentence);
                 while (words.find()) {
                     String word = words.group().toLowerCase(Locale.ROOT);
-                    if (word.length() < 4 || !stems.contains(stem(word))) {
+                    if (word.length() < 4 || titleWords.contains(word) || !stems.contains(stem(word))) {
                         continue;
                     }
                     String after = sentence.substring(words.end());
@@ -354,6 +383,26 @@ public final class ProfessionalNarrativeValidator {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * The words that identify what a responsibility is about: everything after its leading action verbs ("Design and
+     * develop backend services" gives backend, services). A responsibility with nothing after its verb, such as a
+     * noun phrase, keeps all its meaningful words.
+     */
+    private static List<String> responsibilitySubjects(String responsibility) {
+        List<String> tokens = WORD.matcher(responsibility).results()
+                .map(match -> match.group().toLowerCase(Locale.ROOT)).toList();
+        int index = tokens.isEmpty() ? 0 : 1;
+        while (index + 1 < tokens.size() && (tokens.get(index).equals("and") || tokens.get(index).equals("or"))) {
+            index += 2;
+        }
+        List<String> subjects = meaningful(tokens.subList(Math.min(index, tokens.size()), tokens.size()));
+        return subjects.isEmpty() ? meaningful(tokens) : subjects;
+    }
+
+    private static List<String> meaningful(List<String> tokens) {
+        return tokens.stream().filter(word -> word.length() >= 4 && !GENERIC_WORDS.contains(word)).toList();
     }
 
     /**

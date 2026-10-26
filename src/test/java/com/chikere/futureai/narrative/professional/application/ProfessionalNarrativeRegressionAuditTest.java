@@ -171,7 +171,7 @@ class ProfessionalNarrativeRegressionAuditTest {
             var validations = log.events(TraceStage.NARRATIVE_VALIDATION);
             assertThat(validations).hasSize(2).allSatisfy(validation -> {
                 assertThat(validation.at("/payload/rejectedBy").asText()).isEqualTo("ROLE_ADAPTABILITY_IS_ROLE_LEVEL");
-                assertThat(validation.at("/payload/rules/6/triggeringText").asText()).isEqualTo(NURSE_ADAPTABILITY);
+                assertThat(validation.at("/payload/rules/7/triggeringText").asText()).isEqualTo(NURSE_ADAPTABILITY);
             });
             assertThat(log.only(TraceStage.NARRATIVE_OUTCOME).at("/payload/status").asText()).isEqualTo("FAILED");
         }

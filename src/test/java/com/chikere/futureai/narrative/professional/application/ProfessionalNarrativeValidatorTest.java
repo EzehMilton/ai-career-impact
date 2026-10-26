@@ -414,9 +414,11 @@ class ProfessionalNarrativeValidatorTest {
                 "Medication administration is moderately exposed to AI.",
                 "Patient monitoring is highly automatable.")) {
             var narrative = safe(n -> with(n, Field.SUMMARY, claim));
+            // "…is highly automatable" is caught first by the task-automation rule; both mean the same here.
             assertThatThrownBy(() -> validator.validate(narrative, context)).as(claim)
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("not present a submitted responsibility as separately scored");
+                    .isInstanceOfSatisfying(com.chikere.futureai.trace.NarrativeRuleViolation.class, violation ->
+                            assertThat(violation.rule()).isIn("NO_RESPONSIBILITY_LEVEL_SCORING",
+                                    "NO_UNSUPPORTED_TASK_AUTOMATION_CLAIMS"));
         }
     }
 
@@ -489,13 +491,13 @@ class ProfessionalNarrativeValidatorTest {
             assertThat(validation.get("rules").findValuesAsText("rule")).containsExactly("NARRATIVE_PRESENT",
                     "WELL_FORMED_STRUCTURED_OUTPUT", "NO_NUMERIC_SCORES_OR_PERCENTAGES",
                     "NO_UNSUPPORTED_FUTURE_PREDICTIONS", "NO_CATEGORICAL_AI_CAPABILITY_CLAIMS",
-                    "NO_JOB_LOSS_OR_SECURITY_INFERENCE", "ROLE_ADAPTABILITY_IS_ROLE_LEVEL", "NO_INTERNAL_DIMENSION_JARGON",
+                    "NO_UNSUPPORTED_TASK_AUTOMATION_CLAIMS", "NO_JOB_LOSS_OR_SECURITY_INFERENCE", "ROLE_ADAPTABILITY_IS_ROLE_LEVEL", "NO_INTERNAL_DIMENSION_JARGON",
                     "NO_UNSAFE_PROCEDURE_DEVIATION", "NO_ENUM_STYLE_BAND_WORDS", "BRITISH_ENGLISH_SPELLING",
                     "EXPOSURE_EXPLANATION_GROUNDED_IN_FACTORS", "EXPOSURE_EXPLANATION_LEADS_WITH_DOMINANT_FACTOR",
                     "EXPOSURE_FACTOR_DIRECTIONS_MATCH", "NO_OCCUPATION_WIDE_CLAIMS",
                     "NO_RESPONSIBILITY_LEVEL_SCORING");
-            assertThat(validation.at("/rules/6/triggeringText").asText()).isEqualTo(sentence);
-            assertThat(validation.at("/rules/7/reason").asText()).startsWith("NOT_EVALUATED");
+            assertThat(validation.at("/rules/7/triggeringText").asText()).isEqualTo(sentence);
+            assertThat(validation.at("/rules/8/reason").asText()).startsWith("NOT_EVALUATED");
 
             log.clear();
             traced.validate(safe(UnaryOperator.identity()), nurseContext());

@@ -67,7 +67,7 @@ class ProfessionalNarrativeServiceTest {
         assertThat(saves.getAllValues()).extracting(StoredProfessionalNarrative::status)
                 .containsExactly(NarrativeStatus.PENDING, NarrativeStatus.AVAILABLE);
         assertThat(result.narrative()).contains(narrative);
-        assertThat(result.promptSchemaVersion()).isEqualTo("professional-narrative-v4");
+        assertThat(result.promptSchemaVersion()).isEqualTo("professional-narrative-v5");
         assertThat(result.source()).isEqualTo(NarrativeSource.OPENAI);
         assertThat(result.providerIdentifier()).isEqualTo("openai");
         assertThat(result.modelIdentifier()).contains("gpt-test");

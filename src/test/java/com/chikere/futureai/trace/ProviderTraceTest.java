@@ -142,7 +142,8 @@ class ProviderTraceTest {
         assertThat(messages.get(1).get("role").asText()).isEqualTo("USER");
         assertThat(messages.get(1).get("text").asText())
                 .startsWith(OpenAiProfessionalNarrativeGenerator.USER_PROMPT_PREFIX)
-                .contains("Software Architect", "AI_EXPOSURE", "digital_executability");
+                .contains("Software Architect", "AI Exposure", "Much of the work can be performed digitally")
+                .doesNotContain("digital_executability", "AI_EXPOSURE");
         assertThat(request.at("/payload/model").asText()).isEqualTo("gpt-4o-mini");
         // The Professional narrative's low temperature reaches the model; the configured model is kept.
         assertThat(request.at("/payload/temperature").asDouble()).isEqualTo(0.2);
@@ -199,8 +200,12 @@ class ProviderTraceTest {
                 List.of("Design platforms"), List.of("Architecture"), OptionalInt.of(14),
                 AssessmentStatus.READY,
                 java.util.Arrays.stream(ProfessionalMeasure.values())
-                        .map(measure -> new ProfessionalNarrativeContext.MeasureContext(measure, measure.name(), 6.5,
-                                "Moderate"))
+                        .map(measure -> new ProfessionalNarrativeContext.MeasureContext(measure, switch (measure) {
+                            case AI_EXPOSURE -> "AI Exposure";
+                            case HUMAN_ADVANTAGE -> "Human Advantage";
+                            case AI_COMPLEMENTARITY -> "AI Complementarity";
+                            case ROLE_ADAPTABILITY -> "Role Adaptability";
+                        }, 6.5, "Moderate"))
                         .toList(),
                 List.of(new ProfessionalNarrativeContext.FactorContext("digital_executability", "Digital executability",
                         "Much of the work can be performed digitally", DecisionFactorEffect.INCREASES_AI_EXPOSURE,
