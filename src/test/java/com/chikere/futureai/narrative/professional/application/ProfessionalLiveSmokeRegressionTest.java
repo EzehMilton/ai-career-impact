@@ -65,7 +65,7 @@ class ProfessionalLiveSmokeRegressionTest {
         }).generateFor(assessment.id());
 
         assertThat(result.status()).isEqualTo(NarrativeStatus.AVAILABLE);
-        assertThat(result.promptSchemaVersion()).isEqualTo("professional-narrative-v6");
+        assertThat(result.promptSchemaVersion()).isEqualTo("professional-narrative-v7");
         assertThat(generations.get()).isEqualTo(1);
         assertThat(repairs.get()).isZero();
     }
@@ -215,6 +215,106 @@ class ProfessionalLiveSmokeRegressionTest {
         assertThat(DominantExposureFactor.of(accountantContext())).containsExactly("digital_executability");
         rejects(with(narrative("Your work relies on accountability for decisions."), "Summary."), accountantContext(),
                 "EXPOSURE_EXPLANATION");
+    }
+
+    // ---- Java Software Developer: the live categorical-capability repair sequence ----
+
+    private static final String JAVA_ATTEMPT_ONE_ACTION = "Continue to mentor less experienced developers, as this "
+            + "human interaction is crucial and cannot be replaced by AI.";
+    private static final String JAVA_ATTEMPT_TWO_MEANING = "The combination of these measures suggests that while your "
+            + "role involves tasks that can be supported by AI, the complexity and need for human judgement in your work "
+            + "means that AI cannot fully replace the human element.";
+    private static final String JAVA_COMPLIANT_MEANING = "The combination of these measures suggests that AI may "
+            + "support parts of the work while judgement and contextual understanding remain important areas of human "
+            + "contribution.";
+
+    @Test
+    void theLiveJavaCapabilityClaimsAreRejectedAndTheNeutralEquivalentPasses() {
+        var context = javaContext();
+        rejects(withActions(narrative(javaExposure()), JAVA_ATTEMPT_ONE_ACTION), context,
+                ProfessionalNarrativeValidator.CAPABILITY);
+        rejects(withMeaning(narrative(javaExposure()), JAVA_ATTEMPT_TWO_MEANING), context,
+                ProfessionalNarrativeValidator.CAPABILITY);
+        for (String qualified : List.of(
+                "The complexity and need for human judgement in your work means that AI cannot fully replace the human element.",
+                "AI cannot easily replace the judgement your work relies on.",
+                "AI currently cannot replicate the trust involved in the work.",
+                "This human interaction cannot be fully replaced by AI.")) {
+            rejects(withMeaning(narrative(javaExposure()), qualified), context, ProfessionalNarrativeValidator.CAPABILITY);
+        }
+        var compliant = withMeaning(narrative(javaExposure()), JAVA_COMPLIANT_MEANING);
+        assertThat(validator.validate(compliant, context)).isSameAs(compliant);
+    }
+
+    @Test
+    void theLiveJavaSequenceGetsOneCapabilitySpecificRepairAndFailsIfTheRepairParaphrasesTheSameClaim() {
+        var assessment = stored("senior_software_architect", "Java Software Developer", List.of(
+                "Design and develop backend services", "Mentor less experienced developers"));
+        List<NarrativeRepairFeedback> feedback = new java.util.ArrayList<>();
+        AtomicInteger calls = new AtomicInteger();
+        var result = service(assessment, scripted(calls, feedback,
+                withActions(narrative(javaExposure()), JAVA_ATTEMPT_ONE_ACTION),
+                withMeaning(narrative(javaExposure()), JAVA_ATTEMPT_TWO_MEANING))).generateFor(assessment.id());
+
+        assertThat(result.status()).isEqualTo(NarrativeStatus.FAILED);
+        assertThat(calls.get()).as("first draft plus at most one repair").isEqualTo(2);
+        assertThat(feedback).singleElement().satisfies(repair -> {
+            assertThat(repair.rule()).isEqualTo(ProfessionalNarrativeValidator.CAPABILITY);
+            assertThat(repair.offendingSentence()).isEqualTo(JAVA_ATTEMPT_ONE_ACTION);
+            String prompt = com.chikere.futureai.narrative.professional.openai.OpenAiProfessionalNarrativeGenerator
+                    .repairInstructions(repair).replaceAll("\\s+", " ");
+            assertThat(prompt).contains("Remove that concept entirely; do not reword it",
+                    "Do not say that AI cannot fully, partly or easily replace",
+                    "\"human element\"", "meaningful human contribution remains important",
+                    "rewrite the complete narrative");
+        });
+    }
+
+    @Test
+    void theLiveJavaSequenceIsAcceptedWhenTheRepairUsesNeutralWording() {
+        var assessment = stored("senior_software_architect", "Java Software Developer", List.of(
+                "Design and develop backend services", "Mentor less experienced developers"));
+        AtomicInteger calls = new AtomicInteger();
+        var result = service(assessment, scripted(calls, new java.util.ArrayList<>(),
+                withActions(narrative(javaExposure()), JAVA_ATTEMPT_ONE_ACTION),
+                withMeaning(narrative(javaExposure()), JAVA_COMPLIANT_MEANING))).generateFor(assessment.id());
+
+        assertThat(result.status()).isEqualTo(NarrativeStatus.AVAILABLE);
+        assertThat(result.promptSchemaVersion()).isEqualTo("professional-narrative-v7");
+        assertThat(result.narrative().orElseThrow().whatThisMeans()).isEqualTo(JAVA_COMPLIANT_MEANING);
+        assertThat(calls.get()).isEqualTo(2);
+    }
+
+    /** Returns the first draft from generate and the second from the single repair, recording the feedback. */
+    private static ProfessionalNarrativeGenerator scripted(AtomicInteger calls, List<NarrativeRepairFeedback> feedback,
+            ProfessionalNarrative first, ProfessionalNarrative repaired) {
+        return new ProfessionalNarrativeGenerator() {
+            @Override public ProfessionalNarrative generate(ProfessionalNarrativeContext ignored) {
+                calls.incrementAndGet();
+                return first;
+            }
+            @Override public ProfessionalNarrative repair(ProfessionalNarrativeContext ignored, NarrativeRepairFeedback f) {
+                calls.incrementAndGet();
+                feedback.add(f);
+                return repaired;
+            }
+            @Override public NarrativeSource source() { return NarrativeSource.OPENAI; }
+            @Override public String providerIdentifier() { return "openai"; }
+        };
+    }
+
+    private static ProfessionalNarrative withActions(ProfessionalNarrative n, String firstAction) {
+        List<String> actions = new java.util.ArrayList<>(n.practicalActions());
+        actions.set(0, firstAction);
+        return new ProfessionalNarrative(n.headline(), n.summary(), n.whatThisMeans(), n.exposureExplanation(),
+                n.humanAdvantageExplanation(), n.complementarityExplanation(), n.adaptabilityExplanation(),
+                actions, n.cautionOrLimitations());
+    }
+
+    private static ProfessionalNarrative withMeaning(ProfessionalNarrative n, String whatThisMeans) {
+        return new ProfessionalNarrative(n.headline(), n.summary(), whatThisMeans, n.exposureExplanation(),
+                n.humanAdvantageExplanation(), n.complementarityExplanation(), n.adaptabilityExplanation(),
+                n.practicalActions(), n.cautionOrLimitations());
     }
 
     // ---- Helpers ----

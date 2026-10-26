@@ -1,6 +1,7 @@
 package com.chikere.futureai.narrative.professional.openai;
 
 import com.chikere.futureai.narrative.professional.application.NarrativeRepairFeedback;
+import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeValidator;
 import com.chikere.futureai.narrative.professional.application.NarrativeSource;
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrative;
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeContext;
@@ -11,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatOptions;
 
+import java.util.Map;
 import java.util.Optional;
 
 public final class OpenAiProfessionalNarrativeGenerator implements ProfessionalNarrativeGenerator {
@@ -153,6 +155,26 @@ public final class OpenAiProfessionalNarrativeGenerator implements ProfessionalN
             measure, band, factor, direction and rank exactly as supplied.
             """;
 
+    /**
+     * Added to the repair request when the first draft failed {@code NO_CATEGORICAL_AI_CAPABILITY_CLAIMS}. A plain
+     * "correct that problem" lets the model reword the same idea ("AI cannot fully replace the human element"), so
+     * the concept itself is ruled out and a neutral alternative is given. Profession-independent.
+     */
+    public static final String CAPABILITY_CLAIM_REPAIR_INSTRUCTIONS = """
+            The failed draft made a claim about what AI can or cannot do. Remove that concept entirely; do not reword
+            it. Do not use "replace", "replicate", "substitute", "cannot", "can't", "unable", "only humans" or any
+            equivalent claim about AI capability. Do not say that AI cannot fully, partly or easily replace any
+            person, role, task, interaction, judgement, skill or "human element", and do not turn the failed sentence
+            into another statement about the limits of AI. Instead describe the assessment positively and neutrally,
+            for example "meaningful human contribution remains important", "the work continues to rely on judgement
+            and contextual understanding" or "AI assistance still requires human review and responsibility". Keep the
+            supplied bands and factors exactly as they are, and rewrite the complete narrative, not only that sentence.
+            """;
+
+    /** Extra repair guidance for the rules whose violations a model tends to paraphrase rather than remove. */
+    private static final Map<String, String> RULE_REPAIR_INSTRUCTIONS = Map.of(
+            ProfessionalNarrativeValidator.CAPABILITY, CAPABILITY_CLAIM_REPAIR_INSTRUCTIONS);
+
     private final ChatClient chatClient;
     private final ObjectMapper objectMapper;
     private final Optional<String> modelIdentifier;
@@ -175,8 +197,13 @@ public final class OpenAiProfessionalNarrativeGenerator implements ProfessionalN
     /** The one repair attempt: the same request plus application-generated feedback naming the failed rule. */
     @Override
     public ProfessionalNarrative repair(ProfessionalNarrativeContext context, NarrativeRepairFeedback feedback) {
-        return call(context, REPAIR_INSTRUCTIONS.formatted(feedback.rule(), feedback.reason(),
-                quoted(feedback.offendingSentence())));
+        return call(context, repairInstructions(feedback));
+    }
+
+    /** The repair text sent for one failed draft: the general correction plus any rule-specific guidance. */
+    public static String repairInstructions(NarrativeRepairFeedback feedback) {
+        return REPAIR_INSTRUCTIONS.formatted(feedback.rule(), feedback.reason(), quoted(feedback.offendingSentence()))
+                + RULE_REPAIR_INSTRUCTIONS.getOrDefault(feedback.rule(), "");
     }
 
     private ProfessionalNarrative call(ProfessionalNarrativeContext context, String repair) {

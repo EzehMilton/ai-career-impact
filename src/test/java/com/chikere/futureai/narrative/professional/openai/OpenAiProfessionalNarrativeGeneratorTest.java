@@ -1,5 +1,6 @@
 package com.chikere.futureai.narrative.professional.openai;
 
+import com.chikere.futureai.narrative.professional.application.NarrativeRepairFeedback;
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.assessment.professional.application.AssessmentSource;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentResult;
@@ -184,7 +185,30 @@ class OpenAiProfessionalNarrativeGeneratorTest {
 
     @Test
     void thePromptVersionIsBumpedForTheNewContract() {
-        assertThat(ProfessionalNarrativeVersions.PROMPT_AND_SCHEMA).isEqualTo("professional-narrative-v6");
+        assertThat(ProfessionalNarrativeVersions.PROMPT_AND_SCHEMA).isEqualTo("professional-narrative-v7");
+    }
+
+    @Test
+    void onlyACapabilityClaimRepairForbidsParaphrasingTheCapabilityConcept() {
+        String capability = OpenAiProfessionalNarrativeGenerator.repairInstructions(new NarrativeRepairFeedback(
+                "NO_CATEGORICAL_AI_CAPABILITY_CLAIMS", "reason", "AI cannot replace this.")).replaceAll("\\s+", " ");
+        assertThat(capability).contains("CORRECTION REQUIRED", "\"AI cannot replace this.\"",
+                "Remove that concept entirely; do not reword it",
+                "Do not use \"replace\", \"replicate\", \"substitute\", \"cannot\", \"can't\", \"unable\", \"only humans\"",
+                "Do not say that AI cannot fully, partly or easily replace any person, role, task, interaction, judgement, "
+                        + "skill or \"human element\"",
+                "do not turn the failed sentence into another statement about the limits of AI",
+                "\"meaningful human contribution remains important\"",
+                "\"the work continues to rely on judgement and contextual understanding\"",
+                "\"AI assistance still requires human review and responsibility\"",
+                "Keep the supplied bands and factors exactly as they are",
+                "rewrite the complete narrative, not only that sentence");
+
+        String other = OpenAiProfessionalNarrativeGenerator.repairInstructions(new NarrativeRepairFeedback(
+                "NO_JOB_LOSS_OR_SECURITY_INFERENCE", "reason", "sentence"));
+        assertThat(other).contains("CORRECTION REQUIRED").doesNotContain("Remove that concept entirely");
+        assertThat(OpenAiProfessionalNarrativeGenerator.CAPABILITY_CLAIM_REPAIR_INSTRUCTIONS)
+                .doesNotContain("nurse", "developer", "accountant", "Java");
     }
 
     @Test

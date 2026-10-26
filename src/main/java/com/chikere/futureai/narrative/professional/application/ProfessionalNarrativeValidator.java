@@ -31,7 +31,7 @@ public final class ProfessionalNarrativeValidator {
 
     static final String NUMERIC = "NO_NUMERIC_SCORES_OR_PERCENTAGES";
     static final String FUTURE = "NO_UNSUPPORTED_FUTURE_PREDICTIONS";
-    static final String CAPABILITY = "NO_CATEGORICAL_AI_CAPABILITY_CLAIMS";
+    public static final String CAPABILITY = "NO_CATEGORICAL_AI_CAPABILITY_CLAIMS";
     static final String TASK_AUTOMATION = "NO_UNSUPPORTED_TASK_AUTOMATION_CLAIMS";
     static final String JOB_LOSS = "NO_JOB_LOSS_OR_SECURITY_INFERENCE";
     static final String ADAPTABILITY = "ROLE_ADAPTABILITY_IS_ROLE_LEVEL";
@@ -86,7 +86,9 @@ public final class ProfessionalNarrativeValidator {
 
     /** Categorical claims about what AI or technology can never do. */
     private static final List<Pattern> CAPABILITY_CLAIMS = patterns(
+            // An adverb between the subject and the negation ("AI currently cannot") does not soften the claim.
             "\\b(?:AI|artificial\\s+intelligence|machines?|technology|automation|computers?|algorithms?)\\s+"
+                    + "(?:(?:currently|still|simply|really|yet|today|ever|fully|easily|truly)\\s+)?"
                     + "(?:cannot|can\\s+not|can't|is\\s+unable\\s+to|are\\s+unable\\s+to|will\\s+never|could\\s+never"
                     + "|can\\s+never|is\\s+incapable\\s+of|are\\s+incapable\\s+of|lacks?\\s+the\\s+(?:ability|capacity))\\b",
             "\\b(?:cannot|can\\s+not|can't)\\s+(?:\\w+\\s+){0,2}?(?:be\\s+)?(?:replicated|replaced|automated|reproduced"
