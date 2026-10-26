@@ -25,6 +25,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 class ProfessionalNarrativeServiceTest {
@@ -66,7 +67,7 @@ class ProfessionalNarrativeServiceTest {
         assertThat(saves.getAllValues()).extracting(StoredProfessionalNarrative::status)
                 .containsExactly(NarrativeStatus.PENDING, NarrativeStatus.AVAILABLE);
         assertThat(result.narrative()).contains(narrative);
-        assertThat(result.promptSchemaVersion()).isEqualTo("professional-narrative-v2");
+        assertThat(result.promptSchemaVersion()).isEqualTo("professional-narrative-v3");
         assertThat(result.source()).isEqualTo(NarrativeSource.OPENAI);
         assertThat(result.providerIdentifier()).isEqualTo("openai");
         assertThat(result.modelIdentifier()).contains("gpt-test");
@@ -91,6 +92,26 @@ class ProfessionalNarrativeServiceTest {
         assertThat(saves.getAllValues()).extracting(StoredProfessionalNarrative::status)
                 .containsExactly(NarrativeStatus.PENDING, NarrativeStatus.FAILED);
         verify(assessmentStore).findById(ID);
+    }
+
+    @Test
+    void anUnsafeNarrativeIsStoredAsFailedSoTheVisitorGetsTheFallbackAndTheAssessmentIsUntouched() {
+        when(narrativeStore.findByAssessmentId(ID)).thenReturn(Optional.empty());
+        when(assessmentStore.findById(ID)).thenReturn(Optional.of(snapshot()));
+        metadata();
+        var safe = narrative();
+        when(generator.generate(any())).thenReturn(new ProfessionalNarrative(safe.headline(), safe.summary(),
+                "Current AI developments are not expected to fundamentally alter the core responsibilities of your role.",
+                safe.exposureExplanation(), safe.humanAdvantageExplanation(), safe.complementarityExplanation(),
+                safe.adaptabilityExplanation(), safe.practicalActions(), safe.cautionOrLimitations()));
+
+        StoredProfessionalNarrative result = service().generateFor(ID);
+
+        assertThat(result.status()).isEqualTo(NarrativeStatus.FAILED);
+        assertThat(result.narrative()).as("rejected prose is never stored as the narrative").isEmpty();
+        verify(generator, times(1)).generate(any());
+        verify(assessmentStore).findById(ID);
+        verifyNoMoreInteractions(assessmentStore);
     }
 
     @Test
@@ -133,7 +154,8 @@ class ProfessionalNarrativeServiceTest {
 
     private ProfessionalNarrative narrative() {
         return new ProfessionalNarrative("A measured outlook", "Saved summary", "Saved meaning",
-                "Saved exposure", "Saved human advantage", "Saved complementarity", "Saved adaptability",
+                "Much of the work you described can be performed digitally, which raises your AI Exposure.",
+                "Saved human advantage", "Saved complementarity", "Saved adaptability",
                 List.of("Review repeatable work", "Strengthen human context", "Document accountability"),
                 "This is not a prediction.");
     }
