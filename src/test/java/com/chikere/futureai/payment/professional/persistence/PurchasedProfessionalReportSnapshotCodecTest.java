@@ -55,7 +55,7 @@ class PurchasedProfessionalReportSnapshotCodecTest {
         var model = new ProfessionalReportPdfModel(ProfessionalReportPdfVersions.PDF_TEMPLATE, "professional-report-v1",
                 Instant.parse("2026-09-01T00:00:00Z"), historical);
         assertThat(model.purchasedReportVersion()).isEqualTo("professional-report-v1");
-        assertThat(model.pdfTemplateVersion()).isEqualTo("professional-report-pdf-v3");
+        assertThat(model.pdfTemplateVersion()).isEqualTo("professional-report-pdf-v4");
     }
 
     @Test

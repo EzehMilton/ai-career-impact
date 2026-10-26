@@ -156,6 +156,14 @@ public class ProfessionalReportAssemblerTest {
         assertThat(v1.methodology().decisionPolicyVersion()).isEqualTo("professional-decision-v1");
     }
 
+    /**
+     * The live Java Software Developer boundary case: judgments giving Role Adaptability 6.99625, authoritatively
+     * Moderate. Role Adaptability = 10 x (0.35c + 0.2cx + 0.2oj + 0.1t + 0.1a)/4 + 0.5 x (1 - task/4).
+     */
+    public static final Map<String, Double> JAVA_ROLE_ADAPTABILITY_BOUNDARY = Map.of("ai_complementarity", 2.5,
+            "contextual_complexity", 3.0, "original_judgment", 3.0, "human_trust_dependency", 3.0,
+            "accountability_responsibility", 3.0, "task_repeatability", 1.53);
+
     public static ProfessionalReportSource source(boolean narrativeAvailable, boolean evidenceAvailable,
             boolean classificationAvailable) {
         return source(narrativeAvailable, evidenceAvailable, classificationAvailable, Map.of());

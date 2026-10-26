@@ -88,7 +88,17 @@ class OpenHtmlProfessionalReportPdfRendererTest {
         // With both sides populated neither sentence appears.
         assertThat(renderer.html(model())).doesNotContain("No strong exposure drivers were identified.",
                 "No strong factors reducing AI Exposure were identified.");
-        assertThat(ProfessionalReportPdfVersions.PDF_TEMPLATE).isEqualTo("professional-report-pdf-v3");
+        assertThat(ProfessionalReportPdfVersions.PDF_TEMPLATE).isEqualTo("professional-report-pdf-v4");
+    }
+
+    @Test
+    void theLiveJavaBoundaryScoreReadsSixPointNineNineInTheNewPdf() {
+        String html = html(ProfessionalReportAssemblerTest.JAVA_ROLE_ADAPTABILITY_BOUNDARY);
+
+        assertThat(html.substring(html.indexOf("Role Adaptability"))).containsSubsequence("Score: 6.99 / 10",
+                "Band:</span> Moderate");
+        assertThat(html).doesNotContain("Score: 7.00 / 10");
+        assertThat(ProfessionalReportPdfVersions.PDF_TEMPLATE).isEqualTo("professional-report-pdf-v4");
     }
 
     private String html(Map<String, Double> values) {

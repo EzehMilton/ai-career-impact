@@ -15,6 +15,54 @@ class LiveSmokeTraceFilesTest {
     @TempDir Path directory;
 
     @Test
+    void theDefaultTraceDirectoryIsOutsideTargetInBothThePropertyAndTheBeanDefault() throws Exception {
+        var properties = new java.util.Properties();
+        try (var in = Files.newInputStream(Path.of("src/main/resources/application-live-smoke.properties"))) {
+            properties.load(in);
+        }
+        assertThat(properties.getProperty("app.live-smoke.trace-directory"))
+                .isEqualTo("${APP_LIVE_SMOKE_TRACE_DIRECTORY:.live-smoke/traces}");
+        var method = java.util.Arrays.stream(LiveSmokeConfiguration.class.getDeclaredMethods())
+                .filter(candidate -> candidate.getName().equals("liveSmokeTraceFiles")).findFirst().orElseThrow();
+        var value = method.getParameters()[1].getAnnotation(org.springframework.beans.factory.annotation.Value.class);
+        assertThat(value.value()).isEqualTo("${app.live-smoke.trace-directory:.live-smoke/traces}");
+        assertThat(Files.readString(Path.of(".gitignore")).lines()).contains(".live-smoke/");
+    }
+
+    @Test
+    void tracesInTheDefaultLocationSurviveAMavenCleanOfTarget() throws Exception {
+        // A stand-in working directory: Maven clean deletes target/, never .live-smoke/.
+        Path workingDirectory = directory.resolve("workspace");
+        Path target = Files.createDirectories(workingDirectory.resolve("target/classes"));
+        Files.writeString(target.resolve("Built.class"), "bytes");
+        var files = new LiveSmokeTraceFiles(workingDirectory.resolve(".live-smoke/traces"), List.of());
+        UUID id = UUID.randomUUID();
+        files.accept("t", id, "{\"stage\":\"SUMMARY\"}");
+
+        try (var walk = Files.walk(workingDirectory.resolve("target"))) {
+            walk.sorted(java.util.Comparator.reverseOrder()).forEach(path -> path.toFile().delete());
+        }
+
+        assertThat(workingDirectory.resolve("target")).doesNotExist();
+        assertThat(files.fileFor(id)).hasValue(workingDirectory.resolve(".live-smoke/traces/" + id + ".jsonl")
+                .toAbsolutePath().normalize());
+        assertThat(Files.readString(files.fileFor(id).orElseThrow())).isEqualTo("{\"stage\":\"SUMMARY\"}\n");
+        // A fresh instance after the clean finds the same file: nothing depends on target/.
+        assertThat(new LiveSmokeTraceFiles(workingDirectory.resolve(".live-smoke/traces"), List.of()).fileFor(id))
+                .isPresent();
+    }
+
+    @Test
+    void theTraceDirectoryIsCreatedWhenItDoesNotExist() {
+        Path missing = directory.resolve("not-yet/.live-smoke/traces");
+        assertThat(missing).doesNotExist();
+
+        new LiveSmokeTraceFiles(missing, List.of());
+
+        assertThat(missing).isDirectory();
+    }
+
+    @Test
     void eventsBeforeTheAssessmentIdJoinTheirOwnAssessmentsFileOnly() throws Exception {
         var files = new LiveSmokeTraceFiles(directory, List.of());
         UUID first = UUID.randomUUID();

@@ -1,5 +1,6 @@
 package com.chikere.futureai.pdf.professional.openhtml;
 
+import com.chikere.futureai.report.professional.application.ProfessionalScoreDisplayFormatter;
 import com.chikere.futureai.assessment.domain.AssessmentStatus;
 import com.chikere.futureai.pdf.professional.application.*;
 import com.chikere.futureai.report.professional.application.ProfessionalReport;
@@ -72,7 +73,7 @@ public final class OpenHtmlProfessionalReportPdfRenderer implements Professional
         heading(out, "Your four measures");
         for (var measure : report.measures()) {
             out.append("<article class=\"card measure\"><h3>").append(measureName(measure.measure().name()))
-                    .append("</h3><div class=\"score\">Score: ").append(String.format(Locale.ROOT, "%.2f", measure.indicator()))
+                    .append("</h3><div class=\"score\">Score: ").append(ProfessionalScoreDisplayFormatter.format(measure.indicator(), measure.band()))
                     .append(" / 10</div><p><span class=\"pill\">Band:</span> ").append(label(measure.band().name()))
                     .append("</p><p>")
                     .append(escape(measure.conciseExplanation())).append("</p>");

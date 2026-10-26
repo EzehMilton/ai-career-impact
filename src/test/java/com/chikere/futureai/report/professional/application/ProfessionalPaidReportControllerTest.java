@@ -43,6 +43,26 @@ class ProfessionalPaidReportControllerTest {
                 "No strong factors reducing AI Exposure were identified.");
     }
 
+    @Test
+    void theLiveJavaRoleAdaptabilityJustBelowTheHighBoundaryReadsAsModerateAndNeverAsSevenPointZero() throws Exception {
+        var source = ProfessionalReportAssemblerTest.source(true, true, true,
+                ProfessionalReportAssemblerTest.JAVA_ROLE_ADAPTABILITY_BOUNDARY,
+                new com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV2());
+        var stored = source.assessment().result().decision().measures()
+                .get(com.chikere.futureai.decision.professional.ProfessionalMeasure.ROLE_ADAPTABILITY);
+        assertThat(stored.indicator()).isCloseTo(6.99625, org.assertj.core.api.Assertions.within(1e-9)).isLessThan(7.0);
+        assertThat(stored.band()).isEqualTo(com.chikere.futureai.decision.professional.IndicatorBand.MODERATE);
+
+        String html = paidHtml(ProfessionalReportAssemblerTest.JAVA_ROLE_ADAPTABILITY_BOUNDARY);
+
+        // The Role Adaptability card: its band, then its score.
+        String card = html.substring(html.indexOf("<h3>Role Adaptability</h3>"));
+        assertThat(card).containsSubsequence(">Moderate<", "<span>6.99</span> / 10");
+        assertThat(html).doesNotContain("<span>7.00</span> / 10");
+        // The stored result is untouched by display.
+        assertThat(stored.indicator()).isGreaterThan(6.99);
+    }
+
     private String paidHtml(java.util.Map<String, Double> values) throws Exception {
         var source = ProfessionalReportAssemblerTest.source(true, true, true, values,
                 new com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV2());

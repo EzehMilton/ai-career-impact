@@ -29,7 +29,7 @@ class ProfessionalReportPdfServiceTest {
         assertThat(artifact.bytes()).isEqualTo(pdf);
         assertThat(artifact.sha256()).hasSize(64);
         assertThat(artifact.purchasedReportVersion()).isEqualTo("professional-report-v2");
-        assertThat(artifact.pdfTemplateVersion()).isEqualTo("professional-report-pdf-v3");
+        assertThat(artifact.pdfTemplateVersion()).isEqualTo("professional-report-pdf-v4");
         assertThat(artifact.filename()).isEqualTo("ai-career-impact-software-architect-report.pdf");
         verify(fixture.renderer).render(argThat(model -> model.report().equals(fixture.snapshot.report())
                 && model.purchasedReportVersion().equals("professional-report-v2")));

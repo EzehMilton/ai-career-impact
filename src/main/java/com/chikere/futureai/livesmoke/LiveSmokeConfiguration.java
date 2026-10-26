@@ -67,7 +67,7 @@ public class LiveSmokeConfiguration {
     /** Per-assessment trace files, fed by the existing AssessmentTrace as its sink. */
     @Bean
     LiveSmokeTraceFiles liveSmokeTraceFiles(Environment environment,
-            @Value("${app.live-smoke.trace-directory:target/live-smoke/traces}") String directory) {
+            @Value("${app.live-smoke.trace-directory:.live-smoke/traces}") String directory) {
         return new LiveSmokeTraceFiles(Path.of(directory),
                 SECRET_SETTINGS.stream().map(name -> environment.getProperty(name, "")).toList());
     }

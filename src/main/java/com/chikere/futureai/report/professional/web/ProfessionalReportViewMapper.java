@@ -1,5 +1,6 @@
 package com.chikere.futureai.report.professional.web;
 
+import com.chikere.futureai.report.professional.application.ProfessionalScoreDisplayFormatter;
 import com.chikere.futureai.assessment.domain.AssessmentStatus;
 import com.chikere.futureai.report.professional.application.ProfessionalReport;
 import com.chikere.futureai.report.professional.application.WorkFocusCategory;
@@ -28,7 +29,7 @@ public final class ProfessionalReportViewMapper {
                 report.developmentFixture(), summary.interpretation(), summary.jobLossDisclaimer(),
                 summary.methodologyCaveat(), report.measures().stream().map(value ->
                     new ProfessionalReportViewModel.MeasureView(measureLabel(value.measure().name()),
-                            String.format(Locale.ROOT, "%.2f", value.indicator()), label(value.band().name()),
+                            ProfessionalScoreDisplayFormatter.format(value.indicator(), value.band()), label(value.band().name()),
                             value.conciseExplanation(), value.detailedExplanation().orElse(null))).toList(),
                 report.exposureDrivers(), report.protectiveFactors(),
                 new ProfessionalReportViewModel.NarrativeView(narrative.available(),

@@ -40,7 +40,7 @@ idempotent: reopening a result never creates a second entitlement.
 | `OPENAI_API_KEY` | Real OpenAI narratives |
 | `OPENAI_MODEL` (optional) | Defaults to `gpt-4o-mini` |
 | `ASSESSMENT_TRACE_ENABLED` (optional) | Defaults to `true` here; set `false` to turn tracing off |
-| `APP_LIVE_SMOKE_TRACE_DIRECTORY` (optional) | Trace file directory; defaults to `target/live-smoke/traces` |
+| `APP_LIVE_SMOKE_TRACE_DIRECTORY` (optional) | Trace file directory; defaults to `.live-smoke/traces` |
 
 No Stripe or evidence variables are needed. Docker must be running if you rely on `compose.yaml` for PostgreSQL.
 
@@ -79,7 +79,7 @@ All three journeys have a normal paid PDF, rendered by their usual renderer; the
 
 ## Trace files
 
-Each assessment's trace is written to `target/live-smoke/traces/{assessmentId}.jsonl`, one JSON object per line.
+Each assessment's trace is written to `.live-smoke/traces/{assessmentId}.jsonl`, one JSON object per line.
 The lines are the same events the console trace shows (form input, Jev request and response, information
 sufficiency, confidence, every score calculation, factor selection and materiality, persistence, the OpenAI
 request and response, narrative validation and any repair, evidence and classification, report assembly and the
@@ -93,7 +93,8 @@ route accepts nothing but a UUID and resolves the file only inside the trace dir
 Trace files are sensitive: they contain the submitted inputs, prompts, judgments, model responses and narratives.
 Credentials are never traced, and as a second safeguard every configured secret value (OpenAI and TypeSafe keys,
 datasource password, Stripe secrets, complimentary code) is replaced with `[REDACTED]` before a line reaches
-disk. The files live under `target/`, which Git ignores and `./mvnw clean` deletes, and are never stored in the
+disk. The files live under `.live-smoke/` in the working directory, which Git ignores and `./mvnw clean` leaves
+alone, so traces survive rebuilds; delete the folder yourself to remove them. They are never stored in the
 database.
 
 Every page shows the red **LIVE SMOKE TEST MODE** banner. Neither the banner, the panel nor any `/dev/live-smoke`

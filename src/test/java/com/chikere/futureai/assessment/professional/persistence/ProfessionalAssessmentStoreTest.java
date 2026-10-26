@@ -389,7 +389,7 @@ class ProfessionalAssessmentStoreTest {
             assertThat(reloaded.fileSize()).isEqualTo(pdfBytes.length);
             assertThat(reloaded.generatedAt()).isEqualTo(Instant.parse("2026-09-30T12:03:00Z"));
             assertThat(reloaded.purchasedReportVersion()).isEqualTo("professional-report-v2");
-            assertThat(reloaded.pdfTemplateVersion()).isEqualTo("professional-report-pdf-v3");
+            assertThat(reloaded.pdfTemplateVersion()).isEqualTo("professional-report-pdf-v4");
         });
         byte[] losingBytes = "%PDF-different-racing-candidate".getBytes(java.nio.charset.StandardCharsets.US_ASCII);
         var losingCandidate = new PurchasedProfessionalReportPdf(entitlementId, assessmentId, report.reportVersion(),

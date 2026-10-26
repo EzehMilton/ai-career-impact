@@ -68,8 +68,8 @@ final class ProfessionalDecisionEngine {
     private static final double MODERATE_MEAN_CONFIDENCE_THRESHOLD = 0.65;
     private static final double HIGH_MEAN_CONFIDENCE_THRESHOLD = 0.80;
     private static final double HIGH_MINIMUM_CONFIDENCE_THRESHOLD = 0.60;
-    private static final double MODERATE_BAND_THRESHOLD = 3.50;
-    private static final double HIGH_BAND_THRESHOLD = 7.00;
+    private static final double MODERATE_BAND_THRESHOLD = ProfessionalBandThresholds.MODERATE_FROM;
+    private static final double HIGH_BAND_THRESHOLD = ProfessionalBandThresholds.HIGH_FROM;
     private static final int MAXIMUM_DISPLAYED_FACTORS = 3;
     private static final Map<String, String> BAND_THRESHOLDS = bandThresholds();
 

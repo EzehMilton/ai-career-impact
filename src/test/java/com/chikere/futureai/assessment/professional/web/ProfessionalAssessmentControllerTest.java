@@ -295,6 +295,16 @@ class ProfessionalAssessmentControllerTest {
                 .doesNotContain("No strong exposure drivers were identified.");
     }
 
+    @Test
+    void theFreeResultShowsTheLiveJavaBoundaryScoreInsideItsModerateBand() throws Exception {
+        String html = freeHtml(com.chikere.futureai.report.professional.application.ProfessionalReportAssemblerTest
+                .JAVA_ROLE_ADAPTABILITY_BOUNDARY);
+
+        assertThat(html.substring(html.indexOf("<h3>Role Adaptability</h3>"))).containsSubsequence(">Moderate<",
+                "<span>6.99</span> / 10");
+        assertThat(html).doesNotContain("<span>7.00</span> / 10");
+    }
+
     private String freeHtml(Map<String, Double> values) throws Exception {
         var source = com.chikere.futureai.report.professional.application.ProfessionalReportAssemblerTest.source(
                 true, true, true, values, new com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV2());
