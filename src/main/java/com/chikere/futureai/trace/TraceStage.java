@@ -29,5 +29,11 @@ public enum TraceStage {
     SUMMARY,
     FREE_ASSESSMENT_COMPLETE,
     DETAILED_REPORT_COMPLETE,
-    REPORT_SUMMARY
+    REPORT_SUMMARY,
+    /** Responsibility analysis for the paid Professional report: the selected responsibilities and schema. */
+    RESPONSIBILITY_ANALYSIS_REQUEST,
+    RESPONSIBILITY_MODEL_PROVIDER_REQUEST,
+    RESPONSIBILITY_MODEL_PROVIDER_RESPONSE,
+    /** The validated, vendor-neutral responsibility judgments, or why they were rejected. */
+    RESPONSIBILITY_ANALYSIS_RESULT
 }

@@ -244,6 +244,33 @@
 			</build>
 		</profile>
 		<profile>
+			<id>live-responsibility-probe</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<configuration>
+							<systemPropertyVariables>
+								<jev.responsibility.probe.enabled>true</jev.responsibility.probe.enabled>
+							</systemPropertyVariables>
+							<includes>
+								<include>**/ProfessionalResponsibilityJevProbeIT.java</include>
+							</includes>
+						</configuration>
+						<executions>
+							<execution>
+								<goals>
+									<goal>integration-test</goal>
+									<goal>verify</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
 			<id>live-jev-evaluation</id>
 			<build>
 				<plugins>
