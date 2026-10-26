@@ -4,6 +4,7 @@ import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.assessment.professional.application.AssessmentSource;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentResult;
 import com.chikere.futureai.assessment.professional.application.StoredProfessionalAssessment;
+import com.chikere.futureai.decision.professional.DecisionFactorEffect;
 import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV1;
 import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfessionalJudgmentProvider;
 import com.chikere.futureai.trace.AssessmentTrace;
@@ -132,8 +133,9 @@ class ProfessionalNarrativeValidatorTest {
         var narrative = new ProfessionalNarrative("Your assessment at a glance",
                 "Your result reflects the work you described.",
                 "The combination of measures describes the work as you described it today.",
-                "The work you described involves substantial hands-on activity and changing real-world conditions, "
-                        + "which contribute to the Low AI Exposure result.",
+                "Your work has a low level of AI Exposure because relatively little of it can be completed entirely "
+                        + "through digital systems, while skilled physical presence and human trust also reduce the "
+                        + "overlap with AI capabilities.",
                 "The work relies strongly on human interaction, situational judgement and accountability. This "
                         + "contributes to the Human Advantage result but does not imply that AI cannot assist with "
                         + "parts of the work.",
@@ -188,8 +190,8 @@ class ProfessionalNarrativeValidatorTest {
     void anExposureExplanationThatReversesASelectedFactorIsRejected() {
         rejects(safe(n -> with(n, Field.EXPOSURE, "Much of your work is digital, which increases your AI Exposure.")),
                 "must not reverse the direction");
-        rejects(safe(n -> with(n, Field.EXPOSURE,
-                "Your physical presence at the bedside raises your AI Exposure.")), "must not reverse the direction");
+        rejects(safe(n -> with(n, Field.EXPOSURE, "Little of your work can be done through digital systems. "
+                + "Your physical presence at the bedside raises your AI Exposure.")), "must not reverse the direction");
     }
 
     @Test
@@ -197,10 +199,146 @@ class ProfessionalNarrativeValidatorTest {
         for (String explanation : List.of(
                 "Relatively little of the work you described can be completed through digital systems, which lowers "
                         + "your AI Exposure.",
-                "Your work depends on physical presence and on the trust of the people you care for, which reduces "
-                        + "exposure.")) {
+                "Little of your work can be completed digitally, and it depends on physical presence and on the "
+                        + "trust of the people you care for, which reduces exposure.")) {
             var narrative = safe(n -> with(n, Field.EXPOSURE, explanation));
             assertThat(validator.validate(narrative, nurseContext())).as(explanation).isSameAs(narrative);
+        }
+    }
+
+    // ---- The dominant AI Exposure factor must lead the explanation ----
+
+    private static final String DOMINANT = "must include the dominant factor";
+
+    @Test
+    void lowExposureMustIncludeTheRank1FactorLoweringIt() {
+        // The live Registered Nurse explanation named the second and third factors but not the first.
+        rejects(safe(n -> with(n, Field.EXPOSURE, "Your work has a low level of AI Exposure, primarily due to factors "
+                + "such as the reliance on skilled physical presence and the importance of human trust and "
+                + "relationships in your role.")), DOMINANT);
+        var passing = safe(n -> with(n, Field.EXPOSURE, "Your work has a low level of AI Exposure because relatively "
+                + "little of it can be completed entirely through digital systems, while skilled physical presence "
+                + "and human trust also reduce the overlap with AI capabilities."));
+        assertThat(validator.validate(passing, nurseContext())).isSameAs(passing);
+    }
+
+    @Test
+    void highExposureMustIncludeTheRank1FactorRaisingIt() {
+        var routine = context("routine_software_developer");
+        assertThat(routine.measures().getFirst().band()).isEqualTo("High");
+        assertThat(routine.exposureDrivers().getFirst().dimensionId()).isEqualTo("digital_executability");
+        var omitted = safe(n -> with(n, Field.EXPOSURE,
+                "Much of the work you described follows set routines, which raises your AI Exposure."));
+        assertThatThrownBy(() -> validator.validate(omitted, routine)).hasMessageContaining(DOMINANT);
+        var present = safe(n -> with(n, Field.EXPOSURE, "Much of the work you described can be completed through "
+                + "digital systems and follows set routines, which raises your AI Exposure."));
+        assertThat(validator.validate(present, routine)).isSameAs(present);
+    }
+
+    @Test
+    void moderateExposureUsesTheSideWhoseRank1FactorHasTheLargerAbsoluteEffect() {
+        var architect = context("senior_software_architect");
+        assertThat(architect.measures().getFirst().band()).isEqualTo("Moderate");
+        assertThat(Math.abs(architect.exposureDrivers().getFirst().signedEffect()))
+                .isGreaterThan(Math.abs(architect.protectiveFactors().getFirst().signedEffect()));
+        // The rank-1 driver (digital work) outweighs the rank-1 protective factor (less routine work), so it must appear.
+        var protectiveOnly = safe(n -> with(n, Field.EXPOSURE,
+                "Your work is less repetitive and depends on changing situations, which lowers your AI Exposure."));
+        assertThatThrownBy(() -> validator.validate(protectiveOnly, architect)).hasMessageContaining(DOMINANT);
+        var withDriver = safe(n -> with(n, Field.EXPOSURE, "Much of the work you described can be performed "
+                + "digitally, which raises your AI Exposure."));
+        assertThat(validator.validate(withDriver, architect)).isSameAs(withDriver);
+    }
+
+    @Test
+    void anExactModerateTieAcceptsEitherRank1Factor() {
+        var tie = manualContext("Moderate",
+                List.of(factor("digital_executability", DecisionFactorEffect.INCREASES_AI_EXPOSURE, 0.05)),
+                List.of(factor("physical_world_dependency", DecisionFactorEffect.REDUCES_AI_EXPOSURE, -0.05)));
+        for (String explanation : List.of("Much of your work can be performed digitally, which raises your AI Exposure.",
+                "Your work relies on physical presence, which lowers your AI Exposure.")) {
+            var narrative = safe(n -> with(n, Field.EXPOSURE, explanation));
+            assertThat(validator.validate(narrative, tie)).as(explanation).isSameAs(narrative);
+        }
+    }
+
+    @Test
+    void anEmptyRelevantListFallsBackToOrdinaryGroundingAndNoFactorsRequiresNothing() {
+        // Low result with no exposure-lowering factors: any selected factor grounds the explanation.
+        var lowWithoutProtective = manualContext("Low",
+                List.of(factor("task_repeatability", DecisionFactorEffect.INCREASES_AI_EXPOSURE, 0.02)), List.of());
+        var grounded = safe(n -> with(n, Field.EXPOSURE, "Some of your work follows set routines."));
+        assertThat(validator.validate(grounded, lowWithoutProtective)).isSameAs(grounded);
+        assertThatThrownBy(() -> validator.validate(safe(n -> with(n, Field.EXPOSURE,
+                "Your result reflects your overall profile.")), lowWithoutProtective))
+                .hasMessageContaining("explain at least one of the factors Java selected");
+        // No factors at all: nothing is manufactured.
+        var none = manualContext("Moderate", List.of(), List.of());
+        var anything = safe(n -> with(n, Field.EXPOSURE, "Your result reflects your overall profile."));
+        assertThat(validator.validate(anything, none)).isSameAs(anything);
+    }
+
+    // ---- Internal dimension labels never reach the visitor ----
+
+    @Test
+    void internalDimensionLabelsAndCodesAreRejected() {
+        for (String jargon : List.of(
+                "Your role benefits from high human trust dependency.",
+                "The task repeatability of your work is low.",
+                "Your digital executability is limited.",
+                "Physical-world dependency is central to your role.",
+                "Contextual complexity shapes much of your day.",
+                "Your high original judgement supports this result.",
+                "Accountability responsibility is an important factor here.",
+                "The information sufficiency of your description was good.",
+                "The factor human_trust_dependency applies to your work.",
+                "This reflects LOW_DIGITAL_EXECUTABILITY in your work.")) {
+            rejects(safe(n -> with(n, Field.SUMMARY, jargon)), "plain language, not internal assessment labels");
+        }
+    }
+
+    @Test
+    void plainEnglishDescriptionsOfTheSameFactorsAreAccepted() {
+        for (String plain : List.of(
+                "The importance of trust and relationships in the work you described stands out.",
+                "Much of the work cannot be completed entirely through digital systems.",
+                "Your work depends on understanding changing situations and their context.",
+                "The role relies on original judgement and synthesis.",
+                "Some of your work is repeatable.",
+                "Accountability and responsibility for decisions are part of the work you described.",
+                "Physical presence matters in the work you described.")) {
+            var narrative = safe(n -> with(n, Field.SUMMARY, plain));
+            assertThat(validator.validate(narrative, nurseContext())).as(plain).isSameAs(narrative);
+        }
+    }
+
+    // ---- Regulated and safety-critical procedures ----
+
+    @Test
+    void adviceToSetAsideLoosenOrWorkAroundProceduresIsRejected() {
+        for (String action : List.of(
+                "Personalise established clinical routines to make the work less repetitive.",
+                "Relax standard procedures where AI can make the process quicker.",
+                "Work around existing safety checks when the tool is confident.",
+                "Reflect on the established routines in your tasks and think about areas where you can introduce "
+                        + "more personalised approaches to enhance patient care.",
+                "Bypass the confidentiality policy when sharing notes with an AI tool.",
+                "Skip the second check on medication when the system agrees.")) {
+            rejects(safe(n -> with(n, Field.ACTION, action)), "never advise setting aside");
+        }
+    }
+
+    @Test
+    void adviceThatKeepsToProceduresAndHumanReviewIsAccepted() {
+        for (String action : List.of(
+                "Explore approved technology while continuing to follow required clinical procedures and safety checks.",
+                "Use AI assistance only with appropriate human review and organisational controls.",
+                "Use approved technology in ways that remain consistent with clinical procedures and organisational policy.",
+                "Explore where technology could assist while keeping the required safety checks and human review.",
+                "Never bypass safety checks, even when a tool seems confident.",
+                "Replace manual note-taking with an approved system where your organisation allows it.")) {
+            var narrative = safe(n -> with(n, Field.ACTION, action));
+            assertThat(validator.validate(narrative, nurseContext())).as(action).isSameAs(narrative);
         }
     }
 
@@ -351,8 +489,9 @@ class ProfessionalNarrativeValidatorTest {
             assertThat(validation.get("rules").findValuesAsText("rule")).containsExactly("NARRATIVE_PRESENT",
                     "WELL_FORMED_STRUCTURED_OUTPUT", "NO_NUMERIC_SCORES_OR_PERCENTAGES",
                     "NO_UNSUPPORTED_FUTURE_PREDICTIONS", "NO_CATEGORICAL_AI_CAPABILITY_CLAIMS",
-                    "NO_JOB_LOSS_OR_SECURITY_INFERENCE", "ROLE_ADAPTABILITY_IS_ROLE_LEVEL", "NO_ENUM_STYLE_BAND_WORDS",
-                    "BRITISH_ENGLISH_SPELLING", "EXPOSURE_EXPLANATION_GROUNDED_IN_FACTORS",
+                    "NO_JOB_LOSS_OR_SECURITY_INFERENCE", "ROLE_ADAPTABILITY_IS_ROLE_LEVEL", "NO_INTERNAL_DIMENSION_JARGON",
+                    "NO_UNSAFE_PROCEDURE_DEVIATION", "NO_ENUM_STYLE_BAND_WORDS", "BRITISH_ENGLISH_SPELLING",
+                    "EXPOSURE_EXPLANATION_GROUNDED_IN_FACTORS", "EXPOSURE_EXPLANATION_LEADS_WITH_DOMINANT_FACTOR",
                     "EXPOSURE_FACTOR_DIRECTIONS_MATCH", "NO_OCCUPATION_WIDE_CLAIMS",
                     "NO_RESPONSIBILITY_LEVEL_SCORING");
             assertThat(validation.at("/rules/6/triggeringText").asText()).isEqualTo(sentence);
@@ -373,7 +512,7 @@ class ProfessionalNarrativeValidatorTest {
                 .hasMessageContaining(reason);
     }
 
-    private enum Field { SUMMARY, WHAT_THIS_MEANS, EXPOSURE, HUMAN_ADVANTAGE, ADAPTABILITY, CAUTION }
+    private enum Field { SUMMARY, WHAT_THIS_MEANS, EXPOSURE, HUMAN_ADVANTAGE, ADAPTABILITY, ACTION, CAUTION }
 
     /** A narrative that passes every rule against the nurse factors, with one field changed. */
     private static ProfessionalNarrative safe(UnaryOperator<ProfessionalNarrative> change) {
@@ -398,8 +537,35 @@ class ProfessionalNarrativeValidatorTest {
                 field == Field.HUMAN_ADVANTAGE ? text : n.humanAdvantageExplanation(),
                 n.complementarityExplanation(),
                 field == Field.ADAPTABILITY ? text : n.adaptabilityExplanation(),
-                n.practicalActions(),
+                field == Field.ACTION ? List.of(text, n.practicalActions().get(1), n.practicalActions().get(2))
+                        : n.practicalActions(),
                 field == Field.CAUTION ? text : n.cautionOrLimitations());
+    }
+
+    private static ProfessionalNarrativeContext.FactorContext factor(String id, DecisionFactorEffect effect,
+            double signedEffect) {
+        var direction = com.chikere.futureai.decision.professional.ProfessionalFactorDirection.valueOf(
+                (effect == DecisionFactorEffect.INCREASES_AI_EXPOSURE ? "HIGH_" : "LOW_") + id.toUpperCase());
+        if (id.equals("physical_world_dependency")) {
+            direction = com.chikere.futureai.decision.professional.ProfessionalFactorDirection.HIGH_PHYSICAL_WORLD_DEPENDENCY;
+        }
+        return new ProfessionalNarrativeContext.FactorContext(id, id, "description", effect, direction, 1, 2.0,
+                signedEffect);
+    }
+
+    /** A hand-built context with a chosen AI Exposure band and factor lists. */
+    private static ProfessionalNarrativeContext manualContext(String exposureBand,
+            List<ProfessionalNarrativeContext.FactorContext> drivers,
+            List<ProfessionalNarrativeContext.FactorContext> protective) {
+        var measures = java.util.Arrays.stream(com.chikere.futureai.decision.professional.ProfessionalMeasure.values())
+                .map(measure -> new ProfessionalNarrativeContext.MeasureContext(measure, measure.name(), 5.0,
+                        measure == com.chikere.futureai.decision.professional.ProfessionalMeasure.AI_EXPOSURE
+                                ? exposureBand : "Moderate"))
+                .toList();
+        return new ProfessionalNarrativeContext("Registered Nurse", "I care for patients on a busy ward.",
+                List.of("Monitor patients"), List.of("Clinical observation"), OptionalInt.empty(),
+                com.chikere.futureai.assessment.domain.AssessmentStatus.READY, measures, drivers, protective,
+                AssessmentSource.JEV, "professional-v1", "professional-decision-v1");
     }
 
     /** The registered-nurse fixture: digital executability, human trust and physical world all lower exposure. */

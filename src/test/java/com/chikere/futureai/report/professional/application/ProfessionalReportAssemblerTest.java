@@ -57,7 +57,7 @@ public class ProfessionalReportAssemblerTest {
                         assertThat(item.quality()).isEqualTo("Development fixture"));
         assertThat(paid.occupationClassification()).get().extracting(
                 ProfessionalReport.OccupationClassification::classificationCode).isEqualTo("2133");
-        assertThat(paid.methodology().reportVersion()).isEqualTo("professional-report-v1");
+        assertThat(paid.methodology().reportVersion()).isEqualTo("professional-report-v2");
     }
 
     @Test

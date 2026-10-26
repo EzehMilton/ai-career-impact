@@ -96,7 +96,7 @@ class ProfessionalReportPurchaseServiceTest {
         var snapshot = ArgumentCaptor.forClass(PurchasedProfessionalReportSnapshot.class);
         verify(store).confirmAndFreeze(eq(event), snapshot.capture());
         assertThat(snapshot.getValue().report()).isEqualTo(report);
-        assertThat(snapshot.getValue().reportVersion()).isEqualTo("professional-report-v1");
+        assertThat(snapshot.getValue().reportVersion()).isEqualTo("professional-report-v2");
         assertThat(service.processPaymentNotification(notification))
                 .isEqualTo(ProfessionalPaymentProcessingResult.ALREADY_PROCESSED);
         verify(reports, times(1)).assemble(source.assessment().id(), ProfessionalReportTier.PAID);

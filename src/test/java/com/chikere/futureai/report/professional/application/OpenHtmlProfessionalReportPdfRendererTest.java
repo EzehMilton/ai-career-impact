@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class OpenHtmlProfessionalReportPdfRendererTest {
     @Test
-    void rendersFrozenV1SnapshotAsNetworkFreePdfWithMajorPurchasedSections() throws Exception {
+    void rendersFrozenSnapshotAsNetworkFreePdfWithMajorPurchasedSections() throws Exception {
         var source = ProfessionalReportAssemblerTest.source(true, true, true);
         var report = new ProfessionalReportAssembler().assemble(source, ProfessionalReportTier.PAID);
         var snapshot = new PurchasedProfessionalReportSnapshot(java.util.UUID.randomUUID(),
@@ -26,7 +26,7 @@ class OpenHtmlProfessionalReportPdfRendererTest {
             assertThat(text).contains("Executive summary", "Your four measures", "AI Exposure",
                     "Why you received this result", "What your results mean for your work",
                     "What to focus on next", "Work guidance", "About this guidance", "Career context",
-                    "About your assessment", "professional-report-v1", "professional-report-pdf-v1",
+                    "About your assessment", "professional-report-v2", "professional-report-pdf-v2",
                     "AI Exposure describes characteristics of the work. It is not a probability");
             for (int page = 1; page <= document.getNumberOfPages(); page++) {
                 var stripper = new PDFTextStripper(); stripper.setStartPage(page); stripper.setEndPage(page);

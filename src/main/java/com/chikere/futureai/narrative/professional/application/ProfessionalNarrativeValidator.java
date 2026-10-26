@@ -39,11 +39,14 @@ public final class ProfessionalNarrativeValidator {
     static final String BAND_WORDS = "NO_ENUM_STYLE_BAND_WORDS";
     static final String SPELLING = "BRITISH_ENGLISH_SPELLING";
     static final String RESPONSIBILITY_SCORING = "NO_RESPONSIBILITY_LEVEL_SCORING";
+    static final String DOMINANT = "EXPOSURE_EXPLANATION_LEADS_WITH_DOMINANT_FACTOR";
+    static final String JARGON = "NO_INTERNAL_DIMENSION_JARGON";
+    static final String UNSAFE_PROCEDURE = "NO_UNSAFE_PROCEDURE_DEVIATION";
 
     private static final List<String> TEXT_RULES = List.of("NARRATIVE_PRESENT", "WELL_FORMED_STRUCTURED_OUTPUT",
-            NUMERIC, FUTURE, CAPABILITY, JOB_LOSS, ADAPTABILITY, BAND_WORDS, SPELLING);
+            NUMERIC, FUTURE, CAPABILITY, JOB_LOSS, ADAPTABILITY, JARGON, UNSAFE_PROCEDURE, BAND_WORDS, SPELLING);
     private static final List<String> CONTEXT_RULES = Stream.concat(TEXT_RULES.stream(),
-            Stream.of(GROUNDED, DIRECTIONS, OCCUPATION, RESPONSIBILITY_SCORING)).toList();
+            Stream.of(GROUNDED, DOMINANT, DIRECTIONS, OCCUPATION, RESPONSIBILITY_SCORING)).toList();
 
     // No trailing \\b: a percent sign is not a word character, so "92%" would otherwise slip through.
     private static final Pattern NUMERIC_CLAIM = Pattern.compile(
@@ -131,6 +134,44 @@ public final class ProfessionalNarrativeValidator {
             "into", "their", "your", "other", "about", "ensure", "ensuring", "provide", "providing", "manage",
             "managing", "work", "working", "team", "teams", "daily", "using", "make", "making", "support");
 
+    /**
+     * Internal assessment vocabulary that must not reach a visitor: the dimension labels, raw dimension ids and
+     * direction or effect codes. Natural words such as trust, context, judgement or physical presence are fine; only
+     * the labels are caught, and "original judgement" only when used as a high/low dimension label.
+     */
+    private static final List<Pattern> INTERNAL_JARGON = List.of(
+            Pattern.compile("(?i)\\b(?:human\\s+)?trust\\s+dependency\\b"),
+            Pattern.compile("(?i)\\b(?:task\\s+)?repeatability\\b"),
+            Pattern.compile("(?i)\\b(?:digital\\s+)?executability\\b"),
+            Pattern.compile("(?i)\\bphysical[-\\s]world\\s+dependency\\b"),
+            Pattern.compile("(?i)\\bcontextual\\s+complexity\\b"),
+            Pattern.compile("(?i)\\b(?:high|low|higher|lower)\\s+original\\s+judge?ments?\\b"
+                    + "|\\boriginal\\s+judge?ment\\s+(?:dimension|score|factor|rating|level)\\b"),
+            Pattern.compile("(?i)\\baccountability\\s+responsibility\\b"),
+            Pattern.compile("(?i)\\binformation\\s+sufficiency\\b"),
+            Pattern.compile("(?i)\\b(?:information_sufficient|task_repeatability|digital_executability|human_trust_dependency"
+                    + "|physical_world_dependency|contextual_complexity|original_judgment|accountability_responsibility"
+                    + "|ai_complementarity)\\b"),
+            Pattern.compile("\\b(?:HIGH|LOW)_[A-Z]+(?:_[A-Z]+)*\\b|\\b(?:INCREASES|REDUCES)_AI_EXPOSURE\\b"));
+
+    /** Advice to set aside, loosen or work around a rule, procedure, check or obligation. */
+    private static final Pattern DEVIATION = Pattern.compile("(?i)\\b(?:ignor\\w*|bypass\\w*|skip\\w*|loosen\\w*"
+            + "|relax\\w*|deviat\\w*|depart\\w*\\s+from|work(?:ing)?\\s+around|circumvent\\w*|overrid\\w*"
+            + "|disregard\\w*|shortcut\\w*|cut(?:ting)?\\s+corners\\s+(?:on|with)|personali[sz]\\w*|abandon\\w*"
+            + "|drop(?:ping)?|replac\\w*|bend(?:ing)?|waiv\\w*|set(?:ting)?\\s+aside)\\b");
+    private static final Pattern REGULATED = Pattern.compile("(?i)\\b(?:procedures?|protocols?|checks?|checklists?"
+            + "|polic(?:y|ies)|guidelines?|regulations?|regulatory\\s+requirements?|legal\\s+(?:obligations?"
+            + "|requirements?)|professional\\s+standards?|standards\\s+of\\s+practice|security\\s+controls?|controls?"
+            + "|safeguards?|confidentiality|privacy|data\\s+protection|consent|compliance"
+            + "|(?:established|clinical|safety|standard|required|mandatory)\\s+routines?)\\b");
+    /** Established routines or procedures together with personalising, varying or loosening them, anywhere in a sentence. */
+    private static final Pattern ESTABLISHED_PROCEDURE = Pattern.compile("(?i)\\b(?:established|clinical|safety"
+            + "|standard|required|mandatory|set)\\s+(?:routines?|procedures?|protocols?|processes?)\\b");
+    private static final Pattern LOOSENING = Pattern.compile("(?i)\\b(?:personali[sz]\\w*|less\\s+repetitive|var(?:y|ied)"
+            + "|deviat\\w*|depart\\w*|loosen\\w*|relax\\w*|bend\\w*)\\b");
+    private static final Pattern SAFETY_NEGATION = Pattern.compile("(?i)\\b(?:never|not|no|without|avoid\\w*"
+            + "|rather\\s+than|instead\\s+of)\\b|n't\\b");
+
     private static final Pattern ENUM_BAND_WORD = Pattern.compile("\\b(?:LOW|MODERATE|HIGH)\\b");
     private static final Pattern AMERICAN_SPELLING = Pattern.compile("(?i)\\b(?:judgments?|prioritiz\\w*"
             + "|personaliz\\w*|organiz\\w*|emphasiz\\w*|analyz\\w*|recogniz\\w*|behaviors?|optimiz\\w*|specializ\\w*"
@@ -199,6 +240,13 @@ public final class ProfessionalNarrativeValidator {
                 "narrative must not turn AI Exposure into job loss, replacement or job security");
         claim(checks, ADAPTABILITY, List.of(narrative.adaptabilityExplanation()), PERSONAL_ADAPTABILITY_CLAIMS,
                 "Role Adaptability must describe the structure of the role, not the person");
+        Optional<String> jargon = NarrativeClaimMatcher.firstUndisclaimed(text, INTERNAL_JARGON);
+        checks.check(JARGON, jargon.isPresent(), () -> jargon.orElse(null),
+                "narrative must describe factors in plain language, not internal assessment labels");
+        Optional<String> unsafe = unsafeProcedureAdvice(text);
+        checks.check(UNSAFE_PROCEDURE, unsafe.isPresent(), () -> unsafe.orElse(null),
+                "narrative must never advise setting aside, loosening or working around procedures, safety checks, "
+                        + "policies or legal and professional obligations");
         checks.check(BAND_WORDS, text.stream().anyMatch(value -> ENUM_BAND_WORD.matcher(value).find()),
                 () -> NarrativeRuleChecks.firstMatch(ENUM_BAND_WORD, text),
                 "narrative must use the natural band words low, moderate and high, not capitals");
@@ -221,6 +269,11 @@ public final class ProfessionalNarrativeValidator {
         boolean grounded = supplied.isEmpty() || supplied.keySet().stream().anyMatch(id -> mentions(explanation, id));
         checks.check(GROUNDED, !grounded, () -> explanation,
                 "the AI Exposure explanation must explain at least one of the factors Java selected");
+
+        List<String> dominant = DominantExposureFactor.of(context);
+        boolean leads = dominant.isEmpty() || dominant.stream().anyMatch(id -> mentions(explanation, id));
+        checks.check(DOMINANT, !leads, () -> explanation,
+                "the AI Exposure explanation must include the dominant factor Java selected for this result");
 
         Optional<String> contradiction = directionContradiction(explanation, supplied);
         checks.check(DIRECTIONS, contradiction.isPresent(), () -> contradiction.orElse(null),
@@ -301,6 +354,45 @@ public final class ProfessionalNarrativeValidator {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * A sentence advising that a procedure, check, policy or obligation be set aside, loosened, personalised or
+     * worked around. A deviation word directly followed by a regulated object counts, as does an established
+     * routine or procedure mentioned together with personalising or loosening it. Negated advice ("never bypass…",
+     * "without skipping…") is left alone, and keeping to procedures is never caught.
+     */
+    private static Optional<String> unsafeProcedureAdvice(List<String> texts) {
+        for (String text : texts) {
+            for (String sentence : NarrativeClaimMatcher.sentences(text)) {
+                var deviation = DEVIATION.matcher(sentence);
+                while (deviation.find()) {
+                    String after = sentence.substring(deviation.end());
+                    var clauseEnd = CLAUSE_END.matcher(after);
+                    String clause = clauseEnd.find() ? after.substring(0, clauseEnd.start()) : after;
+                    String nearby = String.join(" ", java.util.Arrays.stream(clause.trim().split("\\s+")).limit(6).toList());
+                    if (REGULATED.matcher(nearby).find() && !negatedBefore(sentence, deviation.start())) {
+                        return Optional.of(sentence.strip());
+                    }
+                }
+                var established = ESTABLISHED_PROCEDURE.matcher(sentence);
+                var loosening = LOOSENING.matcher(sentence);
+                if (established.find() && loosening.find() && !negatedBefore(sentence, loosening.start())) {
+                    return Optional.of(sentence.strip());
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static boolean negatedBefore(String sentence, int position) {
+        String before = sentence.substring(0, position);
+        var breaks = Pattern.compile("[,;:]|\\bbut\\b").matcher(before);
+        int clauseStart = 0;
+        while (breaks.find()) {
+            clauseStart = breaks.end();
+        }
+        return SAFETY_NEGATION.matcher(before.substring(clauseStart)).find();
     }
 
     /** A crude shared stem, so "monitoring", "monitor" and "monitored" all match. */
