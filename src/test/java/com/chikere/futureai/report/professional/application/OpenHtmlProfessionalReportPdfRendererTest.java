@@ -26,7 +26,7 @@ class OpenHtmlProfessionalReportPdfRendererTest {
             assertThat(text).contains("Executive summary", "Your four measures", "AI Exposure",
                     "Why you received this result", "What your results mean for your work",
                     "What to focus on next", "Work guidance", "About this guidance", "Career context",
-                    "About your assessment", "professional-report-v2", "professional-report-pdf-v2",
+                    "About your assessment", "professional-report-v2", "professional-report-pdf-v3",
                     "AI Exposure describes characteristics of the work. It is not a probability");
             for (int page = 1; page <= document.getNumberOfPages(); page++) {
                 var stripper = new PDFTextStripper(); stripper.setStartPage(page); stripper.setEndPage(page);

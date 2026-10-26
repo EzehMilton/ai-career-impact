@@ -81,8 +81,11 @@ public final class OpenHtmlProfessionalReportPdfRenderer implements Professional
         }
 
         heading(out, "Why you received this result");
-        listBlock(out, "What increases AI Exposure", report.exposureDrivers(), "column");
-        listBlock(out, "What reduces AI Exposure", report.protectiveFactors(), "column");
+        // Only material factors are listed, so either side can be legitimately empty (pdf-v3).
+        factorBlock(out, "What increases AI Exposure", report.exposureDrivers(),
+                "No strong exposure drivers were identified.");
+        factorBlock(out, "What reduces AI Exposure", report.protectiveFactors(),
+                "No strong factors reducing AI Exposure were identified.");
 
         // Each measure's detailed explanation is already in its card above; only the overall meaning is new here.
         heading(out, "What your results mean for your work");
@@ -154,6 +157,14 @@ public final class OpenHtmlProfessionalReportPdfRenderer implements Professional
                 .append(escape(item.relevanceNote())).append("</p></article>");
     }
 
+    private void factorBlock(StringBuilder out, String title, java.util.List<String> factors, String whenEmpty) {
+        if (!factors.isEmpty()) {
+            listBlock(out, title, factors, "column");
+            return;
+        }
+        out.append("<div class=\"card column\"><h3>").append(title).append("</h3><p>").append(escape(whenEmpty))
+                .append("</p></div>");
+    }
     private void listBlock(StringBuilder out, String title, java.util.List<String> values, String css) {
         out.append("<div class=\"card ").append(css).append("\"><h3>").append(title).append("</h3>"); list(out, values); out.append("</div>");
     }

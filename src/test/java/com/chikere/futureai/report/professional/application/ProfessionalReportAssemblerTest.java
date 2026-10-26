@@ -2,7 +2,10 @@ package com.chikere.futureai.report.professional.application;
 
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.assessment.professional.application.*;
+import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicy;
 import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV1;
+import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV2;
+import com.chikere.futureai.decision.professional.ProfessionalMaterialityCalibrationCases;
 import com.chikere.futureai.evidence.professional.application.*;
 import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
 import com.chikere.futureai.judgment.domain.DimensionJudgment;
@@ -127,14 +130,47 @@ public class ProfessionalReportAssemblerTest {
         assertThat(paid.narrative().cautionOrLimitations()).contains("Caution");
     }
 
+    @Test
+    void removingTheNursesImmaterialRepeatabilityFactorRemovesTheGuidanceItDrove() {
+        Map<String, Double> nurse = ProfessionalMaterialityCalibrationCases.registeredNurse();
+        var v1 = assembler.assemble(source(true, true, true, nurse, new ProfessionalDecisionPolicyV1()),
+                ProfessionalReportTier.PAID);
+        var v2 = assembler.assemble(source(true, true, true, nurse, new ProfessionalDecisionPolicyV2()),
+                ProfessionalReportTier.PAID);
+
+        // v1 selected the +0.009 task-repeatability effect as raising AI Exposure, which drove both items.
+        assertThat(v1.skillPriorities()).extracting(ProfessionalReport.SkillDevelopmentPriority::title)
+                .contains("Process automation");
+        assertThat(v1.workFocus().areas()).extracting(ProfessionalReport.WorkFocusGuidance::title)
+                .contains("Look for repeatable digital preparation work");
+        // v2 selects nothing raising AI Exposure, so the factor-driven items follow automatically.
+        assertThat(v2.exposureDrivers()).isEmpty();
+        assertThat(v2.protectiveFactors()).isEqualTo(v1.protectiveFactors()).hasSize(3);
+        assertThat(v2.skillPriorities()).extracting(ProfessionalReport.SkillDevelopmentPriority::title)
+                .doesNotContain("Process automation")
+                // Driven by AI Complementarity, not by the factor lists: out of scope for materiality.
+                .contains("AI-tool fluency");
+        assertThat(v2.workFocus().areas()).extracting(ProfessionalReport.WorkFocusGuidance::title)
+                .doesNotContain("Look for repeatable digital preparation work");
+        assertThat(v2.methodology().decisionPolicyVersion()).isEqualTo("professional-decision-v2");
+        assertThat(v1.methodology().decisionPolicyVersion()).isEqualTo("professional-decision-v1");
+    }
+
     public static ProfessionalReportSource source(boolean narrativeAvailable, boolean evidenceAvailable,
             boolean classificationAvailable) {
         return source(narrativeAvailable, evidenceAvailable, classificationAvailable, Map.of());
     }
 
-    /** The architect fixture with some judgment values replaced, keeping each judgment's confidence. */
+    /** The architect fixture with some judgment values replaced, decided by the current policy. */
     public static ProfessionalReportSource source(boolean narrativeAvailable, boolean evidenceAvailable,
             boolean classificationAvailable, Map<String, Double> values) {
+        return source(narrativeAvailable, evidenceAvailable, classificationAvailable, values,
+                new ProfessionalDecisionPolicyV2());
+    }
+
+    /** The architect fixture with some judgment values replaced, keeping each judgment's confidence. */
+    public static ProfessionalReportSource source(boolean narrativeAvailable, boolean evidenceAvailable,
+            boolean classificationAvailable, Map<String, Double> values, ProfessionalDecisionPolicy policy) {
         Instant time = Instant.parse("2026-09-30T12:00:00Z");
         var state = new ProfessionalAssessmentState("Software Architect", "Designs complex systems.",
                 List.of("Design systems", "Resolve trade-offs"), List.of("Architecture"), OptionalInt.of(14));
@@ -145,7 +181,7 @@ public class ProfessionalReportAssemblerTest {
                                 OptionalDouble.of(values.get(judgment.dimensionId())), judgment.categoricalValue(),
                                 judgment.confidence(), judgment.confidenceValue(), judgment.probabilityDistribution())
                         : judgment).toList());
-        var decision = new ProfessionalDecisionPolicyV1().decide(judgments);
+        var decision = policy.decide(judgments);
         var assessment = new StoredProfessionalAssessment(ID, time, state, judgments,
                 new ProfessionalAssessmentResult(decision, AssessmentSource.LOCAL_FIXTURE,
                         judgments.schemaVersion(), decision.policyVersion()), Optional.empty());

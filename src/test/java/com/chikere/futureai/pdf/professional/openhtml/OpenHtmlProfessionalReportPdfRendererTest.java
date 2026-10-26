@@ -1,6 +1,8 @@
 package com.chikere.futureai.pdf.professional.openhtml;
 
 import com.chikere.futureai.assessment.domain.AssessmentStatus;
+import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV2;
+import com.chikere.futureai.decision.professional.ProfessionalMaterialityCalibrationCases;
 import com.chikere.futureai.pdf.professional.application.ProfessionalReportPdfModel;
 import com.chikere.futureai.pdf.professional.application.ProfessionalReportPdfVersions;
 import com.chikere.futureai.report.professional.application.ProfessionalReportAssembler;
@@ -64,6 +66,39 @@ class OpenHtmlProfessionalReportPdfRendererTest {
 
         assertThat(html).contains("Verified external career information was not available for this assessment.");
         assertThat(html).doesNotContain("Career context", "External career context is currently unavailable");
+    }
+
+    @Test
+    void anEmptyFactorSideRendersAnExplanatorySentenceInsteadOfAnEmptyList() {
+        String noDrivers = html(ProfessionalMaterialityCalibrationCases.registeredNurse());
+        assertThat(noDrivers).contains("<h3>What increases AI Exposure</h3><p>No strong exposure drivers were identified.</p>")
+                .contains("<h3>What reduces AI Exposure</h3><ul><li>")
+                .doesNotContain("No strong factors reducing AI Exposure were identified.", "<ul></ul>");
+
+        String noReducers = html(ProfessionalMaterialityCalibrationCases.managementAccountant());
+        assertThat(noReducers).contains("<h3>What increases AI Exposure</h3><ul><li>",
+                "<h3>What reduces AI Exposure</h3><p>No strong factors reducing AI Exposure were identified.</p>")
+                .doesNotContain("No strong exposure drivers were identified.", "<ul></ul>");
+
+        String neither = html(ProfessionalMaterialityCalibrationCases.raw(Map.of("task_repeatability", 0.01,
+                "human_trust_dependency", -0.012)));
+        assertThat(neither).contains("No strong exposure drivers were identified.",
+                "No strong factors reducing AI Exposure were identified.").doesNotContain("<ul></ul>");
+
+        // With both sides populated neither sentence appears.
+        assertThat(renderer.html(model())).doesNotContain("No strong exposure drivers were identified.",
+                "No strong factors reducing AI Exposure were identified.");
+        assertThat(ProfessionalReportPdfVersions.PDF_TEMPLATE).isEqualTo("professional-report-pdf-v3");
+    }
+
+    private String html(Map<String, Double> values) {
+        var source = ProfessionalReportAssemblerTest.source(true, true, true, values, new ProfessionalDecisionPolicyV2());
+        var report = new ProfessionalReportAssembler().assemble(source, ProfessionalReportTier.PAID);
+        assertThat(new String(renderer.render(new ProfessionalReportPdfModel(ProfessionalReportPdfVersions.PDF_TEMPLATE,
+                report.reportVersion(), Instant.parse("2026-10-26T09:00:00Z"), report)).bytes(), 0, 5,
+                StandardCharsets.US_ASCII)).isEqualTo("%PDF-");
+        return renderer.html(new ProfessionalReportPdfModel(ProfessionalReportPdfVersions.PDF_TEMPLATE,
+                report.reportVersion(), Instant.parse("2026-10-26T09:00:00Z"), report));
     }
 
     /** A purchased report whose stored status is READY_WITH_CAUTION and whose narrative carries a caution. */

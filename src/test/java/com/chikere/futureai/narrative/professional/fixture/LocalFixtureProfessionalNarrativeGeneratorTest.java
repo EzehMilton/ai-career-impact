@@ -5,9 +5,12 @@ import com.chikere.futureai.assessment.professional.application.AssessmentSource
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentResult;
 import com.chikere.futureai.assessment.professional.application.StoredProfessionalAssessment;
 import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV1;
+import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV2;
+import com.chikere.futureai.decision.professional.ProfessionalMaterialityCalibrationCases;
 import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfessionalJudgmentProvider;
 import com.chikere.futureai.narrative.professional.application.NarrativeSource;
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeContextFactory;
+import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeValidator;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -39,5 +42,26 @@ class LocalFixtureProfessionalNarrativeGeneratorTest {
         assertThat(generator.source()).isEqualTo(NarrativeSource.LOCAL_FIXTURE);
         assertThat(generator.providerIdentifier()).isEqualTo("local-fixture");
         assertThat(generator.modelIdentifier()).isEmpty();
+    }
+
+    @Test
+    void withNoMaterialFactorTheFixtureNarrativeAttributesTheResultToNoSpecificFactorAndIsValid() {
+        var state = new ProfessionalAssessmentState("Role", "Work described.", List.of("Responsibility one"),
+                List.of("Skill one"), OptionalInt.empty());
+        var judgments = ProfessionalMaterialityCalibrationCases.judgments(ProfessionalMaterialityCalibrationCases.raw(
+                java.util.Map.of("task_repeatability", 0.01, "human_trust_dependency", -0.012)));
+        var decision = new ProfessionalDecisionPolicyV2().decide(judgments);
+        var context = new ProfessionalNarrativeContextFactory().create(new StoredProfessionalAssessment(
+                UUID.randomUUID(), Instant.EPOCH, state, judgments, new ProfessionalAssessmentResult(decision,
+                        AssessmentSource.LOCAL_FIXTURE, judgments.schemaVersion(), decision.policyVersion()),
+                Optional.empty()));
+        assertThat(context.exposureDrivers()).isEmpty();
+        assertThat(context.protectiveFactors()).isEmpty();
+
+        var narrative = new LocalFixtureProfessionalNarrativeGenerator().generate(context);
+
+        assertThat(narrative.exposureExplanation()).startsWith("No individual characteristic of the work was strong "
+                + "enough to highlight.").contains("combined effect of several smaller characteristics");
+        assertThat(new ProfessionalNarrativeValidator().validate(narrative, context)).isSameAs(narrative);
     }
 }

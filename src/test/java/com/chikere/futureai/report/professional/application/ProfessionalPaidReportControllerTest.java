@@ -1,5 +1,6 @@
 package com.chikere.futureai.report.professional.application;
 
+import com.chikere.futureai.decision.professional.ProfessionalMaterialityCalibrationCases;
 import com.chikere.futureai.payment.professional.application.*;
 import com.chikere.futureai.report.professional.web.ProfessionalPaidReportController;
 import com.chikere.futureai.report.professional.web.ProfessionalReportViewMapper;
@@ -23,6 +24,33 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ProfessionalPaidReportControllerTest {
     @Autowired MockMvc mvc;
     @MockitoBean ProfessionalReportPurchaseUseCase purchaseService;
+
+    @Test
+    void anEmptyFactorSideIsExplainedRatherThanLeftBlank() throws Exception {
+        var noDrivers = paidHtml(ProfessionalMaterialityCalibrationCases.registeredNurse());
+        assertThat(noDrivers).containsSubsequence("What increases AI Exposure",
+                "No strong exposure drivers were identified.", "What reduces AI Exposure", "<li>")
+                .doesNotContain("No strong factors reducing AI Exposure were identified.");
+
+        var noReducers = paidHtml(ProfessionalMaterialityCalibrationCases.managementAccountant());
+        assertThat(noReducers).containsSubsequence("What increases AI Exposure", "<li>", "What reduces AI Exposure",
+                "No strong factors reducing AI Exposure were identified.")
+                .doesNotContain("No strong exposure drivers were identified.");
+
+        var neither = paidHtml(ProfessionalMaterialityCalibrationCases.raw(java.util.Map.of(
+                "task_repeatability", 0.01, "human_trust_dependency", -0.012)));
+        assertThat(neither).contains("No strong exposure drivers were identified.",
+                "No strong factors reducing AI Exposure were identified.");
+    }
+
+    private String paidHtml(java.util.Map<String, Double> values) throws Exception {
+        var source = ProfessionalReportAssemblerTest.source(true, true, true, values,
+                new com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV2());
+        var report = new ProfessionalReportAssembler().assemble(source, ProfessionalReportTier.PAID);
+        when(purchaseService.findPurchasedReport(source.assessment().id())).thenReturn(Optional.of(report));
+        return mvc.perform(get("/professional-assessment/" + source.assessment().id() + "/report"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+    }
 
     @Test
     void activeEntitlementRendersFrozenPurchasedReport() throws Exception {

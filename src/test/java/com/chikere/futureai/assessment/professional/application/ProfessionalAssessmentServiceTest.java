@@ -2,7 +2,7 @@ package com.chikere.futureai.assessment.professional.application;
 
 import com.chikere.futureai.configuration.JourneyMetrics;
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
-import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV1;
+import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV2;
 import com.chikere.futureai.decision.professional.ProfessionalMeasure;
 import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfessionalJudgmentProvider;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -41,14 +41,14 @@ class ProfessionalAssessmentServiceTest {
         when(provider.source()).thenReturn(AssessmentSource.JEV);
 
         ProfessionalAssessmentResult result = new ProfessionalAssessmentService(
-                provider, new ProfessionalDecisionPolicyV1()).assess(state);
+                provider, new ProfessionalDecisionPolicyV2()).assess(state);
 
         verify(provider, times(1)).judge(state);
         verify(provider, times(1)).source();
         verifyNoMoreInteractions(provider);
         assertThat(result.source()).isEqualTo(AssessmentSource.JEV);
         assertThat(result.judgmentSchemaVersion()).isEqualTo("professional-v1");
-        assertThat(result.decisionPolicyVersion()).isEqualTo(ProfessionalDecisionPolicyV1.POLICY_VERSION);
+        assertThat(result.decisionPolicyVersion()).isEqualTo(ProfessionalDecisionPolicyV2.POLICY_VERSION);
         assertThat(result.decision().policyVersion()).isEqualTo(result.decisionPolicyVersion());
         assertThat(result.decision().measure(ProfessionalMeasure.AI_EXPOSURE).orElseThrow().indicator())
                 .isCloseTo(9.471, within(0.001));
@@ -62,7 +62,7 @@ class ProfessionalAssessmentServiceTest {
         when(provider.judge(state)).thenThrow(failure);
 
         ProfessionalAssessmentService service = new ProfessionalAssessmentService(
-                provider, new ProfessionalDecisionPolicyV1());
+                provider, new ProfessionalDecisionPolicyV2());
 
         assertThatThrownBy(() -> service.assess(state)).isSameAs(failure);
         verify(provider, times(1)).judge(state);
@@ -79,7 +79,7 @@ class ProfessionalAssessmentServiceTest {
         when(provider.judge(state)).thenThrow(failure);
         MeterRegistry registry = new SimpleMeterRegistry();
         ProfessionalAssessmentService service = new ProfessionalAssessmentService(provider,
-                new ProfessionalDecisionPolicyV1(), null, Clock.systemUTC(), new JourneyMetrics(registry));
+                new ProfessionalDecisionPolicyV2(), null, Clock.systemUTC(), new JourneyMetrics(registry));
 
         assertThatThrownBy(() -> service.assess(state)).isSameAs(failure);
         assertThat(registry.get("judgment.failures").tag("journey", "professional").counter().count())
@@ -92,11 +92,11 @@ class ProfessionalAssessmentServiceTest {
     void fixtureAssessmentCarriesFixtureProvenanceToTheApplicationResult() {
         ProfessionalAssessmentResult result = new ProfessionalAssessmentService(
                 new LocalFixtureProfessionalJudgmentProvider("electrician"),
-                new ProfessionalDecisionPolicyV1()).assess(state("Electrician"));
+                new ProfessionalDecisionPolicyV2()).assess(state("Electrician"));
 
         assertThat(result.source()).isEqualTo(AssessmentSource.LOCAL_FIXTURE);
         assertThat(result.judgmentSchemaVersion()).isEqualTo("professional-v1");
-        assertThat(result.decisionPolicyVersion()).isEqualTo(ProfessionalDecisionPolicyV1.POLICY_VERSION);
+        assertThat(result.decisionPolicyVersion()).isEqualTo(ProfessionalDecisionPolicyV2.POLICY_VERSION);
     }
 
     @Test
@@ -104,7 +104,7 @@ class ProfessionalAssessmentServiceTest {
         var state = state("Software Architect");
         var judgments = new LocalFixtureProfessionalJudgmentProvider("senior_software_architect").judge(state);
         var provider = mock(ProfessionalJudgmentProvider.class);
-        var policy = new ProfessionalDecisionPolicyV1();
+        var policy = new ProfessionalDecisionPolicyV2();
         var store = mock(ProfessionalAssessmentStore.class);
         org.mockito.Mockito.doReturn(judgments).when(provider).judge(state);
         when(provider.source()).thenReturn(AssessmentSource.JEV);
@@ -138,7 +138,7 @@ class ProfessionalAssessmentServiceTest {
         var state = state("Electrician");
         var provider = mock(ProfessionalJudgmentProvider.class);
         var store = mock(ProfessionalAssessmentStore.class);
-        var service = new ProfessionalAssessmentService(provider, new ProfessionalDecisionPolicyV1(),
+        var service = new ProfessionalAssessmentService(provider, new ProfessionalDecisionPolicyV2(),
                 store, Clock.systemUTC());
         when(provider.judge(state)).thenThrow(new IllegalStateException("Jev unavailable"));
         assertThatThrownBy(() -> service.submitProfessionalAssessment(state))

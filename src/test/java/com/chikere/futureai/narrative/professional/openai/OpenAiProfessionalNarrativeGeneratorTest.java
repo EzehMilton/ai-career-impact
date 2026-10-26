@@ -184,7 +184,19 @@ class OpenAiProfessionalNarrativeGeneratorTest {
 
     @Test
     void thePromptVersionIsBumpedForTheNewContract() {
-        assertThat(ProfessionalNarrativeVersions.PROMPT_AND_SCHEMA).isEqualTo("professional-narrative-v5");
+        assertThat(ProfessionalNarrativeVersions.PROMPT_AND_SCHEMA).isEqualTo("professional-narrative-v6");
+    }
+
+    @Test
+    void thePromptExplainsThatFactorListsAreMaterialOnlyAndMayBeEmpty() {
+        String prompt = OpenAiProfessionalNarrativeGenerator.SYSTEM_INSTRUCTIONS.replaceAll("\\s+", " ");
+        assertThat(prompt).contains("They contain only factors material enough to highlight",
+                "An empty list is meaningful and correct",
+                "Do not assume there must be factors on both sides, and never invent a factor because a list is empty",
+                "no material factor was identified as strongly increasing AI Exposure",
+                "If factorsLoweringAiExposure is empty, do not invent anything that lowers AI Exposure",
+                "If both lists are empty, do not attribute the result to any specific characteristic or name a main reason",
+                "the combined effect of several smaller characteristics of the work");
     }
 
     @SuppressWarnings("unchecked")

@@ -1,6 +1,7 @@
 package com.chikere.futureai.assessment.professional.application;
 
-import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV1;
+import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicy;
+import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV2;
 import com.chikere.futureai.evidence.professional.application.ProfessionalEvidenceProvider;
 import com.chikere.futureai.evidence.professional.application.ProfessionalEvidenceRequestFactory;
 import com.chikere.futureai.evidence.professional.application.ProfessionalEvidenceService;
@@ -27,15 +28,16 @@ import java.util.Optional;
 @Configuration(proxyBeanMethods = false)
 public class ProfessionalAssessmentConfiguration {
 
+    /** New assessments are decided under v2; stored v1 assessments keep their saved decision. */
     @Bean
-    ProfessionalDecisionPolicyV1 professionalDecisionPolicyV1(ObjectProvider<AssessmentTrace> trace) {
-        return new ProfessionalDecisionPolicyV1(trace.getIfAvailable(AssessmentTrace::disabled));
+    ProfessionalDecisionPolicy professionalDecisionPolicy(ObjectProvider<AssessmentTrace> trace) {
+        return new ProfessionalDecisionPolicyV2(trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean
     ProfessionalAssessmentService professionalAssessmentService(
             ProfessionalJudgmentProvider judgmentProvider,
-            ProfessionalDecisionPolicyV1 decisionPolicy,
+            ProfessionalDecisionPolicy decisionPolicy,
             ProfessionalAssessmentStore store,
             ObjectProvider<JourneyMetrics> metrics,
             ObjectProvider<AssessmentTrace> trace) {

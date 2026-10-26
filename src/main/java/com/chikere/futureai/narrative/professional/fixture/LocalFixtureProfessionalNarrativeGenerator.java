@@ -20,9 +20,6 @@ public final class LocalFixtureProfessionalNarrativeGenerator implements Profess
         }
         String exposureBand = band(context, ProfessionalMeasure.AI_EXPOSURE);
         String complementarityBand = band(context, ProfessionalMeasure.AI_COMPLEMENTARITY);
-        String driver = context.exposureDrivers().isEmpty()
-                ? "the mix of tasks described"
-                : describe(context.exposureDrivers().getFirst().direction());
         String protection = context.protectiveFactors().isEmpty()
                 ? "the parts of the role that still need human context and accountability"
                 : describe(context.protectiveFactors().getFirst().direction());
@@ -32,7 +29,7 @@ public final class LocalFixtureProfessionalNarrativeGenerator implements Profess
                         + exposureBand + " while scope for AI complementarity is " + complementarityBand + ".",
                 "These measures describe the work you described as it is today; exposure and human value can "
                         + "exist at the same time.",
-                exposureExplanation(context, driver),
+                exposureExplanation(context),
                 "Human value remains visible where the work depends on " + protection + ".",
                 "There may be scope to use AI for repeatable or information-heavy tasks while keeping human "
                         + "judgement, context and accountability in the loop.",
@@ -81,14 +78,21 @@ public final class LocalFixtureProfessionalNarrativeGenerator implements Profess
 
     /**
      * Explains AI Exposure from Java's selected factors: the strongest factor raising it and the strongest lowering
-     * it, so whichever of them is dominant for the result is always included.
+     * it, so whichever of them is dominant for the result is always included. With no material factor on either
+     * side, the result is attributed to no specific characteristic.
      */
-    private String exposureExplanation(ProfessionalNarrativeContext context, String driver) {
+    private String exposureExplanation(ProfessionalNarrativeContext context) {
         boolean drivers = !context.exposureDrivers().isEmpty();
         boolean protective = !context.protectiveFactors().isEmpty();
+        if (!drivers && !protective) {
+            return "No individual characteristic of the work was strong enough to highlight. The " + band(context,
+                    ProfessionalMeasure.AI_EXPOSURE) + " AI Exposure result reflects the combined effect of several "
+                    + "smaller characteristics of the work you described.";
+        }
         StringBuilder explanation = new StringBuilder();
-        if (drivers || !protective) {
-            explanation.append("The assessment identifies ").append(driver)
+        if (drivers) {
+            explanation.append("The assessment identifies ")
+                    .append(describe(context.exposureDrivers().getFirst().direction()))
                     .append(" as an important reason AI may affect parts of the work.");
         }
         if (protective) {

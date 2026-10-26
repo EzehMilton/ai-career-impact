@@ -55,7 +55,24 @@ class PurchasedProfessionalReportSnapshotCodecTest {
         var model = new ProfessionalReportPdfModel(ProfessionalReportPdfVersions.PDF_TEMPLATE, "professional-report-v1",
                 Instant.parse("2026-09-01T00:00:00Z"), historical);
         assertThat(model.purchasedReportVersion()).isEqualTo("professional-report-v1");
-        assertThat(model.pdfTemplateVersion()).isEqualTo("professional-report-pdf-v2");
+        assertThat(model.pdfTemplateVersion()).isEqualTo("professional-report-pdf-v3");
+    }
+
+    @Test
+    void aSnapshotFrozenFromAV1AssessmentKeepsItsV1FactorsAfterTheV2PolicyChange() {
+        var nurse = com.chikere.futureai.decision.professional.ProfessionalMaterialityCalibrationCases.registeredNurse();
+        var v1 = new ProfessionalReportAssembler().assemble(ProfessionalReportAssemblerTest.source(true, true, true,
+                nurse, new com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV1()),
+                ProfessionalReportTier.PAID);
+        assertThat(v1.exposureDrivers()).hasSize(2);
+
+        ProfessionalReport frozen = codec.read(v1.reportVersion(), codec.write(v1));
+
+        assertThat(frozen).isEqualTo(v1);
+        assertThat(frozen.exposureDrivers()).isEqualTo(v1.exposureDrivers());
+        assertThat(frozen.methodology().decisionPolicyVersion()).isEqualTo("professional-decision-v1");
+        // The report version describes composition, not the decision, so it is unchanged by materiality.
+        assertThat(frozen.reportVersion()).isEqualTo("professional-report-v2");
     }
 
     @Test

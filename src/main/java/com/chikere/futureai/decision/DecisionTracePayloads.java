@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalDouble;
 import java.util.Objects;
 
 /**
@@ -82,6 +83,20 @@ public final class DecisionTracePayloads {
     public static Map<String, Object> factorSelection(String policyVersion, String basis,
             List<FactorCandidate> candidates, List<String> positive, List<String> negative, int limit,
             String positiveList, String negativeList) {
+        return factorSelection(policyVersion, basis, candidates, positive, negative, limit, positiveList,
+                negativeList, OptionalDouble.empty());
+    }
+
+    /**
+     * As {@link #factorSelection(String, String, List, List, List, int, String, String)}, also recording
+     * the materiality test when the policy applies one. Every candidate stays in the payload, material or
+     * not, so future calibration can see what was left out and by how much.
+     *
+     * @param materialityThreshold the minimum absolute signed effect for selection, or empty when none applies
+     */
+    public static Map<String, Object> factorSelection(String policyVersion, String basis,
+            List<FactorCandidate> candidates, List<String> positive, List<String> negative, int limit,
+            String positiveList, String negativeList, OptionalDouble materialityThreshold) {
         List<Map<String, Object>> rendered = new ArrayList<>();
         for (FactorCandidate candidate : candidates) {
             Map<String, Object> factor = new LinkedHashMap<>();
@@ -92,16 +107,26 @@ public final class DecisionTracePayloads {
             factor.put("signedEffect", candidate.signedEffect());
             double effect = candidate.signedEffect();
             factor.put("sign", effect > 0.0 ? "POSITIVE" : effect < 0.0 ? "NEGATIVE" : "ZERO");
-            factor.put("eligible", effect != 0.0);
             List<String> ranking = effect > 0.0 ? positive : effect < 0.0 ? negative : List.of();
             String list = effect > 0.0 ? positiveList : effect < 0.0 ? negativeList : null;
             int rank = ranking.indexOf(candidate.dimensionId()) + 1;
+            // The policy's ranked lists hold only the factors that passed its materiality test.
+            boolean material = effect != 0.0 && (materialityThreshold.isEmpty() || rank > 0);
             boolean selected = rank > 0 && rank <= limit;
-            factor.put("list", list);
+            factor.put("eligible", effect != 0.0 && material);
+            if (materialityThreshold.isPresent()) {
+                factor.put("absoluteEffect", Math.abs(effect));
+                factor.put("materialityThreshold", materialityThreshold.getAsDouble());
+                factor.put("material", material);
+            }
+            factor.put("list", material ? list : null);
             factor.put("rank", rank > 0 ? rank : null);
             factor.put("selected", selected);
             factor.put("reason", effect == 0.0
                     ? "score at the neutral midpoint, so no effect: never displayed"
+                    : !material
+                    ? "excluded: absolute signed effect " + Math.abs(effect) + " < materiality threshold "
+                            + materialityThreshold.getAsDouble()
                     : selected
                             ? "ranked " + rank + " of " + ranking.size() + " in " + list + ", within the top " + limit
                             : "ranked " + rank + " of " + ranking.size() + " in " + list + ", outside the top " + limit);
@@ -113,6 +138,9 @@ public final class DecisionTracePayloads {
         payload.put("formula", "signedEffect = weight x (transformedValue - 0.5)");
         payload.put("ordering", "positive list by signedEffect descending; negative list by signedEffect ascending");
         payload.put("limitPerList", limit);
+        materialityThreshold.ifPresent(threshold -> payload.put("materiality",
+                "a factor is selected only when abs(signedEffect) >= " + threshold
+                        + "; smaller effects still count towards the score"));
         payload.put("candidates", rendered);
         payload.put(positiveList, positive.subList(0, Math.min(limit, positive.size())));
         payload.put(negativeList, negative.subList(0, Math.min(limit, negative.size())));

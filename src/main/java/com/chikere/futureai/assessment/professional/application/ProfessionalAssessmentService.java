@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
-import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV1;
+import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicy;
 import com.chikere.futureai.decision.professional.ProfessionalDecisionResult;
 import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
 
@@ -24,7 +24,7 @@ public final class ProfessionalAssessmentService implements ProfessionalAssessme
     private static final Logger LOGGER = LoggerFactory.getLogger(ProfessionalAssessmentService.class);
 
     private final ProfessionalJudgmentProvider judgmentProvider;
-    private final ProfessionalDecisionPolicyV1 decisionPolicy;
+    private final ProfessionalDecisionPolicy decisionPolicy;
     private final ProfessionalAssessmentStore store;
     private final Clock clock;
     private final JourneyMetrics metrics;
@@ -32,13 +32,13 @@ public final class ProfessionalAssessmentService implements ProfessionalAssessme
 
     public ProfessionalAssessmentService(
             ProfessionalJudgmentProvider judgmentProvider,
-            ProfessionalDecisionPolicyV1 decisionPolicy) {
+            ProfessionalDecisionPolicy decisionPolicy) {
         this(judgmentProvider, decisionPolicy, null, Clock.systemUTC());
     }
 
     public ProfessionalAssessmentService(
             ProfessionalJudgmentProvider judgmentProvider,
-            ProfessionalDecisionPolicyV1 decisionPolicy,
+            ProfessionalDecisionPolicy decisionPolicy,
             ProfessionalAssessmentStore store,
             Clock clock) {
         this(judgmentProvider, decisionPolicy, store, clock, JourneyMetrics.disabled());
@@ -46,7 +46,7 @@ public final class ProfessionalAssessmentService implements ProfessionalAssessme
 
     public ProfessionalAssessmentService(
             ProfessionalJudgmentProvider judgmentProvider,
-            ProfessionalDecisionPolicyV1 decisionPolicy,
+            ProfessionalDecisionPolicy decisionPolicy,
             ProfessionalAssessmentStore store,
             Clock clock,
             JourneyMetrics metrics) {
@@ -55,7 +55,7 @@ public final class ProfessionalAssessmentService implements ProfessionalAssessme
 
     public ProfessionalAssessmentService(
             ProfessionalJudgmentProvider judgmentProvider,
-            ProfessionalDecisionPolicyV1 decisionPolicy,
+            ProfessionalDecisionPolicy decisionPolicy,
             ProfessionalAssessmentStore store,
             Clock clock,
             JourneyMetrics metrics,

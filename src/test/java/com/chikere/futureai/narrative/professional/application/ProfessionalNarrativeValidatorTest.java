@@ -263,7 +263,7 @@ class ProfessionalNarrativeValidatorTest {
     }
 
     @Test
-    void anEmptyRelevantListFallsBackToOrdinaryGroundingAndNoFactorsRequiresNothing() {
+    void anEmptyRelevantListFallsBackToOrdinaryGroundingAndNoFactorsRequiresAnAcknowledgement() {
         // Low result with no exposure-lowering factors: any selected factor grounds the explanation.
         var lowWithoutProtective = manualContext("Low",
                 List.of(factor("task_repeatability", DecisionFactorEffect.INCREASES_AI_EXPOSURE, 0.02)), List.of());
@@ -272,10 +272,127 @@ class ProfessionalNarrativeValidatorTest {
         assertThatThrownBy(() -> validator.validate(safe(n -> with(n, Field.EXPOSURE,
                 "Your result reflects your overall profile.")), lowWithoutProtective))
                 .hasMessageContaining("explain at least one of the factors Java selected");
-        // No factors at all: nothing is manufactured.
+        // No factors at all: nothing is manufactured, and the explanation must say no individual factor stood out.
         var none = manualContext("Moderate", List.of(), List.of());
-        var anything = safe(n -> with(n, Field.EXPOSURE, "Your result reflects your overall profile."));
-        assertThat(validator.validate(anything, none)).isSameAs(anything);
+        assertThatThrownBy(() -> validator.validate(safe(n -> with(n, Field.EXPOSURE,
+                "Your result reflects your overall profile.")), none))
+                .hasMessageContaining("no individual factor stood out");
+        var acknowledged = safe(n -> with(n, Field.EXPOSURE, "No individual characteristic was strong enough to "
+                + "highlight; your moderate result reflects the combined effect of several smaller characteristics."));
+        assertThat(validator.validate(acknowledged, none)).isSameAs(acknowledged);
+    }
+
+    // ---- No material factor on either side ----
+
+    @Test
+    void withNoMaterialFactorsTheExplanationMustNotNameAMainReasonOrInventAFactor() {
+        var none = manualContext("Moderate", List.of(), List.of());
+        for (String invented : List.of(
+                "No single characteristic stood out, but the main reason for your result is the digital nature of the work.",
+                "Much of the work is done on computers, which raises your AI Exposure; no individual factor dominates.",
+                "Your hands-on work reduces your AI Exposure, although no individual factor was strong enough to highlight.",
+                "Your result is driven mainly by the importance of trust; the combined effect of several smaller "
+                        + "characteristics also matters.")) {
+            assertThatThrownBy(() -> validator.validate(safe(n -> with(n, Field.EXPOSURE, invented)), none))
+                    .as(invented).isInstanceOfSatisfying(com.chikere.futureai.trace.NarrativeRuleViolation.class,
+                            violation -> assertThat(violation.rule()).isEqualTo(ProfessionalNarrativeValidator.NO_MATERIAL_FACTORS));
+        }
+        for (String acknowledged : List.of(
+                "No individual factor was strong enough to highlight. Your moderate AI Exposure reflects the combined "
+                        + "effect of several smaller characteristics of the work you described.",
+                "None of the characteristics of your work stood out on its own; no single factor is the main reason for "
+                        + "your moderate result.",
+                "Your moderate result comes from a combination of several modest characteristics of the work, and no "
+                        + "one characteristic raises AI Exposure on its own.")) {
+            var narrative = safe(n -> with(n, Field.EXPOSURE, acknowledged));
+            assertThat(validator.validate(narrative, none)).as(acknowledged).isSameAs(narrative);
+        }
+    }
+
+    @Test
+    void withAnEmptyRaisingSideNothingMayBeCreditedWithRaisingAiExposure() {
+        // Nurse-style: Java selected only material factors lowering AI Exposure.
+        var nurse = manualContext("Low", List.of(), List.of(
+                factor("digital_executability", DecisionFactorEffect.REDUCES_AI_EXPOSURE, -0.115),
+                factor("physical_world_dependency", DecisionFactorEffect.REDUCES_AI_EXPOSURE, -0.073),
+                factor("human_trust_dependency", DecisionFactorEffect.REDUCES_AI_EXPOSURE, -0.056)));
+        // Each pairs a valid lowering sentence, which satisfies grounding, with the invented raising claim.
+        String lowering = "Much of the work cannot be carried out digitally, which lowers your AI Exposure. ";
+        for (String invented : List.of(lowering + "Some routine work increases AI Exposure.",
+                lowering + "The use of established processes contributes to higher AI Exposure.",
+                "Much of the work cannot be carried out digitally, which lowers your AI Exposure. Some repetitive "
+                        + "record-keeping pushes AI Exposure up.")) {
+            rejectsWith(invented, nurse, ProfessionalNarrativeValidator.NO_MATERIAL_FACTORS);
+        }
+        // Also outside the AI Exposure explanation.
+        assertThatThrownBy(() -> validator.validate(safe(n -> with(n, Field.SUMMARY,
+                "Repetitive record-keeping raises your AI Exposure.")), nurse))
+                .isInstanceOfSatisfying(com.chikere.futureai.trace.NarrativeRuleViolation.class, violation ->
+                        assertThat(violation.rule()).isEqualTo(ProfessionalNarrativeValidator.NO_MATERIAL_FACTORS));
+        for (String valid : List.of(
+                "No individual factor was strong enough to highlight as increasing AI Exposure. The low result is "
+                        + "primarily explained by the fact that much of the work cannot be completed entirely through "
+                        + "digital systems.",
+                "The material factors identified in your assessment all reduce AI Exposure. Much of the work cannot be "
+                        + "carried out digitally, which lowers your AI Exposure.",
+                "Nothing in the work you described strongly increases AI Exposure. Work that cannot be done "
+                        + "digitally lowers your AI Exposure.")) {
+            accepts(valid, nurse);
+        }
+    }
+
+    @Test
+    void withAnEmptyLoweringSideNothingMayBeCreditedWithLoweringAiExposure() {
+        // Accountant-style: Java selected only material factors raising AI Exposure.
+        var accountant = manualContext("High", List.of(
+                factor("digital_executability", DecisionFactorEffect.INCREASES_AI_EXPOSURE, 0.105),
+                factor("physical_world_dependency", DecisionFactorEffect.INCREASES_AI_EXPOSURE, 0.072),
+                factor("task_repeatability", DecisionFactorEffect.INCREASES_AI_EXPOSURE, 0.052)), List.of());
+        for (String invented : List.of("Much of the work is performed digitally, which raises your AI Exposure. "
+                        + "Human judgement reduces your AI Exposure.",
+                "Much of the work is performed digitally, which raises your AI Exposure. The complexity of the "
+                        + "situations you handle provides some protection from AI Exposure.",
+                "Much of the work is performed digitally, which raises your AI Exposure, although the trust clients "
+                        + "place in you offsets some exposure.")) {
+            rejectsWith(invented, accountant, ProfessionalNarrativeValidator.NO_MATERIAL_FACTORS);
+        }
+        for (String valid : List.of(
+                "Much of the work is performed digitally, which raises your AI Exposure.",
+                "Much of the work is performed digitally, which raises your AI Exposure. No individual factor was "
+                        + "strong enough to highlight as reducing AI Exposure.")) {
+            accepts(valid, accountant);
+        }
+    }
+
+    @Test
+    void withBothSidesPopulatedTheEmptySideRuleChangesNothing() {
+        var both = manualContext("Moderate",
+                List.of(factor("digital_executability", DecisionFactorEffect.INCREASES_AI_EXPOSURE, 0.107)),
+                List.of(factor("task_repeatability", DecisionFactorEffect.REDUCES_AI_EXPOSURE, -0.089)));
+        accepts("Much of the work is performed digitally, which raises your AI Exposure. Work that is less "
+                + "repetitive lowers your AI Exposure.", both);
+        // A reversed direction is still the Stage 1 direction rule's rejection, not the empty-side rule's.
+        rejectsWith("Digital work lowers your AI Exposure.", both, "EXPOSURE_FACTOR_DIRECTIONS_MATCH");
+    }
+
+    private void accepts(String explanation, ProfessionalNarrativeContext context) {
+        var narrative = safe(n -> with(n, Field.EXPOSURE, explanation));
+        assertThat(validator.validate(narrative, context)).as(explanation).isSameAs(narrative);
+    }
+
+    private void rejectsWith(String explanation, ProfessionalNarrativeContext context, String rule) {
+        assertThatThrownBy(() -> validator.validate(safe(n -> with(n, Field.EXPOSURE, explanation)), context))
+                .as(explanation).isInstanceOfSatisfying(com.chikere.futureai.trace.NarrativeRuleViolation.class,
+                        violation -> assertThat(violation.rule()).isEqualTo(rule));
+    }
+
+    @Test
+    void theNoMaterialFactorRuleDoesNotApplyWhileEitherSideHasAFactor() {
+        var protectiveOnly = manualContext("Low", List.of(),
+                List.of(factor("digital_executability", DecisionFactorEffect.REDUCES_AI_EXPOSURE, -0.115)));
+        var narrative = safe(n -> with(n, Field.EXPOSURE, "The main reason for your low result is that much of the "
+                + "work cannot be carried out digitally, which lowers your AI Exposure."));
+        assertThat(validator.validate(narrative, protectiveOnly)).isSameAs(narrative);
     }
 
     // ---- A factor's level is not a claim about its effect on AI Exposure ----
@@ -602,7 +719,7 @@ class ProfessionalNarrativeValidatorTest {
             JsonNode validation = log.only(TraceStage.NARRATIVE_VALIDATION).get("payload");
             assertThat(validation.get("outcome").asText()).isEqualTo("REJECTED");
             assertThat(validation.get("rejectedBy").asText()).isEqualTo("NO_RESPONSIBILITY_LEVEL_SCORING");
-            JsonNode rule = validation.get("rules").get(validation.get("rules").size() - 1);
+            JsonNode rule = validation.get("rules").get(validation.get("rules").size() - 2);
             assertThat(rule.get("rule").asText()).isEqualTo("NO_RESPONSIBILITY_LEVEL_SCORING");
             assertThat(rule.get("passed").asBoolean()).isFalse();
             assertThat(rule.get("triggeringText").asText()).isEqualTo(sentence);
@@ -643,7 +760,7 @@ class ProfessionalNarrativeValidatorTest {
                     "NO_UNSAFE_PROCEDURE_DEVIATION", "NO_ENUM_STYLE_BAND_WORDS", "BRITISH_ENGLISH_SPELLING",
                     "EXPOSURE_EXPLANATION_GROUNDED_IN_FACTORS", "EXPOSURE_EXPLANATION_LEADS_WITH_DOMINANT_FACTOR",
                     "EXPOSURE_FACTOR_DIRECTIONS_MATCH", "EXPOSURE_FACTOR_LEVELS_MATCH", "NO_OCCUPATION_WIDE_CLAIMS",
-                    "NO_RESPONSIBILITY_LEVEL_SCORING");
+                    "NO_RESPONSIBILITY_LEVEL_SCORING", "NO_FACTOR_ATTRIBUTION_WITHOUT_MATERIAL_FACTORS");
             assertThat(validation.at("/rules/7/triggeringText").asText()).isEqualTo(sentence);
             assertThat(validation.at("/rules/8/reason").asText()).startsWith("NOT_EVALUATED");
 

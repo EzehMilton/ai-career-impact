@@ -65,7 +65,7 @@ class ProfessionalLiveSmokeRegressionTest {
         }).generateFor(assessment.id());
 
         assertThat(result.status()).isEqualTo(NarrativeStatus.AVAILABLE);
-        assertThat(result.promptSchemaVersion()).isEqualTo("professional-narrative-v5");
+        assertThat(result.promptSchemaVersion()).isEqualTo("professional-narrative-v6");
         assertThat(generations.get()).isEqualTo(1);
         assertThat(repairs.get()).isZero();
     }

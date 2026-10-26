@@ -58,9 +58,19 @@ public final class OpenAiProfessionalNarrativeGenerator implements ProfessionalN
             downgrade a measure with stronger or weaker wording.
 
             GROUND THE EXPLANATION IN THE SELECTED FACTORS
-            factorsRaisingAiExposure and factorsLoweringAiExposure list the factors Java selected. Each has a plain
-            description, its effect on AI Exposure and a rank, where 1 is the strongest in its list. Explain the AI Exposure result from these factors, giving the most weight to the highest-ranked
-            factors in the list that matches the result. The factor marked dominant is the main reason for the result:
+            factorsRaisingAiExposure and factorsLoweringAiExposure list the factors Java selected. They contain only
+            factors material enough to highlight: smaller characteristics still count towards the score but are left
+            out. Each has a plain description, its effect on AI Exposure and a rank, where 1 is the strongest in its
+            list. Explain the AI Exposure result from these factors, giving the most weight to the highest-ranked
+            factors in the list that matches the result.
+            An empty list is meaningful and correct: it means no characteristic strongly pushes AI Exposure in that
+            direction. Do not assume there must be factors on both sides, and never invent a factor because a list is
+            empty. If factorsRaisingAiExposure is empty, say in substance that no material factor was identified as
+            strongly increasing AI Exposure, and explain the result from the factors lowering it and the band. If
+            factorsLoweringAiExposure is empty, do not invent anything that lowers AI Exposure. If both lists are
+            empty, do not attribute the result to any specific characteristic or name a main reason; explain in
+            natural language that no individual factor was strong enough to highlight and that the result reflects
+            the combined effect of several smaller characteristics of the work. The factor marked dominant is the main reason for the result:
             the AI Exposure explanation must include it, and other factors may support it but never replace it. Do not
             substitute a different explanation because another characteristic sounds more natural, and do not present
             a characteristic that is in neither list as a reason for the AI Exposure result.

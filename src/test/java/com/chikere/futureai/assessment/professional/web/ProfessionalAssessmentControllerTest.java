@@ -19,6 +19,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
+import com.chikere.futureai.decision.professional.ProfessionalMaterialityCalibrationCases;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -280,6 +281,28 @@ class ProfessionalAssessmentControllerTest {
         assertThat(active).contains("Open your purchased report").doesNotContain("Payment was not completed.");
         org.mockito.Mockito.verify(purchaseService, org.mockito.Mockito.times(2)).accessFor(ID);
         org.mockito.Mockito.verifyNoMoreInteractions(purchaseService);
+    }
+
+    @Test
+    void theFreeResultExplainsAnEmptyFactorSideRatherThanLeavingItBlank() throws Exception {
+        String noDrivers = freeHtml(ProfessionalMaterialityCalibrationCases.registeredNurse());
+        assertThat(noDrivers).containsSubsequence("What increases AI Exposure",
+                "No strong exposure drivers were identified.", "What reduces AI Exposure", "<li>")
+                .doesNotContain("No strong factors reducing AI Exposure were identified.");
+        String noReducers = freeHtml(ProfessionalMaterialityCalibrationCases.managementAccountant());
+        assertThat(noReducers).containsSubsequence("What increases AI Exposure", "<li>", "What reduces AI Exposure",
+                "No strong factors reducing AI Exposure were identified.")
+                .doesNotContain("No strong exposure drivers were identified.");
+    }
+
+    private String freeHtml(Map<String, Double> values) throws Exception {
+        var source = com.chikere.futureai.report.professional.application.ProfessionalReportAssemblerTest.source(
+                true, true, true, values, new com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV2());
+        UUID id = source.assessment().id();
+        when(reportService.assemble(id, ProfessionalReportTier.FREE)).thenReturn(Optional.of(
+                new ProfessionalReportAssembler().assemble(source, ProfessionalReportTier.FREE)));
+        return mvc.perform(get("/professional-assessment/" + id)).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
     }
 
     private ProfessionalReport report(ProfessionalReportTier tier, boolean narrative, boolean fixture) {

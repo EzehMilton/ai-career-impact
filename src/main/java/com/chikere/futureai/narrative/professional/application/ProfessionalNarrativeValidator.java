@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -44,11 +45,13 @@ public final class ProfessionalNarrativeValidator {
     static final String DOMINANT = "EXPOSURE_EXPLANATION_LEADS_WITH_DOMINANT_FACTOR";
     static final String JARGON = "NO_INTERNAL_DIMENSION_JARGON";
     static final String UNSAFE_PROCEDURE = "NO_UNSAFE_PROCEDURE_DEVIATION";
+    static final String NO_MATERIAL_FACTORS = "NO_FACTOR_ATTRIBUTION_WITHOUT_MATERIAL_FACTORS";
 
     private static final List<String> TEXT_RULES = List.of("NARRATIVE_PRESENT", "WELL_FORMED_STRUCTURED_OUTPUT",
             NUMERIC, FUTURE, CAPABILITY, TASK_AUTOMATION, JOB_LOSS, ADAPTABILITY, JARGON, UNSAFE_PROCEDURE, BAND_WORDS, SPELLING);
     private static final List<String> CONTEXT_RULES = Stream.concat(TEXT_RULES.stream(),
-            Stream.of(GROUNDED, DOMINANT, DIRECTIONS, LEVELS, OCCUPATION, RESPONSIBILITY_SCORING)).toList();
+            Stream.of(GROUNDED, DOMINANT, DIRECTIONS, LEVELS, OCCUPATION, RESPONSIBILITY_SCORING,
+                    NO_MATERIAL_FACTORS)).toList();
 
     // No trailing \\b: a percent sign is not a word character, so "92%" would otherwise slip through.
     private static final Pattern NUMERIC_CLAIM = Pattern.compile(
@@ -237,6 +240,32 @@ public final class ProfessionalNarrativeValidator {
     private static final Pattern PHRASE_BREAK = Pattern.compile(
             "(?i)[,;:]|\\b(?:while|whereas|but|which|although|though|because)\\b");
 
+    /**
+     * When Java selected no material factor on either side, the AI Exposure explanation must say so in substance:
+     * no individual factor stood out, or the result reflects a combination of smaller characteristics.
+     */
+    private static final Pattern NO_MATERIAL_FACTOR_ACKNOWLEDGED = Pattern.compile("(?i)\\b(?:no|none\\s+of\\s+the)\\s+"
+            + "(?:(?:single|individual|one|particular|specific|stand-?out|material|strong|dominant|clear)\\s+)*"
+            + "(?:factors?|characteristics?|features?|aspects?|reasons?|drivers?)\\b"
+            + "|\\b(?:combined|cumulative|overall|joint)\\s+effect\\s+of"
+            + "|\\bcombination\\s+of\\s+(?:several|many|various|different|smaller|a\\s+number\\s+of)"
+            + "|\\bseveral\\s+(?:smaller|modest|minor)\\b|\\bbalance\\s+of\\s+(?:several|many|different|various)\\b");
+    private static final Pattern PHRASE_NEGATION = Pattern.compile("(?i)\\b(?:not|never|no|none|nothing)\\b|n't\\b");
+    /**
+     * Effect language checked against an empty side: the shared effect patterns plus the phrasings "AI Exposure
+     * higher/up" and "protection from AI Exposure", which the direction rule does not need.
+     */
+    private static final List<Pattern> EMPTY_SIDE_RAISES = List.of(RAISES_EXPOSURE,
+            Pattern.compile("(?i)\\b(?:AI\\s+)?exposure\\s+(?:higher|up)\\b"));
+    private static final List<Pattern> EMPTY_SIDE_LOWERS = List.of(LOWERS_EXPOSURE,
+            Pattern.compile("(?i)\\bprotect(?:s|ion|ing|ive)?\\s+(?:\\w+\\s+){0,3}?(?:from|against)\\s+(?:AI\\s+)?exposure\\b"
+                    + "|\\b(?:AI\\s+)?exposure\\s+(?:lower|down)\\b"));
+    /** "The main reason", "the key driver", "driven mainly by": attributing the result to one leading cause. */
+    private static final Pattern MAIN_REASON_CLAIM = Pattern.compile("(?i)\\b(?:main|primary|principal|chief|dominant"
+            + "|biggest|largest|leading|key|most\\s+important)\\s+(?:reasons?|drivers?|factors?|causes?|contributors?"
+            + "|explanations?)\\b|\\bdriven\\s+(?:mainly|mostly|largely|primarily|chiefly)\\s+by\\b"
+            + "|\\b(?:mainly|mostly|largely|primarily|chiefly)\\s+(?:because\\s+of|due\\s+to)\\b");
+
     private final AssessmentTrace trace;
 
     public ProfessionalNarrativeValidator() {
@@ -351,6 +380,78 @@ public final class ProfessionalNarrativeValidator {
         Optional<String> scored = responsibilityScored(everything, context.responsibilities(), context.profession());
         checks.check(RESPONSIBILITY_SCORING, scored.isPresent(), () -> scored.orElse(null),
                 "narrative must not present a submitted responsibility as separately scored; the assessment is role-level");
+
+        // Only for a side on which Java selected nothing material; a populated side is left to the rules above.
+        Optional<String> unsupported = attributionToEmptySide(explanation, text,
+                context.exposureDrivers().isEmpty(), context.protectiveFactors().isEmpty());
+        checks.check(NO_MATERIAL_FACTORS, unsupported.isPresent(), () -> unsupported.orElse(null),
+                "the narrative must not credit a characteristic with moving AI Exposure in a direction for which no "
+                        + "factor was material enough to highlight; when nothing is material on either side, the AI "
+                        + "Exposure explanation must say that no individual factor stood out and must not name a main "
+                        + "reason");
+    }
+
+    /**
+     * Attribution to a side Java left empty. With no material raising factor, no sentence may credit a characteristic
+     * with raising AI Exposure; with no material lowering factor, none may credit one with lowering it. With both
+     * sides empty, the AI Exposure explanation must also name no main reason and must acknowledge that no individual
+     * factor stood out. Negated statements ("no single factor raises AI Exposure") are allowed. Returns the offending
+     * sentence, or the whole explanation when the acknowledgement is missing.
+     */
+    private static Optional<String> attributionToEmptySide(String explanation, List<String> text,
+            boolean raisingEmpty, boolean loweringEmpty) {
+        List<Pattern> unsupportedEffects = new ArrayList<>();
+        if (raisingEmpty) {
+            unsupportedEffects.addAll(EMPTY_SIDE_RAISES);
+        }
+        if (loweringEmpty) {
+            unsupportedEffects.addAll(EMPTY_SIDE_LOWERS);
+        }
+        for (String value : text) {
+            for (String sentence : NarrativeClaimMatcher.sentences(value)) {
+                if (DIMENSION_LANGUAGE.keySet().stream().noneMatch(id -> mentions(sentence, id))) {
+                    continue;
+                }
+                Optional<String> claim = undeniedMatch(sentence, unsupportedEffects);
+                if (claim.isPresent()) {
+                    return claim;
+                }
+            }
+        }
+        if (!raisingEmpty || !loweringEmpty) {
+            return Optional.empty();
+        }
+        for (String sentence : NarrativeClaimMatcher.sentences(explanation)) {
+            Optional<String> mainReason = undeniedMatch(sentence, List.of(MAIN_REASON_CLAIM));
+            if (mainReason.isPresent()) {
+                return mainReason;
+            }
+        }
+        return NO_MATERIAL_FACTOR_ACKNOWLEDGED.matcher(explanation).find() ? Optional.empty() : Optional.of(explanation);
+    }
+
+    /** The sentence, when one of the patterns matches it without a negation earlier in the same phrase. */
+    private static Optional<String> undeniedMatch(String sentence, List<Pattern> patterns) {
+        for (Pattern pattern : patterns) {
+            Matcher match = pattern.matcher(sentence);
+            while (match.find()) {
+                if (!negatedInPhrase(sentence, match.start())) {
+                    return Optional.of(sentence.strip());
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    /** Whether a negation appears earlier in the same phrase as the match at {@code position}. */
+    private static boolean negatedInPhrase(String sentence, int position) {
+        String before = sentence.substring(0, position);
+        Matcher breaks = PHRASE_BREAK.matcher(before);
+        int phraseStart = 0;
+        while (breaks.find()) {
+            phraseStart = breaks.end();
+        }
+        return PHRASE_NEGATION.matcher(before.substring(phraseStart)).find();
     }
 
     /**

@@ -9,7 +9,11 @@ import com.chikere.futureai.assessment.professional.application.ProfessionalAsse
 import com.chikere.futureai.assessment.professional.application.ProfessionalJudgmentProvider;
 import com.chikere.futureai.assessment.professional.application.StoredProfessionalAssessment;
 import com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentInputMetadata;
+import com.chikere.futureai.decision.professional.ProfessionalDecisionFactor;
+import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicy;
 import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV1;
+import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV2;
+import com.chikere.futureai.decision.professional.ProfessionalMaterialityCalibrationCases;
 import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
 import com.chikere.futureai.judgment.domain.DimensionJudgment;
 import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfessionalJudgmentProvider;
@@ -71,6 +75,39 @@ class ProfessionalAssessmentStoreTest {
     @Autowired ProfessionalReportPdfStore pdfStore;
     @Autowired Flyway flyway;
     @Autowired DataSource dataSource;
+    @Autowired ProfessionalDecisionPolicy decisionPolicy;
+
+    @Test
+    void newAssessmentsAreDecidedUnderV2WhileAStoredV1AssessmentKeepsItsSavedFactors() {
+        assertThat(decisionPolicy).isInstanceOf(ProfessionalDecisionPolicyV2.class);
+        assertThat(decisionPolicy.policyVersion()).isEqualTo("professional-decision-v2");
+
+        // Saved under v1, which selected the immaterial +0.009 and +0.003 effects as raising AI Exposure.
+        var state = new ProfessionalAssessmentState("Registered Nurse", "I care for patients on a busy ward.",
+                List.of("Monitor patients"), List.of("Clinical observation"), OptionalInt.of(9));
+        var judgments = ProfessionalMaterialityCalibrationCases.judgments(
+                ProfessionalMaterialityCalibrationCases.registeredNurse());
+        var decision = new ProfessionalDecisionPolicyV1().decide(judgments);
+        var snapshot = new StoredProfessionalAssessment(UUID.randomUUID(), Instant.parse("2026-10-20T12:00:00Z"),
+                state, judgments, new ProfessionalAssessmentResult(decision, AssessmentSource.JEV,
+                        judgments.schemaVersion(), decision.policyVersion()), Optional.empty(),
+                ProfessionalAssessmentInputMetadata.manual());
+        store.save(snapshot);
+
+        var loaded = store.findById(snapshot.id()).orElseThrow();
+        assertThat(loaded).isEqualTo(snapshot);
+        assertThat(loaded.result().decisionPolicyVersion()).isEqualTo("professional-decision-v1");
+        assertThat(loaded.result().decision().topExposureDrivers()).extracting(ProfessionalDecisionFactor::dimensionId)
+                .containsExactly("task_repeatability", "original_judgment");
+        assertThat(loaded.result().decision().assessmentDecision().keyDrivers())
+                .containsExactly("task_repeatability", "original_judgment");
+        // Its report is still composed from the saved v1 factors, not recomputed under v2.
+        var report = new ProfessionalReportAssembler().assemble(new ProfessionalReportSource(loaded,
+                Optional.empty(), Optional.empty(), Optional.empty()), ProfessionalReportTier.PAID);
+        assertThat(report.exposureDrivers()).hasSize(2);
+        assertThat(report.methodology().decisionPolicyVersion()).isEqualTo("professional-decision-v1");
+        assertThat(decisionPolicy.decide(judgments).topExposureDrivers()).isEmpty();
+    }
 
     @Test
     void migratedPostgresqlRoundTripPreservesCompleteSnapshot() {
@@ -352,7 +389,7 @@ class ProfessionalAssessmentStoreTest {
             assertThat(reloaded.fileSize()).isEqualTo(pdfBytes.length);
             assertThat(reloaded.generatedAt()).isEqualTo(Instant.parse("2026-09-30T12:03:00Z"));
             assertThat(reloaded.purchasedReportVersion()).isEqualTo("professional-report-v2");
-            assertThat(reloaded.pdfTemplateVersion()).isEqualTo("professional-report-pdf-v2");
+            assertThat(reloaded.pdfTemplateVersion()).isEqualTo("professional-report-pdf-v3");
         });
         byte[] losingBytes = "%PDF-different-racing-candidate".getBytes(java.nio.charset.StandardCharsets.US_ASCII);
         var losingCandidate = new PurchasedProfessionalReportPdf(entitlementId, assessmentId, report.reportVersion(),
