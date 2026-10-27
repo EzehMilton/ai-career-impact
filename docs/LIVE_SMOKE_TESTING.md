@@ -154,3 +154,17 @@ to `.live-smoke/paid-narrative/<timestamp>/`. Add `-Dopenai.paid.narrative.live.
 without any call. `OPENAI_MODEL` selects the model (default `gpt-4o-mini`); a GPT-6 model such as `gpt-6-luna` is
 sent reasoning effort `none` and no temperature. The four non-Stage-2 roles use placeholder role-level measures; their narratives explain those
 placeholder scores, so review them for their responsibility-level content.
+
+## University baseline capture
+
+`UniversityBaselineLiveIT` (Stage 5B) makes one real `university-v1` Jev call for each of seven representative
+courses and decides it with the unchanged `university-decision-v1` policy. It never calls OpenAI, Stripe or the
+database, and it is never part of `./mvnw verify`:
+
+```
+TYPESAFE_API_KEY=... ./mvnw -Plive-university verify -Dtest=NoSuchTest -Dsurefire.failIfNoSpecifiedTests=false
+```
+
+It writes `results.json`, `README.md` and one capture per course (input, judgments and decision) to
+`.live-smoke/university/<timestamp>/`. `UniversityBaselineHarnessTest` runs the same harness offline with synthetic
+judgments and writes `target/university-baseline-dry-run/`.
