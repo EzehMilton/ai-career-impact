@@ -361,6 +361,41 @@ The frozen snapshot, not today's assembler, is authoritative after purchase. A `
 
 There are no accounts yet. Entitlement is associated with the assessment UUID, so anyone who obtains that opaque URL may potentially reach both the assessment and an entitled report. There is no public listing route, but this is explicitly temporary pre-authentication access rather than final production-grade authorisation. Account-bound ownership belongs in a later phase.
 
+## Paid professional responsibility analysis
+
+A paid Professional assessment can gain one additional, immutable responsibility analysis: one Jev call for the
+selected responsibilities (`professional-responsibility-v1`), classified by `professional-responsibility-policy-v1`,
+and stored as a snapshot with its inputs, raw judgments and classifications. It never changes the role-level scores,
+bands, factors or narrative, and a stored snapshot is never regenerated or re-classified.
+
+- **Access.** Reuse and generation both require the assessment's entitlement to be ACTIVE now. A refunded or revoked
+  entitlement keeps its stored snapshot but can no longer obtain it.
+- **Responsibility limit.** An assessment may hold more than eight responsibilities; detailed analysis supports one
+  to eight. More than eight is refused as `RESPONSIBILITY_SELECTION_REQUIRED`; nothing is truncated and no automatic
+  "first eight" selection is permitted. `generateOrGet(id, selection)` accepts the customer's explicit choice (1-based
+  positions, one to eight, distinct); an invalid choice is `INVALID_SELECTION`. No customer-facing selection UI exists yet.
+- **Payment boundary.** The Stripe webhook only establishes the ACTIVE entitlement. Responsibility analysis is
+  generated later by the paid-report lifecycle; payment confirmation makes no responsibility provider call.
+- **Concurrency.** The unique assessment constraint makes one snapshot canonical. Two truly simultaneous first
+  requests may both call the provider, and both return the canonical snapshot. This is accepted for v1.
+
+### Responsibility guidance
+
+`ProfessionalGuidancePolicyV1` (`professional-guidance-policy-v1`) is pure Java. It derives deterministic guidance
+from the frozen analysis snapshot only: up to three AI-assistance opportunities (an explicit ranking formula with a
+governance penalty: O1 0.4, O2 0.2, regulated high accountability and safety-critical physical O1 work, rule IDs
+`GV1`–`GV4`, which lowers sensitive work's rank without making it ineligible), up to
+three human-value areas, two to four consolidated skill priorities, a three-phase 90-day plan and up to four
+responsible-use safeguards. Every item carries a rule ID. It reads neither the role-level scores nor the user-entered
+skills and profession, and it calls no provider.
+
+`ProfessionalResponsibilityGuidanceService` checks the ACTIVE entitlement, returns stored guidance unchanged if it
+exists, and otherwise obtains the analysis through `ProfessionalResponsibilityAnalysisService` (which makes the only
+possible Jev call), runs the policy once and stores an immutable snapshot (Flyway V20,
+`professional_responsibility_guidance`, unique per assessment and per analysis). Each run emits one
+`RESPONSIBILITY_GUIDANCE` trace event (GENERATED, REUSED or CONCURRENT_SNAPSHOT_RETURNED) carrying IDs, keys and
+rule IDs only. Guidance is not yet part of the paid report, PDF or narrative.
+
 ## Purchased professional report PDF
 
 ```text

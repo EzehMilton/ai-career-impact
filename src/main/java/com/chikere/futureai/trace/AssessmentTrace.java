@@ -231,6 +231,31 @@ public final class AssessmentTrace {
     }
 
     /**
+     * Runs work for one existing assessment under its own trace of the given kind, so its events carry the
+     * assessment id, then restores whatever trace was open before. Emits nothing itself.
+     */
+    public <T> T scoped(JourneyType journey, UUID assessmentId, String kind, Supplier<T> work) {
+        if (!enabled) {
+            return work.get();
+        }
+        Context previous = current.get();
+        Context context = new Context(journey, kind);
+        context.assessmentId = assessmentId;
+        current.set(context);
+        try {
+            return work.get();
+        }
+        finally {
+            if (previous == null) {
+                current.remove();
+            }
+            else {
+                current.set(previous);
+            }
+        }
+    }
+
+    /**
      * Assembles a free result or a detailed report under its own trace, logging the structured report
      * that feeds the HTML and PDF views, then a timing summary.
      */

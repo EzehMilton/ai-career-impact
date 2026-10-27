@@ -47,7 +47,7 @@ import java.util.Optional;
  * <p>The provider's clarity answer is recorded but never used: in the calibration it was low for responsibilities
  * that were clearly understood and judged coherently. No role-level score, band or factor is read or changed.</p>
  */
-public final class ProfessionalResponsibilityPolicyV1 {
+public final class ProfessionalResponsibilityPolicyV1 implements ProfessionalResponsibilityClassifier {
 
     public static final String POLICY_VERSION = "professional-responsibility-policy-v1";
     public static final String SUPPORTED_SCHEMA_VERSION = "professional-responsibility-v1";
@@ -74,6 +74,7 @@ public final class ProfessionalResponsibilityPolicyV1 {
         this.trace = Objects.requireNonNull(trace, "trace must not be null");
     }
 
+    @Override
     public ProfessionalResponsibilityClassificationResult classify(ProfessionalResponsibilityJudgmentResult judgments) {
         Objects.requireNonNull(judgments, "judgments must not be null");
         if (!SUPPORTED_SCHEMA_VERSION.equals(judgments.schemaVersion())) {

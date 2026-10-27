@@ -58,6 +58,17 @@ class LiveSmokeIsolationTest {
     }
 
     @Test
+    void theResponsibilityAnalysisAndGuidanceTriggersDoNotExist() throws Exception {
+        for (String route : List.of("/responsibility-analysis", "/responsibility-guidance")) {
+            String path = "/dev/live-smoke/professional/" + java.util.UUID.randomUUID() + route;
+            mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(path)
+                    .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                    .andExpect(status().isNotFound());
+            mvc.perform(get(path)).andExpect(status().isNotFound());
+        }
+    }
+
+    @Test
     void noSmokeBeanExistsAndSubmissionsUseTheNormalWorkflowsUndecorated() {
         for (Class<?> type : List.of(LiveSmokeConfiguration.class, LiveSmokeController.class,
                 LiveSmokeShellAdvice.class, LiveSmokeCaseCatalog.class, LiveSmokeEntitlements.class,

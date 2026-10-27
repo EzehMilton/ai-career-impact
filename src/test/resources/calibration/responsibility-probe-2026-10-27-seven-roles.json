@@ -1,0 +1,4076 @@
+{
+  "registered-nurse-8" : {
+    "schemaVersion" : "professional-responsibility-v1",
+    "source" : "JEV",
+    "model" : "jev-1.14.0",
+    "providerRequestId" : "req_01a17c0ff81275cf9a0ce25b79d74848",
+    "inputTokens" : 8141,
+    "outputTokens" : 1002,
+    "regulatedContext" : {
+      "value" : 3.97,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.03,
+        "4" : 0.97
+      },
+      "providerConfidence" : 0.97,
+      "nearestLevel" : 4,
+      "nearestLabel" : "The work is fundamentally governed by professional regulation, legal duties or safety-critical procedures that constrain how almost every part of it is done."
+    },
+    "responsibilities" : [ {
+      "responsibilityIndex" : 1,
+      "responsibilityKey" : "r1",
+      "responsibilityText" : "Monitor patients and assess changes in their condition",
+      "describedClearly" : 0.62,
+      "assistanceScope" : {
+        "value" : 2.84,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.04,
+          "2" : 0.33,
+          "3" : 0.38,
+          "4" : 0.25
+        },
+        "providerConfidence" : 0.45,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 3.11,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.05,
+          "3" : 0.79,
+          "4" : 0.16
+        },
+        "providerConfidence" : 0.82,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 1.44,
+        "distribution" : {
+          "0" : 0.12,
+          "1" : 0.48,
+          "2" : 0.27,
+          "3" : 0.1,
+          "4" : 0.03
+        },
+        "providerConfidence" : 0.43,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 3.68,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.29,
+          "4" : 0.7
+        },
+        "providerConfidence" : 0.74,
+        "nearestLevel" : 4,
+        "nearestLabel" : "The activity fundamentally consists of physical action or in-person presence."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.95,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.05,
+          "4" : 0.95
+        },
+        "providerConfidence" : 0.96,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    }, {
+      "responsibilityIndex" : 2,
+      "responsibilityKey" : "r2",
+      "responsibilityText" : "Administer medication safely",
+      "describedClearly" : 0.62,
+      "assistanceScope" : {
+        "value" : 2.41,
+        "distribution" : {
+          "0" : 0.01,
+          "1" : 0.17,
+          "2" : 0.34,
+          "3" : 0.35,
+          "4" : 0.13
+        },
+        "providerConfidence" : 0.3,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 1.99,
+        "distribution" : {
+          "0" : 0.01,
+          "1" : 0.2,
+          "2" : 0.6,
+          "3" : 0.19,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.66,
+        "nearestLevel" : 2,
+        "nearestLabel" : "A meaningful mixture of rule-following and contextual judgement."
+      },
+      "humanInteraction" : {
+        "value" : 2.03,
+        "distribution" : {
+          "0" : 0.02,
+          "1" : 0.27,
+          "2" : 0.41,
+          "3" : 0.26,
+          "4" : 0.04
+        },
+        "providerConfidence" : 0.46,
+        "nearestLevel" : 2,
+        "nearestLabel" : "Interaction with people matters alongside other parts of the activity."
+      },
+      "physicalPresence" : {
+        "value" : 3.91,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.08,
+          "4" : 0.92
+        },
+        "providerConfidence" : 0.93,
+        "nearestLevel" : 4,
+        "nearestLabel" : "The activity fundamentally consists of physical action or in-person presence."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.99,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.01,
+          "4" : 0.99
+        },
+        "providerConfidence" : 0.99,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    }, {
+      "responsibilityIndex" : 3,
+      "responsibilityKey" : "r3",
+      "responsibilityText" : "Record observations and clinical information",
+      "describedClearly" : 0.64,
+      "assistanceScope" : {
+        "value" : 3.07,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.02,
+          "2" : 0.22,
+          "3" : 0.43,
+          "4" : 0.33
+        },
+        "providerConfidence" : 0.51,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 1.99,
+        "distribution" : {
+          "0" : 0.01,
+          "1" : 0.23,
+          "2" : 0.52,
+          "3" : 0.24,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.59,
+        "nearestLevel" : 2,
+        "nearestLabel" : "A meaningful mixture of rule-following and contextual judgement."
+      },
+      "humanInteraction" : {
+        "value" : 1.09,
+        "distribution" : {
+          "0" : 0.24,
+          "1" : 0.51,
+          "2" : 0.18,
+          "3" : 0.07,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.53,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 2.09,
+        "distribution" : {
+          "0" : 0.06,
+          "1" : 0.3,
+          "2" : 0.22,
+          "3" : 0.34,
+          "4" : 0.08
+        },
+        "providerConfidence" : 0.1,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Physical action, handling or in-person presence is important to the activity."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.84,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.14,
+          "4" : 0.85
+        },
+        "providerConfidence" : 0.87,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    }, {
+      "responsibilityIndex" : 4,
+      "responsibilityKey" : "r4",
+      "responsibilityText" : "Escalate concerns to doctors and senior clinical staff",
+      "describedClearly" : 0.73,
+      "assistanceScope" : {
+        "value" : 2.82,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.05,
+          "2" : 0.24,
+          "3" : 0.55,
+          "4" : 0.16
+        },
+        "providerConfidence" : 0.58,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 2.97,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.09,
+          "3" : 0.85,
+          "4" : 0.06
+        },
+        "providerConfidence" : 0.88,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 3.6,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.38,
+          "4" : 0.61
+        },
+        "providerConfidence" : 0.67,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Success fundamentally depends on trust, care, persuasion or live human communication."
+      },
+      "physicalPresence" : {
+        "value" : 2.1,
+        "distribution" : {
+          "0" : 0.07,
+          "1" : 0.27,
+          "2" : 0.22,
+          "3" : 0.38,
+          "4" : 0.06
+        },
+        "providerConfidence" : 0.14,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Physical action, handling or in-person presence is important to the activity."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.94,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.06,
+          "4" : 0.94
+        },
+        "providerConfidence" : 0.95,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    }, {
+      "responsibilityIndex" : 5,
+      "responsibilityKey" : "r5",
+      "responsibilityText" : "Support patients and communicate with families",
+      "describedClearly" : 0.37,
+      "assistanceScope" : {
+        "value" : 2.32,
+        "distribution" : {
+          "0" : 0.01,
+          "1" : 0.19,
+          "2" : 0.36,
+          "3" : 0.35,
+          "4" : 0.09
+        },
+        "providerConfidence" : 0.38,
+        "nearestLevel" : 2,
+        "nearestLabel" : "AI tools could usefully support several parts of this activity under human direction."
+      },
+      "contextualJudgement" : {
+        "value" : 2.8,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.25,
+          "3" : 0.67,
+          "4" : 0.07
+        },
+        "providerConfidence" : 0.72,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 3.98,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.02,
+          "4" : 0.98
+        },
+        "providerConfidence" : 0.98,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Success fundamentally depends on trust, care, persuasion or live human communication."
+      },
+      "physicalPresence" : {
+        "value" : 3.12,
+        "distribution" : {
+          "0" : 0.01,
+          "1" : 0.05,
+          "2" : 0.09,
+          "3" : 0.51,
+          "4" : 0.34
+        },
+        "providerConfidence" : 0.53,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Physical action, handling or in-person presence is important to the activity."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.24,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.12,
+          "3" : 0.51,
+          "4" : 0.37
+        },
+        "providerConfidence" : 0.59,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Errors can have significant consequences for which the person is accountable."
+      }
+    }, {
+      "responsibilityIndex" : 6,
+      "responsibilityKey" : "r6",
+      "responsibilityText" : "Coordinate care with other healthcare professionals",
+      "describedClearly" : 0.16,
+      "assistanceScope" : {
+        "value" : 2.86,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.02,
+          "2" : 0.26,
+          "3" : 0.55,
+          "4" : 0.16
+        },
+        "providerConfidence" : 0.62,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 2.81,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.2,
+          "3" : 0.78,
+          "4" : 0.02
+        },
+        "providerConfidence" : 0.82,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 3.63,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.37,
+          "4" : 0.63
+        },
+        "providerConfidence" : 0.69,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Success fundamentally depends on trust, care, persuasion or live human communication."
+      },
+      "physicalPresence" : {
+        "value" : 1.8,
+        "distribution" : {
+          "0" : 0.07,
+          "1" : 0.33999999999999997,
+          "2" : 0.33,
+          "3" : 0.23,
+          "4" : 0.03
+        },
+        "providerConfidence" : 0.21,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Occasional physical action or presence helps but is not central."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.6,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.03,
+          "3" : 0.34,
+          "4" : 0.63
+        },
+        "providerConfidence" : 0.67,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    }, {
+      "responsibilityIndex" : 7,
+      "responsibilityKey" : "r7",
+      "responsibilityText" : "Respond to emergencies and unexpected situations",
+      "describedClearly" : 0.16,
+      "assistanceScope" : {
+        "value" : 2.35,
+        "distribution" : {
+          "0" : 0.01,
+          "1" : 0.16,
+          "2" : 0.41,
+          "3" : 0.31,
+          "4" : 0.11
+        },
+        "providerConfidence" : 0.41,
+        "nearestLevel" : 2,
+        "nearestLabel" : "AI tools could usefully support several parts of this activity under human direction."
+      },
+      "contextualJudgement" : {
+        "value" : 3.1,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.05,
+          "3" : 0.8,
+          "4" : 0.15
+        },
+        "providerConfidence" : 0.83,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 2.96,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.03,
+          "2" : 0.19,
+          "3" : 0.58,
+          "4" : 0.2
+        },
+        "providerConfidence" : 0.62,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Trust, communication or relationship handling is important to success."
+      },
+      "physicalPresence" : {
+        "value" : 3.83,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.15,
+          "4" : 0.84
+        },
+        "providerConfidence" : 0.86,
+        "nearestLevel" : 4,
+        "nearestLabel" : "The activity fundamentally consists of physical action or in-person presence."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.99,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.01,
+          "4" : 0.99
+        },
+        "providerConfidence" : 0.99,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    }, {
+      "responsibilityIndex" : 8,
+      "responsibilityKey" : "r8",
+      "responsibilityText" : "Follow clinical procedures and safety requirements",
+      "describedClearly" : 0.12,
+      "assistanceScope" : {
+        "value" : 2.6,
+        "distribution" : {
+          "0" : 0.01,
+          "1" : 0.09,
+          "2" : 0.34,
+          "3" : 0.42,
+          "4" : 0.14
+        },
+        "providerConfidence" : 0.42,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 1.73,
+        "distribution" : {
+          "0" : 0.04,
+          "1" : 0.32,
+          "2" : 0.53,
+          "3" : 0.11,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.57,
+        "nearestLevel" : 2,
+        "nearestLabel" : "A meaningful mixture of rule-following and contextual judgement."
+      },
+      "humanInteraction" : {
+        "value" : 1.25,
+        "distribution" : {
+          "0" : 0.12,
+          "1" : 0.58,
+          "2" : 0.22,
+          "3" : 0.07,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.57,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 2.86,
+        "distribution" : {
+          "0" : 0.02,
+          "1" : 0.08,
+          "2" : 0.19,
+          "3" : 0.45,
+          "4" : 0.26
+        },
+        "providerConfidence" : 0.44,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Physical action, handling or in-person presence is important to the activity."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.97,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.02,
+          "4" : 0.98
+        },
+        "providerConfidence" : 0.98,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    } ]
+  },
+  "java-software-developer-8" : {
+    "schemaVersion" : "professional-responsibility-v1",
+    "source" : "JEV",
+    "model" : "jev-1.14.0",
+    "providerRequestId" : "req_01a17c0ffa287268b8ce2f6bd399a9f2",
+    "inputTokens" : 8142,
+    "outputTokens" : 1002,
+    "regulatedContext" : {
+      "value" : 1.17,
+      "distribution" : {
+        "0" : 0.09,
+        "1" : 0.64,
+        "2" : 0.27,
+        "3" : 0.0,
+        "4" : 0.0
+      },
+      "providerConfidence" : 0.7,
+      "nearestLevel" : 1,
+      "nearestLabel" : "Some formal procedures or confidentiality expectations apply, with limited consequences."
+    },
+    "responsibilities" : [ {
+      "responsibilityIndex" : 1,
+      "responsibilityKey" : "r1",
+      "responsibilityText" : "Design and develop backend services",
+      "describedClearly" : 0.43,
+      "assistanceScope" : {
+        "value" : 3.19,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.19,
+          "3" : 0.43,
+          "4" : 0.38
+        },
+        "providerConfidence" : 0.52,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 3.12,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.86,
+          "4" : 0.13
+        },
+        "providerConfidence" : 0.88,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 1.4,
+        "distribution" : {
+          "0" : 0.06,
+          "1" : 0.54,
+          "2" : 0.35,
+          "3" : 0.05,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.57,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.02,
+        "distribution" : {
+          "0" : 0.98,
+          "1" : 0.02,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.98,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.75,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.27,
+          "3" : 0.71,
+          "4" : 0.02
+        },
+        "providerConfidence" : 0.76,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Errors can have significant consequences for which the person is accountable."
+      }
+    }, {
+      "responsibilityIndex" : 2,
+      "responsibilityKey" : "r2",
+      "responsibilityText" : "Review pull requests and technical designs",
+      "describedClearly" : 0.74,
+      "assistanceScope" : {
+        "value" : 3.34,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.08,
+          "3" : 0.5,
+          "4" : 0.42
+        },
+        "providerConfidence" : 0.58,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 3.01,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.06,
+          "3" : 0.87,
+          "4" : 0.07
+        },
+        "providerConfidence" : 0.89,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 2.33,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.1,
+          "2" : 0.47000000000000003,
+          "3" : 0.43,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.56,
+        "nearestLevel" : 2,
+        "nearestLabel" : "Interaction with people matters alongside other parts of the activity."
+      },
+      "physicalPresence" : {
+        "value" : 0.02,
+        "distribution" : {
+          "0" : 0.98,
+          "1" : 0.02,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.98,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.59,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.4,
+          "3" : 0.58,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.64,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Errors can have significant consequences for which the person is accountable."
+      }
+    }, {
+      "responsibilityIndex" : 3,
+      "responsibilityKey" : "r3",
+      "responsibilityText" : "Investigate and resolve production incidents",
+      "describedClearly" : 0.6,
+      "assistanceScope" : {
+        "value" : 3.24,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.1,
+          "3" : 0.55,
+          "4" : 0.35
+        },
+        "providerConfidence" : 0.62,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 3.28,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.72,
+          "4" : 0.28
+        },
+        "providerConfidence" : 0.77,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 1.61,
+        "distribution" : {
+          "0" : 0.03,
+          "1" : 0.43,
+          "2" : 0.45,
+          "3" : 0.09,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.52,
+        "nearestLevel" : 2,
+        "nearestLabel" : "Interaction with people matters alongside other parts of the activity."
+      },
+      "physicalPresence" : {
+        "value" : 0.02,
+        "distribution" : {
+          "0" : 0.98,
+          "1" : 0.02,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.98,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.99,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.12,
+          "3" : 0.77,
+          "4" : 0.11
+        },
+        "providerConfidence" : 0.81,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Errors can have significant consequences for which the person is accountable."
+      }
+    }, {
+      "responsibilityIndex" : 4,
+      "responsibilityKey" : "r4",
+      "responsibilityText" : "Discuss requirements with product and business teams",
+      "describedClearly" : 0.34,
+      "assistanceScope" : {
+        "value" : 2.73,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.05,
+          "2" : 0.29,
+          "3" : 0.54,
+          "4" : 0.12
+        },
+        "providerConfidence" : 0.57,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 3.06,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.04,
+          "3" : 0.86,
+          "4" : 0.1
+        },
+        "providerConfidence" : 0.88,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 3.35,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.03,
+          "3" : 0.59,
+          "4" : 0.38
+        },
+        "providerConfidence" : 0.66,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Trust, communication or relationship handling is important to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.13,
+        "distribution" : {
+          "0" : 0.89,
+          "1" : 0.11,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.91,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.33,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.03,
+          "2" : 0.62,
+          "3" : 0.34,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.68,
+        "nearestLevel" : 2,
+        "nearestLabel" : "Errors can have meaningful consequences, with shared or supervised accountability."
+      }
+    }, {
+      "responsibilityIndex" : 5,
+      "responsibilityKey" : "r5",
+      "responsibilityText" : "Make decisions about APIs, integrations and data models",
+      "describedClearly" : 0.73,
+      "assistanceScope" : {
+        "value" : 2.99,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.18,
+          "3" : 0.61,
+          "4" : 0.2
+        },
+        "providerConfidence" : 0.67,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 3.29,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.71,
+          "4" : 0.29
+        },
+        "providerConfidence" : 0.76,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 2.2,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.16,
+          "2" : 0.48,
+          "3" : 0.36,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.57,
+        "nearestLevel" : 2,
+        "nearestLabel" : "Interaction with people matters alongside other parts of the activity."
+      },
+      "physicalPresence" : {
+        "value" : 0.04,
+        "distribution" : {
+          "0" : 0.96,
+          "1" : 0.04,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.97,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.81,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.2,
+          "3" : 0.78,
+          "4" : 0.02
+        },
+        "providerConfidence" : 0.82,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Errors can have significant consequences for which the person is accountable."
+      }
+    }, {
+      "responsibilityIndex" : 6,
+      "responsibilityKey" : "r6",
+      "responsibilityText" : "Mentor less experienced developers",
+      "describedClearly" : 0.13,
+      "assistanceScope" : {
+        "value" : 2.6,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.07,
+          "2" : 0.38,
+          "3" : 0.41000000000000003,
+          "4" : 0.14
+        },
+        "providerConfidence" : 0.45,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 3.19,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.06,
+          "3" : 0.69,
+          "4" : 0.25
+        },
+        "providerConfidence" : 0.74,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 3.35,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.02,
+          "3" : 0.61,
+          "4" : 0.37
+        },
+        "providerConfidence" : 0.68,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Trust, communication or relationship handling is important to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.11,
+        "distribution" : {
+          "0" : 0.9,
+          "1" : 0.1,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.92,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 1.99,
+        "distribution" : {
+          "0" : 0.01,
+          "1" : 0.15,
+          "2" : 0.6900000000000001,
+          "3" : 0.15,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.73,
+        "nearestLevel" : 2,
+        "nearestLabel" : "Errors can have meaningful consequences, with shared or supervised accountability."
+      }
+    }, {
+      "responsibilityIndex" : 7,
+      "responsibilityKey" : "r7",
+      "responsibilityText" : "Support releases and deployments",
+      "describedClearly" : 0.16,
+      "assistanceScope" : {
+        "value" : 2.78,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.05,
+          "2" : 0.3,
+          "3" : 0.47000000000000003,
+          "4" : 0.18
+        },
+        "providerConfidence" : 0.52,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 2.69,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.02,
+          "2" : 0.28,
+          "3" : 0.69,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.72,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 1.99,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.18,
+          "2" : 0.65,
+          "3" : 0.17,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.71,
+        "nearestLevel" : 2,
+        "nearestLabel" : "Interaction with people matters alongside other parts of the activity."
+      },
+      "physicalPresence" : {
+        "value" : 0.03,
+        "distribution" : {
+          "0" : 0.97,
+          "1" : 0.03,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.97,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.74,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.27,
+          "3" : 0.71,
+          "4" : 0.02
+        },
+        "providerConfidence" : 0.76,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Errors can have significant consequences for which the person is accountable."
+      }
+    }, {
+      "responsibilityIndex" : 8,
+      "responsibilityKey" : "r8",
+      "responsibilityText" : "Improve automated tests and code quality",
+      "describedClearly" : 0.39,
+      "assistanceScope" : {
+        "value" : 3.22,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.16,
+          "3" : 0.43,
+          "4" : 0.4
+        },
+        "providerConfidence" : 0.52,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 2.87,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.14,
+          "3" : 0.84,
+          "4" : 0.02
+        },
+        "providerConfidence" : 0.87,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 1.53,
+        "distribution" : {
+          "0" : 0.03,
+          "1" : 0.48,
+          "2" : 0.41,
+          "3" : 0.08,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.5,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.01,
+        "distribution" : {
+          "0" : 0.99,
+          "1" : 0.01,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.99,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.15,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.1,
+          "2" : 0.65,
+          "3" : 0.25,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.71,
+        "nearestLevel" : 2,
+        "nearestLabel" : "Errors can have meaningful consequences, with shared or supervised accountability."
+      }
+    } ]
+  },
+  "management-accountant-8" : {
+    "schemaVersion" : "professional-responsibility-v1",
+    "source" : "JEV",
+    "model" : "jev-1.14.0",
+    "providerRequestId" : "req_01a17c0ffb087d69a9e5a16520b65379",
+    "inputTokens" : 8142,
+    "outputTokens" : 1002,
+    "regulatedContext" : {
+      "value" : 1.85,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.21,
+        "2" : 0.73,
+        "3" : 0.06,
+        "4" : 0.0
+      },
+      "providerConfidence" : 0.77,
+      "nearestLevel" : 2,
+      "nearestLabel" : "Formal procedures, confidentiality or regulatory requirements meaningfully shape parts of the work."
+    },
+    "responsibilities" : [ {
+      "responsibilityIndex" : 1,
+      "responsibilityKey" : "r1",
+      "responsibilityText" : "Prepare monthly management accounts",
+      "describedClearly" : 0.52,
+      "assistanceScope" : {
+        "value" : 3.55,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.03,
+          "3" : 0.38,
+          "4" : 0.59
+        },
+        "providerConfidence" : 0.63,
+        "nearestLevel" : 4,
+        "nearestLabel" : "AI tools could support most of the information work in this activity, with the person directing and reviewing the outcome."
+      },
+      "contextualJudgement" : {
+        "value" : 1.71,
+        "distribution" : {
+          "0" : 0.02,
+          "1" : 0.33,
+          "2" : 0.57,
+          "3" : 0.08,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.62,
+        "nearestLevel" : 2,
+        "nearestLabel" : "A meaningful mixture of rule-following and contextual judgement."
+      },
+      "humanInteraction" : {
+        "value" : 0.98,
+        "distribution" : {
+          "0" : 0.23,
+          "1" : 0.58,
+          "2" : 0.17,
+          "3" : 0.02,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.63,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.05,
+        "distribution" : {
+          "0" : 0.95,
+          "1" : 0.05,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.96,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.64,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.37,
+          "3" : 0.61,
+          "4" : 0.02
+        },
+        "providerConfidence" : 0.68,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Errors can have significant consequences for which the person is accountable."
+      }
+    }, {
+      "responsibilityIndex" : 2,
+      "responsibilityKey" : "r2",
+      "responsibilityText" : "Analyse budgets against actual financial results",
+      "describedClearly" : 0.91,
+      "assistanceScope" : {
+        "value" : 3.59,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.02,
+          "3" : 0.37,
+          "4" : 0.61
+        },
+        "providerConfidence" : 0.66,
+        "nearestLevel" : 4,
+        "nearestLabel" : "AI tools could support most of the information work in this activity, with the person directing and reviewing the outcome."
+      },
+      "contextualJudgement" : {
+        "value" : 2.44,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.02,
+          "2" : 0.52,
+          "3" : 0.46,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.6,
+        "nearestLevel" : 2,
+        "nearestLabel" : "A meaningful mixture of rule-following and contextual judgement."
+      },
+      "humanInteraction" : {
+        "value" : 1.61,
+        "distribution" : {
+          "0" : 0.07,
+          "1" : 0.39,
+          "2" : 0.41,
+          "3" : 0.13,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.45,
+        "nearestLevel" : 2,
+        "nearestLabel" : "Interaction with people matters alongside other parts of the activity."
+      },
+      "physicalPresence" : {
+        "value" : 0.06,
+        "distribution" : {
+          "0" : 0.95,
+          "1" : 0.05,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.96,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.6,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.4,
+          "3" : 0.58,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.64,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Errors can have significant consequences for which the person is accountable."
+      }
+    }, {
+      "responsibilityIndex" : 3,
+      "responsibilityKey" : "r3",
+      "responsibilityText" : "Produce financial reports for management",
+      "describedClearly" : 0.33,
+      "assistanceScope" : {
+        "value" : 3.35,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.06,
+          "3" : 0.52,
+          "4" : 0.42
+        },
+        "providerConfidence" : 0.6,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 2.21,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.09,
+          "2" : 0.61,
+          "3" : 0.3,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.68,
+        "nearestLevel" : 2,
+        "nearestLabel" : "A meaningful mixture of rule-following and contextual judgement."
+      },
+      "humanInteraction" : {
+        "value" : 1.42,
+        "distribution" : {
+          "0" : 0.08,
+          "1" : 0.54,
+          "2" : 0.27,
+          "3" : 0.11,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.52,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.05,
+        "distribution" : {
+          "0" : 0.96,
+          "1" : 0.04,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.97,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.64,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.37,
+          "3" : 0.61,
+          "4" : 0.02
+        },
+        "providerConfidence" : 0.68,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Errors can have significant consequences for which the person is accountable."
+      }
+    }, {
+      "responsibilityIndex" : 4,
+      "responsibilityKey" : "r4",
+      "responsibilityText" : "Prepare forecasts and support annual budgeting",
+      "describedClearly" : 0.72,
+      "assistanceScope" : {
+        "value" : 3.36,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.05,
+          "3" : 0.53,
+          "4" : 0.42
+        },
+        "providerConfidence" : 0.61,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 2.97,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.05,
+          "3" : 0.93,
+          "4" : 0.02
+        },
+        "providerConfidence" : 0.94,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 2.49,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.04,
+          "2" : 0.43,
+          "3" : 0.52,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.57,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Trust, communication or relationship handling is important to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.21,
+        "distribution" : {
+          "0" : 0.81,
+          "1" : 0.18,
+          "2" : 0.01,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.83,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.61,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.4,
+          "3" : 0.59,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.66,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Errors can have significant consequences for which the person is accountable."
+      }
+    }, {
+      "responsibilityIndex" : 5,
+      "responsibilityKey" : "r5",
+      "responsibilityText" : "Investigate unusual costs or financial variances",
+      "describedClearly" : 0.76,
+      "assistanceScope" : {
+        "value" : 3.46,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.03,
+          "3" : 0.47,
+          "4" : 0.5
+        },
+        "providerConfidence" : 0.56,
+        "nearestLevel" : 4,
+        "nearestLabel" : "AI tools could support most of the information work in this activity, with the person directing and reviewing the outcome."
+      },
+      "contextualJudgement" : {
+        "value" : 2.69,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.31,
+          "3" : 0.67,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.72,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 1.75,
+        "distribution" : {
+          "0" : 0.02,
+          "1" : 0.36,
+          "2" : 0.47,
+          "3" : 0.15,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.54,
+        "nearestLevel" : 2,
+        "nearestLabel" : "Interaction with people matters alongside other parts of the activity."
+      },
+      "physicalPresence" : {
+        "value" : 0.11,
+        "distribution" : {
+          "0" : 0.9,
+          "1" : 0.1,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.92,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.37,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.02,
+          "2" : 0.58,
+          "3" : 0.39,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.64,
+        "nearestLevel" : 2,
+        "nearestLabel" : "Errors can have meaningful consequences, with shared or supervised accountability."
+      }
+    }, {
+      "responsibilityIndex" : 6,
+      "responsibilityKey" : "r6",
+      "responsibilityText" : "Meet department managers to discuss financial performance",
+      "describedClearly" : 0.7,
+      "assistanceScope" : {
+        "value" : 2.85,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.06,
+          "2" : 0.19,
+          "3" : 0.5700000000000001,
+          "4" : 0.18
+        },
+        "providerConfidence" : 0.59,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 2.88,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.17,
+          "3" : 0.78,
+          "4" : 0.05
+        },
+        "providerConfidence" : 0.82,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 3.22,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.03,
+          "3" : 0.71,
+          "4" : 0.26
+        },
+        "providerConfidence" : 0.76,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Trust, communication or relationship handling is important to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.77,
+        "distribution" : {
+          "0" : 0.46,
+          "1" : 0.4,
+          "2" : 0.08,
+          "3" : 0.05,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.38,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.36,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.04,
+          "2" : 0.56,
+          "3" : 0.39,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.62,
+        "nearestLevel" : 2,
+        "nearestLabel" : "Errors can have meaningful consequences, with shared or supervised accountability."
+      }
+    }, {
+      "responsibilityIndex" : 7,
+      "responsibilityKey" : "r7",
+      "responsibilityText" : "Provide financial information to support business decisions",
+      "describedClearly" : 0.21,
+      "assistanceScope" : {
+        "value" : 3.35,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.07,
+          "3" : 0.49,
+          "4" : 0.43
+        },
+        "providerConfidence" : 0.57,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 2.79,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.22,
+          "3" : 0.76,
+          "4" : 0.02
+        },
+        "providerConfidence" : 0.8,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 2.4,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.11,
+          "2" : 0.39,
+          "3" : 0.49,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.48,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Trust, communication or relationship handling is important to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.25,
+        "distribution" : {
+          "0" : 0.78,
+          "1" : 0.2,
+          "2" : 0.02,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.8,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.64,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.37,
+          "3" : 0.62,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.68,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Errors can have significant consequences for which the person is accountable."
+      }
+    }, {
+      "responsibilityIndex" : 8,
+      "responsibilityKey" : "r8",
+      "responsibilityText" : "Maintain accurate financial records and reporting processes",
+      "describedClearly" : 0.28,
+      "assistanceScope" : {
+        "value" : 3.15,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.02,
+          "2" : 0.17,
+          "3" : 0.46,
+          "4" : 0.35
+        },
+        "providerConfidence" : 0.53,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 1.36,
+        "distribution" : {
+          "0" : 0.07,
+          "1" : 0.53,
+          "2" : 0.36,
+          "3" : 0.04,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.57,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Occasional judgement is needed, but explicit rules decide most of the outcome."
+      },
+      "humanInteraction" : {
+        "value" : 0.74,
+        "distribution" : {
+          "0" : 0.35,
+          "1" : 0.58,
+          "2" : 0.06,
+          "3" : 0.01,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.64,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.09,
+        "distribution" : {
+          "0" : 0.92,
+          "1" : 0.08,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.93,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.81,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.25,
+          "3" : 0.67,
+          "4" : 0.07
+        },
+        "providerConfidence" : 0.72,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Errors can have significant consequences for which the person is accountable."
+      }
+    } ]
+  },
+  "electrician-8" : {
+    "schemaVersion" : "professional-responsibility-v1",
+    "source" : "JEV",
+    "model" : "jev-1.14.0",
+    "providerRequestId" : "req_01a17c0ffbf47f179ae87257be33fae7",
+    "inputTokens" : 8095,
+    "outputTokens" : 1002,
+    "regulatedContext" : {
+      "value" : 3.85,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.14,
+        "4" : 0.86
+      },
+      "providerConfidence" : 0.88,
+      "nearestLevel" : 4,
+      "nearestLabel" : "The work is fundamentally governed by professional regulation, legal duties or safety-critical procedures that constrain how almost every part of it is done."
+    },
+    "responsibilities" : [ {
+      "responsibilityIndex" : 1,
+      "responsibilityKey" : "r1",
+      "responsibilityText" : "Install electrical wiring and equipment",
+      "describedClearly" : 0.76,
+      "assistanceScope" : {
+        "value" : 2.25,
+        "distribution" : {
+          "0" : 0.03,
+          "1" : 0.22,
+          "2" : 0.29,
+          "3" : 0.37,
+          "4" : 0.09
+        },
+        "providerConfidence" : 0.24,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 1.94,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.2,
+          "2" : 0.66,
+          "3" : 0.14,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.72,
+        "nearestLevel" : 2,
+        "nearestLabel" : "A meaningful mixture of rule-following and contextual judgement."
+      },
+      "humanInteraction" : {
+        "value" : 0.95,
+        "distribution" : {
+          "0" : 0.21,
+          "1" : 0.65,
+          "2" : 0.13,
+          "3" : 0.01,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.7,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 3.99,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 1.0
+        },
+        "providerConfidence" : 1.0,
+        "nearestLevel" : 4,
+        "nearestLabel" : "The activity fundamentally consists of physical action or in-person presence."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.99,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.01,
+          "4" : 0.99
+        },
+        "providerConfidence" : 0.99,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    }, {
+      "responsibilityIndex" : 2,
+      "responsibilityKey" : "r2",
+      "responsibilityText" : "Inspect and test electrical systems",
+      "describedClearly" : 0.43,
+      "assistanceScope" : {
+        "value" : 2.39,
+        "distribution" : {
+          "0" : 0.01,
+          "1" : 0.17,
+          "2" : 0.37,
+          "3" : 0.31,
+          "4" : 0.14
+        },
+        "providerConfidence" : 0.35,
+        "nearestLevel" : 2,
+        "nearestLabel" : "AI tools could usefully support several parts of this activity under human direction."
+      },
+      "contextualJudgement" : {
+        "value" : 1.69,
+        "distribution" : {
+          "0" : 0.02,
+          "1" : 0.36,
+          "2" : 0.53,
+          "3" : 0.09,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.59,
+        "nearestLevel" : 2,
+        "nearestLabel" : "A meaningful mixture of rule-following and contextual judgement."
+      },
+      "humanInteraction" : {
+        "value" : 0.59,
+        "distribution" : {
+          "0" : 0.46,
+          "1" : 0.49,
+          "2" : 0.05,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.57,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 3.91,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.08,
+          "4" : 0.92
+        },
+        "providerConfidence" : 0.93,
+        "nearestLevel" : 4,
+        "nearestLabel" : "The activity fundamentally consists of physical action or in-person presence."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.98,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.02,
+          "4" : 0.98
+        },
+        "providerConfidence" : 0.98,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    }, {
+      "responsibilityIndex" : 3,
+      "responsibilityKey" : "r3",
+      "responsibilityText" : "Diagnose electrical faults",
+      "describedClearly" : 0.51,
+      "assistanceScope" : {
+        "value" : 2.56,
+        "distribution" : {
+          "0" : 0.01,
+          "1" : 0.11,
+          "2" : 0.34,
+          "3" : 0.39,
+          "4" : 0.15
+        },
+        "providerConfidence" : 0.38,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 2.83,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.2,
+          "3" : 0.76,
+          "4" : 0.04
+        },
+        "providerConfidence" : 0.8,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 0.65,
+        "distribution" : {
+          "0" : 0.41,
+          "1" : 0.53,
+          "2" : 0.06,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.61,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 3.37,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.07,
+          "3" : 0.46,
+          "4" : 0.46
+        },
+        "providerConfidence" : 0.54,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Physical action, handling or in-person presence is important to the activity."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.97,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.02,
+          "4" : 0.98
+        },
+        "providerConfidence" : 0.98,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    }, {
+      "responsibilityIndex" : 4,
+      "responsibilityKey" : "r4",
+      "responsibilityText" : "Repair faulty wiring and components",
+      "describedClearly" : 0.8,
+      "assistanceScope" : {
+        "value" : 2.05,
+        "distribution" : {
+          "0" : 0.05,
+          "1" : 0.28,
+          "2" : 0.32,
+          "3" : 0.27,
+          "4" : 0.08
+        },
+        "providerConfidence" : 0.32,
+        "nearestLevel" : 2,
+        "nearestLabel" : "AI tools could usefully support several parts of this activity under human direction."
+      },
+      "contextualJudgement" : {
+        "value" : 2.42,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.05,
+          "2" : 0.48,
+          "3" : 0.46,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.56,
+        "nearestLevel" : 2,
+        "nearestLabel" : "A meaningful mixture of rule-following and contextual judgement."
+      },
+      "humanInteraction" : {
+        "value" : 0.66,
+        "distribution" : {
+          "0" : 0.41,
+          "1" : 0.53,
+          "2" : 0.05,
+          "3" : 0.01,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.6,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 3.98,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.01,
+          "4" : 0.99
+        },
+        "providerConfidence" : 0.99,
+        "nearestLevel" : 4,
+        "nearestLabel" : "The activity fundamentally consists of physical action or in-person presence."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.99,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.01,
+          "4" : 0.99
+        },
+        "providerConfidence" : 0.99,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    }, {
+      "responsibilityIndex" : 5,
+      "responsibilityKey" : "r5",
+      "responsibilityText" : "Read technical drawings and specifications",
+      "describedClearly" : 0.85,
+      "assistanceScope" : {
+        "value" : 2.63,
+        "distribution" : {
+          "0" : 0.01,
+          "1" : 0.1,
+          "2" : 0.33,
+          "3" : 0.39,
+          "4" : 0.17
+        },
+        "providerConfidence" : 0.39,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 1.53,
+        "distribution" : {
+          "0" : 0.09,
+          "1" : 0.4,
+          "2" : 0.39999999999999997,
+          "3" : 0.11,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.41,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Occasional judgement is needed, but explicit rules decide most of the outcome."
+      },
+      "humanInteraction" : {
+        "value" : 0.26,
+        "distribution" : {
+          "0" : 0.76,
+          "1" : 0.23,
+          "2" : 0.01,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.79,
+        "nearestLevel" : 0,
+        "nearestLabel" : "Success depends very little on interaction with other people."
+      },
+      "physicalPresence" : {
+        "value" : 1.68,
+        "distribution" : {
+          "0" : 0.17,
+          "1" : 0.37,
+          "2" : 0.13,
+          "3" : 0.28,
+          "4" : 0.05
+        },
+        "providerConfidence" : 0.16,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Occasional physical action or presence helps but is not central."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.94,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.05,
+          "4" : 0.95
+        },
+        "providerConfidence" : 0.96,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    }, {
+      "responsibilityIndex" : 6,
+      "responsibilityKey" : "r6",
+      "responsibilityText" : "Explain faults and repair options to customers",
+      "describedClearly" : 0.84,
+      "assistanceScope" : {
+        "value" : 2.67,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.08,
+          "2" : 0.3,
+          "3" : 0.48,
+          "4" : 0.14
+        },
+        "providerConfidence" : 0.5,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 2.73,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.26,
+          "3" : 0.7,
+          "4" : 0.03
+        },
+        "providerConfidence" : 0.74,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 3.59,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.38,
+          "4" : 0.61
+        },
+        "providerConfidence" : 0.67,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Success fundamentally depends on trust, care, persuasion or live human communication."
+      },
+      "physicalPresence" : {
+        "value" : 2.24,
+        "distribution" : {
+          "0" : 0.11,
+          "1" : 0.26,
+          "2" : 0.11,
+          "3" : 0.32,
+          "4" : 0.2
+        },
+        "providerConfidence" : 0.03,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Physical action, handling or in-person presence is important to the activity."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.62,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.04,
+          "3" : 0.28,
+          "4" : 0.67
+        },
+        "providerConfidence" : 0.68,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    }, {
+      "responsibilityIndex" : 7,
+      "responsibilityKey" : "r7",
+      "responsibilityText" : "Complete safety documentation",
+      "describedClearly" : 0.23,
+      "assistanceScope" : {
+        "value" : 3.17,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.15,
+          "3" : 0.5,
+          "4" : 0.34
+        },
+        "providerConfidence" : 0.57,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 1.06,
+        "distribution" : {
+          "0" : 0.2,
+          "1" : 0.56,
+          "2" : 0.22,
+          "3" : 0.02,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.62,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Occasional judgement is needed, but explicit rules decide most of the outcome."
+      },
+      "humanInteraction" : {
+        "value" : 0.73,
+        "distribution" : {
+          "0" : 0.39,
+          "1" : 0.51,
+          "2" : 0.08,
+          "3" : 0.02,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.57,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.96,
+        "distribution" : {
+          "0" : 0.37,
+          "1" : 0.42,
+          "2" : 0.11,
+          "3" : 0.09,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.43,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Occasional physical action or presence helps but is not central."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.89,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.09,
+          "4" : 0.9
+        },
+        "providerConfidence" : 0.91,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    }, {
+      "responsibilityIndex" : 8,
+      "responsibilityKey" : "r8",
+      "responsibilityText" : "Follow electrical safety regulations",
+      "describedClearly" : 0.35,
+      "assistanceScope" : {
+        "value" : 2.95,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.04,
+          "2" : 0.2,
+          "3" : 0.51,
+          "4" : 0.25
+        },
+        "providerConfidence" : 0.56,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 1.5,
+        "distribution" : {
+          "0" : 0.06,
+          "1" : 0.46,
+          "2" : 0.42,
+          "3" : 0.06,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.5,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Occasional judgement is needed, but explicit rules decide most of the outcome."
+      },
+      "humanInteraction" : {
+        "value" : 0.62,
+        "distribution" : {
+          "0" : 0.47,
+          "1" : 0.45,
+          "2" : 0.07,
+          "3" : 0.01,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.48,
+        "nearestLevel" : 0,
+        "nearestLabel" : "Success depends very little on interaction with other people."
+      },
+      "physicalPresence" : {
+        "value" : 2.4,
+        "distribution" : {
+          "0" : 0.09,
+          "1" : 0.18,
+          "2" : 0.18,
+          "3" : 0.35,
+          "4" : 0.2
+        },
+        "providerConfidence" : 0.16,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Physical action, handling or in-person presence is important to the activity."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.99,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.01,
+          "4" : 0.99
+        },
+        "providerConfidence" : 0.99,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    } ]
+  },
+  "secondary-school-teacher-8" : {
+    "schemaVersion" : "professional-responsibility-v1",
+    "source" : "JEV",
+    "model" : "jev-1.14.0",
+    "providerRequestId" : "req_01a17c0ffd467f6e8ff6bfdd38e9ecc4",
+    "inputTokens" : 8108,
+    "outputTokens" : 1002,
+    "regulatedContext" : {
+      "value" : 2.85,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.28,
+        "3" : 0.59,
+        "4" : 0.13
+      },
+      "providerConfidence" : 0.66,
+      "nearestLevel" : 3,
+      "nearestLabel" : "Much of the work is governed by regulation, safety-critical procedure, confidentiality or security controls."
+    },
+    "responsibilities" : [ {
+      "responsibilityIndex" : 1,
+      "responsibilityKey" : "r1",
+      "responsibilityText" : "Plan lessons",
+      "describedClearly" : 0.13,
+      "assistanceScope" : {
+        "value" : 3.54,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.43,
+          "4" : 0.56
+        },
+        "providerConfidence" : 0.62,
+        "nearestLevel" : 4,
+        "nearestLabel" : "AI tools could support most of the information work in this activity, with the person directing and reviewing the outcome."
+      },
+      "contextualJudgement" : {
+        "value" : 2.98,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.09,
+          "3" : 0.84,
+          "4" : 0.07
+        },
+        "providerConfidence" : 0.87,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 0.98,
+        "distribution" : {
+          "0" : 0.27,
+          "1" : 0.52,
+          "2" : 0.17,
+          "3" : 0.04,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.57,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.63,
+        "distribution" : {
+          "0" : 0.47,
+          "1" : 0.45,
+          "2" : 0.06,
+          "3" : 0.02,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.47,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.4,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.04,
+          "2" : 0.52,
+          "3" : 0.43,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.59,
+        "nearestLevel" : 2,
+        "nearestLabel" : "Errors can have meaningful consequences, with shared or supervised accountability."
+      }
+    }, {
+      "responsibilityIndex" : 2,
+      "responsibilityKey" : "r2",
+      "responsibilityText" : "Teach lessons to students",
+      "describedClearly" : 0.26,
+      "assistanceScope" : {
+        "value" : 2.24,
+        "distribution" : {
+          "0" : 0.04,
+          "1" : 0.22,
+          "2" : 0.32,
+          "3" : 0.3,
+          "4" : 0.12
+        },
+        "providerConfidence" : 0.3,
+        "nearestLevel" : 2,
+        "nearestLabel" : "AI tools could usefully support several parts of this activity under human direction."
+      },
+      "contextualJudgement" : {
+        "value" : 3.19,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.04,
+          "3" : 0.73,
+          "4" : 0.23
+        },
+        "providerConfidence" : 0.77,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 3.92,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.07,
+          "4" : 0.93
+        },
+        "providerConfidence" : 0.94,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Success fundamentally depends on trust, care, persuasion or live human communication."
+      },
+      "physicalPresence" : {
+        "value" : 3.65,
+        "distribution" : {
+          "0" : 0.01,
+          "1" : 0.01,
+          "2" : 0.02,
+          "3" : 0.24,
+          "4" : 0.72
+        },
+        "providerConfidence" : 0.71,
+        "nearestLevel" : 4,
+        "nearestLabel" : "The activity fundamentally consists of physical action or in-person presence."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.78,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.26,
+          "3" : 0.69,
+          "4" : 0.05
+        },
+        "providerConfidence" : 0.74,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Errors can have significant consequences for which the person is accountable."
+      }
+    }, {
+      "responsibilityIndex" : 3,
+      "responsibilityKey" : "r3",
+      "responsibilityText" : "Explain difficult concepts",
+      "describedClearly" : 0.54,
+      "assistanceScope" : {
+        "value" : 2.96,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.04,
+          "2" : 0.19,
+          "3" : 0.53,
+          "4" : 0.24
+        },
+        "providerConfidence" : 0.57,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 3.14,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.08,
+          "3" : 0.7,
+          "4" : 0.22
+        },
+        "providerConfidence" : 0.75,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 3.65,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.02,
+          "3" : 0.31,
+          "4" : 0.67
+        },
+        "providerConfidence" : 0.71,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Success fundamentally depends on trust, care, persuasion or live human communication."
+      },
+      "physicalPresence" : {
+        "value" : 2.87,
+        "distribution" : {
+          "0" : 0.09,
+          "1" : 0.08,
+          "2" : 0.07,
+          "3" : 0.39999999999999997,
+          "4" : 0.36
+        },
+        "providerConfidence" : 0.28,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Physical action, handling or in-person presence is important to the activity."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.29,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.05,
+          "2" : 0.61,
+          "3" : 0.34,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.68,
+        "nearestLevel" : 2,
+        "nearestLabel" : "Errors can have meaningful consequences, with shared or supervised accountability."
+      }
+    }, {
+      "responsibilityIndex" : 4,
+      "responsibilityKey" : "r4",
+      "responsibilityText" : "Assess student work",
+      "describedClearly" : 0.2,
+      "assistanceScope" : {
+        "value" : 3.28,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.14,
+          "3" : 0.4,
+          "4" : 0.45
+        },
+        "providerConfidence" : 0.41,
+        "nearestLevel" : 4,
+        "nearestLabel" : "AI tools could support most of the information work in this activity, with the person directing and reviewing the outcome."
+      },
+      "contextualJudgement" : {
+        "value" : 2.44,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.04,
+          "2" : 0.49,
+          "3" : 0.46,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.57,
+        "nearestLevel" : 2,
+        "nearestLabel" : "A meaningful mixture of rule-following and contextual judgement."
+      },
+      "humanInteraction" : {
+        "value" : 1.52,
+        "distribution" : {
+          "0" : 0.1,
+          "1" : 0.46,
+          "2" : 0.27,
+          "3" : 0.15,
+          "4" : 0.02
+        },
+        "providerConfidence" : 0.39,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 2.01,
+        "distribution" : {
+          "0" : 0.08,
+          "1" : 0.21,
+          "2" : 0.36,
+          "3" : 0.31,
+          "4" : 0.04
+        },
+        "providerConfidence" : 0.37,
+        "nearestLevel" : 2,
+        "nearestLabel" : "A meaningful mixture of physical or in-person work and other work."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.73,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.29,
+          "3" : 0.66,
+          "4" : 0.04
+        },
+        "providerConfidence" : 0.71,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Errors can have significant consequences for which the person is accountable."
+      }
+    }, {
+      "responsibilityIndex" : 5,
+      "responsibilityKey" : "r5",
+      "responsibilityText" : "Give students feedback",
+      "describedClearly" : 0.25,
+      "assistanceScope" : {
+        "value" : 3.14,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.16,
+          "3" : 0.51,
+          "4" : 0.32
+        },
+        "providerConfidence" : 0.58,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 2.94,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.14,
+          "3" : 0.77,
+          "4" : 0.09
+        },
+        "providerConfidence" : 0.81,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 3.45,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.02,
+          "3" : 0.49,
+          "4" : 0.49
+        },
+        "providerConfidence" : 0.57,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Trust, communication or relationship handling is important to success."
+      },
+      "physicalPresence" : {
+        "value" : 1.94,
+        "distribution" : {
+          "0" : 0.11,
+          "1" : 0.25,
+          "2" : 0.27,
+          "3" : 0.32,
+          "4" : 0.05
+        },
+        "providerConfidence" : 0.04,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Physical action, handling or in-person presence is important to the activity."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.45,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.04,
+          "2" : 0.47,
+          "3" : 0.48,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.53,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Errors can have significant consequences for which the person is accountable."
+      }
+    }, {
+      "responsibilityIndex" : 6,
+      "responsibilityKey" : "r6",
+      "responsibilityText" : "Manage classroom behaviour",
+      "describedClearly" : 0.21,
+      "assistanceScope" : {
+        "value" : 2.07,
+        "distribution" : {
+          "0" : 0.03,
+          "1" : 0.25,
+          "2" : 0.38,
+          "3" : 0.29,
+          "4" : 0.05
+        },
+        "providerConfidence" : 0.42,
+        "nearestLevel" : 2,
+        "nearestLabel" : "AI tools could usefully support several parts of this activity under human direction."
+      },
+      "contextualJudgement" : {
+        "value" : 3.14,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.04,
+          "3" : 0.77,
+          "4" : 0.19
+        },
+        "providerConfidence" : 0.81,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 3.8,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.19,
+          "4" : 0.81
+        },
+        "providerConfidence" : 0.84,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Success fundamentally depends on trust, care, persuasion or live human communication."
+      },
+      "physicalPresence" : {
+        "value" : 3.49,
+        "distribution" : {
+          "0" : 0.01,
+          "1" : 0.02,
+          "2" : 0.04,
+          "3" : 0.36,
+          "4" : 0.57
+        },
+        "providerConfidence" : 0.55,
+        "nearestLevel" : 4,
+        "nearestLabel" : "The activity fundamentally consists of physical action or in-person presence."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.15,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.12,
+          "3" : 0.61,
+          "4" : 0.27
+        },
+        "providerConfidence" : 0.68,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Errors can have significant consequences for which the person is accountable."
+      }
+    }, {
+      "responsibilityIndex" : 7,
+      "responsibilityKey" : "r7",
+      "responsibilityText" : "Communicate with parents",
+      "describedClearly" : 0.12,
+      "assistanceScope" : {
+        "value" : 2.82,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.03,
+          "2" : 0.3,
+          "3" : 0.49,
+          "4" : 0.18
+        },
+        "providerConfidence" : 0.55,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 2.92,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.14,
+          "3" : 0.8,
+          "4" : 0.06
+        },
+        "providerConfidence" : 0.83,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 3.96,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.04,
+          "4" : 0.96
+        },
+        "providerConfidence" : 0.97,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Success fundamentally depends on trust, care, persuasion or live human communication."
+      },
+      "physicalPresence" : {
+        "value" : 1.07,
+        "distribution" : {
+          "0" : 0.26,
+          "1" : 0.47,
+          "2" : 0.21,
+          "3" : 0.05,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.5,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Occasional physical action or presence helps but is not central."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.85,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.27,
+          "3" : 0.58,
+          "4" : 0.14
+        },
+        "providerConfidence" : 0.64,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Errors can have significant consequences for which the person is accountable."
+      }
+    }, {
+      "responsibilityIndex" : 8,
+      "responsibilityKey" : "r8",
+      "responsibilityText" : "Maintain safeguarding and academic records",
+      "describedClearly" : 0.56,
+      "assistanceScope" : {
+        "value" : 3.04,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.03,
+          "2" : 0.22,
+          "3" : 0.43,
+          "4" : 0.32
+        },
+        "providerConfidence" : 0.5,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 1.72,
+        "distribution" : {
+          "0" : 0.02,
+          "1" : 0.36,
+          "2" : 0.5,
+          "3" : 0.12,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.57,
+        "nearestLevel" : 2,
+        "nearestLabel" : "A meaningful mixture of rule-following and contextual judgement."
+      },
+      "humanInteraction" : {
+        "value" : 1.52,
+        "distribution" : {
+          "0" : 0.13,
+          "1" : 0.47,
+          "2" : 0.18,
+          "3" : 0.2,
+          "4" : 0.02
+        },
+        "providerConfidence" : 0.36,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 1.05,
+        "distribution" : {
+          "0" : 0.24,
+          "1" : 0.53,
+          "2" : 0.17,
+          "3" : 0.05,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.55,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Occasional physical action or presence helps but is not central."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.81,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.17,
+          "4" : 0.82
+        },
+        "providerConfidence" : 0.84,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    } ]
+  },
+  "solicitor-8" : {
+    "schemaVersion" : "professional-responsibility-v1",
+    "source" : "JEV",
+    "model" : "jev-1.14.0",
+    "providerRequestId" : "req_01a17c0ffe4474a299913b862284b63c",
+    "inputTokens" : 8112,
+    "outputTokens" : 1002,
+    "regulatedContext" : {
+      "value" : 3.97,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.03,
+        "4" : 0.97
+      },
+      "providerConfidence" : 0.97,
+      "nearestLevel" : 4,
+      "nearestLabel" : "The work is fundamentally governed by professional regulation, legal duties or safety-critical procedures that constrain how almost every part of it is done."
+    },
+    "responsibilities" : [ {
+      "responsibilityIndex" : 1,
+      "responsibilityKey" : "r1",
+      "responsibilityText" : "Review contracts and legal documents",
+      "describedClearly" : 0.56,
+      "assistanceScope" : {
+        "value" : 3.63,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.02,
+          "3" : 0.33,
+          "4" : 0.65
+        },
+        "providerConfidence" : 0.69,
+        "nearestLevel" : 4,
+        "nearestLabel" : "AI tools could support most of the information work in this activity, with the person directing and reviewing the outcome."
+      },
+      "contextualJudgement" : {
+        "value" : 2.83,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.19,
+          "3" : 0.78,
+          "4" : 0.03
+        },
+        "providerConfidence" : 0.82,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 0.94,
+        "distribution" : {
+          "0" : 0.26,
+          "1" : 0.58,
+          "2" : 0.13,
+          "3" : 0.03,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.62,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.18,
+        "distribution" : {
+          "0" : 0.83,
+          "1" : 0.17,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.86,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.78,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.22,
+          "4" : 0.78
+        },
+        "providerConfidence" : 0.82,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    }, {
+      "responsibilityIndex" : 2,
+      "responsibilityKey" : "r2",
+      "responsibilityText" : "Research relevant law and precedent",
+      "describedClearly" : 0.83,
+      "assistanceScope" : {
+        "value" : 3.86,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.14,
+          "4" : 0.86
+        },
+        "providerConfidence" : 0.88,
+        "nearestLevel" : 4,
+        "nearestLabel" : "AI tools could support most of the information work in this activity, with the person directing and reviewing the outcome."
+      },
+      "contextualJudgement" : {
+        "value" : 2.65,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.04,
+          "2" : 0.31,
+          "3" : 0.62,
+          "4" : 0.03
+        },
+        "providerConfidence" : 0.65,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 0.15,
+        "distribution" : {
+          "0" : 0.86,
+          "1" : 0.14,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.88,
+        "nearestLevel" : 0,
+        "nearestLabel" : "Success depends very little on interaction with other people."
+      },
+      "physicalPresence" : {
+        "value" : 0.09,
+        "distribution" : {
+          "0" : 0.92,
+          "1" : 0.08,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.93,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.68,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.3,
+          "4" : 0.69
+        },
+        "providerConfidence" : 0.73,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    }, {
+      "responsibilityIndex" : 3,
+      "responsibilityKey" : "r3",
+      "responsibilityText" : "Draft legal documents and correspondence",
+      "describedClearly" : 0.58,
+      "assistanceScope" : {
+        "value" : 3.54,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.05,
+          "3" : 0.35,
+          "4" : 0.6
+        },
+        "providerConfidence" : 0.62,
+        "nearestLevel" : 4,
+        "nearestLabel" : "AI tools could support most of the information work in this activity, with the person directing and reviewing the outcome."
+      },
+      "contextualJudgement" : {
+        "value" : 2.75,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.25,
+          "3" : 0.72,
+          "4" : 0.02
+        },
+        "providerConfidence" : 0.76,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 1.78,
+        "distribution" : {
+          "0" : 0.04,
+          "1" : 0.38,
+          "2" : 0.34,
+          "3" : 0.23,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.28,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.22,
+        "distribution" : {
+          "0" : 0.8,
+          "1" : 0.19,
+          "2" : 0.01,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.82,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.79,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.21,
+          "4" : 0.79
+        },
+        "providerConfidence" : 0.82,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    }, {
+      "responsibilityIndex" : 4,
+      "responsibilityKey" : "r4",
+      "responsibilityText" : "Advise clients on legal options",
+      "describedClearly" : 0.42,
+      "assistanceScope" : {
+        "value" : 3.19,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.02,
+          "2" : 0.1,
+          "3" : 0.55,
+          "4" : 0.33
+        },
+        "providerConfidence" : 0.61,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 3.2,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.78,
+          "4" : 0.21
+        },
+        "providerConfidence" : 0.82,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 3.47,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.51,
+          "4" : 0.48
+        },
+        "providerConfidence" : 0.59,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Trust, communication or relationship handling is important to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.26,
+        "distribution" : {
+          "0" : 0.77,
+          "1" : 0.21,
+          "2" : 0.02,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.79,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.86,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.13,
+          "4" : 0.87
+        },
+        "providerConfidence" : 0.89,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    }, {
+      "responsibilityIndex" : 5,
+      "responsibilityKey" : "r5",
+      "responsibilityText" : "Negotiate with other parties",
+      "describedClearly" : 0.21,
+      "assistanceScope" : {
+        "value" : 2.54,
+        "distribution" : {
+          "0" : 0.01,
+          "1" : 0.13,
+          "2" : 0.26,
+          "3" : 0.5,
+          "4" : 0.1
+        },
+        "providerConfidence" : 0.46,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 3.31,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.69,
+          "4" : 0.31
+        },
+        "providerConfidence" : 0.74,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 3.89,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.11,
+          "4" : 0.89
+        },
+        "providerConfidence" : 0.91,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Success fundamentally depends on trust, care, persuasion or live human communication."
+      },
+      "physicalPresence" : {
+        "value" : 0.52,
+        "distribution" : {
+          "0" : 0.53,
+          "1" : 0.41,
+          "2" : 0.05,
+          "3" : 0.01,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.55,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.69,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.3,
+          "4" : 0.7
+        },
+        "providerConfidence" : 0.75,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    }, {
+      "responsibilityIndex" : 6,
+      "responsibilityKey" : "r6",
+      "responsibilityText" : "Assess legal risks",
+      "describedClearly" : 0.21,
+      "assistanceScope" : {
+        "value" : 3.39,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.05,
+          "3" : 0.51,
+          "4" : 0.44
+        },
+        "providerConfidence" : 0.59,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 3.16,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.82,
+          "4" : 0.17
+        },
+        "providerConfidence" : 0.85,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 1.2,
+        "distribution" : {
+          "0" : 0.15,
+          "1" : 0.57,
+          "2" : 0.22,
+          "3" : 0.06,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.59,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.04,
+        "distribution" : {
+          "0" : 0.96,
+          "1" : 0.04,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.97,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.79,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.2,
+          "4" : 0.8
+        },
+        "providerConfidence" : 0.83,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    }, {
+      "responsibilityIndex" : 7,
+      "responsibilityKey" : "r7",
+      "responsibilityText" : "Manage confidential client information",
+      "describedClearly" : 0.31,
+      "assistanceScope" : {
+        "value" : 2.45,
+        "distribution" : {
+          "0" : 0.03,
+          "1" : 0.16,
+          "2" : 0.32,
+          "3" : 0.3,
+          "4" : 0.19
+        },
+        "providerConfidence" : 0.25,
+        "nearestLevel" : 2,
+        "nearestLabel" : "AI tools could usefully support several parts of this activity under human direction."
+      },
+      "contextualJudgement" : {
+        "value" : 2.3,
+        "distribution" : {
+          "0" : 0.01,
+          "1" : 0.11,
+          "2" : 0.45,
+          "3" : 0.42,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.53,
+        "nearestLevel" : 2,
+        "nearestLabel" : "A meaningful mixture of rule-following and contextual judgement."
+      },
+      "humanInteraction" : {
+        "value" : 2.72,
+        "distribution" : {
+          "0" : 0.03,
+          "1" : 0.16,
+          "2" : 0.09,
+          "3" : 0.49,
+          "4" : 0.23
+        },
+        "providerConfidence" : 0.39,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Trust, communication or relationship handling is important to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.22,
+        "distribution" : {
+          "0" : 0.8,
+          "1" : 0.19,
+          "2" : 0.01,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.82,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.92,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.07,
+          "4" : 0.93
+        },
+        "providerConfidence" : 0.94,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    }, {
+      "responsibilityIndex" : 8,
+      "responsibilityKey" : "r8",
+      "responsibilityText" : "Ensure work complies with professional obligations",
+      "describedClearly" : 0.14,
+      "assistanceScope" : {
+        "value" : 2.94,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.05,
+          "2" : 0.19,
+          "3" : 0.51,
+          "4" : 0.25
+        },
+        "providerConfidence" : 0.55,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 2.56,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.03,
+          "2" : 0.4,
+          "3" : 0.55,
+          "4" : 0.02
+        },
+        "providerConfidence" : 0.6,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Doing it well often depends on weighing trade-offs or interpreting incomplete or changing situations."
+      },
+      "humanInteraction" : {
+        "value" : 1.28,
+        "distribution" : {
+          "0" : 0.2,
+          "1" : 0.47,
+          "2" : 0.19,
+          "3" : 0.13,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.43,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.1,
+        "distribution" : {
+          "0" : 0.91,
+          "1" : 0.09,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.93,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.88,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.11,
+          "4" : 0.89
+        },
+        "providerConfidence" : 0.91,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Errors can cause serious harm or legal, safety or financial consequences, with clear personal or professional accountability."
+      }
+    } ]
+  },
+  "customer-service-adviser-8" : {
+    "schemaVersion" : "professional-responsibility-v1",
+    "source" : "JEV",
+    "model" : "jev-1.14.0",
+    "providerRequestId" : "req_01a17c0fff227a0a94b6fff2f16eafbe",
+    "inputTokens" : 8104,
+    "outputTokens" : 1002,
+    "regulatedContext" : {
+      "value" : 2.24,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.02,
+        "2" : 0.72,
+        "3" : 0.26,
+        "4" : 0.0
+      },
+      "providerConfidence" : 0.77,
+      "nearestLevel" : 2,
+      "nearestLabel" : "Formal procedures, confidentiality or regulatory requirements meaningfully shape parts of the work."
+    },
+    "responsibilities" : [ {
+      "responsibilityIndex" : 1,
+      "responsibilityKey" : "r1",
+      "responsibilityText" : "Respond to customer enquiries",
+      "describedClearly" : 0.25,
+      "assistanceScope" : {
+        "value" : 3.31,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.11,
+          "3" : 0.46,
+          "4" : 0.43
+        },
+        "providerConfidence" : 0.55,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 1.7,
+        "distribution" : {
+          "0" : 0.02,
+          "1" : 0.35,
+          "2" : 0.55,
+          "3" : 0.08,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.61,
+        "nearestLevel" : 2,
+        "nearestLabel" : "A meaningful mixture of rule-following and contextual judgement."
+      },
+      "humanInteraction" : {
+        "value" : 3.76,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.22,
+          "4" : 0.77
+        },
+        "providerConfidence" : 0.8,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Success fundamentally depends on trust, care, persuasion or live human communication."
+      },
+      "physicalPresence" : {
+        "value" : 0.1,
+        "distribution" : {
+          "0" : 0.92,
+          "1" : 0.07,
+          "2" : 0.01,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.93,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 1.9,
+        "distribution" : {
+          "0" : 0.01,
+          "1" : 0.22,
+          "2" : 0.64,
+          "3" : 0.13,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.69,
+        "nearestLevel" : 2,
+        "nearestLabel" : "Errors can have meaningful consequences, with shared or supervised accountability."
+      }
+    }, {
+      "responsibilityIndex" : 2,
+      "responsibilityKey" : "r2",
+      "responsibilityText" : "Explain products and services",
+      "describedClearly" : 0.46,
+      "assistanceScope" : {
+        "value" : 3.18,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.12,
+          "3" : 0.54,
+          "4" : 0.33
+        },
+        "providerConfidence" : 0.61,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 1.61,
+        "distribution" : {
+          "0" : 0.03,
+          "1" : 0.4,
+          "2" : 0.51,
+          "3" : 0.06,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.57,
+        "nearestLevel" : 2,
+        "nearestLabel" : "A meaningful mixture of rule-following and contextual judgement."
+      },
+      "humanInteraction" : {
+        "value" : 3.49,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.03,
+          "3" : 0.45,
+          "4" : 0.52
+        },
+        "providerConfidence" : 0.57,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Success fundamentally depends on trust, care, persuasion or live human communication."
+      },
+      "physicalPresence" : {
+        "value" : 0.04,
+        "distribution" : {
+          "0" : 0.97,
+          "1" : 0.03,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.97,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.05,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.15,
+          "2" : 0.65,
+          "3" : 0.2,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.71,
+        "nearestLevel" : 2,
+        "nearestLabel" : "Errors can have meaningful consequences, with shared or supervised accountability."
+      }
+    }, {
+      "responsibilityIndex" : 3,
+      "responsibilityKey" : "r3",
+      "responsibilityText" : "Resolve straightforward complaints",
+      "describedClearly" : 0.41,
+      "assistanceScope" : {
+        "value" : 3.12,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.16,
+          "3" : 0.55,
+          "4" : 0.29
+        },
+        "providerConfidence" : 0.62,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 1.84,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.25,
+          "2" : 0.66,
+          "3" : 0.09,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.72,
+        "nearestLevel" : 2,
+        "nearestLabel" : "A meaningful mixture of rule-following and contextual judgement."
+      },
+      "humanInteraction" : {
+        "value" : 3.75,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.25,
+          "4" : 0.75
+        },
+        "providerConfidence" : 0.79,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Success fundamentally depends on trust, care, persuasion or live human communication."
+      },
+      "physicalPresence" : {
+        "value" : 0.04,
+        "distribution" : {
+          "0" : 0.96,
+          "1" : 0.04,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.97,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.16,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.07,
+          "2" : 0.7,
+          "3" : 0.23,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.75,
+        "nearestLevel" : 2,
+        "nearestLabel" : "Errors can have meaningful consequences, with shared or supervised accountability."
+      }
+    }, {
+      "responsibilityIndex" : 4,
+      "responsibilityKey" : "r4",
+      "responsibilityText" : "Investigate account problems",
+      "describedClearly" : 0.35,
+      "assistanceScope" : {
+        "value" : 3.39,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.05,
+          "3" : 0.51,
+          "4" : 0.44
+        },
+        "providerConfidence" : 0.59,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 2.16,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.1,
+          "2" : 0.64,
+          "3" : 0.26,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.7,
+        "nearestLevel" : 2,
+        "nearestLabel" : "A meaningful mixture of rule-following and contextual judgement."
+      },
+      "humanInteraction" : {
+        "value" : 1.69,
+        "distribution" : {
+          "0" : 0.05,
+          "1" : 0.39,
+          "2" : 0.38,
+          "3" : 0.17,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.33,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.03,
+        "distribution" : {
+          "0" : 0.98,
+          "1" : 0.02,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.98,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.38,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.02,
+          "2" : 0.59,
+          "3" : 0.38,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.65,
+        "nearestLevel" : 2,
+        "nearestLabel" : "Errors can have meaningful consequences, with shared or supervised accountability."
+      }
+    }, {
+      "responsibilityIndex" : 5,
+      "responsibilityKey" : "r5",
+      "responsibilityText" : "Escalate complex complaints",
+      "describedClearly" : 0.4,
+      "assistanceScope" : {
+        "value" : 2.94,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.04,
+          "2" : 0.19,
+          "3" : 0.55,
+          "4" : 0.22
+        },
+        "providerConfidence" : 0.59,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 2.15,
+        "distribution" : {
+          "0" : 0.01,
+          "1" : 0.16,
+          "2" : 0.52,
+          "3" : 0.31,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.59,
+        "nearestLevel" : 2,
+        "nearestLabel" : "A meaningful mixture of rule-following and contextual judgement."
+      },
+      "humanInteraction" : {
+        "value" : 2.64,
+        "distribution" : {
+          "0" : 0.01,
+          "1" : 0.12,
+          "2" : 0.22,
+          "3" : 0.53,
+          "4" : 0.12
+        },
+        "providerConfidence" : 0.49,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Trust, communication or relationship handling is important to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.03,
+        "distribution" : {
+          "0" : 0.98,
+          "1" : 0.02,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.98,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.2,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.06,
+          "2" : 0.69,
+          "3" : 0.24,
+          "4" : 0.01
+        },
+        "providerConfidence" : 0.73,
+        "nearestLevel" : 2,
+        "nearestLabel" : "Errors can have meaningful consequences, with shared or supervised accountability."
+      }
+    }, {
+      "responsibilityIndex" : 6,
+      "responsibilityKey" : "r6",
+      "responsibilityText" : "Update customer records",
+      "describedClearly" : 0.35,
+      "assistanceScope" : {
+        "value" : 2.73,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.1,
+          "2" : 0.3,
+          "3" : 0.35000000000000003,
+          "4" : 0.25
+        },
+        "providerConfidence" : 0.38,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 0.75,
+        "distribution" : {
+          "0" : 0.32,
+          "1" : 0.62,
+          "2" : 0.06,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.68,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Occasional judgement is needed, but explicit rules decide most of the outcome."
+      },
+      "humanInteraction" : {
+        "value" : 0.46,
+        "distribution" : {
+          "0" : 0.61,
+          "1" : 0.34,
+          "2" : 0.04,
+          "3" : 0.01,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.62,
+        "nearestLevel" : 0,
+        "nearestLabel" : "Success depends very little on interaction with other people."
+      },
+      "physicalPresence" : {
+        "value" : 0.07,
+        "distribution" : {
+          "0" : 0.94,
+          "1" : 0.06,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.95,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.58,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.02,
+          "2" : 0.42,
+          "3" : 0.51,
+          "4" : 0.05
+        },
+        "providerConfidence" : 0.57,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Errors can have significant consequences for which the person is accountable."
+      }
+    }, {
+      "responsibilityIndex" : 7,
+      "responsibilityKey" : "r7",
+      "responsibilityText" : "Handle sensitive customer information",
+      "describedClearly" : 0.22,
+      "assistanceScope" : {
+        "value" : 2.86,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.06,
+          "2" : 0.28,
+          "3" : 0.39,
+          "4" : 0.27
+        },
+        "providerConfidence" : 0.44,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 1.37,
+        "distribution" : {
+          "0" : 0.06,
+          "1" : 0.56,
+          "2" : 0.32,
+          "3" : 0.05,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.6,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Occasional judgement is needed, but explicit rules decide most of the outcome."
+      },
+      "humanInteraction" : {
+        "value" : 1.65,
+        "distribution" : {
+          "0" : 0.2,
+          "1" : 0.36,
+          "2" : 0.1,
+          "3" : 0.28,
+          "4" : 0.06
+        },
+        "providerConfidence" : 0.13,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interaction occurs, but it is not central to success."
+      },
+      "physicalPresence" : {
+        "value" : 0.09,
+        "distribution" : {
+          "0" : 0.92,
+          "1" : 0.08,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.93,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 3.42,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.04,
+          "3" : 0.5,
+          "4" : 0.46
+        },
+        "providerConfidence" : 0.58,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Errors can have significant consequences for which the person is accountable."
+      }
+    }, {
+      "responsibilityIndex" : 8,
+      "responsibilityKey" : "r8",
+      "responsibilityText" : "Communicate difficult decisions to customers",
+      "describedClearly" : 0.48,
+      "assistanceScope" : {
+        "value" : 2.65,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.09,
+          "2" : 0.3,
+          "3" : 0.46,
+          "4" : 0.15
+        },
+        "providerConfidence" : 0.47,
+        "nearestLevel" : 3,
+        "nearestLabel" : "AI tools could support much of the preparatory or information work in this activity under human direction and review."
+      },
+      "contextualJudgement" : {
+        "value" : 2.45,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.08,
+          "2" : 0.44,
+          "3" : 0.44,
+          "4" : 0.04
+        },
+        "providerConfidence" : 0.5,
+        "nearestLevel" : 2,
+        "nearestLabel" : "A meaningful mixture of rule-following and contextual judgement."
+      },
+      "humanInteraction" : {
+        "value" : 3.95,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.05,
+          "4" : 0.95
+        },
+        "providerConfidence" : 0.96,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Success fundamentally depends on trust, care, persuasion or live human communication."
+      },
+      "physicalPresence" : {
+        "value" : 0.08,
+        "distribution" : {
+          "0" : 0.93,
+          "1" : 0.07,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        },
+        "providerConfidence" : 0.94,
+        "nearestLevel" : 0,
+        "nearestLabel" : "No meaningful physical action or in-person presence is required."
+      },
+      "outcomeAccountability" : {
+        "value" : 2.66,
+        "distribution" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.37,
+          "3" : 0.58,
+          "4" : 0.04
+        },
+        "providerConfidence" : 0.64,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Errors can have significant consequences for which the person is accountable."
+      }
+    } ]
+  }
+}

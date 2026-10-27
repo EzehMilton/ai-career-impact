@@ -7,6 +7,12 @@ import com.chikere.futureai.livesmoke.LiveSmokeJourney;
 import com.chikere.futureai.livesmoke.LiveSmokeProviderStatus;
 import com.chikere.futureai.livesmoke.LiveSmokeRuns;
 import com.chikere.futureai.livesmoke.LiveSmokeTraceFiles;
+import com.chikere.futureai.responsibility.professional.analysis.ProfessionalResponsibilityAnalysisService;
+import com.chikere.futureai.responsibility.professional.analysis.ResponsibilityAnalysisFailedException;
+import com.chikere.futureai.responsibility.professional.analysis.ResponsibilityAnalysisUnavailableException;
+import com.chikere.futureai.responsibility.professional.guidance.ProfessionalResponsibilityGuidanceService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
@@ -20,6 +26,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Arrays;
@@ -42,13 +49,94 @@ public class LiveSmokeController {
     private final LiveSmokeProviderStatus status;
     private final LiveSmokeTraceFiles traceFiles;
     private final LiveSmokeRuns runs;
+    private final ProfessionalResponsibilityAnalysisService responsibilityAnalysis;
+    private final ProfessionalResponsibilityGuidanceService responsibilityGuidance;
+    private static final ObjectMapper JSON = new ObjectMapper().findAndRegisterModules()
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     public LiveSmokeController(LiveSmokeCaseCatalog catalog, LiveSmokeProviderStatus status,
-            LiveSmokeTraceFiles traceFiles, LiveSmokeRuns runs) {
+            LiveSmokeTraceFiles traceFiles, LiveSmokeRuns runs,
+            ProfessionalResponsibilityAnalysisService responsibilityAnalysis,
+            ProfessionalResponsibilityGuidanceService responsibilityGuidance) {
         this.catalog = catalog;
         this.status = status;
         this.traceFiles = traceFiles;
         this.runs = runs;
+        this.responsibilityAnalysis = responsibilityAnalysis;
+        this.responsibilityGuidance = responsibilityGuidance;
+    }
+
+    /**
+     * Generates the deterministic paid guidance of one Professional assessment (and its responsibility analysis if
+     * it does not exist yet), or reuses the stored guidance. Entitlement is enforced by the service.
+     */
+    @PostMapping("/dev/live-smoke/professional/{assessmentId}/responsibility-guidance")
+    public ResponseEntity<String> generateResponsibilityGuidance(@PathVariable String assessmentId) {
+        UUID id = uuid(assessmentId);
+        try {
+            responsibilityGuidance.generateOrGet(id);
+        }
+        catch (ResponsibilityAnalysisUnavailableException unavailable) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).contentType(MediaType.TEXT_PLAIN)
+                    .body(unavailable.reason() + ": " + unavailable.getMessage());
+        }
+        catch (ResponsibilityAnalysisFailedException failed) {
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).contentType(MediaType.TEXT_PLAIN)
+                    .body("FAILED at " + failed.stage() + "; nothing was stored and the analysis can be retried");
+        }
+        return ResponseEntity.status(HttpStatus.SEE_OTHER)
+                .header(HttpHeaders.LOCATION, "/dev/live-smoke/professional/" + id + "/responsibility-guidance").build();
+    }
+
+    /** The stored guidance, read-only: never runs the policy or any provider. */
+    @GetMapping("/dev/live-smoke/professional/{assessmentId}/responsibility-guidance")
+    public ResponseEntity<String> responsibilityGuidance(@PathVariable String assessmentId) throws Exception {
+        var snapshot = responsibilityGuidance.find(uuid(assessmentId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
+                .body(JSON.writerWithDefaultPrettyPrinter().writeValueAsString(snapshot));
+    }
+
+    /**
+     * Generates the paid responsibility analysis of one Professional assessment, or reuses the stored snapshot. The
+     * service enforces the ACTIVE entitlement (complimentary under this profile), so this route grants nothing.
+     */
+    @PostMapping("/dev/live-smoke/professional/{assessmentId}/responsibility-analysis")
+    public ResponseEntity<String> generateResponsibilityAnalysis(@PathVariable String assessmentId) {
+        UUID id = uuid(assessmentId);
+        try {
+            responsibilityAnalysis.generateOrGet(id);
+        }
+        catch (ResponsibilityAnalysisUnavailableException unavailable) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).contentType(MediaType.TEXT_PLAIN)
+                    .body(unavailable.reason() + ": " + unavailable.getMessage());
+        }
+        catch (ResponsibilityAnalysisFailedException failed) {
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).contentType(MediaType.TEXT_PLAIN)
+                    .body("FAILED at " + failed.stage() + "; nothing was stored and the analysis can be retried");
+        }
+        return ResponseEntity.status(HttpStatus.SEE_OTHER)
+                .header(HttpHeaders.LOCATION, "/dev/live-smoke/professional/" + id + "/responsibility-analysis").build();
+    }
+
+    /** The stored snapshot, read-only: this never calls a provider or regenerates anything. */
+    @GetMapping("/dev/live-smoke/professional/{assessmentId}/responsibility-analysis")
+    public ResponseEntity<String> responsibilityAnalysis(@PathVariable String assessmentId) throws Exception {
+        var snapshot = responsibilityAnalysis.find(uuid(assessmentId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
+                .body(JSON.writerWithDefaultPrettyPrinter().writeValueAsString(snapshot));
+    }
+
+    private static UUID uuid(String value) {
+        try {
+            return UUID.fromString(value);
+        }
+        catch (IllegalArgumentException notAnIdentifier) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
     }
 
     @GetMapping("/dev/live-smoke")

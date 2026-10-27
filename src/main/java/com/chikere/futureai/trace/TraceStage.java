@@ -37,5 +37,12 @@ public enum TraceStage {
     /** The validated, vendor-neutral responsibility judgments, or why they were rejected. */
     RESPONSIBILITY_ANALYSIS_RESULT,
     /** The deterministic category, oversight marker and levels derived for each analysed responsibility. */
-    RESPONSIBILITY_CLASSIFICATION
+    RESPONSIBILITY_CLASSIFICATION,
+    /** A completed responsibility-analysis snapshot already existed and was returned; no provider was called. */
+    RESPONSIBILITY_ANALYSIS_REUSED,
+    RESPONSIBILITY_ANALYSIS_PERSISTED,
+    /** Generation failed at a named stage; no completed snapshot was stored and a retry remains possible. */
+    RESPONSIBILITY_ANALYSIS_FAILED,
+    /** Deterministic paid guidance generated from a stored analysis, or an existing guidance snapshot reused. */
+    RESPONSIBILITY_GUIDANCE
 }

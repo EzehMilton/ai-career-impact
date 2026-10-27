@@ -75,6 +75,8 @@ class LiveSmokeModeTest {
     @MockitoBean UniversityNarrativeGenerator universityNarrative;
     @MockitoBean ALevelJudgmentProvider aLevelJudgments;
     @MockitoBean ALevelNarrativeGenerator aLevelNarrative;
+    @MockitoBean com.chikere.futureai.responsibility.professional.application.ProfessionalResponsibilityJudgmentProvider
+            responsibilityProvider;
 
     @Autowired MockMvc mvc;
     @Autowired ApplicationContext context;
@@ -115,6 +117,58 @@ class LiveSmokeModeTest {
                 new LocalFixtureALevelNarrativeGenerator().generate(call.getArgument(0)));
         when(aLevelNarrative.source()).thenReturn(com.chikere.futureai.narrative.alevel.application.NarrativeSource.OPENAI);
         when(aLevelNarrative.providerIdentifier()).thenReturn("test-double");
+        when(responsibilityProvider.judge(any())).thenAnswer(call -> com.chikere.futureai.responsibility.professional
+                .analysis.HandBuiltResponsibilityJudgments.forRequest(call.getArgument(0)));
+    }
+
+    @Test
+    void theResponsibilityAnalysisIsGeneratedOnceForAnEntitledSmokeAssessmentAndThenOnlyReused() throws Exception {
+        UUID id = submit(catalog.find(LiveSmokeJourney.PROFESSIONAL, "registered-nurse").orElseThrow());
+        String path = "/dev/live-smoke/professional/" + id + "/responsibility-analysis";
+        assertThat(mvc.perform(get("/professional-assessment/" + id)).andReturn().getResponse().getContentAsString())
+                .contains("Run responsibility analysis", path);
+        mvc.perform(get(path)).andExpect(status().isNotFound());
+
+        mvc.perform(post(path)).andExpect(status().isForbidden());
+        mvc.perform(post(path).with(csrf())).andExpect(status().isSeeOther())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", path));
+        mvc.perform(post(path).with(csrf())).andExpect(status().isSeeOther());
+        org.mockito.Mockito.verify(responsibilityProvider, org.mockito.Mockito.times(1)).judge(any());
+
+        String json = mvc.perform(get(path)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(json).contains("\"schemaVersion\" : \"professional-responsibility-v1\"",
+                "\"policyVersion\" : \"professional-responsibility-policy-v1\"", "\"status\" : \"COMPLETED\"",
+                "Monitor patients and assess changes in their condition",
+                "Follow clinical procedures and safety requirements", "GOOD_AI_ASSISTANCE_OPPORTUNITY");
+        org.mockito.Mockito.verify(responsibilityProvider, org.mockito.Mockito.times(1)).judge(any());
+
+        mvc.perform(post("/dev/live-smoke/professional/" + UUID.randomUUID() + "/responsibility-analysis").with(csrf()))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void thePaidGuidanceIsGeneratedOnceWithItsAnalysisAndThenOnlyReused() throws Exception {
+        UUID id = submit(catalog.find(LiveSmokeJourney.PROFESSIONAL, "registered-nurse").orElseThrow());
+        String path = "/dev/live-smoke/professional/" + id + "/responsibility-guidance";
+        assertThat(mvc.perform(get("/professional-assessment/" + id)).andReturn().getResponse().getContentAsString())
+                .contains("Generate paid guidance", path);
+        mvc.perform(get(path)).andExpect(status().isNotFound());
+
+        mvc.perform(post(path)).andExpect(status().isForbidden());
+        mvc.perform(post(path).with(csrf())).andExpect(status().isSeeOther())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", path));
+        mvc.perform(post(path).with(csrf())).andExpect(status().isSeeOther());
+        // The analysis was generated through the analysis service exactly once.
+        org.mockito.Mockito.verify(responsibilityProvider, org.mockito.Mockito.times(1)).judge(any());
+
+        String json = mvc.perform(get(path)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(json).contains("\"policyVersion\" : \"professional-guidance-policy-v1\"", "\"opportunities\"",
+                "\"humanValueAreas\"", "\"skillPriorities\"", "\"days1To30\"", "\"safeguards\"");
+        mvc.perform(get("/dev/live-smoke/professional/" + id + "/responsibility-analysis")).andExpect(status().isOk());
+        org.mockito.Mockito.verify(responsibilityProvider, org.mockito.Mockito.times(1)).judge(any());
+
+        mvc.perform(post("/dev/live-smoke/professional/" + UUID.randomUUID() + "/responsibility-guidance").with(csrf()))
+                .andExpect(status().isConflict());
     }
 
     @Test

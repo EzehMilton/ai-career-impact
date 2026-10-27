@@ -36,6 +36,9 @@ import com.chikere.futureai.payment.university.stripe.StripeUniversityPaymentCon
 import com.chikere.futureai.payment.professional.web.StripeWebhookController;
 import com.chikere.futureai.payment.university.web.UniversityStripeWebhookController;
 import com.chikere.futureai.payment.alevel.web.ALevelStripeWebhookController;
+import com.chikere.futureai.responsibility.professional.application.ProfessionalResponsibilityJudgmentProvider;
+import com.chikere.futureai.responsibility.professional.typesafe.ProfessionalResponsibilityJevAutoConfiguration;
+import com.chikere.futureai.responsibility.professional.typesafe.ProfessionalResponsibilityJevProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springaicommunity.typesafe.TypeSafeClient;
@@ -59,7 +62,8 @@ class LiveSmokeProviderWiringTest {
                     "app.professional.fixture-id=senior_software_architect", "app.university.fixture-id=computer_science",
                     "app.a-level.fixture-id=maths_economics_geography")
             .withConfiguration(AutoConfigurations.of(ProfessionalJevAutoConfiguration.class,
-                    UniversityJevAutoConfiguration.class, ALevelJevAutoConfiguration.class))
+                    UniversityJevAutoConfiguration.class, ALevelJevAutoConfiguration.class,
+                    ProfessionalResponsibilityJevAutoConfiguration.class))
             .withUserConfiguration(
                     LocalFixtureProfessionalConfiguration.class, LocalFixtureUniversityConfiguration.class,
                     LocalFixtureALevelConfiguration.class,
@@ -92,6 +96,14 @@ class LiveSmokeProviderWiringTest {
             assertThat(context.getBean(UniversityJudgmentProvider.class).source().name()).isEqualTo("JEV");
             assertThat(context.getBean(ALevelJudgmentProvider.class).source().name()).isEqualTo("JEV");
         });
+    }
+
+    @Test
+    void theRealResponsibilityProviderIsWiredForLiveSmokeButNotForDev() {
+        runner.run(context -> assertThat(context.getBean(ProfessionalResponsibilityJudgmentProvider.class))
+                .isInstanceOf(ProfessionalResponsibilityJevProvider.class));
+        runner.withInitializer(context -> context.getEnvironment().setActiveProfiles("dev"))
+                .run(context -> assertThat(context.getBeansOfType(ProfessionalResponsibilityJudgmentProvider.class)).isEmpty());
     }
 
     @Test

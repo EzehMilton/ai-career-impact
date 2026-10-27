@@ -69,10 +69,10 @@ class UniversityAssessmentStoreTest {
 
     @Test
     void allMigrationsAreAppliedAndUniversityTablesAreSeparateFromProfessionalOnes() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("18");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("20");
         assertThat(flyway.info().applied()).extracting(info -> info.getVersion().getVersion())
                 .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
-                        "13", "14", "15", "16", "17", "18");
+                        "13", "14", "15", "16", "17", "18", "19", "20");
     }
 
     @Test

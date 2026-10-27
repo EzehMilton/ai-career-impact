@@ -149,7 +149,7 @@ class ProfessionalResponsibilityPolicyV1Test {
     }
 
     @Test
-    void thePolicyReadsNoRoleLevelDecisionAndNothingInProductionUsesItYet() throws Exception {
+    void thePolicyReadsNoRoleLevelDecisionAndOnlyTheResponsibilityCapabilityUsesIt() throws Exception {
         Path policyPackage = Path.of("src/main/java/com/chikere/futureai/responsibility/professional/policy");
         try (var files = Files.walk(policyPackage)) {
             for (Path file : files.filter(path -> path.toString().endsWith(".java")).toList()) {
@@ -157,8 +157,10 @@ class ProfessionalResponsibilityPolicyV1Test {
                         "com.chikere.futureai.decision", "org.springframework", "org.springaicommunity");
             }
         }
+        // The paid lifecycle (Stage 4D) uses the policy; no role-level, report, payment or PDF code does.
+        Path responsibility = Path.of("src/main/java/com/chikere/futureai/responsibility");
         try (var files = Files.walk(Path.of("src/main/java"))) {
-            for (Path file : files.filter(path -> path.toString().endsWith(".java") && !path.startsWith(policyPackage))
+            for (Path file : files.filter(path -> path.toString().endsWith(".java") && !path.startsWith(responsibility))
                     .toList()) {
                 assertThat(Files.readString(file)).as(file.toString())
                         .doesNotContain("ProfessionalResponsibilityPolicyV1", "ResponsibilityCategory");
