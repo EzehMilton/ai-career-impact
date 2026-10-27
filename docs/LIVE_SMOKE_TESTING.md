@@ -166,5 +166,6 @@ TYPESAFE_API_KEY=... ./mvnw -Plive-university verify -Dtest=NoSuchTest -Dsurefir
 ```
 
 It writes `results.json`, `README.md` and one capture per course (input, judgments and decision) to
-`.live-smoke/university/<timestamp>/`. `UniversityBaselineHarnessTest` runs the same harness offline with synthetic
+`.live-smoke/university/<timestamp>/`. Add `-Duniversity.baseline.case=nursing` to run one case (one Jev call); each
+capture also keeps Jev's raw answers and their probability sums. `UniversityBaselineHarnessTest` runs the same harness offline with synthetic
 judgments and writes `target/university-baseline-dry-run/`.

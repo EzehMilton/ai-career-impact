@@ -45,15 +45,36 @@ final class UniversityBaselineHarness {
     enum Mode { LIVE, DRY_RUN }
 
     record CaseRun(BaselineCase baselineCase, Optional<AssessmentJudgmentSet> judgments,
-            Optional<UniversityDecisionResult> decision, int jevCalls, long durationMs, Optional<String> error) {
+            Optional<UniversityDecisionResult> decision, int jevCalls, long durationMs, Optional<String> error,
+            Optional<Map<String, Object>> rawResponse) {
+    }
+
+    /** The provider's last raw response, taken once per case; kept even when mapping it into judgments fails. */
+    @FunctionalInterface
+    interface RawResponses {
+        RawResponses NONE = Optional::empty;
+
+        Optional<Map<String, Object>> take();
     }
 
     private final UniversityJudgmentProvider provider;
     private final UniversityDecisionPolicyV1 policy;
+    private final RawResponses rawResponses;
 
     UniversityBaselineHarness(UniversityJudgmentProvider provider, UniversityDecisionPolicyV1 policy) {
+        this(provider, policy, RawResponses.NONE);
+    }
+
+    UniversityBaselineHarness(UniversityJudgmentProvider provider, UniversityDecisionPolicyV1 policy,
+            RawResponses rawResponses) {
         this.provider = Objects.requireNonNull(provider);
         this.policy = Objects.requireNonNull(policy);
+        this.rawResponses = Objects.requireNonNull(rawResponses);
+    }
+
+    /** Selects the cases first, so an unknown case id fails before any provider call. */
+    List<CaseRun> runSelected(String selection) {
+        return run(UniversityBaselineCases.select(selection));
     }
 
     List<CaseRun> run(List<BaselineCase> cases) {
@@ -66,17 +87,18 @@ final class UniversityBaselineHarness {
             }
             catch (RuntimeException failure) {
                 runs.add(new CaseRun(baselineCase, Optional.empty(), Optional.empty(), 1, millisSince(started),
-                        Optional.of("provider: " + describe(failure))));
+                        Optional.of("provider: " + describe(failure)), rawResponses.take()));
                 continue;
             }
             long durationMs = millisSince(started);
+            Optional<Map<String, Object>> raw = rawResponses.take();
             try {
                 runs.add(new CaseRun(baselineCase, Optional.of(judgments), Optional.of(policy.decide(judgments)), 1,
-                        durationMs, Optional.empty()));
+                        durationMs, Optional.empty(), raw));
             }
             catch (RuntimeException failure) {
                 runs.add(new CaseRun(baselineCase, Optional.of(judgments), Optional.empty(), 1, durationMs,
-                        Optional.of("policy: " + describe(failure))));
+                        Optional.of("policy: " + describe(failure)), raw));
             }
         }
         return List.copyOf(runs);
@@ -107,8 +129,11 @@ final class UniversityBaselineHarness {
         provider.put("jevCalls", run.jevCalls());
         provider.put("durationMs", run.durationMs());
         provider.put("error", run.error().orElse(null));
-        provider.put("note", "Provider request ID, resolved model and token usage are not exposed by the adapter.");
+        provider.put("note", run.rawResponse().isPresent()
+                ? "rawProviderResponse holds Jev's answers before the adapter mapped them."
+                : "Provider request ID, resolved model and token usage are not exposed by the adapter.");
         out.put("provider", provider);
+        out.put("rawProviderResponse", run.rawResponse().orElse(null));
         out.put("judgmentSet", run.judgments().map(UniversityBaselineHarness::judgmentSet).orElse(null));
         out.put("decision", run.decision().map(UniversityBaselineHarness::decision).orElse(null));
         return out;

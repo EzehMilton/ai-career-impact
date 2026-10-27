@@ -143,7 +143,67 @@ class UniversityBaselineHarnessTest {
         assertThat(Arrays.stream(UniversityBaselineHarness.class.getDeclaredFields())
                 .filter(field -> !java.lang.reflect.Modifier.isStatic(field.getModifiers()))
                 .map(Field::getType).toList())
-                .containsExactly(UniversityJudgmentProvider.class, UniversityDecisionPolicyV1.class);
+                .containsExactly(UniversityJudgmentProvider.class, UniversityDecisionPolicyV1.class,
+                        UniversityBaselineHarness.RawResponses.class);
+    }
+
+    @Test
+    void withoutASelectionAllSevenCasesRun() {
+        assertThat(UniversityBaselineCases.select(null)).isEqualTo(UniversityBaselineCases.ALL);
+        assertThat(UniversityBaselineCases.select("  ")).isEqualTo(UniversityBaselineCases.ALL);
+        var provider = new Synthetic();
+        assertThat(new UniversityBaselineHarness(provider, new UniversityDecisionPolicyV1()).runSelected(""))
+                .hasSize(7);
+        assertThat(provider.calls).hasSize(7);
+    }
+
+    @Test
+    void selectingNursingCallsTheProviderExactlyOnceWithTheUnchangedInput() {
+        var provider = new Synthetic();
+        var runs = new UniversityBaselineHarness(provider, new UniversityDecisionPolicyV1()).runSelected("nursing");
+
+        assertThat(provider.calls).containsExactly("nursing");
+        assertThat(runs).singleElement().satisfies(run -> {
+            assertThat(run.baselineCase()).isSameAs(UniversityBaselineCases.ALL.get(2));
+            assertThat(run.jevCalls()).isEqualTo(1);
+        });
+    }
+
+    @Test
+    void anUnknownCaseFailsBeforeAnyProviderCall() {
+        var provider = new Synthetic();
+        var harness = new UniversityBaselineHarness(provider, new UniversityDecisionPolicyV1());
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> harness.runSelected("nurse"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Unknown university.baseline.case 'nurse'").hasMessageContaining("nursing");
+        assertThat(provider.calls).isEmpty();
+    }
+
+    @Test
+    void theRawResponseIsKeptEvenWhenTheAdapterRejectsIt() throws Exception {
+        // As in the live Nursing failure: Jev answered, then mapping the answer into a judgment threw.
+        Map<String, Object> raw = Map.of("answers", Map.of("career_breadth", Map.of("probabilities", Map.of())),
+                "probabilitySums", Map.of("career_breadth", 0.99));
+        var runs = new UniversityBaselineHarness(new Synthetic("nursing"), new UniversityDecisionPolicyV1(),
+                () -> Optional.of(raw)).runSelected("nursing");
+        Path directory = Files.createTempDirectory("university-baseline");
+        UniversityBaselineHarness.write(directory, Mode.LIVE, "jev-latest", Instant.now(), runs);
+
+        JsonNode capture = UniversityBaselineHarness.JSON.readTree(directory.resolve("nursing.json").toFile());
+        assertThat(capture.get("provider").get("error").asText()).startsWith("provider: ");
+        assertThat(capture.get("judgmentSet").isNull()).isTrue();
+        assertThat(capture.get("rawProviderResponse").get("probabilitySums").get("career_breadth").asDouble())
+                .isEqualTo(0.99);
+        assertThat(UniversityBaselineHarness.JSON.readTree(directory.resolve("results.json").toFile())
+                .get("courses")).hasSize(1);
+    }
+
+    @Test
+    void theRecordingClientIsBuiltWithoutCallingJevAndStartsEmpty() {
+        var client = RecordingTypeSafeClient.create("not-a-key", "jev-latest");
+        assertThat(client.defaultModel()).isEqualTo("jev-latest");
+        assertThat(client.take()).isEmpty();
     }
 
     @Test

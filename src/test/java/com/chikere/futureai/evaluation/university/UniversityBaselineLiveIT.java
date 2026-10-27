@@ -8,7 +8,6 @@ import com.chikere.futureai.judgment.typesafe.university.UniversityJudgmentSchem
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
-import org.springaicommunity.typesafe.TypeSafeClient;
 
 import java.nio.file.Path;
 import java.time.Instant;
@@ -22,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <pre>
  * TYPESAFE_API_KEY=... ./mvnw -Plive-university verify -Dtest=NoSuchTest -Dsurefire.failIfNoSpecifiedTests=false
+ *   [-Duniversity.baseline.case=nursing]
  * </pre>
  *
  * Writes {@code .live-smoke/university/<time>/}, outside target/ so a later clean does not delete it.
@@ -32,19 +32,19 @@ class UniversityBaselineLiveIT {
 
     @Test
     void capturesTheUniversityV1BaselineForTheRepresentativeCourses() throws Exception {
+        // Resolved before any client exists, so an unknown case id fails without a provider call.
+        var cases = UniversityBaselineCases.select(System.getProperty("university.baseline.case", ""));
         String model = System.getProperty("spring.ai.typesafe.model", "jev-latest");
-        TypeSafeClient client = TypeSafeClient.builder().apiKey(System.getenv("TYPESAFE_API_KEY"))
-                .defaultModel(model).build();
+        var client = RecordingTypeSafeClient.create(System.getenv("TYPESAFE_API_KEY"), model);
         var provider = new UniversityJevJudgmentService(client, new UniversityJudgmentSchema(),
                 new UniversityJevStateMapper(), model);
         Instant startedAt = Instant.now();
 
-        var runs = new UniversityBaselineHarness(provider, new UniversityDecisionPolicyV1())
-                .run(UniversityBaselineCases.ALL);
+        var runs = new UniversityBaselineHarness(provider, new UniversityDecisionPolicyV1(), client).run(cases);
 
         Path directory = Path.of(".live-smoke", "university", startedAt.toString().replace(":", "-"));
         UniversityBaselineHarness.write(directory, Mode.LIVE, model, startedAt, runs);
         System.out.println("University baseline written to " + directory.toAbsolutePath());
-        assertThat(runs).hasSize(UniversityBaselineCases.ALL.size());
+        assertThat(runs).hasSize(cases.size());
     }
 }

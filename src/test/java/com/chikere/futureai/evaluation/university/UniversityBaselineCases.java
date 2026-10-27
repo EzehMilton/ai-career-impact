@@ -109,6 +109,15 @@ final class UniversityBaselineCases {
                             "Seminar discussion", "Independent study"),
                     List.of("Publishing", "Journalism", "Teaching"), Optional.empty(), UK)));
 
+    /** Every case when {@code selection} is blank, otherwise the one named case; an unknown id fails. */
+    static List<BaselineCase> select(String selection) {
+        if (selection == null || selection.isBlank()) return ALL;
+        String id = selection.strip();
+        return List.of(ALL.stream().filter(value -> value.id().equals(id)).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unknown university.baseline.case '" + id
+                        + "'. Known cases: " + ALL.stream().map(BaselineCase::id).toList())));
+    }
+
     private UniversityBaselineCases() {
     }
 }
