@@ -145,6 +145,87 @@ class ProfessionalPaidNarrativeValidatorTest {
         assertThat(validator.validate(narrative, context)).isNotNull();
     }
 
+    // ---- Stage 4F.1 live-run false positives (gpt-6-luna) ----
+
+    /** Rejected live as NO_NEW_RECOMMENDATIONS: the noun "Installation" matched the software-install pattern. */
+    static final String ELECTRICIAN_SYNTHESIS = "Installation, inspection, diagnosis and repair are mainly hands-on "
+            + "responsibilities, while customer communication depends on your own interaction and judgement.";
+
+    /** Rejected live as SECOND_PERSON: "the customer-facing" matched the third-person "the customer". */
+    static final String CUSTOMER_SERVICE_SKILLS = "Together, these skills support both the customer-facing and "
+            + "information-focused parts of your work: maintaining trust through communication, using AI responsibly "
+            + "within your obligations, checking assisted work, and fitting assistance into your workflow while you "
+            + "review the result.";
+
+    @Test
+    void theElectricianSynthesisOfSuppliedClassificationsIsAccepted() {
+        var electrician = DetailedReportFixtures.chain("electrician-8").context();
+        var draft = DetailedReportFixtures.validNarrative(electrician);
+        var narrative = new ProfessionalPaidNarrative(draft.executiveSummary(), draft.scoresTogether(),
+                ELECTRICIAN_SYNTHESIS, draft.opportunityExplanations(), draft.humanValueExplanations(),
+                draft.skillDevelopment(), draft.skillExplanations(), draft.planIntroduction(), draft.planActionNotes(),
+                draft.closingPerspective());
+        assertThat(validator.validate(narrative, electrician)).isSameAs(narrative);
+        assertThat(validator.validate(summary("Your installation and repair work depends on being on site."), context))
+                .isNotNull();
+        assertThat(validator.validate(summary("You keep installing and testing circuits yourself."), context)).isNotNull();
+    }
+
+    @Test
+    void installingSoftwareOrBuyingToolsIsStillAnInventedRecommendation() {
+        rejects(summary("You could install an AI assistant to draft your letters."), NEW_RECOMMENDATIONS);
+        rejects(summary("Install a new drafting tool before you begin."), NEW_RECOMMENDATIONS);
+        rejects(summary("You might install some note-taking software for meetings."), NEW_RECOMMENDATIONS);
+        rejects(summary("You could download a template pack for your drafting."), NEW_RECOMMENDATIONS);
+        rejects(summary("Consider whether to buy a subscription for research."), NEW_RECOMMENDATIONS);
+        rejects(summary("You should sign up for a webinar on AI."), NEW_RECOMMENDATIONS);
+    }
+
+    @Test
+    void theCustomerServiceSkillsSentenceIsSecondPerson() {
+        var adviser = DetailedReportFixtures.chain("customer-service-adviser-8").context();
+        var draft = DetailedReportFixtures.validNarrative(adviser);
+        var narrative = new ProfessionalPaidNarrative(draft.executiveSummary(), draft.scoresTogether(),
+                draft.responsibilityPattern(), draft.opportunityExplanations(), draft.humanValueExplanations(),
+                CUSTOMER_SERVICE_SKILLS, draft.skillExplanations(), draft.planIntroduction(), draft.planActionNotes(),
+                draft.closingPerspective());
+        assertThat(validator.validate(narrative, adviser)).isSameAs(narrative);
+        // Sentences need not begin with "you" when they plainly address you.
+        assertThat(validator.validate(summary("These skills support your client work. This pattern reflects how you "
+                + "work. The findings describe your work as you described it."), context)).isNotNull();
+    }
+
+    @Test
+    void genuinelyThirdPersonPhrasingIsStillRejected() {
+        var adviser = DetailedReportFixtures.chain("customer-service-adviser-8").context();
+        var draft = DetailedReportFixtures.validNarrative(adviser);
+        for (String sentence : List.of("The worker should check every reply before it is sent.",
+                "A customer-service adviser should check every reply before it is sent.",
+                "Your skills matter, and the adviser must keep reviewing replies.",
+                "The customer relies on communication and trust in this work.",
+                "This person reviews every reply.")) {
+            var narrative = new ProfessionalPaidNarrative(draft.executiveSummary() + " " + sentence,
+                    draft.scoresTogether(), draft.responsibilityPattern(), draft.opportunityExplanations(),
+                    draft.humanValueExplanations(), draft.skillDevelopment(), draft.skillExplanations(),
+                    draft.planIntroduction(), draft.planActionNotes(), draft.closingPerspective());
+            assertThatThrownBy(() -> validator.validate(narrative, adviser)).as(sentence).isInstanceOfSatisfying(
+                    NarrativeRuleViolation.class, violation -> assertThat(violation.rule()).isEqualTo(SECOND_PERSON));
+        }
+        rejects(summary("A solicitor should review every draft."), SECOND_PERSON);
+        // Also third person, but an occupation-wide instruction: the earlier occupation rule rejects it first.
+        rejects(summary("Solicitors must review every draft."), OCCUPATION);
+    }
+
+    @Test
+    void theyReferringToThingsOrOtherPeopleIsNotThirdPersonWording() {
+        for (String sentence : List.of("AI drafts can help, but they should still be checked by you.",
+                "Where replies are assisted, they need to be checked before use.",
+                "You decide, and they must follow your judgement.",
+                "They should be reviewed before you send them.")) {
+            assertThat(validator.validate(summary(sentence), context)).as(sentence).isNotNull();
+        }
+    }
+
     @Test
     void everyRuleExceptAMissingNarrativeCanBeRepairedOnce() {
         assertThat(REPAIRABLE).doesNotContain(PRESENT).contains(WELL_FORMED, IDS, NUMERIC, DELEGATION, TONE);

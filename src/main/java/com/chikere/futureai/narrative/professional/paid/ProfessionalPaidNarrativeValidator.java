@@ -133,7 +133,11 @@ public final class ProfessionalPaidNarrativeValidator {
     /** New recommendations the deterministic guidance never makes. */
     private static final List<Pattern> NEW_RECOMMENDATION_CLAIMS = patterns(
             "\\b(?:courses?|certificat\\w*|qualifications?|bootcamps?|diplomas?|webinars?|tutorials?|MOOCs?)\\b",
-            "\\b(?:enrol|enroll|sign\\s+up|subscribe|purchase|buy|download|install)\\w*\\b",
+            "\\b(?:enrol|enroll|sign\\s+up|subscribe|purchase|buy|download)\\w*\\b",
+            // Installing software or a tool. Not the noun "installation" or installing physical work, which
+            // describes the customer's own responsibilities (an electrician's installation work).
+            "\\binstall(?:s|ed|ing)?\\s+(?:(?:a|an|the|some|new|any|this|that|your)\\s+)?(?:[\\w-]+\\s+){0,2}?"
+            + "(?:apps?|applications?|software|tools?|plug-?ins?|extensions?|add-?ons?|programs?|assistants?|AI)\\b",
             "\\b(?:hire|recruit)\\s+(?:a|an|someone)\\b",
             "\\b(?:change|switch|leave)\\s+(?:your\\s+)?(?:career|careers|job|jobs|profession|role)\\b",
             "\\bretrain\\w*\\b", "\\blearn\\s+(?:AI|to\\s+code|coding|programming|prompt\\s+engineering)\\b",
@@ -177,9 +181,21 @@ public final class ProfessionalPaidNarrativeValidator {
             + "|utiliz\\w*|minimiz\\w*|maximiz\\w*|standardiz\\w*|summariz\\w*|familiariz\\w*|center(?:s|ed)?"
             + "|color\\w*|favor\\w*|labor)\\b");
     private static final Pattern SECOND_PERSON_WORDS = Pattern.compile("(?i)\\b(?:you|your|yours|yourself)\\b");
+    /**
+     * Writing about the customer rather than to them. A hyphenated compound ("the customer-facing parts of your work")
+     * describes the work, not a person, so the noun must not continue with a hyphen.
+     */
     private static final Pattern THIRD_PERSON = Pattern.compile("(?i)\\b(?:the\\s+(?:user|customer|client|respondent"
-            + "|individual|person\\s+who\\s+completed|employee|worker)|this\\s+(?:person|individual|professional)"
-            + "|he\\s+or\\s+she)\\b");
+            + "|individual|person\\s+who\\s+completed|employee|worker)(?![\\w-])"
+            + "|this\\s+(?:person|individual|professional)\\b|he\\s+or\\s+she\\b)");
+    /**
+     * A clause telling a named third person what to do: "A customer-service adviser must...". Not "they", which a
+     * regex cannot resolve and usually refers to things ("AI drafts help, but they should still be checked by you").
+     */
+    private static final String THIRD_PERSON_SUBJECT = "(?:(?:a|an|the)\\s+(?:[\\w-]+\\s+){0,3}?(?:worker|employee"
+            + "|professional|practitioner|%s))";
+    private static final String THIRD_PERSON_INSTRUCTION = "(?i)(?:^\\s*|[,;:]\\s*(?:(?:and|but|so|while|yet)\\s+)?)"
+            + "%s\\s+(?:should|must|ought\\s+to|needs?\\s+to|has\\s+to|have\\s+to)\\b";
     private static final Pattern HYPE = Pattern.compile("(?i)!|\\b(?:amazing|exciting|revolutionar\\w*|game[-\\s]?chang\\w*"
             + "|dramatic(?:ally)?|massive(?:ly)?|huge(?:ly)?|incredibl[ey]|unprecedented|skyrocket\\w*|supercharg\\w*"
             + "|transformative|disrupt\\w*|alarming|terrif\\w*|guarantee\\w*|definitely|certainly|undoubtedly"
@@ -253,7 +269,7 @@ public final class ProfessionalPaidNarrativeValidator {
         claim(checks, BAND_WORDS, prose, List.of(ENUM_BAND_WORD), false,
                 "band words must be written in ordinary lower case inside sentences");
         claim(checks, SPELLING, prose, List.of(AMERICAN_SPELLING), false, "the paid narrative must use British English");
-        Optional<String> person = secondPerson(narrative, prose);
+        Optional<String> person = secondPerson(narrative, prose, context.profession());
         checks.check(SECOND_PERSON, person.isPresent(), person::orElseThrow,
                 "the paid narrative must address you directly, in the second person");
         claim(checks, TONE, prose, List.of(HYPE), false, "the paid narrative must keep a calm, restrained tone");
@@ -413,11 +429,19 @@ public final class ProfessionalPaidNarrativeValidator {
         return Optional.empty();
     }
 
-    private static Optional<String> secondPerson(ProfessionalPaidNarrative narrative, List<String> prose) {
+    /**
+     * The summary must address you, and no sentence may describe you in the third person. A sentence need not begin
+     * with "you": "These skills support your work" is second person.
+     */
+    private static Optional<String> secondPerson(ProfessionalPaidNarrative narrative, List<String> prose,
+            String profession) {
         if (!SECOND_PERSON_WORDS.matcher(narrative.executiveSummary()).find()) {
             return Optional.of(narrative.executiveSummary());
         }
-        return firstUndisclaimed(prose, List.of(THIRD_PERSON), false);
+        String last = profession.strip().replaceAll(".*[\\s-]", "").replaceAll("[^A-Za-z]", "");
+        String role = last.length() < 3 ? "worker" : Pattern.quote(last) + "s?";
+        Pattern instruction = Pattern.compile(THIRD_PERSON_INSTRUCTION.formatted(THIRD_PERSON_SUBJECT.formatted(role)));
+        return firstUndisclaimed(prose, List.of(THIRD_PERSON, instruction), false);
     }
 
     /** A claim about everyone with the job title, such as "nurses are" or "solicitors will". */
