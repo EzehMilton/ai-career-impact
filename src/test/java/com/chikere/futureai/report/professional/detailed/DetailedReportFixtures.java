@@ -59,12 +59,30 @@ public final class DetailedReportFixtures {
                 UUID.nameUUIDFromBytes(("guidance" + run).getBytes()), analysis.assessmentId(), analysis.snapshotId(),
                 ProfessionalGuidancePolicyV1.POLICY_VERSION, Instant.parse("2026-10-27T10:00:00Z"),
                 new ProfessionalGuidancePolicyV1().decide(analysis));
-        return new Chain(roleSnapshot(analysis.assessmentId(), ROLES.get(run), run), analysis, guidance);
+        return new Chain(roleSnapshot(assessment(run)), analysis, guidance);
+    }
+
+    /**
+     * The stored Professional assessment a captured run belongs to: the id the captured analysis records, the
+     * responsibilities, work description and skills that analysis was made from, and the role-level judgments
+     * described above (placeholders for four roles). The profession is the role's display name.
+     */
+    public static StoredProfessionalAssessment assessment(String run) {
+        var analysis = AnalysisSnapshots.live(run);
+        var input = analysis.input();
+        var state = new ProfessionalAssessmentState(ROLES.get(run), input.workDescription(), input.responsibilities(),
+                input.skills(), OptionalInt.of(8));
+        return assessment(analysis.assessmentId(), state, run);
     }
 
     public static PurchasedProfessionalReportSnapshot roleSnapshot(UUID assessmentId, String profession, String run) {
         var state = new ProfessionalAssessmentState(profession, "The work described for " + profession + ".",
                 List.of("Responsibility"), List.of("Skill"), OptionalInt.of(8));
+        return roleSnapshot(assessment(assessmentId, state, run));
+    }
+
+    private static StoredProfessionalAssessment assessment(UUID assessmentId, ProfessionalAssessmentState state,
+            String run) {
         var judgments = switch (run) {
             case "registered-nurse-8" -> ProfessionalMaterialityCalibrationCases.judgments(
                     ProfessionalMaterialityCalibrationCases.registeredNurse());
@@ -77,9 +95,13 @@ public final class DetailedReportFixtures {
             default -> new LocalFixtureProfessionalJudgmentProvider("senior_software_architect").judge(state);
         };
         var decision = new ProfessionalDecisionPolicyV2().decide(judgments);
-        var assessment = new StoredProfessionalAssessment(assessmentId, Instant.parse("2026-10-27T09:00:00Z"), state,
+        return new StoredProfessionalAssessment(assessmentId, Instant.parse("2026-10-27T09:00:00Z"), state,
                 judgments, new ProfessionalAssessmentResult(decision, AssessmentSource.LOCAL_FIXTURE,
                         judgments.schemaVersion(), decision.policyVersion()), Optional.empty());
+    }
+
+    private static PurchasedProfessionalReportSnapshot roleSnapshot(StoredProfessionalAssessment assessment) {
+        UUID assessmentId = assessment.id();
         ProfessionalReport report = new ProfessionalReportAssembler().assemble(new ProfessionalReportSource(assessment,
                 Optional.empty(), Optional.empty(), Optional.empty()), ProfessionalReportTier.PAID);
         return new PurchasedProfessionalReportSnapshot(UUID.nameUUIDFromBytes(("entitlement" + assessmentId).getBytes()),

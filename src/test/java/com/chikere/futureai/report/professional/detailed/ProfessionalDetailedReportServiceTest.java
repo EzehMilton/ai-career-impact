@@ -482,7 +482,13 @@ class ProfessionalDetailedReportServiceTest {
         @Override public PurchaseConfirmationResult confirmAndFreeze(ProfessionalPaymentEvent event,
                 PurchasedProfessionalReportSnapshot snapshot) { throw new UnsupportedOperationException(); }
         @Override public void saveComplimentary(ProfessionalReportEntitlement entitlement,
-                PurchasedProfessionalReportSnapshot snapshot) { throw new UnsupportedOperationException(); }
+                PurchasedProfessionalReportSnapshot snapshot) {
+            if (entitlements.containsKey(entitlement.assessmentId())) {
+                throw new IllegalStateException("an entitlement already exists for the assessment");
+            }
+            entitlements.put(entitlement.assessmentId(), entitlement);
+            snapshots.put(snapshot.assessmentId(), snapshot);
+        }
     }
 
     static final class AnalysisStore implements ProfessionalResponsibilityAnalysisStore {

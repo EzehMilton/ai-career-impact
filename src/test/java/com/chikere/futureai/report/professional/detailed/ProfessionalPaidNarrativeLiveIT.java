@@ -4,21 +4,10 @@ import com.chikere.futureai.narrative.professional.application.NarrativeRepairFe
 import com.chikere.futureai.narrative.professional.paid.PaidNarrativeStatus;
 import com.chikere.futureai.narrative.professional.paid.ProfessionalPaidNarrativeContext;
 import com.chikere.futureai.narrative.professional.paid.ProfessionalPaidNarrativeGenerator;
-import com.chikere.futureai.narrative.professional.paid.ProfessionalPaidNarrativeService;
-import com.chikere.futureai.narrative.professional.paid.ProfessionalPaidNarrativeValidator;
 import com.chikere.futureai.narrative.professional.paid.openai.OpenAiProfessionalPaidNarrativeGenerator;
-import com.chikere.futureai.payment.professional.application.ProfessionalEntitlementStatus;
-import com.chikere.futureai.payment.professional.application.ProfessionalPaymentProvider;
-import com.chikere.futureai.payment.professional.application.ProfessionalReportEntitlement;
-import com.chikere.futureai.payment.professional.application.ProfessionalReportPurchaseUseCase;
 import com.chikere.futureai.pdf.professional.openhtml.OpenHtmlProfessionalDetailedReportPdfRenderer;
-import com.chikere.futureai.report.professional.application.ProfessionalReportTier;
-import com.chikere.futureai.responsibility.professional.analysis.ProfessionalResponsibilityAnalysisService;
-import com.chikere.futureai.responsibility.professional.application.ProfessionalResponsibilityJudgmentProvider;
+import com.chikere.futureai.responsibility.professional.guidance.AnalysisSnapshots;
 import com.chikere.futureai.responsibility.professional.guidance.ProfessionalGuidancePolicyV1;
-import com.chikere.futureai.responsibility.professional.guidance.ProfessionalResponsibilityGuidanceService;
-import com.chikere.futureai.responsibility.professional.policy.ProfessionalResponsibilityPolicyV1;
-import com.chikere.futureai.trace.AssessmentTrace;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.jupiter.api.Test;
@@ -28,11 +17,9 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -43,19 +30,19 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 /**
  * Explicit live evaluation of professional-paid-narrative-v1 against REAL OpenAI for the seven calibration roles.
  * Never selected by normal Surefire or verify: run only with
  * {@code ./mvnw -Plive-paid-narrative verify} and OPENAI_API_KEY set.
  *
- * <p>The responsibility analyses are the captured seven-role live Jev probe (Jev is NOT called again: the provider is
- * a mock that must stay untouched). Guidance, the paid narrative with real validation and repair, report-v3 assembly
- * and the v5 PDF are all real. Results are written to {@code .live-smoke/paid-narrative/<timestamp>/}.</p>
+ * <p>Each role runs the real orchestration through {@link PaidNarrativeHarness}: a stored assessment, the real
+ * complimentary grant freezing the v2 report, and the captured seven-role live Jev analysis as the stored snapshot (Jev
+ * is NOT called again: the provider is a mock that must stay untouched). Guidance, the paid narrative with real
+ * validation and repair, report-v3 assembly and the v5 PDF are all real. Results are written to
+ * {@code .live-smoke/paid-narrative/<timestamp>/}. With {@code -Dopenai.paid.narrative.live.dry-run=true} the same
+ * run uses an offline generator and writes to {@code target/paid-narrative-dry-run/}.</p>
  */
 @EnabledIfEnvironmentVariable(named = "OPENAI_API_KEY", matches = ".+")
 @EnabledIfSystemProperty(named = "openai.paid.narrative.live.enabled", matches = "true")
@@ -63,6 +50,10 @@ class ProfessionalPaidNarrativeLiveIT {
 
     private static final ObjectMapper JSON = new ObjectMapper().findAndRegisterModules()
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS).enable(SerializationFeature.INDENT_OUTPUT);
+
+    /** Roles whose four measures come from a local placeholder fixture, as {@link DetailedReportFixtures} explains. */
+    private static final java.util.Set<String> PLACEHOLDER_ROLE_SCORES = java.util.Set.of("electrician-8",
+            "secondary-school-teacher-8", "solicitor-8", "customer-service-adviser-8");
 
     @Test
     void sevenRolesAgainstRealOpenAi() throws Exception {
@@ -79,50 +70,35 @@ class ProfessionalPaidNarrativeLiveIT {
                     assertThat(context).hasNotFailed();
                     var generator = new OpenAiProfessionalPaidNarrativeGenerator(
                             context.getBean(ChatClient.Builder.class).build(), new ObjectMapper(), model);
-                    if (!dryRun) {
-                        run(generator, model);
+                    if (dryRun) {
+                        // The whole harness with an offline generator: no OpenAI call, output under target/.
+                        run(new Offline(), "offline-dry-run", Path.of("target", "paid-narrative-dry-run"));
+                    }
+                    else {
+                        run(generator, model, Path.of(".live-smoke", "paid-narrative"));
                     }
                 });
     }
 
-    private void run(OpenAiProfessionalPaidNarrativeGenerator openAi, String model) throws Exception {
-        Path directory = Path.of(".live-smoke", "paid-narrative", Instant.now().toString().replace(':', '-'));
+    private void run(ProfessionalPaidNarrativeGenerator generator, String model, Path root) throws Exception {
+        Path directory = root.resolve(Instant.now().toString().replace(':', '-'));
         Files.createDirectories(directory);
         List<Map<String, Object>> results = new ArrayList<>();
         StringBuilder markdown = new StringBuilder("# Paid narrative live run\n\nModel: " + model + "\n\n");
         for (String run : DetailedReportFixtures.ROLES.keySet()) {
-            var chain = DetailedReportFixtures.chain(run);
-            UUID id = chain.analysis().assessmentId();
-            var recorder = new Recording(openAi);
-            var purchases = new ProfessionalDetailedReportServiceTest.Purchases();
-            purchases.snapshots.put(id, chain.role());
-            Instant at = Instant.now();
-            purchases.entitlements.put(id, new ProfessionalReportEntitlement(chain.role().entitlementId(), id,
-                    ProfessionalReportTier.PAID, ProfessionalEntitlementStatus.ACTIVE, ProfessionalPaymentProvider.COMPLIMENTARY,
-                    "live_" + id, URI.create("http://localhost/report"), "complimentary", Optional.empty(),
-                    Optional.of("professional-report-v2"), at, Optional.of(at)));
-            ProfessionalReportPurchaseUseCase purchaseUseCase = mock(ProfessionalReportPurchaseUseCase.class);
-            when(purchaseUseCase.findEntitlement(any())).thenAnswer(call -> purchases.findEntitlementByAssessmentId(call.getArgument(0)));
-            ProfessionalResponsibilityJudgmentProvider jev = mock(ProfessionalResponsibilityJudgmentProvider.class);
-            var analysisStore = new ProfessionalDetailedReportServiceTest.AnalysisStore();
-            analysisStore.snapshots.put(id, chain.analysis());
-            var assessments = mock(com.chikere.futureai.assessment.professional.application.ProfessionalAssessmentStore.class);
-            var analyses = new ProfessionalResponsibilityAnalysisService(assessments, purchaseUseCase, () -> Optional.of(jev),
-                    new ProfessionalResponsibilityPolicyV1(), analysisStore, Clock.systemUTC(), AssessmentTrace.disabled());
-            var guidance = new ProfessionalResponsibilityGuidanceService(purchaseUseCase, analyses,
-                    new ProfessionalGuidancePolicyV1(), new ProfessionalDetailedReportServiceTest.GuidanceStore(),
-                    Clock.systemUTC(), AssessmentTrace.disabled());
-            var narratives = new ProfessionalPaidNarrativeService(new ProfessionalDetailedReportServiceTest.NarrativeStore(),
-                    () -> Optional.of(recorder), new ProfessionalPaidNarrativeValidator(), Clock.systemUTC(),
-                    AssessmentTrace.disabled());
-            var service = new ProfessionalDetailedReportService(purchases, assessments, analyses, guidance, narratives,
-                    new ProfessionalDetailedReportAssembler(), new ProfessionalDetailedReportServiceTest.ReportStore(),
-                    Clock.systemUTC(), AssessmentTrace.disabled());
+            var recorder = new Recording(generator);
+            var harness = new PaidNarrativeHarness(recorder);
+            UUID id = harness.seed(run);
+            var analysis = AnalysisSnapshots.live(run);
+            assertThat(harness.assessments.findById(id)).as(run + " assessment stored before preparation").isPresent();
+            var service = harness.service;
 
             long started = System.nanoTime();
             var outcome = service.prepare(id, Optional.empty());
             long preparationMs = (System.nanoTime() - started) / 1_000_000;
-            verifyNoInteractions(jev);
+            verifyNoInteractions(harness.jev);
+            assertThat(recorder.calls).as(run + " reached the paid narrative generator").isNotEmpty();
+            assertThat(harness.guidancePolicy.calls).as(run + " guidance decided once").isEqualTo(1);
 
             var views = new ProfessionalDetailedReportViewMapper();
             var view = outcome.snapshot().map(views::toView).orElseGet(() -> views.toProvisionalView(outcome.report()));
@@ -134,7 +110,7 @@ class ProfessionalPaidNarrativeLiveIT {
                     + narrativeMarkdown(outcome.report()), StandardCharsets.UTF_8);
 
             // The deterministic content must be exactly the stored guidance, whatever the narrative did.
-            var expected = new ProfessionalGuidancePolicyV1().decide(chain.analysis());
+            var expected = new ProfessionalGuidancePolicyV1().decide(analysis);
             boolean deterministicUnchanged = outcome.report().opportunities().items().stream()
                     .map(ProfessionalDetailedReport.Opportunity::key).toList()
                     .equals(expected.opportunities().stream().map(o -> o.responsibilityKey()).toList())
@@ -151,6 +127,8 @@ class ProfessionalPaidNarrativeLiveIT {
 
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("role", DetailedReportFixtures.ROLES.get(run));
+            result.put("roleLevelScores", PLACEHOLDER_ROLE_SCORES.contains(run)
+                    ? "PLACEHOLDER (narrative-only; not calibration evidence)" : "CAPTURED");
             result.put("calls", recorder.calls.size());
             result.put("firstAttemptFailedRule", recorder.repairRule.get());
             result.put("repairRequired", recorder.repairRule.get() != null);
@@ -197,6 +175,29 @@ class ProfessionalPaidNarrativeLiveIT {
                 .append(a.note()).append("\n")));
         out.append("\n### Closing\n").append(report.closingPerspective()).append("\n");
         return out.toString();
+    }
+
+    /** The dry run's generator: valid hand-written copy for exactly the context's ids, never a network call. */
+    static final class Offline implements ProfessionalPaidNarrativeGenerator {
+        @Override
+        public GeneratedPaidNarrative generate(ProfessionalPaidNarrativeContext context) {
+            return new GeneratedPaidNarrative(DetailedReportFixtures.validNarrative(context), Optional.empty(), Optional.empty());
+        }
+
+        @Override
+        public GeneratedPaidNarrative repair(ProfessionalPaidNarrativeContext context, NarrativeRepairFeedback feedback) {
+            return generate(context);
+        }
+
+        @Override
+        public String providerIdentifier() {
+            return "offline-dry-run";
+        }
+
+        @Override
+        public Optional<String> modelIdentifier() {
+            return Optional.empty();
+        }
     }
 
     record Call(int attempt, long durationMs, String error) {
