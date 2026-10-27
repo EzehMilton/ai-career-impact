@@ -35,5 +35,7 @@ public enum TraceStage {
     RESPONSIBILITY_MODEL_PROVIDER_REQUEST,
     RESPONSIBILITY_MODEL_PROVIDER_RESPONSE,
     /** The validated, vendor-neutral responsibility judgments, or why they were rejected. */
-    RESPONSIBILITY_ANALYSIS_RESULT
+    RESPONSIBILITY_ANALYSIS_RESULT,
+    /** The deterministic category, oversight marker and levels derived for each analysed responsibility. */
+    RESPONSIBILITY_CLASSIFICATION
 }

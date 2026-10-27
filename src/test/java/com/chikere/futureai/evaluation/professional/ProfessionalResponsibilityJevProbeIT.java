@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Stage 4B live probe: real Jev responsibility analysis for the three saved Professional smoke cases at increasing
+ * Stage 4B live probe: real Jev responsibility analysis for the saved Professional smoke cases at increasing
  * batch sizes, to decide between one call for up to eight responsibilities and two calls of four. Calls Jev only,
  * never OpenAI. Never selected by ordinary test or verify runs.
  *
@@ -49,7 +49,7 @@ import java.util.UUID;
 class ProfessionalResponsibilityJevProbeIT {
 
     private static final List<String> CASES = List.of("registered-nurse", "java-software-developer",
-            "management-accountant");
+            "management-accountant", "electrician", "secondary-school-teacher", "solicitor", "customer-service-adviser");
     private static final ObjectMapper JSON = new ObjectMapper().findAndRegisterModules();
 
     @Test

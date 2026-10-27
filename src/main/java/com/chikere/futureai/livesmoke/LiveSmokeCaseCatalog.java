@@ -11,7 +11,8 @@ import java.util.Optional;
  * Every live smoke case, in one place. To add a case, add one entry to {@link #CASES}: the dashboard, the
  * prefill route and the tests pick it up from here.
  *
- * <p>Professional cases are the agreed live regression inputs. University and A-level cases are taken from
+ * <p>Professional cases are the agreed live regression inputs, plus four Stage 4C responsibility-calibration cases
+ * (electrician, secondary-school teacher, solicitor, customer-service adviser). University and A-level cases are taken from
  * inputs already in this repository (the example pages and existing tests); none is invented.</p>
  */
 public final class LiveSmokeCaseCatalog {
@@ -81,6 +82,87 @@ public final class LiveSmokeCaseCatalog {
                                     "Forecasting", "Data analysis", "Communication", "Attention to detail",
                                     "Commercial awareness", "Problem solving"),
                             "yearsOfExperience", 7)),
+            new LiveSmokeCase("electrician", LiveSmokeJourney.PROFESSIONAL, "Electrician",
+                    "Stage 4C responsibility calibration case", fields(
+                            "profession", "Electrician",
+                            "workDescription", "I install, inspect, test and repair electrical systems in homes and "
+                                    + "commercial premises. I diagnose electrical faults, read technical drawings, "
+                                    + "follow electrical safety requirements, complete technical documentation and "
+                                    + "explain faults and repair options to customers.",
+                            "responsibilities", lines(
+                                    "Install electrical wiring and equipment",
+                                    "Inspect and test electrical systems",
+                                    "Diagnose electrical faults",
+                                    "Repair faulty wiring and components",
+                                    "Read technical drawings and specifications",
+                                    "Explain faults and repair options to customers",
+                                    "Complete safety documentation",
+                                    "Follow electrical safety regulations"),
+                            "skills", lines("Electrical installation", "Fault diagnosis", "Electrical testing",
+                                    "Safety procedures", "Technical drawings", "Problem solving",
+                                    "Customer communication", "Risk awareness"),
+                            "yearsOfExperience", 8)),
+            new LiveSmokeCase("secondary-school-teacher", LiveSmokeJourney.PROFESSIONAL, "Secondary-school Teacher",
+                    "Stage 4C responsibility calibration case", fields(
+                            "profession", "Secondary-school Teacher",
+                            "workDescription", "I plan and teach lessons, explain concepts to students, assess their "
+                                    + "work and give feedback. I manage classroom behaviour, adapt teaching to different "
+                                    + "needs, communicate with parents and colleagues, and maintain safeguarding and "
+                                    + "academic records.",
+                            "responsibilities", lines(
+                                    "Plan lessons",
+                                    "Teach lessons to students",
+                                    "Explain difficult concepts",
+                                    "Assess student work",
+                                    "Give students feedback",
+                                    "Manage classroom behaviour",
+                                    "Communicate with parents",
+                                    "Maintain safeguarding and academic records"),
+                            "skills", lines("Teaching", "Lesson planning", "Communication", "Assessment",
+                                    "Classroom management", "Subject knowledge", "Safeguarding", "Adaptability",
+                                    "Empathy", "Feedback"),
+                            "yearsOfExperience", 7)),
+            new LiveSmokeCase("solicitor", LiveSmokeJourney.PROFESSIONAL, "Solicitor",
+                    "Stage 4C responsibility calibration case", fields(
+                            "profession", "Solicitor",
+                            "workDescription", "I advise clients on legal matters, research relevant law and precedent, "
+                                    + "review and draft contracts and other legal documents, assess legal risks, "
+                                    + "negotiate with other parties and manage confidential client information. I work "
+                                    + "within professional, legal and ethical obligations.",
+                            "responsibilities", lines(
+                                    "Review contracts and legal documents",
+                                    "Research relevant law and precedent",
+                                    "Draft legal documents and correspondence",
+                                    "Advise clients on legal options",
+                                    "Negotiate with other parties",
+                                    "Assess legal risks",
+                                    "Manage confidential client information",
+                                    "Ensure work complies with professional obligations"),
+                            "skills", lines("Legal research", "Legal drafting", "Legal analysis", "Client advice",
+                                    "Negotiation", "Risk assessment", "Communication", "Confidentiality",
+                                    "Professional judgement", "Attention to detail"),
+                            "yearsOfExperience", 8)),
+            new LiveSmokeCase("customer-service-adviser", LiveSmokeJourney.PROFESSIONAL, "Customer-service Adviser",
+                    "Stage 4C responsibility calibration case", fields(
+                            "profession", "Customer-service Adviser",
+                            "workDescription", "I respond to customer enquiries, explain products and services, "
+                                    + "investigate account problems, resolve straightforward complaints and escalate "
+                                    + "more complex issues. I update customer records, handle sensitive customer "
+                                    + "information and sometimes communicate decisions that customers may find "
+                                    + "difficult.",
+                            "responsibilities", lines(
+                                    "Respond to customer enquiries",
+                                    "Explain products and services",
+                                    "Resolve straightforward complaints",
+                                    "Investigate account problems",
+                                    "Escalate complex complaints",
+                                    "Update customer records",
+                                    "Handle sensitive customer information",
+                                    "Communicate difficult decisions to customers"),
+                            "skills", lines("Customer communication", "Complaint handling", "Problem solving",
+                                    "Product knowledge", "Record keeping", "Data handling", "Listening",
+                                    "Conflict resolution", "Empathy", "Attention to detail"),
+                            "yearsOfExperience", 5)),
             new LiveSmokeCase("computer-science", LiveSmokeJourney.UNIVERSITY, "BSc Computer Science",
                     "University example page (university-example.html)", fields(
                             "courseTitle", "BSc Computer Science",

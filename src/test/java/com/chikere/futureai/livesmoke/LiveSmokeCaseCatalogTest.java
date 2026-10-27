@@ -40,6 +40,44 @@ class LiveSmokeCaseCatalogTest {
     }
 
     @Test
+    void theFourCalibrationCasesAreProfessionalWithEightResponsibilitiesAndMapThroughTheNormalForm() {
+        var mapper = new ProfessionalAssessmentFormMapper();
+        var expected = java.util.Map.of("electrician", "Electrician", "secondary-school-teacher", "Secondary-school Teacher",
+                "solicitor", "Solicitor", "customer-service-adviser", "Customer-service Adviser");
+        expected.forEach((id, profession) -> {
+            var smokeCase = catalog.find(LiveSmokeJourney.PROFESSIONAL, id).orElseThrow();
+            assertThat(smokeCase.journey()).isEqualTo(LiveSmokeJourney.PROFESSIONAL);
+            assertThat(smokeCase.label()).isEqualTo(profession);
+            assertThat(smokeCase.source()).isEqualTo("Stage 4C responsibility calibration case");
+            assertThat(smokeCase.fields()).containsKeys("profession", "workDescription", "responsibilities", "skills",
+                    "yearsOfExperience");
+            var state = mapper.toState((ProfessionalAssessmentForm) catalog.form(smokeCase));
+            assertThat(state.profession()).isEqualTo(profession);
+            assertThat(state.responsibilities()).as(id).hasSize(8).doesNotHaveDuplicates();
+            assertThat(state.skills()).isNotEmpty();
+            assertThat(state.workDescription()).hasSizeGreaterThan(40);
+            assertThat(state.yearsOfExperience()).isPresent();
+        });
+        assertThat(catalog.find(LiveSmokeJourney.PROFESSIONAL, "electrician").map(value -> value.fields()
+                .get("yearsOfExperience"))).contains(8);
+        assertThat(catalog.find(LiveSmokeJourney.PROFESSIONAL, "customer-service-adviser").map(value -> value.fields()
+                .get("yearsOfExperience"))).contains(5);
+    }
+
+    @Test
+    void theOriginalCasesAreUnchangedAndCaseIdsAreUnique() {
+        assertThat(catalog.forJourney(LiveSmokeJourney.PROFESSIONAL)).extracting(LiveSmokeCase::id).startsWith(
+                "registered-nurse", "java-software-developer", "management-accountant");
+        assertThat(catalog.find(LiveSmokeJourney.PROFESSIONAL, "registered-nurse").orElseThrow().source())
+                .isEqualTo("Agreed live regression case");
+        assertThat(catalog.forJourney(LiveSmokeJourney.UNIVERSITY)).extracting(LiveSmokeCase::id)
+                .containsExactly("computer-science", "economics", "history");
+        assertThat(catalog.forJourney(LiveSmokeJourney.A_LEVEL)).extracting(LiveSmokeCase::id)
+                .containsExactly("maths-economics-geography", "mathematics-physics", "english-history-politics");
+        assertThat(catalog.all()).extracting(LiveSmokeCase::id).doesNotHaveDuplicates();
+    }
+
+    @Test
     void everyCaseMapsThroughItsJourneysNormalFormMapper() {
         catalog.forJourney(LiveSmokeJourney.UNIVERSITY).forEach(value ->
                 assertThat(new UniversityAssessmentFormMapper().toState((UniversityAssessmentForm) catalog.form(value))
@@ -48,8 +86,8 @@ class LiveSmokeCaseCatalogTest {
                 assertThat(new ALevelAssessmentFormMapper().toState((ALevelAssessmentForm) catalog.form(value))
                         .selectedSubjects()).hasSizeGreaterThanOrEqualTo(2));
         assertThat(catalog.all().stream().collect(Collectors.groupingBy(LiveSmokeCase::journey, Collectors.counting())))
-                .containsEntry(LiveSmokeJourney.PROFESSIONAL, 3L).containsEntry(LiveSmokeJourney.UNIVERSITY, 3L)
+                .containsEntry(LiveSmokeJourney.PROFESSIONAL, 7L).containsEntry(LiveSmokeJourney.UNIVERSITY, 3L)
                 .containsEntry(LiveSmokeJourney.A_LEVEL, 3L);
-        assertThat(catalog.all().stream().map(value -> value.journey() + "/" + value.id()).distinct()).hasSize(9);
+        assertThat(catalog.all().stream().map(value -> value.journey() + "/" + value.id()).distinct()).hasSize(13);
     }
 }
