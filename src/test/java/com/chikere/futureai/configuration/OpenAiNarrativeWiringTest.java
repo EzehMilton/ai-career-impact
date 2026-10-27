@@ -16,6 +16,8 @@ import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
@@ -38,6 +40,38 @@ class OpenAiNarrativeWiringTest {
                     assertThat(context).hasSingleBean(OpenAiProfessionalPaidNarrativeGenerator.class);
                     assertThat(context).hasSingleBean(OpenAiUniversityNarrativeGenerator.class);
                     assertThat(context).hasSingleBean(OpenAiALevelNarrativeGenerator.class);
+                });
+    }
+
+    @Test
+    void bothProfessionalNarrativesChooseRequestSettingsFromTheConfiguredModelAndReasoningEffort() {
+        runner.withPropertyValues("spring.ai.model.chat=openai", "spring.ai.openai.chat.model=gpt-6-luna")
+                .withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles("prod"))
+                .run(context -> {
+                    for (var options : List.of(
+                            context.getBean(OpenAiProfessionalNarrativeGenerator.class).requestOptions(),
+                            context.getBean(OpenAiProfessionalPaidNarrativeGenerator.class).requestOptions())) {
+                        assertThat(options.reasoningEffort()).contains("none");
+                        assertThat(options.temperature()).isEmpty();
+                    }
+                });
+        runner.withPropertyValues("spring.ai.model.chat=openai", "spring.ai.openai.chat.model=gpt-6-luna",
+                        "app.professional.narrative.openai.reasoning-effort=low",
+                        "app.professional.paid-narrative.openai.reasoning-effort=minimal")
+                .withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles("prod"))
+                .run(context -> {
+                    assertThat(context.getBean(OpenAiProfessionalNarrativeGenerator.class).requestOptions()
+                            .reasoningEffort()).contains("low");
+                    assertThat(context.getBean(OpenAiProfessionalPaidNarrativeGenerator.class).requestOptions()
+                            .reasoningEffort()).contains("minimal");
+                });
+        runner.withPropertyValues("spring.ai.model.chat=openai", "spring.ai.openai.chat.model=gpt-4o-mini")
+                .withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles("prod"))
+                .run(context -> {
+                    assertThat(context.getBean(OpenAiProfessionalNarrativeGenerator.class).requestOptions()
+                            .temperature()).contains(0.2);
+                    assertThat(context.getBean(OpenAiProfessionalPaidNarrativeGenerator.class).requestOptions()
+                            .temperature()).contains(0.2);
                 });
     }
 

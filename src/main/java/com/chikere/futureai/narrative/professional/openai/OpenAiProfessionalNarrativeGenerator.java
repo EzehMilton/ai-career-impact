@@ -10,7 +10,6 @@ import com.chikere.futureai.narrative.professional.application.ProfessionalNarra
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.openai.OpenAiChatOptions;
 
 import java.util.Map;
 import java.util.Optional;
@@ -135,8 +134,8 @@ public final class OpenAiProfessionalNarrativeGenerator implements ProfessionalN
             "Explain this saved assessment to the person who completed it. The assessment context follows:\n";
 
     /**
-     * Low randomness for a constrained explanation of a decided result. Set on this generator's requests only, so
-     * the University and A-level narratives keep their own settings.
+     * Low randomness for a constrained explanation of a decided result, on models that accept a custom value. Set on
+     * this generator's requests only, so the University and A-level narratives keep their own settings.
      */
     public static final double TEMPERATURE = 0.2;
 
@@ -178,15 +177,35 @@ public final class OpenAiProfessionalNarrativeGenerator implements ProfessionalN
     private final ChatClient chatClient;
     private final ObjectMapper objectMapper;
     private final Optional<String> modelIdentifier;
+    private final OpenAiNarrativeRequestOptions requestOptions;
 
+    /** Request options follow the configured model, with no explicit reasoning effort. */
     public OpenAiProfessionalNarrativeGenerator(
             ChatClient chatClient,
             ObjectMapper objectMapper,
             String configuredModelIdentifier) {
+        this(chatClient, objectMapper, configuredModelIdentifier, Optional.empty());
+    }
+
+    /**
+     * The request settings are provider parameters only; the v7 prompt, schema and validation are unchanged by them,
+     * which is why a model-compatible request keeps professional-narrative-v7.
+     */
+    public OpenAiProfessionalNarrativeGenerator(
+            ChatClient chatClient,
+            ObjectMapper objectMapper,
+            String configuredModelIdentifier,
+            Optional<String> configuredReasoningEffort) {
         this.chatClient = chatClient;
         this.objectMapper = objectMapper;
         this.modelIdentifier = configuredModelIdentifier == null || configuredModelIdentifier.isBlank()
                 ? Optional.empty() : Optional.of(configuredModelIdentifier.strip());
+        this.requestOptions = OpenAiNarrativeRequestOptions.forModel(modelIdentifier, configuredReasoningEffort,
+                TEMPERATURE);
+    }
+
+    public OpenAiNarrativeRequestOptions requestOptions() {
+        return requestOptions;
     }
 
     @Override
@@ -216,7 +235,7 @@ public final class OpenAiProfessionalNarrativeGenerator implements ProfessionalN
             throw new IllegalArgumentException("Narrative context could not be serialised", exception);
         }
         ProfessionalNarrative narrative = chatClient.prompt()
-                .options(OpenAiChatOptions.builder().temperature(TEMPERATURE))
+                .options(requestOptions.toChatOptions())
                 .system(SYSTEM_INSTRUCTIONS)
                 .user(USER_PROMPT_PREFIX + contextJson + repair)
                 .call()

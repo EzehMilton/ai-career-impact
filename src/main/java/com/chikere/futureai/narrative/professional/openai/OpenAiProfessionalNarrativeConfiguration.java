@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import java.util.Optional;
+
 @Configuration(proxyBeanMethods = false)
 @Profile({"prod", "dev-no-jev", "live-smoke"})
 public class OpenAiProfessionalNarrativeConfiguration {
@@ -17,8 +19,11 @@ public class OpenAiProfessionalNarrativeConfiguration {
     OpenAiProfessionalNarrativeGenerator openAiProfessionalNarrativeGenerator(
             ChatClient.Builder chatClientBuilder,
             ObjectMapper objectMapper,
-            @Value("${spring.ai.openai.chat.model:}") String configuredModelIdentifier) {
+            @Value("${spring.ai.openai.chat.model:}") String configuredModelIdentifier,
+            @Value("${app.professional.narrative.openai.reasoning-effort:}") String configuredReasoningEffort) {
+        // Empty reasoning effort: chosen from the model (none for GPT-6, otherwise the low custom temperature).
         return new OpenAiProfessionalNarrativeGenerator(
-                chatClientBuilder.build(), objectMapper, configuredModelIdentifier);
+                chatClientBuilder.build(), objectMapper, configuredModelIdentifier,
+                Optional.ofNullable(configuredReasoningEffort));
     }
 }

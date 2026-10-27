@@ -151,5 +151,6 @@ OPENAI_API_KEY=... ./mvnw -Plive-paid-narrative verify -Dtest=NoSuchTest -Dsuref
 
 Results (per-role status, repair, failed rules, call and preparation timings, PDFs and the narrative text) are written
 to `.live-smoke/paid-narrative/<timestamp>/`. Add `-Dopenai.paid.narrative.live.dry-run=true` to check the wiring
-without any call. The four non-Stage-2 roles use placeholder role-level measures; their narratives explain those
+without any call. `OPENAI_MODEL` selects the model (default `gpt-4o-mini`); a GPT-6 model such as `gpt-6-luna` is
+sent reasoning effort `none` and no temperature. The four non-Stage-2 roles use placeholder role-level measures; their narratives explain those
 placeholder scores, so review them for their responsibility-level content.

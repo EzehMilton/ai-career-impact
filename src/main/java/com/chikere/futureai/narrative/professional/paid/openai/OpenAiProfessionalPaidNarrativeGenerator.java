@@ -4,10 +4,10 @@ import com.chikere.futureai.narrative.professional.application.NarrativeRepairFe
 import com.chikere.futureai.narrative.professional.paid.ProfessionalPaidNarrative;
 import com.chikere.futureai.narrative.professional.paid.ProfessionalPaidNarrativeContext;
 import com.chikere.futureai.narrative.professional.paid.ProfessionalPaidNarrativeGenerator;
+import com.chikere.futureai.narrative.professional.openai.OpenAiNarrativeRequestOptions;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.openai.OpenAiChatOptions;
 
 import java.util.Optional;
 
@@ -81,19 +81,32 @@ public final class OpenAiProfessionalPaidNarrativeGenerator implements Professio
             above. Keep every id exactly as supplied and in the supplied order.
             """;
 
-    /** Low randomness for a constrained explanation of decided findings. */
+    /** Low randomness for a constrained explanation of decided findings, on models that accept a custom value. */
     public static final double TEMPERATURE = 0.2;
 
     private final ChatClient chatClient;
     private final ObjectMapper objectMapper;
     private final Optional<String> modelIdentifier;
+    private final OpenAiNarrativeRequestOptions requestOptions;
 
+    /** Request options follow the configured model, with no explicit reasoning effort. */
     public OpenAiProfessionalPaidNarrativeGenerator(ChatClient chatClient, ObjectMapper objectMapper,
             String configuredModelIdentifier) {
+        this(chatClient, objectMapper, configuredModelIdentifier, Optional.empty());
+    }
+
+    public OpenAiProfessionalPaidNarrativeGenerator(ChatClient chatClient, ObjectMapper objectMapper,
+            String configuredModelIdentifier, Optional<String> configuredReasoningEffort) {
         this.chatClient = chatClient;
         this.objectMapper = objectMapper;
         this.modelIdentifier = configuredModelIdentifier == null || configuredModelIdentifier.isBlank()
                 ? Optional.empty() : Optional.of(configuredModelIdentifier.strip());
+        this.requestOptions = OpenAiNarrativeRequestOptions.forModel(modelIdentifier, configuredReasoningEffort,
+                TEMPERATURE);
+    }
+
+    public OpenAiNarrativeRequestOptions requestOptions() {
+        return requestOptions;
     }
 
     @Override
@@ -122,7 +135,7 @@ public final class OpenAiProfessionalPaidNarrativeGenerator implements Professio
 
     private GeneratedPaidNarrative call(ProfessionalPaidNarrativeContext context, String repair) {
         var response = chatClient.prompt()
-                .options(OpenAiChatOptions.builder().temperature(TEMPERATURE))
+                .options(requestOptions.toChatOptions())
                 .system(SYSTEM_INSTRUCTIONS)
                 .user(userMessage(context) + repair)
                 .call()

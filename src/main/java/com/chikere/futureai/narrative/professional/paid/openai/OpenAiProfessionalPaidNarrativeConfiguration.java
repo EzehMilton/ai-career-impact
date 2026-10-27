@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import java.util.Optional;
+
 /** The real paid-narrative provider, in the same profiles and under the same switch as the role-level narrative. */
 @Configuration(proxyBeanMethods = false)
 @Profile({"prod", "dev-no-jev", "live-smoke"})
@@ -17,8 +19,10 @@ public class OpenAiProfessionalPaidNarrativeConfiguration {
     @ConditionalOnProperty(prefix = "spring.ai.model", name = "chat", havingValue = "openai")
     OpenAiProfessionalPaidNarrativeGenerator openAiProfessionalPaidNarrativeGenerator(
             ChatClient.Builder chatClientBuilder, ObjectMapper objectMapper,
-            @Value("${spring.ai.openai.chat.model:}") String configuredModelIdentifier) {
+            @Value("${spring.ai.openai.chat.model:}") String configuredModelIdentifier,
+            @Value("${app.professional.paid-narrative.openai.reasoning-effort:}") String configuredReasoningEffort) {
+        // Empty reasoning effort: chosen from the model (none for GPT-6, otherwise the low custom temperature).
         return new OpenAiProfessionalPaidNarrativeGenerator(chatClientBuilder.build(), objectMapper,
-                configuredModelIdentifier);
+                configuredModelIdentifier, Optional.ofNullable(configuredReasoningEffort));
     }
 }

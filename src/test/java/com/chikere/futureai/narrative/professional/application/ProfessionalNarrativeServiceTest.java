@@ -261,6 +261,24 @@ class ProfessionalNarrativeServiceTest {
         verify(narrativeStore, never()).save(any());
     }
 
+    @Test
+    void aStoredV7NarrativeIsNotRegeneratedWhenTheConfiguredModelChangesToGpt6() {
+        StoredProfessionalNarrative stored = available(narrative(), ProfessionalNarrativeVersions.PROMPT_AND_SCHEMA);
+        when(narrativeStore.findByAssessmentId(ID)).thenReturn(Optional.of(stored));
+        var chatClient = mock(org.springframework.ai.chat.client.ChatClient.class);
+        var gpt6 = new com.chikere.futureai.narrative.professional.openai.OpenAiProfessionalNarrativeGenerator(
+                chatClient, new com.fasterxml.jackson.databind.ObjectMapper(), "gpt-6-luna", Optional.empty());
+
+        StoredProfessionalNarrative result = new ProfessionalNarrativeService(assessmentStore, narrativeStore, gpt6,
+                new ProfessionalNarrativeContextFactory(), new ProfessionalNarrativeValidator(),
+                Clock.fixed(Instant.parse("2026-10-27T12:00:00Z"), ZoneOffset.UTC)).generateFor(ID);
+
+        assertThat(result).isSameAs(stored);
+        assertThat(result.promptSchemaVersion()).isEqualTo("professional-narrative-v7");
+        verifyNoInteractions(assessmentStore, chatClient);
+        verify(narrativeStore, never()).save(any());
+    }
+
     private ProfessionalNarrativeService service() {
         return new ProfessionalNarrativeService(assessmentStore, narrativeStore, generator,
                 new ProfessionalNarrativeContextFactory(), new ProfessionalNarrativeValidator(),

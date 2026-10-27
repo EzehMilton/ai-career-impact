@@ -416,7 +416,8 @@ purchased professional-report-v2 snapshot (frozen at payment: scores, bands, fac
 - **Selection.** With more than eight usable responsibilities and no analysis yet, the page shows "Choose up to 8
   responsibilities for detailed analysis" (nothing pre-selected). The service validates the choice; once the analysis
   exists a later selection is ignored, so the analysed set is frozen.
-- **Paid narrative.** One OpenAI call (temperature 0.2) explains the frozen findings. Its structured output is keyed
+- **Paid narrative.** One OpenAI call explains the frozen findings, with request settings from
+  `OpenAiNarrativeRequestOptions` (see "OpenAI request settings" below). Its structured output is keyed
   by deterministic ids (opportunity, human-value area, skill, plan action); `ProfessionalPaidNarrativeValidator`
   requires every id exactly once in order and rejects reclassification, reranking, new recommendations or skills,
   unsafe delegation, job-loss, capability and future claims, vendors, numbers, internal identifiers, US spelling and
@@ -440,6 +441,25 @@ purchased professional-report-v2 snapshot (frozen at payment: scores, bands, fac
   v3 report exists; `report.pdf` serves the v5 PDF once a v3 report exists.
 - **Concurrency.** As in 4D/4E, unique assessment constraints keep one canonical narrative and report; truly
   simultaneous first requests may duplicate provider calls. Accepted for v1.
+
+#### OpenAI request settings for the Professional narratives
+
+Both Professional OpenAI generators, role-level `professional-narrative-v7` and `professional-paid-narrative-v1`,
+take their sampling settings from one shared `OpenAiNarrativeRequestOptions`, so the model rule lives in one place.
+A setting that is absent is left out of the request entirely, never filled with a default:
+
+- a GPT-6 model (for example `gpt-6-luna`) sends reasoning effort `none` and no temperature, because these models
+  reject a custom temperature;
+- an explicit reasoning effort (`app.professional.narrative.openai.reasoning-effort` for v7,
+  `app.professional.paid-narrative.openai.reasoning-effort` for the paid narrative) is sent for any model, and
+  temperature is then omitted;
+- any other model keeps the existing temperature 0.2 and sends no reasoning effort.
+
+The repair call uses the same settings as the first call. **Versioning:** this is a provider-parameter
+compatibility fix, so `professional-narrative-v7` and `professional-paid-narrative-v1` keep their versions. Their
+prompts, structured-output schemas, validators, repair rules and fallback behaviour are unchanged; the semantic
+contract is unchanged. Stored narratives are immutable and are returned as stored, never regenerated because the
+configured model or its settings changed.
 
 ## Purchased professional report PDF
 
