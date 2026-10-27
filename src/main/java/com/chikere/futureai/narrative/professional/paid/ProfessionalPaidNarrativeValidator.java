@@ -182,10 +182,11 @@ public final class ProfessionalPaidNarrativeValidator {
             + "|color\\w*|favor\\w*|labor)\\b");
     private static final Pattern SECOND_PERSON_WORDS = Pattern.compile("(?i)\\b(?:you|your|yours|yourself)\\b");
     /**
-     * Writing about the customer rather than to them. A hyphenated compound ("the customer-facing parts of your work")
-     * describes the work, not a person, so the noun must not continue with a hyphen.
+     * Writing about the assessed person rather than to them. Not "the customer" or "the client", who in customer-facing
+     * and professional work are usually the people you serve ("your understanding of the customer's situation"). A
+     * hyphenated compound ("the worker-led steps") describes the work, so the noun must not continue with a hyphen.
      */
-    private static final Pattern THIRD_PERSON = Pattern.compile("(?i)\\b(?:the\\s+(?:user|customer|client|respondent"
+    private static final Pattern THIRD_PERSON = Pattern.compile("(?i)\\b(?:the\\s+(?:user|respondent"
             + "|individual|person\\s+who\\s+completed|employee|worker)(?![\\w-])"
             + "|this\\s+(?:person|individual|professional)\\b|he\\s+or\\s+she\\b)");
     /**

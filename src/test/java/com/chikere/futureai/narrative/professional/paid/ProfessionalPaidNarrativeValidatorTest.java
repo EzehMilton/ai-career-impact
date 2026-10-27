@@ -202,8 +202,13 @@ class ProfessionalPaidNarrativeValidatorTest {
         for (String sentence : List.of("The worker should check every reply before it is sent.",
                 "A customer-service adviser should check every reply before it is sent.",
                 "Your skills matter, and the adviser must keep reviewing replies.",
-                "The customer relies on communication and trust in this work.",
-                "This person reviews every reply.")) {
+                "The adviser must keep reviewing replies.",
+                "The user relies on communication and trust in this work.",
+                "The employee reviews every reply.",
+                "This person reviews every reply.",
+                "This individual reviews every reply.",
+                "This professional reviews every reply.",
+                "He or she reviews every reply.")) {
             var narrative = new ProfessionalPaidNarrative(draft.executiveSummary() + " " + sentence,
                     draft.scoresTogether(), draft.responsibilityPattern(), draft.opportunityExplanations(),
                     draft.humanValueExplanations(), draft.skillDevelopment(), draft.skillExplanations(),
@@ -214,6 +219,40 @@ class ProfessionalPaidNarrativeValidatorTest {
         rejects(summary("A solicitor should review every draft."), SECOND_PERSON);
         // Also third person, but an occupation-wide instruction: the earlier occupation rule rejects it first.
         rejects(summary("Solicitors must review every draft."), OCCUPATION);
+    }
+
+    /** Rejected live as SECOND_PERSON: the customer here is the person served, not the person assessed. */
+    static final String ELECTRICIAN_CUSTOMER = "Explaining faults and repair options depends on trust, communication "
+            + "and handling the relationship with the customer.";
+    static final String ADVISER_CUSTOMER = "Your understanding of the customer’s situation helps shape a relevant "
+            + "response.";
+
+    @Test
+    void theCustomersAndClientsYouServeAreNotThirdPersonWording() {
+        var electrician = DetailedReportFixtures.chain("electrician-8").context();
+        var draft = DetailedReportFixtures.validNarrative(electrician);
+        var narrative = new ProfessionalPaidNarrative(draft.executiveSummary(), draft.scoresTogether(),
+                ELECTRICIAN_CUSTOMER, draft.opportunityExplanations(), draft.humanValueExplanations(),
+                draft.skillDevelopment(), draft.skillExplanations(), draft.planIntroduction(), draft.planActionNotes(),
+                draft.closingPerspective());
+        assertThat(validator.validate(narrative, electrician)).isSameAs(narrative);
+
+        var adviser = DetailedReportFixtures.chain("customer-service-adviser-8").context();
+        var adviserDraft = DetailedReportFixtures.validNarrative(adviser);
+        var adviserNarrative = new ProfessionalPaidNarrative(adviserDraft.executiveSummary() + " " + ADVISER_CUSTOMER,
+                adviserDraft.scoresTogether(), adviserDraft.responsibilityPattern(),
+                adviserDraft.opportunityExplanations(), adviserDraft.humanValueExplanations(),
+                adviserDraft.skillDevelopment(), adviserDraft.skillExplanations(), adviserDraft.planIntroduction(),
+                adviserDraft.planActionNotes(), adviserDraft.closingPerspective());
+        assertThat(validator.validate(adviserNarrative, adviser)).isSameAs(adviserNarrative);
+
+        for (String sentence : List.of("Your understanding of the customer's situation helps shape a relevant response.",
+                "Explaining faults depends on handling the relationship with the customer.",
+                "You explain the result clearly to the customer.",
+                "Your discussion with the client remains your responsibility.",
+                "You should review the client's instructions before proceeding.")) {
+            assertThat(validator.validate(summary(sentence), context)).as(sentence).isNotNull();
+        }
     }
 
     @Test
