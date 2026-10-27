@@ -59,7 +59,7 @@ class LiveSmokeIsolationTest {
 
     @Test
     void theResponsibilityAnalysisAndGuidanceTriggersDoNotExist() throws Exception {
-        for (String route : List.of("/responsibility-analysis", "/responsibility-guidance")) {
+        for (String route : List.of("/responsibility-analysis", "/responsibility-guidance", "/detailed-report")) {
             String path = "/dev/live-smoke/professional/" + java.util.UUID.randomUUID() + route;
             mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(path)
                     .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))

@@ -54,7 +54,8 @@ class ProductShellConsistencyTest {
     @Test
     void onlyThePaidReportPagesOfferThePdfDownload() throws IOException {
         for (Map.Entry<Path, String> page : pages().entrySet()) {
-            boolean paidReport = page.getKey().getFileName().toString().equals("paid-report.html");
+            String name = page.getKey().getFileName().toString();
+            boolean paidReport = name.equals("paid-report.html") || name.equals("paid-report-v3.html");
             // Strip parser comments (<!--/* ... */-->) — they are never sent to the browser,
             // so a sample link placeholder inside one is not a real download offer.
             String live = page.getValue().replaceAll("(?s)<!--/\\*.*?\\*/-->", "");

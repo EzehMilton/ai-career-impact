@@ -70,7 +70,8 @@ public final class ResponsibilitySelection {
         return usable;
     }
 
-    private static List<String> usable(List<String> stored) {
+    /** The non-blank stored responsibilities, stripped, in their original order: what a selection's positions index. */
+    public static List<String> usable(List<String> stored) {
         return stored == null ? List.of()
                 : stored.stream().filter(value -> value != null && !value.isBlank()).map(String::strip).toList();
     }

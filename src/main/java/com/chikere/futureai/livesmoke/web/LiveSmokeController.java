@@ -7,6 +7,7 @@ import com.chikere.futureai.livesmoke.LiveSmokeJourney;
 import com.chikere.futureai.livesmoke.LiveSmokeProviderStatus;
 import com.chikere.futureai.livesmoke.LiveSmokeRuns;
 import com.chikere.futureai.livesmoke.LiveSmokeTraceFiles;
+import com.chikere.futureai.report.professional.detailed.ProfessionalDetailedReportUseCase;
 import com.chikere.futureai.responsibility.professional.analysis.ProfessionalResponsibilityAnalysisService;
 import com.chikere.futureai.responsibility.professional.analysis.ResponsibilityAnalysisFailedException;
 import com.chikere.futureai.responsibility.professional.analysis.ResponsibilityAnalysisUnavailableException;
@@ -51,19 +52,35 @@ public class LiveSmokeController {
     private final LiveSmokeRuns runs;
     private final ProfessionalResponsibilityAnalysisService responsibilityAnalysis;
     private final ProfessionalResponsibilityGuidanceService responsibilityGuidance;
+    private final ProfessionalDetailedReportUseCase detailedReports;
     private static final ObjectMapper JSON = new ObjectMapper().findAndRegisterModules()
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     public LiveSmokeController(LiveSmokeCaseCatalog catalog, LiveSmokeProviderStatus status,
             LiveSmokeTraceFiles traceFiles, LiveSmokeRuns runs,
             ProfessionalResponsibilityAnalysisService responsibilityAnalysis,
-            ProfessionalResponsibilityGuidanceService responsibilityGuidance) {
+            ProfessionalResponsibilityGuidanceService responsibilityGuidance,
+            ProfessionalDetailedReportUseCase detailedReports) {
         this.catalog = catalog;
         this.status = status;
         this.traceFiles = traceFiles;
         this.runs = runs;
         this.responsibilityAnalysis = responsibilityAnalysis;
         this.responsibilityGuidance = responsibilityGuidance;
+        this.detailedReports = detailedReports;
+    }
+
+    /**
+     * The stored professional-report-v3 snapshot, read-only, for inspecting what was assembled (including the paid
+     * narrative status). Generation goes through the customer's normal prepare route.
+     */
+    @GetMapping("/dev/live-smoke/professional/{assessmentId}/detailed-report")
+    public ResponseEntity<String> detailedReport(@PathVariable String assessmentId) throws Exception {
+        var snapshot = detailedReports.find(uuid(assessmentId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
+                .body(JSON.writerWithDefaultPrettyPrinter().writeValueAsString(snapshot));
     }
 
     /**

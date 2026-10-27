@@ -75,6 +75,7 @@ class LiveSmokeModeTest {
     @MockitoBean UniversityNarrativeGenerator universityNarrative;
     @MockitoBean ALevelJudgmentProvider aLevelJudgments;
     @MockitoBean ALevelNarrativeGenerator aLevelNarrative;
+    @MockitoBean com.chikere.futureai.narrative.professional.paid.ProfessionalPaidNarrativeGenerator paidNarrative;
     @MockitoBean com.chikere.futureai.responsibility.professional.application.ProfessionalResponsibilityJudgmentProvider
             responsibilityProvider;
 
@@ -169,6 +170,96 @@ class LiveSmokeModeTest {
 
         mvc.perform(post("/dev/live-smoke/professional/" + UUID.randomUUID() + "/responsibility-guidance").with(csrf()))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void theFullDetailedReportV3IsPreparedOnceThroughTheNormalRouteAndItsSnapshotAndPdfAreReusable() throws Exception {
+        when(paidNarrative.providerIdentifier()).thenReturn("test-double");
+        when(paidNarrative.modelIdentifier()).thenReturn(java.util.Optional.of("test-model"));
+        when(paidNarrative.generate(any())).thenAnswer(call -> new com.chikere.futureai.narrative.professional.paid
+                .ProfessionalPaidNarrativeGenerator.GeneratedPaidNarrative(com.chikere.futureai.report.professional.detailed
+                .DetailedReportFixtures.validNarrative(call.getArgument(0)), java.util.Optional.of("req_smoke"),
+                java.util.Optional.of("test-model")));
+        UUID id = submit(catalog.find(LiveSmokeJourney.PROFESSIONAL, "registered-nurse").orElseThrow());
+        String result = mvc.perform(get("/professional-assessment/" + id)).andReturn().getResponse().getContentAsString();
+        assertThat(result).contains("Prepare detailed report v3", "/professional-assessment/" + id + "/report/prepare",
+                "/dev/live-smoke/professional/" + id + "/detailed-report");
+        mvc.perform(get("/dev/live-smoke/professional/" + id + "/detailed-report")).andExpect(status().isNotFound());
+
+        mvc.perform(post("/professional-assessment/" + id + "/report/prepare").with(csrf()))
+                .andExpect(status().is3xxRedirection());
+        mvc.perform(post("/professional-assessment/" + id + "/report/prepare").with(csrf()))
+                .andExpect(status().is3xxRedirection());
+        org.mockito.Mockito.verify(responsibilityProvider, org.mockito.Mockito.times(1)).judge(any());
+        org.mockito.Mockito.verify(paidNarrative, org.mockito.Mockito.times(1)).generate(any());
+
+        String page = mvc.perform(get("/professional-assessment/" + id + "/report")).andExpect(status().isOk())
+                .andExpect(view().name("professional-assessment/paid-report-v3")).andReturn().getResponse().getContentAsString();
+        assertThat(page).contains("Your work, responsibility by responsibility", "Your 90-day plan",
+                "Live smoke: detailed report", "paid narrative AVAILABLE", "This is a sensible place to try AI");
+        String json = mvc.perform(get("/dev/live-smoke/professional/" + id + "/detailed-report")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(json).contains("\"reportVersion\" : \"professional-report-v3\"",
+                "\"pdfVersion\" : \"professional-report-pdf-v5\"", "\"paidNarrativeStatus\" : \"AVAILABLE\"");
+        byte[] pdf = mvc.perform(get("/professional-assessment/" + id + "/report.pdf")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
+        assertThat(pdf).startsWith("%PDF-".getBytes());
+        assertThat(mvc.perform(get("/professional-assessment/" + id + "/report.pdf")).andReturn().getResponse()
+                .getContentAsByteArray()).isEqualTo(pdf);
+        org.mockito.Mockito.verify(responsibilityProvider, org.mockito.Mockito.times(1)).judge(any());
+        org.mockito.Mockito.verify(paidNarrative, org.mockito.Mockito.times(1)).generate(any());
+    }
+
+    @Test
+    void aCustomAssessmentWithMoreThanEightResponsibilitiesExercisesTheSelectionPathAndFreezesTheChoice() throws Exception {
+        when(paidNarrative.providerIdentifier()).thenReturn("test-double");
+        when(paidNarrative.generate(any())).thenAnswer(call -> new com.chikere.futureai.narrative.professional.paid
+                .ProfessionalPaidNarrativeGenerator.GeneratedPaidNarrative(com.chikere.futureai.report.professional.detailed
+                .DetailedReportFixtures.validNarrative(call.getArgument(0)), java.util.Optional.empty(),
+                java.util.Optional.empty()));
+        var nurse = catalog.find(LiveSmokeJourney.PROFESSIONAL, "registered-nurse").orElseThrow();
+        var fields = new java.util.HashMap<String, Object>(nurse.fields());
+        java.util.List<String> ten = java.util.stream.IntStream.rangeClosed(1, 10)
+                .mapToObj(i -> "Custom responsibility number " + i).toList();
+        fields.put("responsibilities", String.join("\n", ten));
+        UUID id = submit(new LiveSmokeCase("custom-ten", LiveSmokeJourney.PROFESSIONAL, "Custom ten",
+                "Test-only custom assessment", fields));
+        String path = "/professional-assessment/" + id + "/report";
+
+        String page = mvc.perform(get(path)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(page).contains("Choose up to 8 responsibilities for detailed analysis")
+                .containsSubsequence(ten.toArray(String[]::new)).doesNotContain("checked");
+        // Nothing chosen, nine chosen, or no selection at all: rejected without any Jev call.
+        mvc.perform(post(path + "/prepare").with(csrf()).param("selectionForm", "true"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl(
+                        path + "?preparation=invalid-selection"));
+        mvc.perform(post(path + "/prepare").with(csrf()).param("selectionForm", "true")
+                        .param("responsibility", "1", "2", "3", "4", "5", "6", "7", "8", "9"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl(
+                        path + "?preparation=invalid-selection"));
+        mvc.perform(post(path + "/prepare").with(csrf()))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl(
+                        path + "?preparation=selection-required"));
+        org.mockito.Mockito.verify(responsibilityProvider, org.mockito.Mockito.never()).judge(any());
+
+        // A valid choice, submitted out of order, is analysed in the original order.
+        mvc.perform(post(path + "/prepare").with(csrf()).param("selectionForm", "true")
+                .param("responsibility", "10", "3", "7")).andExpect(status().is3xxRedirection());
+        var request = org.mockito.ArgumentCaptor.forClass(
+                com.chikere.futureai.responsibility.professional.application.ProfessionalResponsibilityAnalysisRequest.class);
+        org.mockito.Mockito.verify(responsibilityProvider).judge(request.capture());
+        assertThat(request.getValue().responsibilities()).containsExactly("Custom responsibility number 3",
+                "Custom responsibility number 7", "Custom responsibility number 10");
+        String report = mvc.perform(get(path)).andExpect(status().isOk())
+                .andExpect(view().name("professional-assessment/paid-report-v3")).andReturn().getResponse().getContentAsString();
+        assertThat(report).containsSubsequence("Custom responsibility number 3", "Custom responsibility number 7",
+                "Custom responsibility number 10").doesNotContain("Custom responsibility number 1<",
+                "Choose up to 8 responsibilities");
+        // The choice is frozen: a later, different selection changes nothing and calls nothing.
+        mvc.perform(post(path + "/prepare").with(csrf()).param("selectionForm", "true").param("responsibility", "1", "2"))
+                .andExpect(status().is3xxRedirection());
+        org.mockito.Mockito.verify(responsibilityProvider, org.mockito.Mockito.times(1)).judge(any());
+        org.mockito.Mockito.verify(paidNarrative, org.mockito.Mockito.times(1)).generate(any());
     }
 
     @Test

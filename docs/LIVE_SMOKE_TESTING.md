@@ -77,6 +77,14 @@ user-entered data and complete AI prompts and responses.
 
 All three journeys have a normal paid PDF, rendered by their usual renderer; there is no smoke-specific PDF.
 
+For a Professional result the panel also offers **Prepare detailed report v3**, which posts to the customer's
+normal `/professional-assessment/{id}/report/prepare` route: real responsibility Jev call, deterministic guidance,
+real paid-narrative OpenAI call, then the stored professional-report-v3 and its v5 PDF. Each step is stored once;
+preparing again reuses everything. **Detailed report v3 snapshot (JSON)** shows what was assembled, including the
+paid narrative status, and the v3 page shows a small live-smoke line with the versions and narrative status. To
+exercise the more-than-eight selection screen, submit a custom Professional assessment with nine or more
+responsibilities and open its Detailed Report.
+
 ## Trace files
 
 Each assessment's trace is written to `.live-smoke/traces/{assessmentId}.jsonl`, one JSON object per line.
@@ -130,3 +138,18 @@ Smoke assessments are not marked in the database. That would need a migration on
 local-only tool. They can be told apart by the trace label `executionMode: LIVE_SMOKE`, the
 `LIVE SMOKE detailed-report access … executionMode=LIVE_SMOKE` log line, and their `COMPLIMENTARY` entitlement.
 Run smoke tests against a local or disposable database, never a shared or production one.
+
+## Paid narrative live evaluation
+
+`ProfessionalPaidNarrativeLiveIT` runs professional-paid-narrative-v1 against real OpenAI for the seven calibration
+roles, using the captured responsibility analyses (no Jev call), real guidance, validation and repair, report-v3
+assembly and the v5 PDF. It is never part of `./mvnw verify`:
+
+```
+OPENAI_API_KEY=... ./mvnw -Plive-paid-narrative verify -Dtest=NoSuchTest -Dsurefire.failIfNoSpecifiedTests=false
+```
+
+Results (per-role status, repair, failed rules, call and preparation timings, PDFs and the narrative text) are written
+to `.live-smoke/paid-narrative/<timestamp>/`. Add `-Dopenai.paid.narrative.live.dry-run=true` to check the wiring
+without any call. The four non-Stage-2 roles use placeholder role-level measures; their narratives explain those
+placeholder scores, so review them for their responsibility-level content.
