@@ -30,6 +30,13 @@
         th:action="@{/dev/live-smoke/professional/{id}/responsibility-guidance(id=${assessmentId})}">
     <button type="submit" class="button-link button-secondary">Generate paid guidance (deterministic, stored once)</button>
   </form>
+  <form th:if="${basePath == '/professional-assessment'}" method="post"
+        th:action="@{/professional-assessment/{id}/report/prepare(id=${assessmentId})}">
+    <button type="submit" class="button-link button-secondary">Prepare detailed report v3 (real Jev and OpenAI, stored once)</button>
+  </form>
+  <ul th:if="${basePath == '/professional-assessment'}">
+    <li><a th:href="@{/dev/live-smoke/professional/{id}/detailed-report(id=${assessmentId})}" href="#">Detailed report v3 snapshot (JSON)</a></li>
+  </ul>
 </aside>
 </body>
 </html>

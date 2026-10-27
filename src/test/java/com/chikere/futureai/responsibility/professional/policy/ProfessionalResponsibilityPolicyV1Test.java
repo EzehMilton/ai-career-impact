@@ -157,13 +157,21 @@ class ProfessionalResponsibilityPolicyV1Test {
                         "com.chikere.futureai.decision", "org.springframework", "org.springaicommunity");
             }
         }
-        // The paid lifecycle (Stage 4D) uses the policy; no role-level, report, payment or PDF code does.
+        // The paid lifecycle (Stage 4D) uses the policy; no role-level, report, payment or PDF code does. Since Stage 4F
+        // the detailed report and its paid narrative read the STORED category to present and validate it, but they
+        // never classify: the policy itself stays inside the responsibility capability.
         Path responsibility = Path.of("src/main/java/com/chikere/futureai/responsibility");
+        List<Path> storedCategoryReaders = List.of(Path.of("src/main/java/com/chikere/futureai/report/professional/detailed"),
+                Path.of("src/main/java/com/chikere/futureai/narrative/professional/paid"));
         try (var files = Files.walk(Path.of("src/main/java"))) {
             for (Path file : files.filter(path -> path.toString().endsWith(".java") && !path.startsWith(responsibility))
                     .toList()) {
-                assertThat(Files.readString(file)).as(file.toString())
-                        .doesNotContain("ProfessionalResponsibilityPolicyV1", "ResponsibilityCategory");
+                String source = Files.readString(file);
+                assertThat(source).as(file.toString()).doesNotContain("ProfessionalResponsibilityPolicyV1",
+                        "ProfessionalResponsibilityClassifier");
+                if (storedCategoryReaders.stream().noneMatch(file::startsWith)) {
+                    assertThat(source).as(file.toString()).doesNotContain("ResponsibilityCategory");
+                }
             }
         }
     }

@@ -25,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ProfessionalReportPdfControllerTest {
     @Autowired MockMvc mvc;
     @MockitoBean ProfessionalReportPdfUseCase pdfService;
+    @MockitoBean com.chikere.futureai.report.professional.detailed.ProfessionalDetailedReportPdfUseCase detailedPdfs;
     @Autowired MeterRegistry registry;
 
     @Test
@@ -40,6 +41,41 @@ class ProfessionalReportPdfControllerTest {
                 .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")))
                 .andReturn().getResponse();
         assertThat(response.getContentAsByteArray()).isEqualTo(bytes);
+    }
+
+    @Test
+    void aStoredDetailedReportServesItsV5PdfAndNeverTheRoleLevelPdf() throws Exception {
+        UUID assessmentId = UUID.randomUUID(); byte[] bytes = "%PDF-detailed".getBytes(StandardCharsets.US_ASCII);
+        when(detailedPdfs.findOrCreate(assessmentId)).thenReturn(java.util.Optional.of(
+                new com.chikere.futureai.report.professional.detailed.ProfessionalDetailedReportPdfUseCase
+                        .DetailedReportPdfDownload("ai-career-impact-electrician-detailed-report.pdf", bytes, false)));
+        var response = mvc.perform(get("/professional-assessment/" + assessmentId + "/report.pdf"))
+                .andExpect(status().isOk()).andExpect(content().contentType("application/pdf"))
+                .andExpect(header().string("Content-Disposition",
+                        org.hamcrest.Matchers.containsString("ai-career-impact-electrician-detailed-report.pdf")))
+                .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")))
+                .andReturn().getResponse();
+        assertThat(response.getContentAsByteArray()).isEqualTo(bytes);
+        verifyNoInteractions(pdfService);
+    }
+
+    @Test
+    void withoutADetailedReportTheRoleLevelPdfIsServedAsBefore() throws Exception {
+        UUID assessmentId = UUID.randomUUID(); byte[] bytes = "%PDF-v4".getBytes(StandardCharsets.US_ASCII);
+        when(detailedPdfs.findOrCreate(assessmentId)).thenReturn(java.util.Optional.empty());
+        when(pdfService.getOrCreate(assessmentId)).thenReturn(new PurchasedProfessionalReportPdf(UUID.randomUUID(),
+                assessmentId, "professional-report-v2", "professional-report-pdf-v4", Instant.now(),
+                "ai-career-impact-nurse-report.pdf", bytes.length, "c".repeat(64), bytes));
+        assertThat(mvc.perform(get("/professional-assessment/" + assessmentId + "/report.pdf")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray()).isEqualTo(bytes);
+    }
+
+    @Test
+    void aDetailedPdfIsDeniedWithoutAnActiveEntitlement() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(detailedPdfs.findOrCreate(id)).thenThrow(new ProfessionalReportPdfAccessDeniedException());
+        mvc.perform(get("/professional-assessment/" + id + "/report.pdf")).andExpect(status().isForbidden());
+        verifyNoInteractions(pdfService);
     }
 
     @Test

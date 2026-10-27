@@ -23,6 +23,36 @@
     </p>
   </div>
 
+  <section class="panel detailed-preparation" id="prepare" th:if="${preparation != null and !preparation.reportReady}"
+           aria-labelledby="prepare-heading">
+    <p class="eyebrow">Your detailed report</p>
+    <p class="notice" role="status" th:if="${preparationStatus == 'selection-required' or preparationStatus == 'invalid-selection'}">Choose between one and eight responsibilities from the list to continue.</p>
+    <p class="notice" role="status" th:if="${preparationStatus == 'unavailable'}">The responsibility-by-responsibility analysis is not available for this assessment right now. Your report below is complete and unaffected.</p>
+    <p class="notice" role="status" th:if="${preparationStatus == 'failed'}">We could not prepare the detailed analysis just now. Your purchase is unaffected, and you can try again shortly.</p>
+    <th:block th:if="${preparation.selectionRequired}">
+      <h2 id="prepare-heading">Choose up to 8 responsibilities for detailed analysis</h2>
+      <p>The detailed analysis looks at up to eight responsibilities, so each one gets proper attention. Choose the ones that matter most in your work. Your choice is kept once the analysis has been prepared.</p>
+      <form method="post" th:action="@{/professional-assessment/{id}/report/prepare(id=${assessmentId})}">
+        <input type="hidden" name="selectionForm" value="true">
+        <fieldset class="detailed-selection">
+          <legend>Your responsibilities</legend>
+          <div class="checkbox-row" th:each="text, iter : ${preparation.responsibilities}">
+            <input type="checkbox" name="responsibility" th:id="'responsibility-' + ${iter.count}" th:value="${iter.count}">
+            <label th:for="'responsibility-' + ${iter.count}" th:text="${text}">Responsibility</label>
+          </div>
+        </fieldset>
+        <button type="submit" class="button-link">Prepare my detailed report</button>
+      </form>
+    </th:block>
+    <th:block th:unless="${preparation.selectionRequired}">
+      <h2 id="prepare-heading">Prepare your detailed report</h2>
+      <p>Your detailed report looks at each responsibility you listed, where AI may assist most, where your own contribution matters most, the skills to strengthen and a 90-day plan. Preparing it can take up to a minute, and it is prepared only once.</p>
+      <form method="post" th:action="@{/professional-assessment/{id}/report/prepare(id=${assessmentId})}">
+        <button type="submit" class="button-link">Prepare my detailed report</button>
+      </form>
+    </th:block>
+  </section>
+
   <section class="panel paid-overview" aria-labelledby="paid-overview-heading">
     <p class="eyebrow">The big picture</p>
     <h2 id="paid-overview-heading">Your results at a glance</h2>

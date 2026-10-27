@@ -244,6 +244,33 @@
 			</build>
 		</profile>
 		<profile>
+			<id>live-paid-narrative</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<configuration>
+							<systemPropertyVariables>
+								<openai.paid.narrative.live.enabled>true</openai.paid.narrative.live.enabled>
+							</systemPropertyVariables>
+							<includes>
+								<include>**/ProfessionalPaidNarrativeLiveIT.java</include>
+							</includes>
+						</configuration>
+						<executions>
+							<execution>
+								<goals>
+									<goal>integration-test</goal>
+									<goal>verify</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
 			<id>live-responsibility-probe</id>
 			<build>
 				<plugins>

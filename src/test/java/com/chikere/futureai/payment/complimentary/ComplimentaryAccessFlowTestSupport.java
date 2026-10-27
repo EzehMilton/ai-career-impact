@@ -207,9 +207,11 @@ abstract class ComplimentaryAccessFlowTestSupport {
                 .param("accessCode", code)).andExpect(status().is3xxRedirection());
     }
 
+    /** The report page, with per-request CSRF token values normalised (a form token is unique to each response). */
     String reportPage(Journey journey, UUID id) throws Exception {
         return mvc.perform(get(journey.route() + "/" + id + "/report")).andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
+                .andReturn().getResponse().getContentAsString()
+                .replaceAll("name=\"_csrf\" value=\"[^\"]*\"", "name=\"_csrf\" value=\"<token>\"");
     }
 
     Map<String, Object> entitlement(Journey journey, UUID id) {

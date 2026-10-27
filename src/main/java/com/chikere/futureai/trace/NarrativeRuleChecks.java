@@ -22,17 +22,25 @@ public final class NarrativeRuleChecks {
     private final AssessmentTrace trace;
     private final JourneyType journey;
     private final List<String> rules;
+    private final TraceStage stage;
     private final List<Map<String, Object>> results = new ArrayList<>();
 
-    private NarrativeRuleChecks(AssessmentTrace trace, JourneyType journey, List<String> rules) {
+    private NarrativeRuleChecks(AssessmentTrace trace, JourneyType journey, List<String> rules, TraceStage stage) {
         this.trace = trace;
         this.journey = journey;
         this.rules = List.copyOf(rules);
+        this.stage = stage;
     }
 
     /** Starts one validation run over the named rules, in the order the validator applies them. */
     public static NarrativeRuleChecks start(AssessmentTrace trace, JourneyType journey, List<String> rules) {
-        return new NarrativeRuleChecks(trace, journey, rules);
+        return start(trace, journey, rules, TraceStage.NARRATIVE_VALIDATION);
+    }
+
+    /** As {@link #start(AssessmentTrace, JourneyType, List)}, recording the outcome under another trace stage. */
+    public static NarrativeRuleChecks start(AssessmentTrace trace, JourneyType journey, List<String> rules,
+            TraceStage stage) {
+        return new NarrativeRuleChecks(trace, journey, rules, stage);
     }
 
     /** Records one rule and throws the validator's rejection, naming the rule, if it was violated. */
@@ -71,7 +79,7 @@ public final class NarrativeRuleChecks {
     }
 
     private void emit(boolean accepted, String rejectedBy) {
-        trace.event(journey, TraceStage.NARRATIVE_VALIDATION, () -> {
+        trace.event(journey, stage, () -> {
             List<Map<String, Object>> all = new ArrayList<>(results);
             for (String rule : rules.subList(Math.min(results.size(), rules.size()), rules.size())) {
                 Map<String, Object> skipped = new LinkedHashMap<>();

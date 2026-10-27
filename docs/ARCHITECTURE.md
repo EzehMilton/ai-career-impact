@@ -394,7 +394,52 @@ exists, and otherwise obtains the analysis through `ProfessionalResponsibilityAn
 possible Jev call), runs the policy once and stores an immutable snapshot (Flyway V20,
 `professional_responsibility_guidance`, unique per assessment and per analysis). Each run emits one
 `RESPONSIBILITY_GUIDANCE` trace event (GENERATED, REUSED or CONCURRENT_SNAPSHOT_RETURNED) carrying IDs, keys and
-rule IDs only. Guidance is not yet part of the paid report, PDF or narrative.
+rule IDs only. Since Stage 4F the guidance is presented by professional-report-v3.
+
+## Detailed professional report (professional-report-v3)
+
+The £4.99 report, assembled once from stored artefacts and frozen:
+
+```text
+purchased professional-report-v2 snapshot (frozen at payment: scores, bands, factors, v7 narrative)
+  + responsibility-analysis snapshot (4D)  + guidance snapshot (4E)
+  + paid narrative (professional-paid-narrative-v1, or deterministic FALLBACK)
+        -> ProfessionalDetailedReportAssembler -> professional-report-v3 snapshot (V21)
+        -> ProfessionalDetailedReportView -> paid-report-v3.html  and  professional-report-pdf-v5 (stored bytes)
+```
+
+- **Generation is explicit.** `GET /professional-assessment/{id}/report` shows a stored v3 report, or otherwise the
+  purchased v2 report with a "Prepare your detailed report" step. `POST .../report/prepare` (CSRF) runs
+  `ProfessionalDetailedReportService`: ACTIVE entitlement, stored v3 if any, otherwise analysis and guidance through
+  the 4E service (the only possible Jev call), the paid narrative once, assembly and insert-once storage. Viewing a
+  page or downloading a PDF never generates anything, and payment confirmation never reaches this code.
+- **Selection.** With more than eight usable responsibilities and no analysis yet, the page shows "Choose up to 8
+  responsibilities for detailed analysis" (nothing pre-selected). The service validates the choice; once the analysis
+  exists a later selection is ignored, so the analysed set is frozen.
+- **Paid narrative.** One OpenAI call (temperature 0.2) explains the frozen findings. Its structured output is keyed
+  by deterministic ids (opportunity, human-value area, skill, plan action); `ProfessionalPaidNarrativeValidator`
+  requires every id exactly once in order and rejects reclassification, reranking, new recommendations or skills,
+  unsafe delegation, job-loss, capability and future claims, vendors, numbers, internal identifiers, US spelling and
+  hype. One repair attempt. Outcomes:
+  - **AVAILABLE**: validated; stored, immutable, never regenerated.
+  - **FALLBACK** (final): the provider returned content that still failed validation after its repair; stored with
+    the failed rules, immutable, never retried. The report renders completely from deterministic copy.
+  - **RETRYABLE_FALLBACK**: no usable provider response (not configured, timeout, connection failure, rate limit,
+    provider error, empty response, or a failed repair call). Nothing is stored. The customer sees the complete
+    deterministic report provisionally (assembled from the stored analysis and guidance on each view, no provider
+    call; its PDF is rendered on demand and not stored) with an explicit "Add the personalised explanation" button.
+    Viewing never retries; only that explicit POST does.
+- **Freezing.** The canonical v3 snapshot is stored only with an AVAILABLE or final FALLBACK narrative, so a
+  transient outage never becomes the permanent result and a stored report is never rewritten.
+- **Oversight presentation.** When at least 75% of the analysed responsibilities carry the stored oversight marker,
+  one section-level note replaces per-card badges and per-opportunity conditions; below that only affected
+  responsibilities are marked. The markers themselves are unchanged.
+- **Immutability and coexistence.** The v3 snapshot references its entitlement, analysis, guidance and narrative and
+  records every version (role report, decision, responsibility schema and policy, guidance policy, paid narrative,
+  report, PDF). It is read back as stored. v2 snapshots and their v4 PDFs are untouched and still served wherever no
+  v3 report exists; `report.pdf` serves the v5 PDF once a v3 report exists.
+- **Concurrency.** As in 4D/4E, unique assessment constraints keep one canonical narrative and report; truly
+  simultaneous first requests may duplicate provider calls. Accepted for v1.
 
 ## Purchased professional report PDF
 

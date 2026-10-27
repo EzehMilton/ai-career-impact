@@ -44,5 +44,23 @@ public enum TraceStage {
     /** Generation failed at a named stage; no completed snapshot was stored and a retry remains possible. */
     RESPONSIBILITY_ANALYSIS_FAILED,
     /** Deterministic paid guidance generated from a stored analysis, or an existing guidance snapshot reused. */
-    RESPONSIBILITY_GUIDANCE
+    RESPONSIBILITY_GUIDANCE,
+    /** The paid-narrative request: versions, identifiers and the compact provider view of the frozen findings. */
+    PAID_NARRATIVE_REQUEST,
+    /** One paid-narrative provider response (attempt 1, or 2 for the repair). */
+    PAID_NARRATIVE_RESPONSE,
+    /** Each paid-narrative validation rule's outcome. */
+    PAID_NARRATIVE_VALIDATION,
+    /** The single repair request after a draft failed validation. */
+    PAID_NARRATIVE_REPAIR,
+    /** No narrative is shown: why, and that the report uses deterministic copy. */
+    PAID_NARRATIVE_FALLBACK,
+    /** A stored paid narrative was returned; no provider was called. */
+    PAID_NARRATIVE_REUSED,
+    /** A new immutable professional-report-v3 snapshot was assembled from stored artefacts and persisted. */
+    PROFESSIONAL_REPORT_V3_GENERATED,
+    /** A stored professional-report-v3 snapshot was returned unchanged; nothing was generated. */
+    PROFESSIONAL_REPORT_V3_REUSED,
+    /** The paid narrative was retryable, so the deterministic report was returned provisionally and nothing stored. */
+    PROFESSIONAL_REPORT_V3_PROVISIONAL
 }
