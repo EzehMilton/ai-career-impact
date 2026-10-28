@@ -746,6 +746,25 @@ For local startup, run:
 
 `app.university.fixture-id` supports only the exact IDs `computer_science`, `economics`, `graphic_design`, `history`, `mechanical_engineering` and `nursing`. There is no fuzzy matching: a missing or unsupported ID fails at startup. The fixture ID is technical configuration; `UniversityAssessmentState.courseTitle` remains the user's real course. Fixture data is illustrative development data chosen to exercise contrasting presentation paths — it is not empirical intelligence about any subject, course or institution, and the UI marks it prominently as development data. Both journeys' fixture IDs are required under `local-fixture` because each journey wires its own provider independently.
 
+### University decision v2 (built, not yet used by submissions)
+
+`UniversityDecisionPolicyV2` (`university-decision-v2`) is a pure policy over the unchanged `university-v1` judgments, designed from the frozen Stage 5B live baseline (`src/test/resources/university/baseline-5b/`). It is a course profile of three measures with no composite headline: Working Alongside AI, Human and Practical Capability and Transferable Capability. Bands are `LOW`/`MODERATE`/`HIGH` at 3.5 and 7.0; factors are the signed effects of each measure's own formula; confidence is per measure. Contextual complexity contributes to all three measures on purpose. New submissions still use `university-decision-v1`; v1 results and purchases are never recalculated.
+
+### University module analysis (`university-module-v1`, foundation only)
+
+`coursemodule/university` holds the module-level Jev contract for the future paid report: a request of 1 to 8 caller-selected modules with stable keys `m1`–`m8` (more are refused, never truncated), the `university-module-v1` schema, and a strict adapter. Preferred career areas are never sent. Each module gets two truth judgments (`described_clearly`, `professional_standards`) and six 0–4 scores (`ai_learning_assistance`, `independent_demonstration`, `human_judgement`, `interpersonal_work`, `practical_application`, `technical_quantitative`). There is no classification, persistence, orchestration or wiring yet.
+
+Decisions locked by the Stage 5C live probe (seven courses, eight modules each, every call returning all 64 expected answers and nothing unexpected):
+
+- **One Jev call for up to eight modules.** No batching fallback. Strict checks remain for missing and unexpected answers, wrong types, invalid ranges and module identity or order.
+- **Distributions may differ from 1.0 by at most 0.01**, because providers round probabilities. The comparison carries a 1e-9 floating-point allowance: two live answers summing to 0.99 were first rejected because |0.99 − 1.0| evaluates to 0.010000000000000009. The business tolerance is unchanged, and the course-level `university-v1` check is unchanged.
+- **`described_clearly` is diagnostic only**, never a gate or a downgrade. Across the 40 modules first accepted it ranged 0.41–0.94 (mean 0.80); the only value below 0.50 was "Approaches to Literature" (0.41), which is still analysable from the course context.
+
+Findings for the Stage 5D classification policy:
+
+- `ai_learning_assistance` is high almost everywhere (about 2.53–3.78, mean 3.52), so on its own it is not evidence for an AI-assistance category. Classification must combine it with independent demonstration, human judgement, interpersonal work, practical application, professional standards and, where relevant, technical/quantitative context.
+- **Invariant:** AI learning assistance describes where AI may support learning or preparation. It does not determine what use is permitted in assessed work. High AI learning assistance together with high independent demonstration is an integrity-sensitive combination, never permission to use AI in assessment; the paid report must defer to institution and module policies.
+
 ### University limitations and next sub-phases
 
 - There is no live university evidence adapter yet. Only the port, model, persistence and deterministic fixture exist.

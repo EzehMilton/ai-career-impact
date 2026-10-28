@@ -27,6 +27,11 @@ public record ModuleScoredJudgment(
      * sum to 1 within this tolerance. The course-level {@code university-v1} contract is unchanged.
      */
     public static final double DISTRIBUTION_TOLERANCE = 0.01;
+    /**
+     * Floating-point allowance on top of {@link #DISTRIBUTION_TOLERANCE}, so a sum the provider means as exactly 0.99
+     * or 1.01 (|0.99 - 1.0| evaluates to 0.010000000000000009) is accepted. It does not widen the business rule.
+     */
+    static final double COMPARISON_EPSILON = 1.0e-9;
 
     public ModuleScoredJudgment {
         if (!Double.isFinite(value) || value < MINIMUM_LEVEL || value > MAXIMUM_LEVEL) {
@@ -45,7 +50,7 @@ public record ModuleScoredJudgment(
             }
             total += probability;
         }
-        if (!distribution.isEmpty() && Math.abs(total - 1.0) > DISTRIBUTION_TOLERANCE) {
+        if (!distribution.isEmpty() && Math.abs(total - 1.0) > DISTRIBUTION_TOLERANCE + COMPARISON_EPSILON) {
             throw new IllegalArgumentException("distribution probabilities must sum to 1, were " + total);
         }
         distribution = Collections.unmodifiableMap(new TreeMap<>(distribution));

@@ -143,8 +143,9 @@ class UniversityModuleJevProviderTest {
 
     @Test
     void aRoundedDistributionWithinOneHundredthIsAccepted() {
+        // As Jev returned for Computer Science m5 and Mechanical Engineering m6 in the Stage 5C live probe.
         var result = provider(client(answers(map -> map.put("m1__human_judgement",
-                new ScoreAnswer(2.0, Map.of(), Map.of(1, 0.33, 2, 0.33, 3, 0.335), 0.5))))).judge(REQUEST);
+                new ScoreAnswer(2.0, Map.of(), Map.of(1, 0.33, 2, 0.33, 3, 0.33), 0.5))))).judge(REQUEST);
         assertThat(result.modules().getFirst().humanJudgement().distribution()).hasSize(3);
     }
 
