@@ -1,5 +1,7 @@
 package com.chikere.futureai.coursemodule.university.application;
 
+import com.chikere.futureai.judgment.domain.ProbabilityDistributions;
+
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
@@ -22,16 +24,10 @@ public record ModuleScoredJudgment(
 
     public static final int MINIMUM_LEVEL = 0;
     public static final int MAXIMUM_LEVEL = 4;
-    /**
-     * As for the Professional responsibility-level contract: providers round probabilities, so a distribution may
-     * sum to 1 within this tolerance. The course-level {@code university-v1} contract is unchanged.
-     */
-    public static final double DISTRIBUTION_TOLERANCE = 0.01;
-    /**
-     * Floating-point allowance on top of {@link #DISTRIBUTION_TOLERANCE}, so a sum the provider means as exactly 0.99
-     * or 1.01 (|0.99 - 1.0| evaluates to 0.010000000000000009) is accepted. It does not widen the business rule.
-     */
-    static final double COMPARISON_EPSILON = 1.0e-9;
+    /** The shared rule: providers round probabilities, so a distribution may sum to 1 within this tolerance. */
+    public static final double DISTRIBUTION_TOLERANCE = ProbabilityDistributions.TOLERANCE;
+    /** The shared floating-point allowance on top of {@link #DISTRIBUTION_TOLERANCE}. */
+    static final double COMPARISON_EPSILON = ProbabilityDistributions.EPSILON;
 
     public ModuleScoredJudgment {
         if (!Double.isFinite(value) || value < MINIMUM_LEVEL || value > MAXIMUM_LEVEL) {
@@ -50,7 +46,7 @@ public record ModuleScoredJudgment(
             }
             total += probability;
         }
-        if (!distribution.isEmpty() && Math.abs(total - 1.0) > DISTRIBUTION_TOLERANCE + COMPARISON_EPSILON) {
+        if (!distribution.isEmpty() && !ProbabilityDistributions.sumsToOne(total)) {
             throw new IllegalArgumentException("distribution probabilities must sum to 1, were " + total);
         }
         distribution = Collections.unmodifiableMap(new TreeMap<>(distribution));
