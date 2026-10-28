@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.chikere.futureai.evaluation.alevel.ALevelV2CandidateSchema.AI_ERA_COMPLEMENTARITY;
+import static com.chikere.futureai.evaluation.alevel.ALevelV2CandidateSchema.AI_LEARNING_SUPPORT;
 import static com.chikere.futureai.evaluation.alevel.ALevelV2CandidateSchema.ANALYTICAL_REASONING;
 import static com.chikere.futureai.evaluation.alevel.ALevelV2CandidateSchema.CONTEXTUAL_SOCIAL_UNDERSTANDING;
 import static com.chikere.futureai.evaluation.alevel.ALevelV2CandidateSchema.DISCIPLINE_FAMILY_COVERAGE;
@@ -42,7 +42,7 @@ class ALevelV2CalibrationTest {
         assertThat(v2.questions().keySet()).containsExactly("information_sufficient", "quantitative_reasoning",
                 "analytical_reasoning", "written_verbal_communication", "original_judgment_creativity",
                 "contextual_social_understanding", "technical_digital_foundation", "subject_skill_diversity",
-                "discipline_family_coverage", "ai_era_complementarity");
+                "discipline_family_coverage", "ai_learning_support");
         assertThat(v2.questions().keySet()).doesNotContain("degree_pathway_breadth", "skill_transferability");
 
         var v1 = new ALevelJudgmentSchema();
@@ -86,7 +86,7 @@ class ALevelV2CalibrationTest {
             assertThat(measure.weights.values().stream().mapToDouble(Double::doubleValue).sum())
                     .isCloseTo(1.0, within(1e-12));
         }
-        assertThat(Measure.LEARNING_ALONGSIDE_AI.weights).containsEntry(AI_ERA_COMPLEMENTARITY, 0.70);
+        assertThat(Measure.LEARNING_ALONGSIDE_AI.weights).containsEntry(AI_LEARNING_SUPPORT, 0.70);
         // Technical work is part of one capability side only; it carries no weight in breadth or AI learning.
         assertThat(Measure.OPTIONS_KEPT_OPEN.weights).doesNotContainKey(TECHNICAL_DIGITAL_FOUNDATION);
         assertThat(Measure.LEARNING_ALONGSIDE_AI.weights).doesNotContainKey(TECHNICAL_DIGITAL_FOUNDATION);
@@ -241,7 +241,7 @@ class ALevelV2CalibrationTest {
         }
         judgments.put(SUBJECT_SKILL_DIVERSITY, new Judgment(2.4, 0.85));
         judgments.put(DISCIPLINE_FAMILY_COVERAGE, new Judgment(2.6, 0.85));
-        judgments.put(AI_ERA_COMPLEMENTARITY, new Judgment(3.0, 0.85));
+        judgments.put(AI_LEARNING_SUPPORT, new Judgment(3.0, 0.85));
         return judgments;
     }
 

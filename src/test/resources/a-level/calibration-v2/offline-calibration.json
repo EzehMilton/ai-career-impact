@@ -5,7 +5,7 @@
   "cases": [
     {
       "id": "maths-physics-computer-science",
-      "origin": "Seven capability and diversity values and ai_era_complementarity carried over unchanged from the a-level-v1 local development fixture 'mathematics_physics_computer_science'; discipline_family_coverage is a new synthetic value.",
+      "origin": "Seven capability and diversity values and ai_learning_support carried over unchanged from the a-level-v1 local development fixture 'mathematics_physics_computer_science'; discipline_family_coverage is a new synthetic value.",
       "informationSufficiency": 0.9,
       "judgments": {
         "quantitative_reasoning": {
@@ -40,7 +40,7 @@
           "score": 2.6,
           "confidence": 0.85
         },
-        "ai_era_complementarity": {
+        "ai_learning_support": {
           "score": 3.8,
           "confidence": 0.85
         }
@@ -48,7 +48,7 @@
     },
     {
       "id": "maths-economics-geography",
-      "origin": "Seven capability and diversity values and ai_era_complementarity carried over unchanged from the a-level-v1 local development fixture 'maths_economics_geography'; discipline_family_coverage is a new synthetic value.",
+      "origin": "Seven capability and diversity values and ai_learning_support carried over unchanged from the a-level-v1 local development fixture 'maths_economics_geography'; discipline_family_coverage is a new synthetic value.",
       "informationSufficiency": 0.88,
       "judgments": {
         "quantitative_reasoning": {
@@ -83,7 +83,7 @@
           "score": 3.4,
           "confidence": 0.85
         },
-        "ai_era_complementarity": {
+        "ai_learning_support": {
           "score": 3.0,
           "confidence": 0.85
         }
@@ -91,7 +91,7 @@
     },
     {
       "id": "english-literature-history-politics",
-      "origin": "Seven capability and diversity values and ai_era_complementarity carried over unchanged from the a-level-v1 local development fixture 'english_history_politics'; discipline_family_coverage is a new synthetic value.",
+      "origin": "Seven capability and diversity values and ai_learning_support carried over unchanged from the a-level-v1 local development fixture 'english_history_politics'; discipline_family_coverage is a new synthetic value.",
       "informationSufficiency": 0.86,
       "judgments": {
         "quantitative_reasoning": {
@@ -126,7 +126,7 @@
           "score": 2.8,
           "confidence": 0.85
         },
-        "ai_era_complementarity": {
+        "ai_learning_support": {
           "score": 2.4,
           "confidence": 0.85
         }
@@ -134,7 +134,7 @@
     },
     {
       "id": "biology-chemistry-maths",
-      "origin": "Seven capability and diversity values and ai_era_complementarity carried over unchanged from the a-level-v1 local development fixture 'biology_chemistry_mathematics'; discipline_family_coverage is a new synthetic value.",
+      "origin": "Seven capability and diversity values and ai_learning_support carried over unchanged from the a-level-v1 local development fixture 'biology_chemistry_mathematics'; discipline_family_coverage is a new synthetic value.",
       "informationSufficiency": 0.88,
       "judgments": {
         "quantitative_reasoning": {
@@ -169,7 +169,7 @@
           "score": 2.2,
           "confidence": 0.85
         },
-        "ai_era_complementarity": {
+        "ai_learning_support": {
           "score": 2.8,
           "confidence": 0.85
         }
@@ -212,7 +212,7 @@
           "score": 3.2,
           "confidence": 0.85
         },
-        "ai_era_complementarity": {
+        "ai_learning_support": {
           "score": 2.8,
           "confidence": 0.85
         }
@@ -255,7 +255,7 @@
           "score": 2.6,
           "confidence": 0.85
         },
-        "ai_era_complementarity": {
+        "ai_learning_support": {
           "score": 3.0,
           "confidence": 0.85
         }
@@ -298,7 +298,7 @@
           "score": 2.4,
           "confidence": 0.85
         },
-        "ai_era_complementarity": {
+        "ai_learning_support": {
           "score": 2.8,
           "confidence": 0.85
         }

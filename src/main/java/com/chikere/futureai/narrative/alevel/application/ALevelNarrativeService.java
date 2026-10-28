@@ -60,6 +60,21 @@ public final class ALevelNarrativeService implements ALevelNarrativeGeneration {
         this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
     }
 
+    /**
+     * Only a historical v1 assessment has a free narrative. A v2 profile has a deterministic free result and will
+     * have its own paid narrative, so for it nothing is called or stored and the result is empty.
+     */
+    @Override
+    public Optional<StoredALevelNarrative> generateIfApplicable(UUID assessmentId) {
+        Objects.requireNonNull(assessmentId, "assessmentId must not be null");
+        var assessment = assessmentStore.findById(assessmentId)
+                .orElseThrow(() -> new IllegalArgumentException("assessment does not exist"));
+        if (assessment.result().usesSubjectProfile()) {
+            return Optional.empty();
+        }
+        return Optional.of(generateFor(assessmentId));
+    }
+
     @Override
     public StoredALevelNarrative generateFor(UUID assessmentId) {
         Objects.requireNonNull(assessmentId, "assessmentId must not be null");
@@ -71,6 +86,9 @@ public final class ALevelNarrativeService implements ALevelNarrativeGeneration {
         var assessment = assessmentStore.findById(assessmentId)
                 .orElseThrow(() -> new IllegalArgumentException("assessment does not exist"));
         Instant attemptedAt = Instant.now(clock);
+        if (assessment.result().usesSubjectProfile()) {
+            throw new IllegalStateException("a v2 profile has no free narrative; use generateIfApplicable");
+        }
         narrativeStore.save(stored(assessmentId, NarrativeStatus.PENDING, Optional.empty(),
                 attemptedAt, Optional.empty()));
         try {

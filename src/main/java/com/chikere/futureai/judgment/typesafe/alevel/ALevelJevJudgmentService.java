@@ -1,6 +1,5 @@
 package com.chikere.futureai.judgment.typesafe.alevel;
 
-import com.chikere.futureai.assessment.alevel.application.ALevelJudgmentProvider;
 import com.chikere.futureai.judgment.typesafe.JevTraceRendering;
 import com.chikere.futureai.trace.AssessmentTrace;
 import com.chikere.futureai.trace.TraceStage;
@@ -23,8 +22,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalDouble;
 
-/** The normal A-level adapter: one Jev System One request for all eleven a-level-v1 judgments. */
-public final class ALevelJevJudgmentService implements ALevelJudgmentProvider {
+/**
+ * Historical {@code a-level-v1} Jev adapter: one System One request for all eleven a-level-v1 judgments of the full
+ * student state. New submissions use {@link ALevelV2JevJudgmentService}; this class is kept unchanged so the v1
+ * contract stays reproducible, and is no longer registered as the runtime provider.
+ */
+public final class ALevelJevJudgmentService {
 
     private final TypeSafeClient typeSafeClient;
     private final ALevelJudgmentSchema schema;
@@ -60,7 +63,6 @@ public final class ALevelJevJudgmentService implements ALevelJudgmentProvider {
         this.costs = Objects.requireNonNull(costs, "costs must not be null");
     }
 
-    @Override
     public AssessmentJudgmentSet judge(ALevelAssessmentState assessmentState) {
         Map<String, Object> state = stateMapper.map(assessmentState);
         trace.event(JourneyType.A_LEVEL, TraceStage.DECISION_MODEL_PROVIDER_REQUEST,
@@ -85,12 +87,10 @@ public final class ALevelJevJudgmentService implements ALevelJudgmentProvider {
                 usage == null ? null : usage.outputTokens()));
     }
 
-    @Override
     public AssessmentSource source() {
         return AssessmentSource.JEV;
     }
 
-    @Override
     public Optional<String> modelIdentifier() {
         return Optional.ofNullable(configuredModelIdentifier).filter(value -> !value.isBlank());
     }

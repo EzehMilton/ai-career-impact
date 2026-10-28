@@ -111,7 +111,7 @@ class ProfessionalAssessmentStoreTest {
 
     @Test
     void migratedPostgresqlRoundTripPreservesCompleteSnapshot() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("23");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("24");
         var state = new ProfessionalAssessmentState("Software Architect",
                 "I design software and make consequential architecture decisions.",
                 List.of("Design platforms", "Resolve trade-offs"),

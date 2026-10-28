@@ -64,7 +64,8 @@ public final class ALevelAssessmentWorkflow implements ALevelAssessmentUseCase {
         UUID id = assessmentService.submitALevelAssessment(state);
         metrics.assessmentCreated("a-level");
         try {
-            if (narrativeService.generateFor(id).status() == NarrativeStatus.FAILED) {
+            if (narrativeService.generateIfApplicable(id)
+                    .filter(narrative -> narrative.status() == NarrativeStatus.FAILED).isPresent()) {
                 metrics.narrativeFailed("a-level");
             }
         }

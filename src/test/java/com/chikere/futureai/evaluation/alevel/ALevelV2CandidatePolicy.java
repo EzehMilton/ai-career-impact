@@ -1,7 +1,5 @@
 package com.chikere.futureai.evaluation.alevel;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -9,7 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import static com.chikere.futureai.evaluation.alevel.ALevelV2CandidateSchema.AI_ERA_COMPLEMENTARITY;
+import static com.chikere.futureai.evaluation.alevel.ALevelV2CandidateSchema.AI_LEARNING_SUPPORT;
 import static com.chikere.futureai.evaluation.alevel.ALevelV2CandidateSchema.ANALYTICAL_REASONING;
 import static com.chikere.futureai.evaluation.alevel.ALevelV2CandidateSchema.CONTEXTUAL_SOCIAL_UNDERSTANDING;
 import static com.chikere.futureai.evaluation.alevel.ALevelV2CandidateSchema.DISCIPLINE_FAMILY_COVERAGE;
@@ -68,7 +66,7 @@ final class ALevelV2CandidatePolicy {
                 weights(WRITTEN_VERBAL_COMMUNICATION, 0.40, ORIGINAL_JUDGMENT_CREATIVITY, 0.30,
                         CONTEXTUAL_SOCIAL_UNDERSTANDING, 0.30)),
         LEARNING_ALONGSIDE_AI("Learning Alongside AI", List.of("Low", "Moderate", "High"), true,
-                weights(AI_ERA_COMPLEMENTARITY, 0.70, ANALYTICAL_REASONING, 0.15, ORIGINAL_JUDGMENT_CREATIVITY, 0.15));
+                weights(AI_LEARNING_SUPPORT, 0.70, ANALYTICAL_REASONING, 0.15, ORIGINAL_JUDGMENT_CREATIVITY, 0.15));
 
         final String displayName;
         final List<String> bandLabels;
@@ -177,17 +175,13 @@ final class ALevelV2CandidatePolicy {
         return 2;
     }
 
-    /** The University v2 rule: two decimals, half-up, never visually reaching the next band's boundary. */
+    /** The shared boundary-safe display, exactly as production shows it. */
     static String shownScore(double indicator, int band) {
-        BigDecimal rounded = BigDecimal.valueOf(indicator).setScale(2, RoundingMode.HALF_UP);
-        Optional<BigDecimal> upper = switch (band) {
-            case 0 -> Optional.of(BigDecimal.valueOf(MIDDLE_FROM));
-            case 1 -> Optional.of(BigDecimal.valueOf(TOP_FROM));
-            default -> Optional.empty();
-        };
-        return upper.filter(boundary -> rounded.compareTo(boundary) >= 0)
-                .map(boundary -> boundary.setScale(2, RoundingMode.HALF_UP).subtract(new BigDecimal("0.01")))
-                .orElse(rounded).toPlainString();
+        return com.chikere.futureai.report.BoundarySafeScore.format(indicator, switch (band) {
+            case 0 -> java.util.OptionalDouble.of(MIDDLE_FROM);
+            case 1 -> java.util.OptionalDouble.of(TOP_FROM);
+            default -> java.util.OptionalDouble.empty();
+        });
     }
 
     static boolean below(double value, double threshold) {
@@ -212,7 +206,7 @@ final class ALevelV2CandidatePolicy {
                     : "Your subjects sit within closely related academic families";
             case SUBJECT_SKILL_DIVERSITY -> driver ? "Your subjects build different kinds of capability"
                     : "Your subjects build similar kinds of capability";
-            case AI_ERA_COMPLEMENTARITY -> driver ? "Much of the learning in these subjects lends itself to AI support"
+            case AI_LEARNING_SUPPORT -> driver ? "Much of the learning in these subjects lends itself to AI support"
                     : "Less of the learning in these subjects lends itself to AI support";
             default -> {
                 String capability = capability(factor.dimension());

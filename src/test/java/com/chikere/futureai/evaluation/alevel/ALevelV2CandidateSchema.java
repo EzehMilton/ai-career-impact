@@ -10,8 +10,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Stage A1/A2 design: the proposed {@code a-level-v2} atomic judgment contract. Test-side until approved; it moves to
- * production unchanged when {@code a-level-decision-v2} is implemented. {@code a-level-v1} is not touched.
+ * Stage A1/A2 design: the approved {@code a-level-v2} atomic judgment contract, kept as the calibration reference.
+ * Production {@code ALevelJudgmentSchemaV2} must ask exactly these questions; a parity test enforces it.
+ * {@code a-level-v1} is not touched.
  *
  * <p>Every question is about the <strong>subject combination</strong> only. The request carries the subject names and
  * nothing about the student: no predicted grades, strengths, interests or preferred degree and career areas.</p>
@@ -25,8 +26,9 @@ import java.util.Map;
  *       instead of asking Jev for the product conclusion.</li>
  *   <li>{@code skill_transferability} is removed: in v1 it was a holistic judgement that overlapped breadth and
  *       diversity (r = +0.93 with Degree Pathway Breadth across the fixtures) and asked about work contexts.</li>
- *   <li>{@code ai_era_complementarity} keeps its id but asks about AI-supported <em>learning</em> in these subjects,
- *       not about AI-assisted work, and names no capability type in its anchors.</li>
+ *   <li>{@code ai_era_complementarity} is replaced by {@code ai_learning_support} (renamed in Stage A2): it asks
+ *       about AI-supported <em>learning</em> in these subjects, not about AI-assisted work, and names no capability
+ *       type in its anchors. A materially different meaning, so it does not reuse the v1 identifier.</li>
  * </ul>
  */
 final class ALevelV2CandidateSchema {
@@ -42,12 +44,12 @@ final class ALevelV2CandidateSchema {
     static final String TECHNICAL_DIGITAL_FOUNDATION = "technical_digital_foundation";
     static final String SUBJECT_SKILL_DIVERSITY = "subject_skill_diversity";
     static final String DISCIPLINE_FAMILY_COVERAGE = "discipline_family_coverage";
-    static final String AI_ERA_COMPLEMENTARITY = "ai_era_complementarity";
+    static final String AI_LEARNING_SUPPORT = "ai_learning_support";
 
     /** The nine Score dimensions, in schema order. */
     static final List<String> SCORE_DIMENSIONS = List.of(QUANTITATIVE_REASONING, ANALYTICAL_REASONING,
             WRITTEN_VERBAL_COMMUNICATION, ORIGINAL_JUDGMENT_CREATIVITY, CONTEXTUAL_SOCIAL_UNDERSTANDING,
-            TECHNICAL_DIGITAL_FOUNDATION, SUBJECT_SKILL_DIVERSITY, DISCIPLINE_FAMILY_COVERAGE, AI_ERA_COMPLEMENTARITY);
+            TECHNICAL_DIGITAL_FOUNDATION, SUBJECT_SKILL_DIVERSITY, DISCIPLINE_FAMILY_COVERAGE, AI_LEARNING_SUPPORT);
 
     private final Map<String, Question> questions;
 
@@ -128,7 +130,7 @@ final class ALevelV2CandidateSchema {
                 "The subjects give a foundation in two clearly distinct families.",
                 "The subjects give a foundation in three distinct families.",
                 "The subjects give a foundation in four or more distinct families."));
-        questions.put(AI_ERA_COMPLEMENTARITY, Score.of(
+        questions.put(AI_LEARNING_SUPPORT, Score.of(
                 "How much of the learning in these subjects can be productively supported by AI tools, for example "
                         + "through explanation, practice questions, feedback on drafts or exploring sources, while the "
                         + "subjects still develop the student's own understanding?",

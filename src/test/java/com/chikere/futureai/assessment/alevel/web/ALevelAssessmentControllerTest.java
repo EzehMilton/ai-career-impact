@@ -295,6 +295,43 @@ class ALevelAssessmentControllerTest {
         org.mockito.Mockito.verifyNoMoreInteractions(purchaseService);
     }
 
+    @Test
+    void aV2AssessmentRendersTheSubjectProfileWithNoHeadlineScoreOrPurchase() throws Exception {
+        var v2 = com.chikere.futureai.assessment.alevel.application.ALevelTestAssessments.subjectProfile(ID,
+                "english_history_politics", AssessmentSource.LOCAL_FIXTURE);
+        when(reportService.stored(ID)).thenReturn(Optional.of(v2));
+        when(reportService.subjectProfile(ID)).thenReturn(Optional.of(
+                new com.chikere.futureai.report.alevel.application.ALevelSubjectProfileComposer()
+                        .compose(v2.result().profile())));
+
+        String html = mvc.perform(get("/a-level-assessment/" + ID)).andExpect(status().isOk())
+                .andExpect(view().name("a-level-assessment/result-v2"))
+                .andExpect(header().string("Cache-Control", "private, no-store"))
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("Your A-level subject profile", "Mathematics, Economics, Geography",
+                "Options Kept Open", "Capability Profile", "Analytical &amp; Quantitative",
+                "Communication, Interpretation &amp; Context", "Learning Alongside AI", "neither side is better",
+                "does not replace developing your own understanding", "Development mode");
+        assertThat(html).doesNotContain("Future Optionality", "Future Readiness", "AI Career Impact Report",
+                "employability", "Overall score", "Explore your A-level choices in more detail", "checkout");
+        org.mockito.Mockito.verify(reportService, org.mockito.Mockito.never()).assemble(any(), any());
+        org.mockito.Mockito.verifyNoInteractions(purchaseService);
+    }
+
+    @Test
+    void aStoredV1AssessmentKeepsTheHistoricalV1ResultPage() throws Exception {
+        when(reportService.stored(ID)).thenReturn(Optional.of(snapshot()));
+        when(reportService.assemble(ID, ALevelReportTier.FREE))
+                .thenReturn(Optional.of(report(ALevelReportTier.FREE, true, true)));
+
+        String html = mvc.perform(get("/a-level-assessment/" + ID)).andExpect(status().isOk())
+                .andExpect(view().name("a-level-assessment/result"))
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("Future Optionality").doesNotContain("Your A-level subject profile");
+    }
+
     private ALevelReport report(ALevelReportTier tier, boolean narrative, boolean evidence) {
         return new ALevelReportAssembler().assemble(new ALevelReportSource(snapshot(),
                 narrative ? Optional.of(storedNarrative()) : Optional.empty(),

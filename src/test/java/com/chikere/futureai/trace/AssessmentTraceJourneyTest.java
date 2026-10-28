@@ -1,14 +1,14 @@
 package com.chikere.futureai.trace;
 
 import com.chikere.futureai.TestcontainersConfiguration;
+import com.chikere.futureai.assessment.alevel.application.ALevelJudgmentInput;
 import com.chikere.futureai.assessment.alevel.application.ALevelJudgmentProvider;
-import com.chikere.futureai.assessment.domain.ALevelAssessmentState;
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.assessment.domain.UniversityAssessmentState;
 import com.chikere.futureai.assessment.professional.application.ProfessionalJudgmentProvider;
 import com.chikere.futureai.assessment.university.application.UniversityJudgmentProvider;
 import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
-import com.chikere.futureai.judgment.fixture.alevel.LocalFixtureALevelJudgmentProvider;
+import com.chikere.futureai.judgment.fixture.alevel.LocalFixtureALevelV2JudgmentProvider;
 import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfessionalJudgmentProvider;
 import com.chikere.futureai.judgment.fixture.university.LocalFixtureUniversityJudgmentProvider;
 import com.chikere.futureai.narrative.alevel.application.ALevelNarrative;
@@ -170,13 +170,26 @@ class AssessmentTraceJourneyTest {
                 .param("preferredDegreeAreas", "Economics"),
                 "/a-level-assessment/");
 
-        assertSubmissionTraced(id, "maths_economics_geography", 6, true);
+        // New submissions are decided by a-level-decision-v2: four scored dimensions and no free narrative.
+        assertSubmissionTraced(id, "maths_economics_geography", 4, false);
         assertThat(log.only(TraceStage.FORM_INPUT).at("/payload/selectedSubjects").asText())
                 .isEqualTo("Mathematics\nEconomics\nGeography");
         assertThat(log.only(TraceStage.DOMAIN_INPUT).at("/payload/state/selectedSubjects").size()).isEqualTo(3);
+        // Only the subject combination is judged.
+        assertThat(log.only(TraceStage.DECISION_MODEL_REQUEST).at("/payload/judgmentInput/subjects").size())
+                .isEqualTo(3);
 
-        assertReportsTraced(id, "/a-level-assessment/",
-                () -> aLevelReports.assemble(id, ALevelReportTier.PAID));
+        log.clear();
+        mvc.perform(get("/a-level-assessment/" + id)).andExpect(status().isOk());
+        JsonNode free = log.only(TraceStage.FREE_ASSESSMENT_COMPLETE);
+        assertThat(free.get("assessmentId").asText()).isEqualTo(id.toString());
+        assertThat(free.at("/payload/tier").asText()).isEqualTo("FREE");
+        assertThat(free.at("/payload/report/optionsKeptOpen").isObject()).isTrue();
+        assertThat(log.only(TraceStage.REPORT_SUMMARY).at("/payload/timings").has("reportAssemblyMs")).isTrue();
+        assertThat(aLevelReports.assemble(id, ALevelReportTier.PAID)).isEmpty();
+        assertThat(calls.judgments.get()).as("viewing reports re-runs nothing").isEqualTo(1);
+        assertThat(calls.narratives.get()).isZero();
+        assertNoSecrets();
     }
 
     private UUID submit(MockHttpServletRequestBuilder form, String route) throws Exception {
@@ -324,13 +337,13 @@ class AssessmentTraceJourneyTest {
 
         @Bean
         @Primary
-        ALevelJudgmentProvider countingALevelJudgments(LocalFixtureALevelJudgmentProvider fixture,
+        ALevelJudgmentProvider countingALevelJudgments(LocalFixtureALevelV2JudgmentProvider fixture,
                 ProviderCalls calls) {
             return new ALevelJudgmentProvider() {
                 @Override
-                public AssessmentJudgmentSet judge(ALevelAssessmentState state) {
+                public AssessmentJudgmentSet judge(ALevelJudgmentInput input) {
                     calls.judgments.incrementAndGet();
-                    return fixture.judge(state);
+                    return fixture.judge(input);
                 }
 
                 @Override

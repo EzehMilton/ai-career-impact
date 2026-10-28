@@ -342,6 +342,43 @@ class ALevelReportPurchaseServiceTest {
         return gateway;
     }
 
+    @Test
+    void aV2SubjectProfileCannotBeBoughtOrGrantedUntilTheV2PaidReportExists() {
+        var gateway = mock(ALevelPaymentGateway.class);
+        when(assessmentStore.findById(ASSESSMENT)).thenReturn(Optional.of(
+                com.chikere.futureai.assessment.alevel.application.ALevelTestAssessments.subjectProfile(ASSESSMENT,
+                        "maths_economics_geography", com.chikere.futureai.assessment.alevel.application
+                                .AssessmentSource.JEV)));
+        when(purchaseStore.findEntitlementByAssessmentId(ASSESSMENT)).thenReturn(Optional.empty());
+        var service = service(Optional.of(gateway));
+
+        assertThatThrownBy(() -> service.startCheckout(ASSESSMENT))
+                .isInstanceOf(PaymentUnavailableException.class).hasMessageContaining("not yet available");
+        assertThat(service.grantComplimentaryAccess(ASSESSMENT))
+                .isEqualTo(com.chikere.futureai.payment.complimentary.ComplimentaryRedemptionResult.NOT_ELIGIBLE);
+        verify(gateway, never()).createCheckoutSession(any());
+        verify(purchaseStore, never()).savePending(any());
+        verify(purchaseStore, never()).saveComplimentary(any(), any());
+    }
+
+    @Test
+    void aHistoricalV1AssessmentIsStillPurchasedAsTheFrozenV1Report() {
+        when(assessmentStore.findById(ASSESSMENT)).thenReturn(Optional.of(
+                com.chikere.futureai.assessment.alevel.application.ALevelTestAssessments.historicalV1(ASSESSMENT,
+                        "maths_economics_geography")));
+        when(narrativeStore.findByAssessmentId(ASSESSMENT)).thenReturn(Optional.empty());
+        when(evidenceStore.findByAssessmentId(ASSESSMENT)).thenReturn(Optional.empty());
+        when(purchaseStore.findEntitlementByAssessmentId(ASSESSMENT)).thenReturn(Optional.empty());
+
+        assertThat(service(Optional.empty()).grantComplimentaryAccess(ASSESSMENT))
+                .isEqualTo(com.chikere.futureai.payment.complimentary.ComplimentaryRedemptionResult.UNLOCKED);
+
+        var snapshot = org.mockito.ArgumentCaptor.forClass(PurchasedALevelReportSnapshot.class);
+        verify(purchaseStore).saveComplimentary(any(), snapshot.capture());
+        assertThat(snapshot.getValue().reportVersion()).isEqualTo("a-level-report-v1");
+        assertThat(snapshot.getValue().report().measures()).hasSize(6);
+    }
+
     private ALevelReportPurchaseService service(Optional<ALevelPaymentGateway> gateway) {
         return new ALevelReportPurchaseService(reportService, purchaseStore, gateway,
                 URI.create("http://localhost:8080"), Optional.of("£3.99"), CLOCK);

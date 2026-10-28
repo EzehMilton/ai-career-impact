@@ -1,13 +1,13 @@
 package com.chikere.futureai.livesmoke;
 
 import com.chikere.futureai.TestcontainersConfiguration;
+import com.chikere.futureai.assessment.alevel.application.ALevelJudgmentInput;
 import com.chikere.futureai.assessment.alevel.application.ALevelJudgmentProvider;
-import com.chikere.futureai.assessment.domain.ALevelAssessmentState;
 import com.chikere.futureai.assessment.domain.ProfessionalAssessmentState;
 import com.chikere.futureai.assessment.domain.UniversityAssessmentState;
 import com.chikere.futureai.assessment.professional.application.ProfessionalJudgmentProvider;
 import com.chikere.futureai.assessment.university.application.UniversityJudgmentProvider;
-import com.chikere.futureai.judgment.fixture.alevel.LocalFixtureALevelJudgmentProvider;
+import com.chikere.futureai.judgment.fixture.alevel.LocalFixtureALevelV2JudgmentProvider;
 import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfessionalJudgmentProvider;
 import com.chikere.futureai.judgment.fixture.university.LocalFixtureUniversityJudgmentProvider;
 import com.chikere.futureai.narrative.alevel.application.ALevelNarrativeGenerator;
@@ -110,8 +110,8 @@ class LiveSmokeModeTest {
         when(universityNarrative.source()).thenReturn(
                 com.chikere.futureai.narrative.university.application.NarrativeSource.OPENAI);
         when(universityNarrative.providerIdentifier()).thenReturn("test-double");
-        when(aLevelJudgments.judge(any())).thenAnswer(call -> new LocalFixtureALevelJudgmentProvider(
-                "maths_economics_geography").judge(call.<ALevelAssessmentState>getArgument(0)));
+        when(aLevelJudgments.judge(any())).thenAnswer(call -> new LocalFixtureALevelV2JudgmentProvider(
+                "maths_economics_geography").judge(call.<ALevelJudgmentInput>getArgument(0)));
         when(aLevelJudgments.source()).thenReturn(
                 com.chikere.futureai.assessment.alevel.application.AssessmentSource.JEV);
         when(aLevelNarrative.generate(any())).thenAnswer(call ->
@@ -351,10 +351,14 @@ class LiveSmokeModeTest {
         assertThat(universityReport).contains("Prepare my detailed report");
         mvc.perform(get("/university-assessment/" + university + "/report.pdf")).andExpect(status().isForbidden());
 
+        // a-level-decision-v2 has a free subject profile and, until the v2 paid report exists, no detailed report:
+        // the smoke unlock is refused as NOT_ELIGIBLE, so there is no entitlement, report or PDF to reach.
         UUID aLevel = submit(catalog.find(LiveSmokeJourney.A_LEVEL, "maths-economics-geography").orElseThrow());
-        assertThat(aLevelPurchase.accessFor(aLevel).status().map(Enum::name)).contains("ACTIVE");
-        mvc.perform(get("/a-level-assessment/" + aLevel + "/report")).andExpect(status().isOk());
-        mvc.perform(get("/a-level-assessment/" + aLevel + "/report.pdf")).andExpect(status().isOk());
+        assertThat(aLevelPurchase.accessFor(aLevel).status()).isEmpty();
+        assertThat(mvc.perform(get("/a-level-assessment/" + aLevel)).andExpect(status().isOk()).andReturn()
+                .getResponse().getContentAsString()).contains("Your A-level subject profile");
+        mvc.perform(get("/a-level-assessment/" + aLevel + "/report")).andExpect(status().isForbidden());
+        mvc.perform(get("/a-level-assessment/" + aLevel + "/report.pdf")).andExpect(status().isForbidden());
     }
 
     @Test

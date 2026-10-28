@@ -8,8 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.chikere.futureai.assessment.domain.ALevelAssessmentState;
-import com.chikere.futureai.decision.alevel.ALevelDecisionPolicyV1;
-import com.chikere.futureai.decision.alevel.ALevelDecisionResult;
+import com.chikere.futureai.decision.alevel.ALevelDecisionPolicyV2;
+import com.chikere.futureai.decision.alevel.ALevelProfileDecisionResult;
 import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
 
 import java.time.Clock;
@@ -21,37 +21,39 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Coordinates exactly one judgment-provider call and one decision-policy call, then stores an
- * immutable snapshot. It never scores a subject combination itself.
+ * Coordinates exactly one {@code a-level-v2} judgment-provider call and one {@code a-level-decision-v2} call, then
+ * stores an immutable snapshot. It never scores a subject combination itself. The provider sees only the subject
+ * combination ({@link ALevelJudgmentInput}); the student's own context is stored with the assessment but never
+ * judged. Historical v1 assessments are only ever read back, never decided again.
  */
 public final class ALevelAssessmentService implements ALevelAssessmentSubmission {
     private static final Logger LOGGER = LoggerFactory.getLogger(ALevelAssessmentService.class);
 
     private final ALevelJudgmentProvider judgmentProvider;
-    private final ALevelDecisionPolicyV1 decisionPolicy;
+    private final ALevelDecisionPolicyV2 decisionPolicy;
     private final ALevelAssessmentStore store;
     private final Clock clock;
     private final JourneyMetrics metrics;
     private final AssessmentTrace trace;
 
     public ALevelAssessmentService(ALevelJudgmentProvider judgmentProvider,
-            ALevelDecisionPolicyV1 decisionPolicy) {
+            ALevelDecisionPolicyV2 decisionPolicy) {
         this(judgmentProvider, decisionPolicy, null, Clock.systemUTC());
     }
 
     public ALevelAssessmentService(ALevelJudgmentProvider judgmentProvider,
-            ALevelDecisionPolicyV1 decisionPolicy, ALevelAssessmentStore store, Clock clock) {
+            ALevelDecisionPolicyV2 decisionPolicy, ALevelAssessmentStore store, Clock clock) {
         this(judgmentProvider, decisionPolicy, store, clock, JourneyMetrics.disabled());
     }
 
     public ALevelAssessmentService(ALevelJudgmentProvider judgmentProvider,
-            ALevelDecisionPolicyV1 decisionPolicy, ALevelAssessmentStore store, Clock clock,
+            ALevelDecisionPolicyV2 decisionPolicy, ALevelAssessmentStore store, Clock clock,
             JourneyMetrics metrics) {
         this(judgmentProvider, decisionPolicy, store, clock, metrics, AssessmentTrace.disabled());
     }
 
     public ALevelAssessmentService(ALevelJudgmentProvider judgmentProvider,
-            ALevelDecisionPolicyV1 decisionPolicy, ALevelAssessmentStore store, Clock clock,
+            ALevelDecisionPolicyV2 decisionPolicy, ALevelAssessmentStore store, Clock clock,
             JourneyMetrics metrics,
             AssessmentTrace trace) {
         this.trace = Objects.requireNonNull(trace, "trace must not be null");
@@ -96,7 +98,8 @@ public final class ALevelAssessmentService implements ALevelAssessmentSubmission
         try {
             trace.event(JourneyType.A_LEVEL, TraceStage.DECISION_MODEL_REQUEST, () -> decisionModelRequest(state));
             judgments = metrics.timed("judgment", "a-level", () -> trace.timed(JourneyType.A_LEVEL,
-                    TraceStage.DECISION_MODEL_RESPONSE, "decisionModelMs", () -> judgmentProvider.judge(state),
+                    TraceStage.DECISION_MODEL_RESPONSE, "decisionModelMs",
+                    () -> judgmentProvider.judge(ALevelJudgmentInput.of(state)),
                     judged -> judged));
             LOGGER.info("Judgment journey=alevel outcome=SUCCEEDED schemaVersion={}",
                     judgments.schemaVersion());
@@ -107,7 +110,8 @@ public final class ALevelAssessmentService implements ALevelAssessmentSubmission
             metrics.judgmentFailed("a-level");
             throw failure;
         }
-        ALevelDecisionResult decision = trace.measured("decisionPolicyMs", () -> decisionPolicy.decide(judgments));
+        ALevelProfileDecisionResult decision = trace.measured("decisionPolicyMs",
+                () -> decisionPolicy.decide(judgments));
         ALevelAssessmentResult result = new ALevelAssessmentResult(
                 decision, judgmentProvider.source(), judgments.schemaVersion(), decision.policyVersion());
         trace.event(JourneyType.A_LEVEL, TraceStage.DETERMINISTIC_ASSESSMENT, () -> deterministicAssessment(result));
@@ -121,8 +125,10 @@ public final class ALevelAssessmentService implements ALevelAssessmentSubmission
         payload.put("model", judgmentProvider.modelIdentifier().orElse(null));
         payload.put("fixtureId", judgmentProvider.fixtureId().orElse(null));
         payload.put("assessmentState", state);
-        payload.put("note", "The exact provider request (schema questions and wire state) follows as "
-                + "DECISION_MODEL_PROVIDER_REQUEST when the provider is Jev.");
+        payload.put("judgmentInput", ALevelJudgmentInput.of(state));
+        payload.put("note", "Only judgmentInput (the subject combination) is judged; the rest of the state is never "
+                + "sent. The exact provider request follows as DECISION_MODEL_PROVIDER_REQUEST when the provider is "
+                + "Jev.");
         return payload;
     }
 

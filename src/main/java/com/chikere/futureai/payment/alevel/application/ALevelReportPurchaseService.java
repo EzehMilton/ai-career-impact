@@ -78,6 +78,9 @@ public final class ALevelReportPurchaseService implements ALevelReportPurchaseUs
         if (existing.isPresent() && existing.orElseThrow().status() != ALevelEntitlementStatus.FAILED) {
             throw new PaymentUnavailableException("a purchase already exists for this assessment");
         }
+        if (isSubjectProfile(assessmentId)) {
+            throw new PaymentUnavailableException("the detailed report is not yet available for this assessment");
+        }
         ALevelReport paidReport = reportService.assemble(assessmentId, ALevelReportTier.PAID)
                 .orElseThrow(() -> new IllegalArgumentException("assessment does not exist"));
         if (paidReport.measures().size() != 6) {
@@ -264,6 +267,7 @@ public final class ALevelReportPurchaseService implements ALevelReportPurchaseUs
     private ComplimentaryRedemptionResult grant(UUID assessmentId) {
         var existing = purchaseStore.findEntitlementByAssessmentId(assessmentId);
         if (existing.isPresent()) return redemptionFor(existing.orElseThrow());
+        if (isSubjectProfile(assessmentId)) return ComplimentaryRedemptionResult.NOT_ELIGIBLE;
         ALevelReport paidReport = reportService.assemble(assessmentId, ALevelReportTier.PAID)
                 .orElseThrow(() -> new IllegalArgumentException("assessment does not exist"));
         if (paidReport.measures().size() != 6) return ComplimentaryRedemptionResult.NOT_ELIGIBLE;
@@ -288,6 +292,15 @@ public final class ALevelReportPurchaseService implements ALevelReportPurchaseUs
                     .orElseThrow(() -> failure);
         }
         return ComplimentaryRedemptionResult.UNLOCKED;
+    }
+
+    /**
+     * An {@code a-level-decision-v2} subject profile has no paid report yet: only the historical
+     * a-level-report-v1 can be bought, and a v2 assessment is never turned into one. Checkout and complimentary
+     * access are therefore refused for it until the v2 paid report exists.
+     */
+    private boolean isSubjectProfile(UUID assessmentId) {
+        return reportService.stored(assessmentId).filter(stored -> stored.result().usesSubjectProfile()).isPresent();
     }
 
     private static ComplimentaryRedemptionResult redemptionFor(ALevelReportEntitlement existing) {

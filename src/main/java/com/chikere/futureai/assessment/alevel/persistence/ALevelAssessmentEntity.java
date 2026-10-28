@@ -7,6 +7,8 @@ import com.chikere.futureai.assessment.domain.JourneyType;
 import com.chikere.futureai.decision.alevel.ALevelFactorDirection;
 import com.chikere.futureai.decision.alevel.ALevelFactorEffect;
 import com.chikere.futureai.decision.alevel.ALevelMeasure;
+import com.chikere.futureai.decision.alevel.ALevelProfileBand;
+import com.chikere.futureai.decision.alevel.ALevelProfileMeasure;
 import com.chikere.futureai.decision.alevel.OptionalityBand;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -82,6 +84,15 @@ class ALevelAssessmentEntity {
     @CollectionTable(name = "a_level_assessment_factor", joinColumns = @JoinColumn(name = "assessment_id"))
     List<FactorRow> factors = new ArrayList<>();
 
+    /** The a-level-decision-v2 subject profile; empty for a historical v1 assessment. */
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "a_level_assessment_profile_measure", joinColumns = @JoinColumn(name = "assessment_id"))
+    List<ProfileMeasureRow> profileMeasures = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "a_level_assessment_profile_factor", joinColumns = @JoinColumn(name = "assessment_id"))
+    List<ProfileFactorRow> profileFactors = new ArrayList<>();
+
     protected ALevelAssessmentEntity() {
     }
 
@@ -120,5 +131,28 @@ class ALevelAssessmentEntity {
         @Column(nullable = false) double weight;
         @Column(name = "signed_effect", nullable = false) double signedEffect;
         protected FactorRow() { }
+    }
+
+    @Embeddable
+    static class ProfileMeasureRow {
+        @Enumerated(EnumType.STRING) @Column(nullable = false) ALevelProfileMeasure measure;
+        @Column(nullable = false) double indicator;
+        @Enumerated(EnumType.STRING) @Column(nullable = false) ALevelProfileBand band;
+        @Column(nullable = false) double confidence;
+        @Column(name = "lower_confidence", nullable = false) boolean lowerConfidence;
+        protected ProfileMeasureRow() { }
+    }
+
+    @Embeddable
+    static class ProfileFactorRow {
+        @Enumerated(EnumType.STRING) @Column(nullable = false) ALevelProfileMeasure measure;
+        @Column(nullable = false) int position;
+        @Column(name = "dimension_id", nullable = false) String dimensionId;
+        @Column(nullable = false) double score;
+        @Column(nullable = false) double weight;
+        @Column(nullable = false) double effect;
+        @Column(name = "driver_position") Integer driverPosition;
+        @Column(name = "limiting_position") Integer limitingPosition;
+        protected ProfileFactorRow() { }
     }
 }

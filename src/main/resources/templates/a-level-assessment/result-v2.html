@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en-GB" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Your A-level subject profile')}"></head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('a-level')}"></header>
+
+<main class="page-shell alevel-results-refined alevel-profile" id="main">
+  <div th:replace="~{fragments/live-smoke :: resultPanel('/a-level-assessment')}"></div>
+  <meta name="robots" content="noindex,nofollow">
+
+  <div class="page-header alevel-results-header">
+    <p class="eyebrow">Free A-level assessment</p>
+    <h1 th:text="${profile.heading}">Your A-level subject profile</h1>
+    <p class="intro">For <strong th:text="${#strings.listJoin(subjects, ', ')}">your selected subjects</strong></p>
+  </div>
+
+  <aside class="fixture-warning" th:if="${developmentFixture}" role="status">
+    <strong>Development mode</strong>
+    <p>This result uses local fixture data and is not a live AI assessment.</p>
+  </aside>
+
+  <section class="panel alevel-overview" aria-labelledby="summary-heading">
+    <h2 id="summary-heading">What this means</h2>
+    <p class="narrative-summary" th:text="${profile.summary}">Deterministic summary</p>
+    <p class="notice" th:if="${profile.caution}">Some of the judgements behind this profile were less certain, so treat it as a starting point for your own research.</p>
+  </section>
+
+  <th:block th:unless="${profile.moreInformationRequired}">
+    <!--/* Options Kept Open */-->
+    <section class="panel measure-card alevel-measure-card" aria-labelledby="options-heading" th:with="m=${profile.optionsKeptOpen}">
+      <h2 id="options-heading" th:text="${m.name}">Options Kept Open</h2>
+      <p class="alevel-measure-score"><strong th:text="${m.score}">0.00</strong> / 10 &#183; <span th:text="${m.bandLabel}">Balanced</span></p>
+      <p th:text="${m.explanation}">Explanation</p>
+      <th:block th:if="${!m.drivers.isEmpty()}">
+        <h3>What builds this</h3>
+        <ul><li th:each="item : ${m.drivers}" th:text="${item}">Driver</li></ul>
+      </th:block>
+      <th:block th:if="${!m.limits.isEmpty()}">
+        <h3>What narrows it</h3>
+        <ul><li th:each="item : ${m.limits}" th:text="${item}">Limit</li></ul>
+      </th:block>
+      <p class="helper" th:if="${!m.confidenceNote.isEmpty()}" th:text="${m.confidenceNote}">Lower confidence</p>
+    </section>
+
+    <!--/* Capability Profile: two sides, shown together, never added up or ranked */-->
+    <section class="panel alevel-capability-profile" aria-labelledby="capability-heading">
+      <h2 id="capability-heading">Capability Profile</h2>
+      <p th:text="${profile.capabilityProfile.note}">Neither side is better.</p>
+      <div class="measure-grid alevel-capability-sides">
+        <article class="measure-card alevel-measure-card" th:each="m : ${profile.capabilityProfile.sides()}">
+          <h3 th:text="${m.name}">Side</h3>
+          <p class="alevel-measure-score"><strong th:text="${m.score}">0.00</strong> / 10 &#183; <span th:text="${m.bandLabel}">Moderate emphasis</span></p>
+          <p th:text="${m.explanation}">Explanation</p>
+          <th:block th:if="${!m.drivers.isEmpty()}">
+            <h4>What builds this</h4>
+            <ul><li th:each="item : ${m.drivers}" th:text="${item}">Driver</li></ul>
+          </th:block>
+          <p class="helper" th:if="${!m.confidenceNote.isEmpty()}" th:text="${m.confidenceNote}">Lower confidence</p>
+        </article>
+      </div>
+    </section>
+
+    <!--/* Learning Alongside AI */-->
+    <section class="panel measure-card alevel-measure-card" aria-labelledby="ai-heading" th:with="m=${profile.learningAlongsideAi}">
+      <h2 id="ai-heading" th:text="${m.name}">Learning Alongside AI</h2>
+      <p class="alevel-measure-score"><strong th:text="${m.score}">0.00</strong> / 10 &#183; <span th:text="${m.bandLabel}">Moderate</span></p>
+      <p th:text="${m.explanation}">Explanation</p>
+      <th:block th:if="${!m.drivers.isEmpty()}">
+        <h3>What builds this</h3>
+        <ul><li th:each="item : ${m.drivers}" th:text="${item}">Driver</li></ul>
+      </th:block>
+      <th:block th:if="${!m.limits.isEmpty()}">
+        <h3>What narrows it</h3>
+        <ul><li th:each="item : ${m.limits}" th:text="${item}">Limit</li></ul>
+      </th:block>
+      <p class="helper" th:if="${!m.confidenceNote.isEmpty()}" th:text="${m.confidenceNote}">Lower confidence</p>
+    </section>
+
+    <details class="panel alevel-scale-details">
+      <summary>How to read your profile</summary>
+      <p>Each score runs from 0 to 10. Scores below 3.5, from 3.5 to below 7, and 7 and above fall into the three bands shown. A higher number means more of what that part of the profile describes, not a better set of subjects.</p>
+      <p>The parts of your profile are shown side by side and never added into one score. They describe your <strong>subject combination</strong>, not your ability, your grades or your chances of a particular university place or job.</p>
+    </details>
+  </th:block>
+
+  <section class="panel report-caveat" aria-labelledby="caveat-heading">
+    <h2 id="caveat-heading">About your assessment</h2>
+    <p>This is a structured reading of the subjects you listed. It is not an admissions decision, not official careers guidance and not a ranking of subjects. Always check the published entry requirements of any course you are considering.</p>
+    <p>Keep your result link private and save it if you want to return to this page.</p>
+  </section>
+
+  <nav class="page-action alevel-bottom-actions" aria-label="Result page navigation">
+    <a class="button-link button-secondary" th:href="@{/a-level-assessment}" href="/a-level-assessment">Assess another combination</a>
+    <a class="button-link button-secondary" th:href="@{/}" href="/">Back to home</a>
+  </nav>
+</main>
+
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
+</body>
+</html>
