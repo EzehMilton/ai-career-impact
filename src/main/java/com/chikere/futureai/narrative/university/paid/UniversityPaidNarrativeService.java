@@ -49,7 +49,8 @@ public final class UniversityPaidNarrativeService {
         trace.event(JourneyType.UNIVERSITY, TraceStage.PAID_NARRATIVE_REQUEST, () -> request(context, active));
         UniversityPaidNarrativeGenerator.GeneratedNarrative first;
         try {
-            first = active.generate(context);
+            first = trace.timed(JourneyType.UNIVERSITY, TraceStage.PAID_NARRATIVE_RESPONSE, "paidNarrativeModelMs",
+                    () -> active.generate(context), value -> response(1, value));
         }
         catch (RuntimeException failure) {
             return retryable(context, active.providerIdentifier(), active.modelIdentifier(),
@@ -68,7 +69,8 @@ public final class UniversityPaidNarrativeService {
                     "attempt", 2, "failedRule", violation.rule(), "rejectedDraftStored", false));
             UniversityPaidNarrativeGenerator.GeneratedNarrative second;
             try {
-                second = active.repair(context, feedback);
+                second = trace.timed(JourneyType.UNIVERSITY, TraceStage.PAID_NARRATIVE_RESPONSE,
+                        "paidNarrativeRepairModelMs", () -> active.repair(context, feedback), value -> response(2, value));
             }
             catch (RuntimeException failure) {
                 return retryable(context, active.providerIdentifier(), model(active, first),
@@ -123,6 +125,16 @@ public final class UniversityPaidNarrativeService {
     private static Optional<String> model(UniversityPaidNarrativeGenerator provider,
             UniversityPaidNarrativeGenerator.GeneratedNarrative generated) {
         return generated.model().or(provider::modelIdentifier);
+    }
+
+    /** The provider's answer as received, before validation; the rejected draft of a repair is never stored. */
+    private static Map<String, Object> response(int attempt, UniversityPaidNarrativeGenerator.GeneratedNarrative generated) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("attempt", attempt);
+        payload.put("providerRequestId", generated.providerRequestId().orElse(null));
+        payload.put("model", generated.model().orElse(null));
+        payload.put("narrative", generated.narrative());
+        return payload;
     }
 
     private static Map<String, Object> request(UniversityPaidNarrativeContext context,

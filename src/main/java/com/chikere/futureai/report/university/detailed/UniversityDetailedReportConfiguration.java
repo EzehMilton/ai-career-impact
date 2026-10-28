@@ -43,7 +43,7 @@ public class UniversityDetailedReportConfiguration {
 
     @Bean
     UniversityDetailedReportPdfService universityDetailedReportPdfService(UniversityDetailedReportUseCase reports,
-            UniversityDetailedReportPdfRenderer renderer) {
-        return new UniversityDetailedReportPdfService(reports, renderer);
+            UniversityDetailedReportPdfRenderer renderer, ObjectProvider<AssessmentTrace> trace) {
+        return new UniversityDetailedReportPdfService(reports, renderer, trace.getIfAvailable(AssessmentTrace::disabled));
     }
 }

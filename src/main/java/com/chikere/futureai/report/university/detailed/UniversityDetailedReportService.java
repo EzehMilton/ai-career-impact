@@ -131,6 +131,15 @@ public final class UniversityDetailedReportService implements UniversityDetailed
                         UniversityModuleAnalysisUnavailableException.Reason.NOT_ENTITLED,
                         "the detailed report requires an ACTIVE university-report-v2 purchase for the assessment"));
         Optional<UniversityDetailedReportSnapshot> existing = store.findByAssessmentId(assessmentId);
+        trace.event(JourneyType.UNIVERSITY, TraceStage.UNIVERSITY_REPORT_V2_REQUEST, () -> {
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("entitlement", "ACTIVE");
+            payload.put("entitlementId", entitlement.entitlementId());
+            payload.put("reportStored", existing.isPresent());
+            payload.put("selectionSupplied", selection.isPresent());
+            payload.put("selectedModuleIds", selection.orElse(null));
+            return payload;
+        });
         if (existing.isPresent()) {
             trace.event(JourneyType.UNIVERSITY, TraceStage.UNIVERSITY_REPORT_V2_REUSED,
                     () -> payload("REUSED", existing.get()));

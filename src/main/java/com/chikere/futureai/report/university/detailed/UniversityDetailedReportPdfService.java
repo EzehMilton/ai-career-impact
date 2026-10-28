@@ -1,8 +1,13 @@
 package com.chikere.futureai.report.university.detailed;
 
+import com.chikere.futureai.assessment.domain.JourneyType;
 import com.chikere.futureai.pdf.university.application.UniversityReportPdfAccessDeniedException;
+import com.chikere.futureai.trace.AssessmentTrace;
+import com.chikere.futureai.trace.TraceStage;
 
+import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -15,11 +20,18 @@ public final class UniversityDetailedReportPdfService {
 
     private final UniversityDetailedReportUseCase reports;
     private final UniversityDetailedReportPdfRenderer renderer;
+    private final AssessmentTrace trace;
 
     public UniversityDetailedReportPdfService(UniversityDetailedReportUseCase reports,
             UniversityDetailedReportPdfRenderer renderer) {
+        this(reports, renderer, AssessmentTrace.disabled());
+    }
+
+    public UniversityDetailedReportPdfService(UniversityDetailedReportUseCase reports,
+            UniversityDetailedReportPdfRenderer renderer, AssessmentTrace trace) {
         this.reports = Objects.requireNonNull(reports);
         this.renderer = Objects.requireNonNull(renderer);
+        this.trace = Objects.requireNonNull(trace);
     }
 
     public Pdf render(UUID assessmentId) {
@@ -29,7 +41,20 @@ public final class UniversityDetailedReportPdfService {
             throw new IllegalStateException("stored report needs " + snapshot.pdfVersion() + ", renderer is "
                     + renderer.pdfVersion());
         }
-        return new Pdf(filename(snapshot.report().courseTitle()), renderer.render(snapshot.report()));
+        Pdf pdf = new Pdf(filename(snapshot.report().courseTitle()), renderer.render(snapshot.report()));
+        trace.scoped(JourneyType.UNIVERSITY, assessmentId, "UNIVERSITY_REPORT_V2_PDF", () -> {
+            trace.event(JourneyType.UNIVERSITY, TraceStage.UNIVERSITY_REPORT_V2_PDF_RENDERED, () -> {
+                Map<String, Object> payload = new LinkedHashMap<>();
+                payload.put("reportId", snapshot.reportId());
+                payload.put("reportVersion", snapshot.reportVersion());
+                payload.put("pdfVersion", snapshot.pdfVersion());
+                payload.put("bytes", pdf.bytes().length);
+                payload.put("stored", false);
+                return payload;
+            });
+            return null;
+        });
+        return pdf;
     }
 
     public record Pdf(String filename, byte[] bytes) {

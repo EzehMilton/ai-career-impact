@@ -17,6 +17,12 @@ import java.util.Optional;
  */
 public final class LiveSmokeCaseCatalog {
 
+    /**
+     * The seven representative University courses, exactly as frozen for Stage 5B calibration (no institution, so no
+     * real course is implied). Each lists more than eight modules, so each exercises the module-selection step.
+     */
+    private static final String CALIBRATION_SOURCE = "University calibration input (UniversityBaselineCases)";
+
     private static final List<LiveSmokeCase> CASES = List.of(
             new LiveSmokeCase("registered-nurse", LiveSmokeJourney.PROFESSIONAL, "Registered Nurse",
                     "Agreed live regression case", fields(
@@ -197,6 +203,131 @@ public final class LiveSmokeCaseCatalog {
                             "keyModules", lines("Early modern Europe"),
                             "skillsDeveloped", lines("Argument"),
                             "institution", "A UK university",
+                            "country", "United Kingdom")),
+            new LiveSmokeCase("calibration-computer-science", LiveSmokeJourney.UNIVERSITY, "BSc Computer Science",
+                    CALIBRATION_SOURCE, fields(
+                            "courseTitle", "BSc Computer Science",
+                            "courseDescription", "The course covers programming, algorithms, data structures, "
+                                    + "databases, computer systems, networks and software engineering, with options "
+                                    + "in artificial intelligence and cybersecurity. Teaching combines lectures, "
+                                    + "weekly laboratory programming sessions, individual coursework and a "
+                                    + "second-year group software project. The final year includes an individual "
+                                    + "project in which students research, design, build and evaluate a substantial "
+                                    + "piece of software.",
+                            "keyModules", lines("Programming Fundamentals", "Object-Oriented Programming",
+                                    "Algorithms and Data Structures", "Discrete Mathematics", "Databases",
+                                    "Computer Systems and Architecture", "Operating Systems and Networks",
+                                    "Software Engineering Group Project", "Artificial Intelligence", "Cybersecurity",
+                                    "Final-Year Individual Project"),
+                            "skillsDeveloped", lines("Programming", "Problem solving", "Software design",
+                                    "Mathematical reasoning", "Testing", "Teamwork", "Technical writing",
+                                    "Independent research"),
+                            "preferredCareerAreas", lines("Software development", "Data and AI", "Cybersecurity"),
+                            "country", "United Kingdom")),
+            new LiveSmokeCase("calibration-business-management", LiveSmokeJourney.UNIVERSITY, "BA Business Management",
+                    CALIBRATION_SOURCE, fields(
+                            "courseTitle", "BA Business Management",
+                            "courseDescription", "The course introduces how organisations are run, covering "
+                                    + "management, marketing, finance and accounting, human resource management, "
+                                    + "operations and strategy. Students learn through lectures, seminars, case "
+                                    + "studies, group presentations and reports. An optional placement year is "
+                                    + "available, and the final year includes a strategy module and a research-based "
+                                    + "dissertation or consultancy project.",
+                            "keyModules", lines("Principles of Management", "Introduction to Marketing",
+                                    "Financial and Management Accounting", "Organisational Behaviour",
+                                    "Human Resource Management", "Operations Management", "Business Analytics",
+                                    "Entrepreneurship", "Strategic Management", "Dissertation or Consultancy Project"),
+                            "skillsDeveloped", lines("Business analysis", "Report writing", "Presentation",
+                                    "Teamwork", "Basic financial analysis", "Decision making", "Research"),
+                            "preferredCareerAreas", lines("Management", "Marketing", "Human resources", "Consulting"),
+                            "country", "United Kingdom")),
+            new LiveSmokeCase("calibration-nursing", LiveSmokeJourney.UNIVERSITY, "BSc Nursing (Adult)",
+                    CALIBRATION_SOURCE, fields(
+                            "courseTitle", "BSc Nursing (Adult)",
+                            "courseDescription", "A three-year pre-registration course leading to eligibility to "
+                                    + "apply for registration as an adult nurse. Half of the course is spent on "
+                                    + "clinical placements in hospital and community settings under the supervision "
+                                    + "of registered nurses. University study covers anatomy and physiology, "
+                                    + "pharmacology, evidence-based practice, communication, and professional, legal "
+                                    + "and ethical standards, with clinical skills practised in simulation suites "
+                                    + "before placement.",
+                            "keyModules", lines("Foundations of Nursing Practice", "Anatomy and Physiology",
+                                    "Clinical Skills and Simulation", "Pharmacology and Medicines Management",
+                                    "Communication and Compassionate Care", "Evidence-Based Practice",
+                                    "Acute and Long-Term Conditions", "Professional, Legal and Ethical Practice",
+                                    "Leadership and Management of Care", "Clinical Placements"),
+                            "skillsDeveloped", lines("Patient assessment", "Clinical skills", "Communication",
+                                    "Care planning", "Medicines management", "Teamwork", "Professional judgement",
+                                    "Record keeping"),
+                            "preferredCareerAreas", lines("Adult nursing", "Community nursing"),
+                            "country", "United Kingdom")),
+            new LiveSmokeCase("calibration-law", LiveSmokeJourney.UNIVERSITY, "LLB Law",
+                    CALIBRATION_SOURCE, fields(
+                            "courseTitle", "LLB Law",
+                            "courseDescription", "The course covers the core areas of English law, including "
+                                    + "contract, tort, criminal, public, land, equity and trusts, and EU and "
+                                    + "international law. Students learn through lectures and small-group tutorials, "
+                                    + "and develop legal research, analysis and writing through problem questions and "
+                                    + "essays. Mooting, a law clinic option and a final-year dissertation give "
+                                    + "opportunities to apply legal reasoning.",
+                            "keyModules", lines("Legal Method and Skills", "Contract Law", "Law of Tort",
+                                    "Criminal Law", "Constitutional and Administrative Law", "Land Law",
+                                    "Equity and Trusts", "EU and International Law", "Law Clinic", "Dissertation"),
+                            "skillsDeveloped", lines("Legal research", "Legal analysis", "Written argument",
+                                    "Oral advocacy", "Critical reading", "Attention to detail", "Problem solving"),
+                            "preferredCareerAreas", lines("Legal practice", "Policy", "Compliance"),
+                            "country", "United Kingdom")),
+            new LiveSmokeCase("calibration-graphic-design", LiveSmokeJourney.UNIVERSITY, "BA Graphic Design",
+                    CALIBRATION_SOURCE, fields(
+                            "courseTitle", "BA Graphic Design",
+                            "courseDescription", "A studio-based course in visual communication. Students develop "
+                                    + "typography, layout, branding, illustration, motion and digital design through "
+                                    + "briefs set by tutors and, in later years, by external clients and "
+                                    + "competitions. Work is reviewed in group critiques, and the course covers "
+                                    + "design history, research methods and professional practice. The final year "
+                                    + "centres on a self-directed major project and a public portfolio show.",
+                            "keyModules", lines("Design Fundamentals", "Typography", "Visual Identity and Branding",
+                                    "Illustration", "Digital and Interaction Design", "Motion Graphics",
+                                    "Design History and Theory", "Live Briefs", "Professional Practice",
+                                    "Final Major Project"),
+                            "skillsDeveloped", lines("Visual communication", "Typography", "Concept development",
+                                    "Design software", "Presenting and critiquing work", "Working to a brief",
+                                    "Portfolio building"),
+                            "preferredCareerAreas", lines("Graphic design", "Branding", "Digital design"),
+                            "country", "United Kingdom")),
+            new LiveSmokeCase("calibration-mechanical-engineering", LiveSmokeJourney.UNIVERSITY,
+                    "BEng Mechanical Engineering", CALIBRATION_SOURCE, fields(
+                            "courseTitle", "BEng Mechanical Engineering",
+                            "courseDescription", "An engineering degree covering mechanics, thermodynamics, fluid "
+                                    + "mechanics, materials, mechanical design and control systems, built on "
+                                    + "engineering mathematics. Students carry out laboratory experiments, use "
+                                    + "computer-aided design and simulation, and complete design-and-build group "
+                                    + "projects. The course is designed to meet the academic requirements for "
+                                    + "professional engineering registration and ends with an individual project.",
+                            "keyModules", lines("Engineering Mathematics", "Statics and Dynamics", "Thermodynamics",
+                                    "Fluid Mechanics", "Materials Science", "Mechanical Design and CAD",
+                                    "Control Systems", "Manufacturing Processes",
+                                    "Engineering Design-and-Build Project", "Individual Project"),
+                            "skillsDeveloped", lines("Mathematical modelling", "Engineering design",
+                                    "Laboratory work", "CAD and simulation", "Problem solving", "Teamwork",
+                                    "Technical reporting"),
+                            "preferredCareerAreas", lines("Mechanical engineering", "Manufacturing", "Energy"),
+                            "country", "United Kingdom")),
+            new LiveSmokeCase("calibration-english-literature", LiveSmokeJourney.UNIVERSITY, "BA English Literature",
+                    CALIBRATION_SOURCE, fields(
+                            "courseTitle", "BA English Literature",
+                            "courseDescription", "The course studies literature in English from the medieval "
+                                    + "period to the present, including poetry, drama and the novel, alongside "
+                                    + "literary theory and criticism. Students learn through lectures and seminar "
+                                    + "discussion and are assessed mainly through essays, close-reading exercises and "
+                                    + "some examinations. Optional modules include creative writing, and the final "
+                                    + "year includes an independent dissertation.",
+                            "keyModules", lines("Approaches to Literature", "Medieval and Renaissance Literature",
+                                    "Shakespeare", "Romantic and Victorian Literature", "Modernism",
+                                    "Contemporary Fiction", "Literary Theory", "Creative Writing", "Dissertation"),
+                            "skillsDeveloped", lines("Close reading", "Essay writing", "Argument", "Interpretation",
+                                    "Research", "Seminar discussion", "Independent study"),
+                            "preferredCareerAreas", lines("Publishing", "Journalism", "Teaching"),
                             "country", "United Kingdom")),
             new LiveSmokeCase("maths-economics-geography", LiveSmokeJourney.A_LEVEL,
                     "Mathematics, Economics and Geography", "A-level example page (a-level-example.html)", fields(

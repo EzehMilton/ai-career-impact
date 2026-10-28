@@ -69,12 +69,16 @@ public enum TraceStage {
     UNIVERSITY_MODULE_ANALYSIS_PERSISTED,
     /** University module-analysis generation failed; no completed snapshot was stored and a retry remains possible. */
     UNIVERSITY_MODULE_ANALYSIS_FAILED,
+    /** A university-report-v2 preparation was requested with an ACTIVE v2 entitlement: whether a selection came with it. */
+    UNIVERSITY_REPORT_V2_REQUEST,
     /** A new immutable university-report-v2 snapshot was assembled from stored artefacts and persisted. */
     UNIVERSITY_REPORT_V2_GENERATED,
     /** A stored university-report-v2 snapshot was returned unchanged; nothing was generated. */
     UNIVERSITY_REPORT_V2_REUSED,
     /** The University paid narrative was retryable, so the deterministic report was returned and nothing stored. */
     UNIVERSITY_REPORT_V2_PROVISIONAL,
+    /** The PDF of a stored university-report-v2 was rendered on demand: identifiers, version and size, never bytes. */
+    UNIVERSITY_REPORT_V2_PDF_RENDERED,
     /** A stored professional-report-v3 snapshot was returned unchanged; nothing was generated. */
     PROFESSIONAL_REPORT_V3_REUSED,
     /** The paid narrative was retryable, so the deterministic report was returned provisionally and nothing stored. */

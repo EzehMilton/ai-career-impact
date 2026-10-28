@@ -279,7 +279,7 @@ class LiveSmokeModeTest {
                 "/dev/live-smoke/a-level/new");
         assertThat(html).contains("Electrician", "Secondary-school Teacher", "Solicitor", "Customer-service Adviser",
                 "/dev/live-smoke/professional/customer-service-adviser");
-        assertThat(catalog.all()).hasSize(13);
+        assertThat(catalog.all()).hasSize(20);
     }
 
     @Test

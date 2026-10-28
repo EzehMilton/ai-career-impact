@@ -71,7 +71,10 @@ class LiveSmokeCaseCatalogTest {
         assertThat(catalog.find(LiveSmokeJourney.PROFESSIONAL, "registered-nurse").orElseThrow().source())
                 .isEqualTo("Agreed live regression case");
         assertThat(catalog.forJourney(LiveSmokeJourney.UNIVERSITY)).extracting(LiveSmokeCase::id)
-                .containsExactly("computer-science", "economics", "history");
+                .containsExactly("computer-science", "economics", "history", "calibration-computer-science",
+                        "calibration-business-management", "calibration-nursing", "calibration-law",
+                        "calibration-graphic-design", "calibration-mechanical-engineering",
+                        "calibration-english-literature");
         assertThat(catalog.forJourney(LiveSmokeJourney.A_LEVEL)).extracting(LiveSmokeCase::id)
                 .containsExactly("maths-economics-geography", "mathematics-physics", "english-history-politics");
         assertThat(catalog.all()).extracting(LiveSmokeCase::id).doesNotHaveDuplicates();
@@ -86,8 +89,8 @@ class LiveSmokeCaseCatalogTest {
                 assertThat(new ALevelAssessmentFormMapper().toState((ALevelAssessmentForm) catalog.form(value))
                         .selectedSubjects()).hasSizeGreaterThanOrEqualTo(2));
         assertThat(catalog.all().stream().collect(Collectors.groupingBy(LiveSmokeCase::journey, Collectors.counting())))
-                .containsEntry(LiveSmokeJourney.PROFESSIONAL, 7L).containsEntry(LiveSmokeJourney.UNIVERSITY, 3L)
+                .containsEntry(LiveSmokeJourney.PROFESSIONAL, 7L).containsEntry(LiveSmokeJourney.UNIVERSITY, 10L)
                 .containsEntry(LiveSmokeJourney.A_LEVEL, 3L);
-        assertThat(catalog.all().stream().map(value -> value.journey() + "/" + value.id()).distinct()).hasSize(13);
+        assertThat(catalog.all().stream().map(value -> value.journey() + "/" + value.id()).distinct()).hasSize(20);
     }
 }

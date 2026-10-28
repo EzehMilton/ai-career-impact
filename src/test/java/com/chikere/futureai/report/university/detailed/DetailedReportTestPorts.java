@@ -119,6 +119,10 @@ final class DetailedReportTestPorts {
     };
 
     UniversityDetailedReportService service() {
+        return service(AssessmentTrace.disabled());
+    }
+
+    UniversityDetailedReportService service(AssessmentTrace trace) {
         UniversityPurchaseStore purchases = mock(UniversityPurchaseStore.class);
         when(purchases.findEntitlementByAssessmentId(any())).thenAnswer(call ->
                 Optional.ofNullable(entitlements.get(call.<UUID>getArgument(0))));
@@ -129,13 +133,13 @@ final class DetailedReportTestPorts {
                 Optional.ofNullable(entitlements.get(call.<UUID>getArgument(0))));
         var moduleAnalyses = new UniversityModuleAnalysisService(assessmentStore, purchaseUseCase,
                 () -> Optional.of(jev), UniversityModuleClassifier.v1(new UniversityModulePolicyV1()), moduleStore,
-                CLOCK, AssessmentTrace.disabled());
+                CLOCK, trace);
         var narratives = new UniversityPaidNarrativeService(
                 () -> narrativeConfigured ? Optional.of(narrative) : Optional.empty(),
-                new UniversityPaidNarrativeValidator(), AssessmentTrace.disabled());
+                new UniversityPaidNarrativeValidator(trace), trace);
         return new UniversityDetailedReportService(purchases, assessmentStore, moduleAnalyses, moduleStore,
                 new UniversityGuidancePolicyV1(), narratives, new UniversityDetailedReportAssembler(), reportStore,
-                CLOCK, AssessmentTrace.disabled());
+                CLOCK, trace);
     }
 
     /** A university-decision-v2 assessment with an ACTIVE v2 (course-profile) purchase. */
