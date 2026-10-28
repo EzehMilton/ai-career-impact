@@ -65,8 +65,8 @@ public final class UniversityModuleJevProvider implements UniversityModuleJudgme
             response = typeSafeClient.systemOne(state, questions);
         }
         catch (RuntimeException failure) {
-            throw new UniversityModuleJudgmentException("the module-analysis provider call failed: "
-                    + failure.getClass().getSimpleName(), failure);
+            throw new UniversityModuleJudgmentException(UniversityModuleJudgmentException.Kind.PROVIDER_CALL,
+                    "the module-analysis provider call failed: " + failure.getClass().getSimpleName(), failure);
         }
         recordUsage(response);
         try {

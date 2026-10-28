@@ -2,3 +2,4 @@ com.chikere.futureai.judgment.typesafe.professional.ProfessionalJevAutoConfigura
 com.chikere.futureai.judgment.typesafe.university.UniversityJevAutoConfiguration
 com.chikere.futureai.judgment.typesafe.alevel.ALevelJevAutoConfiguration
 com.chikere.futureai.responsibility.professional.typesafe.ProfessionalResponsibilityJevAutoConfiguration
+com.chikere.futureai.coursemodule.university.typesafe.UniversityModuleJevAutoConfiguration

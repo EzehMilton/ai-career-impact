@@ -109,7 +109,8 @@ class UniversityModuleJevProviderTest {
     @Test
     void aMissingAnswerOrAMissingModuleFailsTheCall() {
         assertThatThrownBy(() -> judge(map -> map.remove("m2__practical_application")))
-                .isInstanceOf(UniversityModuleJudgmentException.class)
+                .isInstanceOfSatisfying(UniversityModuleJudgmentException.class, failure -> assertThat(failure.kind())
+                        .isEqualTo(UniversityModuleJudgmentException.Kind.INVALID_RESPONSE))
                 .hasMessageContaining("missing [m2__practical_application]");
         assertThatThrownBy(() -> judge(map -> map.keySet().removeIf(name -> name.startsWith("m2__"))))
                 .hasMessageContaining("missing [m2__ai_learning_assistance");
@@ -153,7 +154,9 @@ class UniversityModuleJevProviderTest {
     void aProviderFailureFailsTheCallClearly() {
         TypeSafeClient client = mock(TypeSafeClient.class);
         when(client.systemOne(anyMap(), anyMap())).thenThrow(new IllegalStateException("Jev returned 503"));
-        assertThatThrownBy(() -> provider(client).judge(REQUEST)).isInstanceOf(UniversityModuleJudgmentException.class)
+        assertThatThrownBy(() -> provider(client).judge(REQUEST)).isInstanceOfSatisfying(
+                UniversityModuleJudgmentException.class, failure -> assertThat(failure.kind())
+                        .isEqualTo(UniversityModuleJudgmentException.Kind.PROVIDER_CALL))
                 .hasMessageContaining("provider call failed").hasCauseInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> provider(client(Map.of())).judge(REQUEST)).hasMessageContaining("missing");
     }

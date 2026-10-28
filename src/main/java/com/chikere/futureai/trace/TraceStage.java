@@ -59,6 +59,16 @@ public enum TraceStage {
     PAID_NARRATIVE_REUSED,
     /** A new immutable professional-report-v3 snapshot was assembled from stored artefacts and persisted. */
     PROFESSIONAL_REPORT_V3_GENERATED,
+    /** University module analysis requested: entitlement accepted and the selected module ids. */
+    UNIVERSITY_MODULE_ANALYSIS_REQUEST,
+    /** University module analysis refused before any provider call: why. */
+    UNIVERSITY_MODULE_ANALYSIS_DENIED,
+    /** A completed University module-analysis snapshot already existed and was returned; no provider was called. */
+    UNIVERSITY_MODULE_ANALYSIS_REUSED,
+    /** A new University module-analysis snapshot was classified and persisted, or a concurrent one returned. */
+    UNIVERSITY_MODULE_ANALYSIS_PERSISTED,
+    /** University module-analysis generation failed; no completed snapshot was stored and a retry remains possible. */
+    UNIVERSITY_MODULE_ANALYSIS_FAILED,
     /** A stored professional-report-v3 snapshot was returned unchanged; nothing was generated. */
     PROFESSIONAL_REPORT_V3_REUSED,
     /** The paid narrative was retryable, so the deterministic report was returned provisionally and nothing stored. */
