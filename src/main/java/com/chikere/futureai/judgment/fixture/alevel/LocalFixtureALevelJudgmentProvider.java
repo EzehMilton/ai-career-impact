@@ -1,6 +1,5 @@
 package com.chikere.futureai.judgment.fixture.alevel;
 
-import com.chikere.futureai.assessment.alevel.application.ALevelJudgmentProvider;
 import com.chikere.futureai.assessment.alevel.application.AssessmentSource;
 import com.chikere.futureai.assessment.domain.ALevelAssessmentState;
 import com.chikere.futureai.assessment.domain.JourneyType;
@@ -17,7 +16,9 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 
 /**
- * Explicit, illustrative A-level judgments for local UI development only.
+ * Explicit, illustrative historical {@code a-level-v1} judgments, kept unchanged so v1 behaviour and its calibration
+ * baseline stay reproducible. It is no longer the runtime provider: new local submissions use
+ * {@link LocalFixtureALevelV2JudgmentProvider}.
  *
  * <p>These numbers are development data chosen to exercise contrasting presentation paths. They
  * are <strong>not</strong> empirical claims about any subject or combination, and they are never
@@ -25,7 +26,7 @@ import java.util.OptionalDouble;
  * configured identifier, not by the subjects a user typed, precisely so this cannot become a
  * hidden subject-ranking table.</p>
  */
-public final class LocalFixtureALevelJudgmentProvider implements ALevelJudgmentProvider {
+public final class LocalFixtureALevelJudgmentProvider {
 
     private static final double FIXTURE_CONFIDENCE = 0.85;
 
@@ -62,7 +63,6 @@ public final class LocalFixtureALevelJudgmentProvider implements ALevelJudgmentP
         }
     }
 
-    @Override
     public AssessmentJudgmentSet judge(ALevelAssessmentState state) {
         Objects.requireNonNull(state, "state must not be null");
         return new AssessmentJudgmentSet(JourneyType.A_LEVEL, ALevelJudgmentSchema.VERSION, List.of(
@@ -80,12 +80,10 @@ public final class LocalFixtureALevelJudgmentProvider implements ALevelJudgmentP
                 score(ALevelJudgmentSchema.AI_ERA_COMPLEMENTARITY, fixture.aiEraComplementarity())));
     }
 
-    @Override
     public AssessmentSource source() {
         return AssessmentSource.LOCAL_FIXTURE;
     }
 
-    @Override
     public Optional<String> fixtureId() {
         return Optional.of(fixtureId);
     }

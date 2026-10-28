@@ -64,7 +64,8 @@ public final class UniversityAssessmentWorkflow implements UniversityAssessmentU
         UUID id = assessmentService.submitUniversityAssessment(state);
         metrics.assessmentCreated("university");
         try {
-            if (narrativeService.generateFor(id).status() == NarrativeStatus.FAILED) {
+            if (narrativeService.generateIfApplicable(id)
+                    .filter(narrative -> narrative.status() == NarrativeStatus.FAILED).isPresent()) {
                 metrics.narrativeFailed("university");
             }
         }

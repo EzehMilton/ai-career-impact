@@ -55,6 +55,7 @@ class ProductShellConsistencyTest {
     void onlyThePaidReportPagesOfferThePdfDownload() throws IOException {
         for (Map.Entry<Path, String> page : pages().entrySet()) {
             String name = page.getKey().getFileName().toString();
+            // paid-report-v2.html exists for both University and A-level; both are paid report pages.
             boolean paidReport = name.equals("paid-report.html") || name.equals("paid-report-v3.html")
                     || name.equals("paid-report-v2.html");
             // Strip parser comments (<!--/* ... */-->) — they are never sent to the browser,

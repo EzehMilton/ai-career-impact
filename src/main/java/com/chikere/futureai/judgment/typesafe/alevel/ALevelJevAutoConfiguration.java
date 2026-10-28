@@ -15,26 +15,30 @@ import org.springframework.context.annotation.Profile;
 @AutoConfiguration(after = TypeSafeAutoConfiguration.class)
 @ConditionalOnClass(TypeSafeClient.class)
 @Profile({"prod", "live-smoke"})
+/**
+ * Jev for new A-level assessments: the {@code a-level-v2} schema, its subject-only wire state and its adapter. The
+ * historical {@code a-level-v1} adapter is not registered: stored v1 judgments are never requested again.
+ */
 public class ALevelJevAutoConfiguration {
 
     @Bean
-    ALevelJudgmentSchema aLevelJudgmentSchema() {
-        return new ALevelJudgmentSchema();
+    ALevelJudgmentSchemaV2 aLevelJudgmentSchemaV2() {
+        return new ALevelJudgmentSchemaV2();
     }
 
     @Bean
-    ALevelJevStateMapper aLevelJevStateMapper() {
-        return new ALevelJevStateMapper();
+    ALevelV2JevStateMapper aLevelV2JevStateMapper() {
+        return new ALevelV2JevStateMapper();
     }
 
     @Bean
     @ConditionalOnBean(TypeSafeClient.class)
-    ALevelJevJudgmentService aLevelJevJudgmentService(TypeSafeClient typeSafeClient,
-            ALevelJudgmentSchema schema, ALevelJevStateMapper stateMapper,
+    ALevelV2JevJudgmentService aLevelV2JevJudgmentService(TypeSafeClient typeSafeClient,
+            ALevelJudgmentSchemaV2 schema, ALevelV2JevStateMapper stateMapper,
             @Value("${spring.ai.typesafe.model:}") String configuredModelIdentifier,
             ObjectProvider<ProviderCostTracker> costs,
             ObjectProvider<AssessmentTrace> trace) {
-        return new ALevelJevJudgmentService(typeSafeClient, schema, stateMapper, configuredModelIdentifier,
+        return new ALevelV2JevJudgmentService(typeSafeClient, schema, stateMapper, configuredModelIdentifier,
                 costs.getIfAvailable(ProviderCostTracker::disabled),
                 trace.getIfAvailable(AssessmentTrace::disabled));
     }

@@ -1,16 +1,16 @@
 package com.chikere.futureai.assessment.alevel.application;
 
 import com.chikere.futureai.assessment.domain.ALevelAssessmentState;
-import com.chikere.futureai.decision.alevel.ALevelMeasure;
+import com.chikere.futureai.decision.alevel.ALevelProfileMeasure;
 import com.chikere.futureai.evidence.alevel.application.ALevelEvidenceProvider;
 import com.chikere.futureai.evidence.alevel.application.ALevelEvidenceStore;
 import com.chikere.futureai.evidence.alevel.application.EvidenceSource;
 import com.chikere.futureai.evidence.alevel.fixture.LocalFixtureALevelEvidenceConfiguration;
 import com.chikere.futureai.evidence.alevel.fixture.LocalFixtureALevelEvidenceProvider;
 import com.chikere.futureai.judgment.fixture.alevel.LocalFixtureALevelConfiguration;
-import com.chikere.futureai.judgment.fixture.alevel.LocalFixtureALevelJudgmentProvider;
+import com.chikere.futureai.judgment.fixture.alevel.LocalFixtureALevelV2JudgmentProvider;
 import com.chikere.futureai.judgment.typesafe.alevel.ALevelJevAutoConfiguration;
-import com.chikere.futureai.judgment.typesafe.alevel.ALevelJevJudgmentService;
+import com.chikere.futureai.judgment.typesafe.alevel.ALevelV2JevJudgmentService;
 import com.chikere.futureai.narrative.alevel.application.ALevelNarrativeGenerator;
 import com.chikere.futureai.narrative.alevel.application.ALevelNarrativeStore;
 import com.chikere.futureai.narrative.alevel.application.NarrativeSource;
@@ -73,15 +73,17 @@ class ALevelProviderWiringTest {
                     assertThat(context).hasNotFailed();
                     assertThat(context.getBeansOfType(ALevelJudgmentProvider.class)).hasSize(1);
                     assertThat(context.getBean(ALevelJudgmentProvider.class))
-                            .isInstanceOf(LocalFixtureALevelJudgmentProvider.class);
-                    assertThat(context).doesNotHaveBean(ALevelJevJudgmentService.class);
+                            .isInstanceOf(LocalFixtureALevelV2JudgmentProvider.class);
+                    assertThat(context).doesNotHaveBean(ALevelV2JevJudgmentService.class);
 
                     var result = context.getBean(ALevelAssessmentService.class).assess(
                             new ALevelAssessmentState(List.of("Mathematics", "Economics", "Geography"),
                                     Map.of(), List.of(), List.of(), List.of(),
                                     Optional.empty(), Optional.empty()));
-                    assertThat(result.decision().measure(ALevelMeasure.FUTURE_OPTIONALITY)
-                            .orElseThrow().indicator()).isBetween(8.31, 8.32);
+                    // New submissions are decided by a-level-decision-v2: a subject profile with no headline score.
+                    assertThat(result.decisionPolicyVersion()).isEqualTo("a-level-decision-v2");
+                    assertThat(result.profile().measure(ALevelProfileMeasure.OPTIONS_KEPT_OPEN)
+                            .orElseThrow().indicator()).isBetween(8.49, 8.51);
 
                     assertThat(context.getBean(ALevelNarrativeGenerator.class))
                             .isInstanceOf(LocalFixtureALevelNarrativeGenerator.class);

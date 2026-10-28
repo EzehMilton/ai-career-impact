@@ -7,7 +7,7 @@ import com.chikere.futureai.judgment.fixture.alevel.LocalFixtureALevelConfigurat
 import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfessionalConfiguration;
 import com.chikere.futureai.judgment.fixture.university.LocalFixtureUniversityConfiguration;
 import com.chikere.futureai.judgment.typesafe.alevel.ALevelJevAutoConfiguration;
-import com.chikere.futureai.judgment.typesafe.alevel.ALevelJevJudgmentService;
+import com.chikere.futureai.judgment.typesafe.alevel.ALevelV2JevJudgmentService;
 import com.chikere.futureai.judgment.typesafe.professional.ProfessionalJevAutoConfiguration;
 import com.chikere.futureai.judgment.typesafe.professional.ProfessionalJevJudgmentService;
 import com.chikere.futureai.judgment.typesafe.university.UniversityJevAutoConfiguration;
@@ -91,7 +91,7 @@ class LiveSmokeProviderWiringTest {
             assertThat(context).hasNotFailed();
             assertThat(context.getBean(ProfessionalJudgmentProvider.class)).isInstanceOf(ProfessionalJevJudgmentService.class);
             assertThat(context.getBean(UniversityJudgmentProvider.class)).isInstanceOf(UniversityJevJudgmentService.class);
-            assertThat(context.getBean(ALevelJudgmentProvider.class)).isInstanceOf(ALevelJevJudgmentService.class);
+            assertThat(context.getBean(ALevelJudgmentProvider.class)).isInstanceOf(ALevelV2JevJudgmentService.class);
             assertThat(context.getBean(ProfessionalJudgmentProvider.class).source().name()).isEqualTo("JEV");
             assertThat(context.getBean(UniversityJudgmentProvider.class).source().name()).isEqualTo("JEV");
             assertThat(context.getBean(ALevelJudgmentProvider.class).source().name()).isEqualTo("JEV");

@@ -342,6 +342,74 @@ class ALevelReportPurchaseServiceTest {
         return gateway;
     }
 
+    @Test
+    void aV2SubjectProfilePurchaseFreezesOnlyAMarkerAndGeneratesNothing() {
+        when(assessmentStore.findById(ASSESSMENT)).thenReturn(Optional.of(
+                com.chikere.futureai.assessment.alevel.application.ALevelTestAssessments.subjectProfile(ASSESSMENT,
+                        "maths_economics_geography", com.chikere.futureai.assessment.alevel.application
+                                .AssessmentSource.JEV)));
+        when(purchaseStore.findEntitlementByAssessmentId(ASSESSMENT)).thenReturn(Optional.empty());
+
+        assertThat(service(Optional.empty()).grantComplimentaryAccess(ASSESSMENT))
+                .isEqualTo(com.chikere.futureai.payment.complimentary.ComplimentaryRedemptionResult.UNLOCKED);
+
+        var snapshot = org.mockito.ArgumentCaptor.forClass(PurchasedALevelReportSnapshot.class);
+        var entitlement = org.mockito.ArgumentCaptor.forClass(ALevelReportEntitlement.class);
+        verify(purchaseStore).saveComplimentary(entitlement.capture(), snapshot.capture());
+        assertThat(snapshot.getValue().isSubjectProfilePurchase()).isTrue();
+        assertThat(snapshot.getValue().reportVersion()).isEqualTo("a-level-report-v2");
+        assertThat(snapshot.getValue().purchasedReport()).isEmpty();
+        assertThat(entitlement.getValue().status()).isEqualTo(ALevelEntitlementStatus.ACTIVE);
+        // Activation only grants access: no v1 report is assembled for a v2 assessment.
+        verify(narrativeStore, never()).findByAssessmentId(any());
+
+        when(purchaseStore.findEntitlementByAssessmentId(ASSESSMENT)).thenReturn(Optional.of(entitlement.getValue()));
+        when(purchaseStore.findSnapshotByAssessmentId(ASSESSMENT)).thenReturn(Optional.of(snapshot.getValue()));
+        assertThat(service(Optional.empty()).activePurchaseVersion(ASSESSMENT)).contains("a-level-report-v2");
+        assertThat(service(Optional.empty()).findPurchasedReport(ASSESSMENT)).isEmpty();
+    }
+
+    @Test
+    void aV2SubjectProfileWebhookActivationFreezesTheMarker() {
+        var gateway = mock(ALevelPaymentGateway.class);
+        when(assessmentStore.findById(ASSESSMENT)).thenReturn(Optional.of(
+                com.chikere.futureai.assessment.alevel.application.ALevelTestAssessments.subjectProfile(ASSESSMENT,
+                        "maths_economics_geography", com.chikere.futureai.assessment.alevel.application
+                                .AssessmentSource.JEV)));
+        when(gateway.provider()).thenReturn(ALevelPaymentProvider.STRIPE);
+        doReturn(Optional.of(event())).when(gateway).verifyPaymentNotification(any());
+        when(purchaseStore.findEntitlementById(ENTITLEMENT)).thenReturn(Optional.of(
+                entitlement(ALevelEntitlementStatus.PENDING)));
+        when(purchaseStore.findSnapshotByAssessmentId(ASSESSMENT)).thenReturn(Optional.empty());
+        when(purchaseStore.confirmAndFreeze(any(), any()))
+                .thenReturn(ALevelPurchaseStore.PurchaseConfirmationResult.ACTIVATED);
+
+        service(Optional.of(gateway)).processPaymentNotification(new ALevelPaymentNotification("p", "s"));
+
+        var frozen = org.mockito.ArgumentCaptor.forClass(PurchasedALevelReportSnapshot.class);
+        verify(purchaseStore).confirmAndFreeze(any(), frozen.capture());
+        assertThat(frozen.getValue().isSubjectProfilePurchase()).isTrue();
+        assertThat(frozen.getValue().purchasedReport()).isEmpty();
+    }
+
+    @Test
+    void aHistoricalV1AssessmentIsStillPurchasedAsTheFrozenV1Report() {
+        when(assessmentStore.findById(ASSESSMENT)).thenReturn(Optional.of(
+                com.chikere.futureai.assessment.alevel.application.ALevelTestAssessments.historicalV1(ASSESSMENT,
+                        "maths_economics_geography")));
+        when(narrativeStore.findByAssessmentId(ASSESSMENT)).thenReturn(Optional.empty());
+        when(evidenceStore.findByAssessmentId(ASSESSMENT)).thenReturn(Optional.empty());
+        when(purchaseStore.findEntitlementByAssessmentId(ASSESSMENT)).thenReturn(Optional.empty());
+
+        assertThat(service(Optional.empty()).grantComplimentaryAccess(ASSESSMENT))
+                .isEqualTo(com.chikere.futureai.payment.complimentary.ComplimentaryRedemptionResult.UNLOCKED);
+
+        var snapshot = org.mockito.ArgumentCaptor.forClass(PurchasedALevelReportSnapshot.class);
+        verify(purchaseStore).saveComplimentary(any(), snapshot.capture());
+        assertThat(snapshot.getValue().reportVersion()).isEqualTo("a-level-report-v1");
+        assertThat(snapshot.getValue().report().measures()).hasSize(6);
+    }
+
     private ALevelReportPurchaseService service(Optional<ALevelPaymentGateway> gateway) {
         return new ALevelReportPurchaseService(reportService, purchaseStore, gateway,
                 URI.create("http://localhost:8080"), Optional.of("£3.99"), CLOCK);

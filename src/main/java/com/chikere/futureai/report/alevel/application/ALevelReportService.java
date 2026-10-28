@@ -1,5 +1,6 @@
 package com.chikere.futureai.report.alevel.application;
 
+import com.chikere.futureai.assessment.alevel.application.StoredALevelAssessment;
 import com.chikere.futureai.assessment.alevel.application.ALevelAssessmentStore;
 import com.chikere.futureai.assessment.domain.JourneyType;
 import com.chikere.futureai.trace.AssessmentTrace;
@@ -17,6 +18,7 @@ public final class ALevelReportService implements ALevelReportQuery {
     private final ALevelEvidenceStore evidenceStore;
     private final ALevelReportAssembler assembler;
     private final AssessmentTrace trace;
+    private final ALevelSubjectProfileComposer profiles = new ALevelSubjectProfileComposer();
 
     public ALevelReportService(ALevelAssessmentStore assessmentStore,
             ALevelNarrativeStore narrativeStore, ALevelEvidenceStore evidenceStore,
@@ -39,8 +41,25 @@ public final class ALevelReportService implements ALevelReportQuery {
         Objects.requireNonNull(assessmentId);
         Objects.requireNonNull(tier);
         return trace.report(JourneyType.A_LEVEL, assessmentId, tier == ALevelReportTier.PAID,
-                () -> assessmentStore.findById(assessmentId).map(assessment -> assembler.assemble(
+                () -> assessmentStore.findById(assessmentId)
+                        .filter(assessment -> !assessment.result().usesSubjectProfile())
+                        .map(assessment -> assembler.assemble(
                 new ALevelReportSource(assessment, narrativeStore.findByAssessmentId(assessmentId),
                         evidenceStore.findByAssessmentId(assessmentId)), tier)));
+    }
+
+    /** Traced as the free result, exactly like the v1 free report, so both versions are observable. */
+    @Override
+    public Optional<ALevelSubjectProfile> subjectProfile(UUID assessmentId) {
+        Objects.requireNonNull(assessmentId);
+        return trace.report(JourneyType.A_LEVEL, assessmentId, false,
+                () -> assessmentStore.findById(assessmentId)
+                        .filter(assessment -> assessment.result().usesSubjectProfile())
+                        .map(assessment -> profiles.compose(assessment.result().profile())));
+    }
+
+    @Override
+    public Optional<StoredALevelAssessment> stored(UUID assessmentId) {
+        return assessmentStore.findById(Objects.requireNonNull(assessmentId));
     }
 }

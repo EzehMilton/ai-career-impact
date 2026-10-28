@@ -14,9 +14,9 @@ public class LocalFixtureALevelConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(LocalFixtureALevelConfiguration.class);
 
     @Bean
-    LocalFixtureALevelJudgmentProvider localFixtureALevelJudgmentProvider(
+    LocalFixtureALevelV2JudgmentProvider localFixtureALevelV2JudgmentProvider(
             @Value("${app.a-level.fixture-id:}") String fixtureId) {
-        LocalFixtureALevelJudgmentProvider provider = new LocalFixtureALevelJudgmentProvider(fixtureId);
+        LocalFixtureALevelV2JudgmentProvider provider = new LocalFixtureALevelV2JudgmentProvider(fixtureId);
         LOGGER.warn("LOCAL FIXTURE MODE ACTIVE - A-LEVEL RESULTS ARE NOT LIVE JEV RESULTS");
         return provider;
     }

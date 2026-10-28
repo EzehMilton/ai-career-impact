@@ -74,13 +74,57 @@ class ALevelAssessmentStoreTest {
     @Autowired com.chikere.futureai.payment.university.application.UniversityPurchaseStore
             universityPurchaseStore;
     @Autowired Flyway flyway;
+    @Autowired javax.sql.DataSource dataSource;
 
     @Test
     void allMigrationsAreAppliedAndALevelTablesAreSeparate() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("23");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("25");
         assertThat(flyway.info().applied()).extracting(info -> info.getVersion().getVersion())
                 .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
-                        "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23");
+                        "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25");
+    }
+
+    @Test
+    void aV2SubjectProfileRoundTripsItsFrozenMeasuresAndFactorsWithNoV1Rows() {
+        UUID id = UUID.randomUUID();
+        var v2 = com.chikere.futureai.assessment.alevel.application.ALevelTestAssessments.subjectProfile(id,
+                "english_history_politics", AssessmentSource.JEV);
+
+        store.save(v2);
+        var loaded = store.findById(id).orElseThrow();
+
+        assertThat(loaded).isEqualTo(v2);
+        assertThat(loaded.result().usesSubjectProfile()).isTrue();
+        assertThat(loaded.result().judgmentSchemaVersion()).isEqualTo("a-level-v2");
+        assertThat(loaded.result().decisionPolicyVersion()).isEqualTo("a-level-decision-v2");
+        assertThat(loaded.result().profile()).isEqualTo(v2.result().profile());
+        assertThat(loaded.result().legacyDecision()).isEmpty();
+        // The student's context is stored with the assessment even though it was never judged.
+        assertThat(loaded.state().preferredCareerAreas()).containsExactly("Finance");
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        assertThat(jdbc.queryForObject("select count(*) from a_level_assessment_profile_measure where assessment_id = ?",
+                Integer.class, id)).isEqualTo(4);
+        assertThat(jdbc.queryForObject("select count(*) from a_level_assessment_measure where assessment_id = ?",
+                Integer.class, id)).isZero();
+        assertThat(jdbc.queryForObject("select count(*) from a_level_assessment_factor where assessment_id = ?",
+                Integer.class, id)).isZero();
+    }
+
+    @Test
+    void aHistoricalV1AssessmentNeverAcquiresV2Rows() {
+        UUID id = UUID.randomUUID();
+        var v1 = com.chikere.futureai.assessment.alevel.application.ALevelTestAssessments.historicalV1(id,
+                "maths_economics_geography");
+
+        store.save(v1);
+        var loaded = store.findById(id).orElseThrow();
+
+        assertThat(loaded).isEqualTo(v1);
+        assertThat(loaded.result().usesSubjectProfile()).isFalse();
+        assertThat(loaded.result().decision().measures()).hasSize(6);
+        assertThat(new org.springframework.jdbc.core.JdbcTemplate(dataSource).queryForObject(
+                "select count(*) from a_level_assessment_profile_measure where assessment_id = ?", Integer.class, id))
+                .isZero();
     }
 
     @Test

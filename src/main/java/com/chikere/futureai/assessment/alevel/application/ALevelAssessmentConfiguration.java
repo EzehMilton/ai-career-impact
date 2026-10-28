@@ -1,7 +1,7 @@
 package com.chikere.futureai.assessment.alevel.application;
 
 import com.chikere.futureai.payment.complimentary.ComplimentaryReportAccess;
-import com.chikere.futureai.decision.alevel.ALevelDecisionPolicyV1;
+import com.chikere.futureai.decision.alevel.ALevelDecisionPolicyV2;
 import com.chikere.futureai.evidence.alevel.application.ALevelEvidenceProvider;
 import com.chikere.futureai.evidence.alevel.application.ALevelEvidenceRequestFactory;
 import com.chikere.futureai.evidence.alevel.application.ALevelEvidenceService;
@@ -31,14 +31,15 @@ import java.util.Optional;
 @Configuration(proxyBeanMethods = false)
 public class ALevelAssessmentConfiguration {
 
+    /** New submissions are decided by {@code a-level-decision-v2}; stored v1 decisions are only read back. */
     @Bean
-    ALevelDecisionPolicyV1 aLevelDecisionPolicyV1(ObjectProvider<AssessmentTrace> trace) {
-        return new ALevelDecisionPolicyV1(trace.getIfAvailable(AssessmentTrace::disabled));
+    ALevelDecisionPolicyV2 aLevelDecisionPolicyV2(ObjectProvider<AssessmentTrace> trace) {
+        return new ALevelDecisionPolicyV2(trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean
     ALevelAssessmentService aLevelAssessmentService(ALevelJudgmentProvider judgmentProvider,
-            ALevelDecisionPolicyV1 decisionPolicy, ALevelAssessmentStore store,
+            ALevelDecisionPolicyV2 decisionPolicy, ALevelAssessmentStore store,
             ObjectProvider<JourneyMetrics> metrics,
             ObjectProvider<AssessmentTrace> trace) {
         return new ALevelAssessmentService(judgmentProvider, decisionPolicy, store, Clock.systemUTC(),

@@ -79,6 +79,16 @@ public enum TraceStage {
     UNIVERSITY_REPORT_V2_PROVISIONAL,
     /** The PDF of a stored university-report-v2 was rendered on demand: identifiers, version and size, never bytes. */
     UNIVERSITY_REPORT_V2_PDF_RENDERED,
+    /** An a-level-report-v2 preparation was requested with an ACTIVE v2 entitlement; never a Jev call. */
+    A_LEVEL_REPORT_V2_REQUEST,
+    /** A new immutable a-level-report-v2 snapshot was assembled from stored artefacts and persisted. */
+    A_LEVEL_REPORT_V2_GENERATED,
+    /** A stored a-level-report-v2 snapshot was returned unchanged; nothing was generated. */
+    A_LEVEL_REPORT_V2_REUSED,
+    /** The A-level paid narrative was retryable, so the deterministic report was returned and nothing stored. */
+    A_LEVEL_REPORT_V2_PROVISIONAL,
+    /** The PDF of a stored a-level-report-v2 was rendered on demand: identifiers, version and size, never bytes. */
+    A_LEVEL_REPORT_V2_PDF_RENDERED,
     /** A stored professional-report-v3 snapshot was returned unchanged; nothing was generated. */
     PROFESSIONAL_REPORT_V3_REUSED,
     /** The paid narrative was retryable, so the deterministic report was returned provisionally and nothing stored. */

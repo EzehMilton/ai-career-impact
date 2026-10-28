@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en-GB" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Your detailed A-level report')}"></head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('a-level')}"></header>
+
+<main class="page-shell paid-report paid-report-refined detailed-report alevel-detailed-report" id="main" th:with="r=${report}">
+  <meta name="robots" content="noindex,nofollow">
+
+  <section class="panel detailed-preparation" th:if="${provisional}" aria-labelledby="ar-retry">
+    <h2 id="ar-retry">Your detailed report is ready</h2>
+    <p>Everything in this report is complete. The personalised explanation that goes alongside it could not be added just now. You can try again; nothing else in your report will change.</p>
+    <form method="post" th:action="@{/a-level-assessment/{id}/report/prepare(id=${assessmentId})}">
+      <button type="submit" class="button-link button-secondary">Add the personalised explanation</button>
+    </form>
+  </section>
+
+  <div class="page-header paid-report-header">
+    <p class="eyebrow">Your detailed A-level report</p>
+    <h1 th:text="${r.profile.heading}">Your A-level subject profile</h1>
+    <p class="intro"><strong th:text="${#strings.listJoin(r.subjects, ', ')}">Your subjects</strong></p>
+    <p class="paid-report-header-actions" th:unless="${provisional}">
+      <a class="button-link" th:href="@{/a-level-assessment/{id}/report.pdf(id=${assessmentId})}">Download PDF <span aria-hidden="true">&#8595;</span></a>
+    </p>
+  </div>
+
+  <!--/* 1. Subject profile */-->
+  <section class="results-section" aria-labelledby="ar-profile">
+    <div class="paid-section-heading">
+      <h2 id="ar-profile">Your A-level subject profile</h2>
+      <p th:text="${r.perspectives.profile}">Profile explanation</p>
+    </div>
+    <div class="measure-grid paid-measure-grid">
+      <article class="panel measure-card paid-measure-card" th:each="m : ${r.profile.singleMeasures()}">
+        <h3 th:text="${m.name}">Measure</h3>
+        <p class="paid-measure-band" th:text="${m.bandLabel}">Balanced</p>
+        <dl class="measure-details"><div><dt>Score</dt><dd><span th:text="${m.score}">0.00</span> / 10</dd></div></dl>
+        <p th:text="${m.explanation}">Explanation</p>
+        <th:block th:if="${!m.drivers.isEmpty()}"><h4>What builds this</h4><ul><li th:each="item : ${m.drivers}" th:text="${item}">Driver</li></ul></th:block>
+        <th:block th:if="${!m.limits.isEmpty()}"><h4>What narrows it</h4><ul><li th:each="item : ${m.limits}" th:text="${item}">Limit</li></ul></th:block>
+        <p class="helper" th:if="${!m.confidenceNote.isEmpty()}" th:text="${m.confidenceNote}">Lower confidence</p>
+      </article>
+    </div>
+    <section class="panel alevel-capability-profile" aria-labelledby="ar-capability">
+      <h3 id="ar-capability">Capability Profile</h3>
+      <p th:text="${r.profile.capabilityProfile.note}">Neither side is better.</p>
+      <div class="measure-grid alevel-capability-sides">
+        <article class="measure-card alevel-measure-card" th:each="m : ${r.profile.capabilityProfile.sides()}">
+          <h4 th:text="${m.name}">Side</h4>
+          <p class="alevel-measure-score"><strong th:text="${m.score}">0.00</strong> / 10 &#183; <span th:text="${m.bandLabel}">Moderate emphasis</span></p>
+          <p th:text="${m.explanation}">Explanation</p>
+          <ul th:if="${!m.drivers.isEmpty()}"><li th:each="item : ${m.drivers}" th:text="${item}">Driver</li></ul>
+          <p class="helper" th:if="${!m.confidenceNote.isEmpty()}" th:text="${m.confidenceNote}">Lower confidence</p>
+        </article>
+      </div>
+      <p th:text="${r.perspectives.capability}">Capability explanation</p>
+    </section>
+  </section>
+
+  <!--/* 2. What this combination gives you */-->
+  <section class="panel" aria-labelledby="ar-shape">
+    <h2 id="ar-shape">What this combination gives you</h2>
+    <article th:each="entry : ${r.combinationShape}"><h3 th:text="${entry.title}">Title</h3><p th:text="${entry.text}">Text</p></article>
+  </section>
+
+  <!--/* 3. Strengths to develop further */-->
+  <section class="panel" th:if="${!r.strengths.isEmpty()}" aria-labelledby="ar-strengths">
+    <h2 id="ar-strengths">Strengths to develop further</h2>
+    <article th:each="entry : ${r.strengths}"><h3 th:text="${entry.title}">Title</h3><p th:text="${entry.text}">Text</p></article>
+  </section>
+
+  <!--/* 4. Areas to strengthen: only when useful */-->
+  <section class="panel" th:if="${!r.areasToStrengthen.isEmpty()}" aria-labelledby="ar-areas">
+    <h2 id="ar-areas">Areas to strengthen</h2>
+    <article th:each="entry : ${r.areasToStrengthen}"><h3 th:text="${entry.title}">Title</h3><p th:text="${entry.text}">Text</p></article>
+  </section>
+
+  <!--/* 5. Options and applications */-->
+  <section class="panel" aria-labelledby="ar-options">
+    <h2 id="ar-options">Options and applications</h2>
+    <p th:text="${r.perspectives.options}">Options explanation</p>
+    <div class="detailed-card-grid">
+      <article class="detailed-card"><h3>What this assessment can say</h3><ul><li th:each="item : ${r.options.canSay}" th:text="${item}">Can say</li></ul></article>
+      <article class="detailed-card"><h3>What it cannot say</h3><ul><li th:each="item : ${r.options.cannotSay}" th:text="${item}">Cannot say</li></ul></article>
+    </div>
+    <article th:each="entry : ${r.options.checks}"><h3 th:text="${entry.title}">Title</h3><p th:text="${entry.text}">Text</p></article>
+    <p class="notice" th:if="${!r.options.gradesNote.isEmpty()}" th:text="${r.options.gradesNote}">Grades note</p>
+  </section>
+
+  <!--/* 6. AI study */-->
+  <section class="panel" aria-labelledby="ar-ai">
+    <h2 id="ar-ai">Using AI to support your learning</h2>
+    <p class="notice" th:text="${r.aiStudy.caution}">Caution</p>
+    <p th:text="${r.perspectives.aiLearning}">AI learning explanation</p>
+    <article th:each="entry : ${r.aiStudy.uses}"><h3 th:text="${entry.title}">Title</h3><p th:text="${entry.text}">Text</p></article>
+  </section>
+
+  <!--/* 7. Skill priorities */-->
+  <section class="results-section" aria-labelledby="ar-skills">
+    <h2 id="ar-skills">Skill priorities</h2>
+    <div class="detailed-card-grid">
+      <article class="panel detailed-card" th:each="entry : ${r.skillPriorities}"><h3 th:text="${entry.title}">Skill</h3><p th:text="${entry.text}">Text</p></article>
+    </div>
+  </section>
+
+  <!--/* 8. Action plan */-->
+  <section class="results-section" aria-labelledby="ar-plan">
+    <h2 id="ar-plan">Your action plan</h2>
+    <p th:text="${r.perspectives.actionPlanIntroduction}">Introduction</p>
+    <div class="detailed-card-grid">
+      <article class="panel detailed-card" th:if="${!r.actionPlan.now.isEmpty()}"><h3>Now</h3>
+        <ul><li th:each="a : ${r.actionPlan.now}"><strong th:text="${a.title}">Action</strong> <span th:text="${a.text}">Detail</span></li></ul></article>
+      <article class="panel detailed-card" th:if="${!r.actionPlan.sixthForm.isEmpty()}"><h3>During Year 13 and the rest of sixth form</h3>
+        <ul><li th:each="a : ${r.actionPlan.sixthForm}"><strong th:text="${a.title}">Action</strong> <span th:text="${a.text}">Detail</span></li></ul></article>
+      <article class="panel detailed-card" th:if="${!r.actionPlan.applications.isEmpty()}"><h3>Applications and next-step decisions</h3>
+        <ul><li th:each="a : ${r.actionPlan.applications}"><strong th:text="${a.title}">Action</strong> <span th:text="${a.text}">Detail</span></li></ul></article>
+    </div>
+  </section>
+
+  <!--/* 9. Safeguards */-->
+  <section class="panel" aria-labelledby="ar-safeguards">
+    <h2 id="ar-safeguards">Safeguards</h2>
+    <article th:each="entry : ${r.safeguards}"><h3 th:text="${entry.title}">Title</h3><p th:text="${entry.text}">Text</p></article>
+  </section>
+
+  <!--/* 10. Evidence: only when a configured provider stored some */-->
+  <section class="panel" th:if="${!r.evidence.isEmpty()}" aria-labelledby="ar-evidence">
+    <h2 id="ar-evidence">Course information from published sources</h2>
+    <p class="helper">These are factual notes with their own sources. They are separate from your assessment and do not change it.</p>
+    <article th:each="item : ${r.evidence}"><h3 th:text="${item.title}">Title</h3><p th:text="${item.summary}">Summary</p><p class="helper">Source: <span th:text="${item.sourceName}">Source</span></p></article>
+  </section>
+
+  <!--/* 11. Limitations */-->
+  <section class="panel report-caveat" aria-labelledby="ar-limits">
+    <h2 id="ar-limits">Perspective and limitations</h2>
+    <ul><li th:each="item : ${r.limitations}" th:text="${item}">Limitation</li></ul>
+  </section>
+
+  <nav class="page-action alevel-bottom-actions" aria-label="Report navigation">
+    <a class="button-link button-secondary" th:href="@{/a-level-assessment/{id}(id=${assessmentId})}">Back to your subject profile</a>
+  </nav>
+</main>
+
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
+</body>
+</html>

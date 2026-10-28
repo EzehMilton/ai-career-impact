@@ -1,5 +1,7 @@
 package com.chikere.futureai.assessment.alevel.web;
 
+import com.chikere.futureai.assessment.alevel.application.AssessmentSource;
+import com.chikere.futureai.assessment.alevel.application.StoredALevelAssessment;
 import com.chikere.futureai.assessment.alevel.application.ALevelAssessmentUseCase;
 import com.chikere.futureai.assessment.domain.ALevelAssessmentState;
 import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseUseCase;
@@ -98,6 +100,11 @@ public final class ALevelAssessmentController {
             return "a-level-assessment/not-found";
         }
         try {
+            // Routed by the stored decision version: a v2 subject profile has its own page, a v1 assessment keeps v1.
+            var stored = reportService.stored(id);
+            if (stored.filter(value -> value.result().usesSubjectProfile()).isPresent()) {
+                return subjectProfile(stored.get(), checkout, model);
+            }
             var report = reportService.assemble(id, ALevelReportTier.FREE);
             if (report.isEmpty()) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -121,6 +128,21 @@ public final class ALevelAssessmentController {
             response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
             return "a-level-assessment/error";
         }
+    }
+
+    /** The deterministic v2 free result, with the a-level-report-v2 purchase panel. */
+    private String subjectProfile(StoredALevelAssessment assessment, String checkout, Model model) {
+        var purchase = ALevelPurchaseViewModel.from(purchaseService.accessFor(assessment.id()));
+        if ("returned".equals(checkout) && purchase.active()) {
+            return "redirect:/a-level-assessment/" + assessment.id() + "/report";
+        }
+        model.addAttribute("purchase", purchase);
+        model.addAttribute("paymentPanel", paymentPanel(checkout));
+        model.addAttribute("assessmentId", assessment.id());
+        model.addAttribute("subjects", assessment.state().selectedSubjects());
+        model.addAttribute("developmentFixture", assessment.result().source() == AssessmentSource.LOCAL_FIXTURE);
+        model.addAttribute("profile", reportService.subjectProfile(assessment.id()).orElseThrow());
+        return "a-level-assessment/result-v2";
     }
 
     /**

@@ -1,0 +1,308 @@
+{
+  "source": "OFFLINE_CALIBRATION",
+  "schemaVersion": "a-level-v2",
+  "note": "Synthetic calibration judgments for Stage A1/A2 design. NOT Jev output and not evidence about any subject. Replace each case with a live a-level-v2 capture (source JEV) in the final release-hardening session.",
+  "cases": [
+    {
+      "id": "maths-physics-computer-science",
+      "origin": "Seven capability and diversity values and ai_learning_support carried over unchanged from the a-level-v1 local development fixture 'mathematics_physics_computer_science'; discipline_family_coverage is a new synthetic value.",
+      "informationSufficiency": 0.9,
+      "judgments": {
+        "quantitative_reasoning": {
+          "score": 4.0,
+          "confidence": 0.85
+        },
+        "analytical_reasoning": {
+          "score": 3.8,
+          "confidence": 0.85
+        },
+        "written_verbal_communication": {
+          "score": 1.6,
+          "confidence": 0.85
+        },
+        "original_judgment_creativity": {
+          "score": 2.4,
+          "confidence": 0.85
+        },
+        "contextual_social_understanding": {
+          "score": 1.2,
+          "confidence": 0.85
+        },
+        "technical_digital_foundation": {
+          "score": 4.0,
+          "confidence": 0.85
+        },
+        "subject_skill_diversity": {
+          "score": 1.8,
+          "confidence": 0.85
+        },
+        "discipline_family_coverage": {
+          "score": 2.6,
+          "confidence": 0.85
+        },
+        "ai_learning_support": {
+          "score": 3.8,
+          "confidence": 0.85
+        }
+      }
+    },
+    {
+      "id": "maths-economics-geography",
+      "origin": "Seven capability and diversity values and ai_learning_support carried over unchanged from the a-level-v1 local development fixture 'maths_economics_geography'; discipline_family_coverage is a new synthetic value.",
+      "informationSufficiency": 0.88,
+      "judgments": {
+        "quantitative_reasoning": {
+          "score": 3.4,
+          "confidence": 0.85
+        },
+        "analytical_reasoning": {
+          "score": 3.4,
+          "confidence": 0.85
+        },
+        "written_verbal_communication": {
+          "score": 3.0,
+          "confidence": 0.85
+        },
+        "original_judgment_creativity": {
+          "score": 2.2,
+          "confidence": 0.85
+        },
+        "contextual_social_understanding": {
+          "score": 3.6,
+          "confidence": 0.85
+        },
+        "technical_digital_foundation": {
+          "score": 1.6,
+          "confidence": 0.85
+        },
+        "subject_skill_diversity": {
+          "score": 3.4,
+          "confidence": 0.85
+        },
+        "discipline_family_coverage": {
+          "score": 3.4,
+          "confidence": 0.85
+        },
+        "ai_learning_support": {
+          "score": 3.0,
+          "confidence": 0.85
+        }
+      }
+    },
+    {
+      "id": "english-literature-history-politics",
+      "origin": "Seven capability and diversity values and ai_learning_support carried over unchanged from the a-level-v1 local development fixture 'english_history_politics'; discipline_family_coverage is a new synthetic value.",
+      "informationSufficiency": 0.86,
+      "judgments": {
+        "quantitative_reasoning": {
+          "score": 0.8,
+          "confidence": 0.85
+        },
+        "analytical_reasoning": {
+          "score": 3.2,
+          "confidence": 0.85
+        },
+        "written_verbal_communication": {
+          "score": 4.0,
+          "confidence": 0.85
+        },
+        "original_judgment_creativity": {
+          "score": 3.4,
+          "confidence": 0.85
+        },
+        "contextual_social_understanding": {
+          "score": 4.0,
+          "confidence": 0.85
+        },
+        "technical_digital_foundation": {
+          "score": 0.6,
+          "confidence": 0.85
+        },
+        "subject_skill_diversity": {
+          "score": 2.2,
+          "confidence": 0.85
+        },
+        "discipline_family_coverage": {
+          "score": 2.8,
+          "confidence": 0.85
+        },
+        "ai_learning_support": {
+          "score": 2.4,
+          "confidence": 0.85
+        }
+      }
+    },
+    {
+      "id": "biology-chemistry-maths",
+      "origin": "Seven capability and diversity values and ai_learning_support carried over unchanged from the a-level-v1 local development fixture 'biology_chemistry_mathematics'; discipline_family_coverage is a new synthetic value.",
+      "informationSufficiency": 0.88,
+      "judgments": {
+        "quantitative_reasoning": {
+          "score": 3.4,
+          "confidence": 0.85
+        },
+        "analytical_reasoning": {
+          "score": 3.6,
+          "confidence": 0.85
+        },
+        "written_verbal_communication": {
+          "score": 1.8,
+          "confidence": 0.85
+        },
+        "original_judgment_creativity": {
+          "score": 1.8,
+          "confidence": 0.85
+        },
+        "contextual_social_understanding": {
+          "score": 2.0,
+          "confidence": 0.85
+        },
+        "technical_digital_foundation": {
+          "score": 1.6,
+          "confidence": 0.85
+        },
+        "subject_skill_diversity": {
+          "score": 2.0,
+          "confidence": 0.85
+        },
+        "discipline_family_coverage": {
+          "score": 2.2,
+          "confidence": 0.85
+        },
+        "ai_learning_support": {
+          "score": 2.8,
+          "confidence": 0.85
+        }
+      }
+    },
+    {
+      "id": "art-english-literature-psychology",
+      "origin": "All values are new synthetic calibration values. Exercise: two lower confidences make Analytical & Quantitative a lower-confidence measure.",
+      "informationSufficiency": 0.86,
+      "judgments": {
+        "quantitative_reasoning": {
+          "score": 1.2,
+          "confidence": 0.4
+        },
+        "analytical_reasoning": {
+          "score": 2.6,
+          "confidence": 0.85
+        },
+        "written_verbal_communication": {
+          "score": 3.6,
+          "confidence": 0.85
+        },
+        "original_judgment_creativity": {
+          "score": 4.0,
+          "confidence": 0.85
+        },
+        "contextual_social_understanding": {
+          "score": 3.0,
+          "confidence": 0.85
+        },
+        "technical_digital_foundation": {
+          "score": 1.4,
+          "confidence": 0.4
+        },
+        "subject_skill_diversity": {
+          "score": 3.0,
+          "confidence": 0.85
+        },
+        "discipline_family_coverage": {
+          "score": 3.2,
+          "confidence": 0.85
+        },
+        "ai_learning_support": {
+          "score": 2.8,
+          "confidence": 0.85
+        }
+      }
+    },
+    {
+      "id": "business-economics-maths",
+      "origin": "All values are new synthetic calibration values.",
+      "informationSufficiency": 0.86,
+      "judgments": {
+        "quantitative_reasoning": {
+          "score": 3.6,
+          "confidence": 0.85
+        },
+        "analytical_reasoning": {
+          "score": 3.2,
+          "confidence": 0.85
+        },
+        "written_verbal_communication": {
+          "score": 2.6,
+          "confidence": 0.85
+        },
+        "original_judgment_creativity": {
+          "score": 2.0,
+          "confidence": 0.85
+        },
+        "contextual_social_understanding": {
+          "score": 3.0,
+          "confidence": 0.85
+        },
+        "technical_digital_foundation": {
+          "score": 1.8,
+          "confidence": 0.85
+        },
+        "subject_skill_diversity": {
+          "score": 2.4,
+          "confidence": 0.85
+        },
+        "discipline_family_coverage": {
+          "score": 2.6,
+          "confidence": 0.85
+        },
+        "ai_learning_support": {
+          "score": 3.0,
+          "confidence": 0.85
+        }
+      }
+    },
+    {
+      "id": "sociology-psychology-biology",
+      "origin": "All values are new synthetic calibration values. Exercise: information sufficiency 0.72 is below the 0.75 ready threshold, so the status is READY_WITH_CAUTION.",
+      "informationSufficiency": 0.72,
+      "judgments": {
+        "quantitative_reasoning": {
+          "score": 1.8,
+          "confidence": 0.85
+        },
+        "analytical_reasoning": {
+          "score": 2.8,
+          "confidence": 0.85
+        },
+        "written_verbal_communication": {
+          "score": 3.0,
+          "confidence": 0.85
+        },
+        "original_judgment_creativity": {
+          "score": 2.2,
+          "confidence": 0.85
+        },
+        "contextual_social_understanding": {
+          "score": 3.4,
+          "confidence": 0.85
+        },
+        "technical_digital_foundation": {
+          "score": 1.0,
+          "confidence": 0.85
+        },
+        "subject_skill_diversity": {
+          "score": 2.6,
+          "confidence": 0.85
+        },
+        "discipline_family_coverage": {
+          "score": 2.4,
+          "confidence": 0.85
+        },
+        "ai_learning_support": {
+          "score": 2.8,
+          "confidence": 0.85
+        }
+      }
+    }
+  ]
+}

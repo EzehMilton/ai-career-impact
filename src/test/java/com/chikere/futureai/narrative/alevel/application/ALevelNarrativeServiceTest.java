@@ -129,6 +129,37 @@ class ALevelNarrativeServiceTest {
         verify(assessmentStore, never()).findById(any());
     }
 
+    @Test
+    void aV2SubjectProfileMakesNoOpenAiCallAndStoresNothing() {
+        var assessmentStore = mock(ALevelAssessmentStore.class);
+        var narrativeStore = mock(ALevelNarrativeStore.class);
+        var generator = mock(ALevelNarrativeGenerator.class);
+        when(assessmentStore.findById(ID)).thenReturn(Optional.of(
+                com.chikere.futureai.assessment.alevel.application.ALevelTestAssessments.subjectProfile(ID,
+                        "maths_economics_geography", AssessmentSource.JEV)));
+
+        assertThat(service(assessmentStore, narrativeStore, generator).generateIfApplicable(ID)).isEmpty();
+
+        verify(generator, never()).generate(any());
+        verify(narrativeStore, never()).save(any());
+    }
+
+    @Test
+    void aHistoricalV1AssessmentStillGetsItsFreeNarrativeThroughTheSameEntryPoint() {
+        var assessmentStore = mock(ALevelAssessmentStore.class);
+        var narrativeStore = mock(ALevelNarrativeStore.class);
+        var generator = mock(ALevelNarrativeGenerator.class);
+        when(assessmentStore.findById(ID)).thenReturn(Optional.of(snapshot("maths_economics_geography")));
+        when(narrativeStore.findByAssessmentId(ID)).thenReturn(Optional.empty());
+        when(generator.source()).thenReturn(NarrativeSource.OPENAI);
+        when(generator.providerIdentifier()).thenReturn("openai");
+        doReturn(narrative()).when(generator).generate(any());
+
+        assertThat(service(assessmentStore, narrativeStore, generator).generateIfApplicable(ID))
+                .hasValueSatisfying(stored -> assertThat(stored.status()).isEqualTo(NarrativeStatus.AVAILABLE));
+        verify(generator, times(1)).generate(any());
+    }
+
     private ALevelNarrativeService service(ALevelAssessmentStore assessmentStore,
             ALevelNarrativeStore narrativeStore, ALevelNarrativeGenerator generator) {
         return new ALevelNarrativeService(assessmentStore, narrativeStore, generator,
