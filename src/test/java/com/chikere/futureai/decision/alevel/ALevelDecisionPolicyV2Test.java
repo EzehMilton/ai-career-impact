@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
 /** The production a-level-decision-v2 policy: formulas, bands, factors, confidence and strict input validation. */
-class ALevelDecisionPolicyV2Test {
+public class ALevelDecisionPolicyV2Test {
 
     private final ALevelDecisionPolicyV2 policy = new ALevelDecisionPolicyV2();
 
@@ -211,7 +211,7 @@ class ALevelDecisionPolicyV2Test {
         return result.measure(measure).orElseThrow().indicator();
     }
 
-    static Map<String, Double> scores(double value) {
+    public static Map<String, Double> scores(double value) {
         Map<String, Double> scores = new LinkedHashMap<>();
         ALevelDecisionPolicyV2.SCORE_DIMENSIONS.forEach(id -> scores.put(id, value));
         return scores;
@@ -221,7 +221,7 @@ class ALevelDecisionPolicyV2Test {
         return scores(value);
     }
 
-    static AssessmentJudgmentSet judgments(double information, Map<String, Double> scores) {
+    public static AssessmentJudgmentSet judgments(double information, Map<String, Double> scores) {
         return judgments(information, scores, confidences(0.85));
     }
 

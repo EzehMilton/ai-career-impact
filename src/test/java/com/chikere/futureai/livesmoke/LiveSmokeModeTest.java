@@ -351,13 +351,12 @@ class LiveSmokeModeTest {
         assertThat(universityReport).contains("Prepare my detailed report");
         mvc.perform(get("/university-assessment/" + university + "/report.pdf")).andExpect(status().isForbidden());
 
-        // a-level-decision-v2 has a free subject profile and, until the v2 paid report exists, no detailed report:
-        // the smoke unlock is refused as NOT_ELIGIBLE, so there is no entitlement, report or PDF to reach.
+        // a-level-report-v2: the complimentary unlock opens the preparation step. The report is generated only by an
+        // explicit POST (which never calls Jev), and its PDF exists only once a final report is stored.
         UUID aLevel = submit(catalog.find(LiveSmokeJourney.A_LEVEL, "maths-economics-geography").orElseThrow());
-        assertThat(aLevelPurchase.accessFor(aLevel).status()).isEmpty();
-        assertThat(mvc.perform(get("/a-level-assessment/" + aLevel)).andExpect(status().isOk()).andReturn()
-                .getResponse().getContentAsString()).contains("Your A-level subject profile");
-        mvc.perform(get("/a-level-assessment/" + aLevel + "/report")).andExpect(status().isForbidden());
+        assertThat(aLevelPurchase.accessFor(aLevel).status().map(Enum::name)).contains("ACTIVE");
+        assertThat(mvc.perform(get("/a-level-assessment/" + aLevel + "/report")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString()).contains("Prepare my detailed report");
         mvc.perform(get("/a-level-assessment/" + aLevel + "/report.pdf")).andExpect(status().isForbidden());
     }
 

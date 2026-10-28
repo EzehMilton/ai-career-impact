@@ -1,5 +1,8 @@
 package com.chikere.futureai.payment.alevel.application;
 
+import com.chikere.futureai.assessment.domain.AssessmentStatus;
+import com.chikere.futureai.assessment.alevel.application.StoredALevelAssessment;
+import com.chikere.futureai.assessment.alevel.application.ALevelAssessmentResult;
 import com.chikere.futureai.report.alevel.application.ALevelReport;
 import com.chikere.futureai.report.alevel.application.ALevelReportQuery;
 import com.chikere.futureai.report.alevel.application.ALevelReportTier;
@@ -78,12 +81,7 @@ public final class ALevelReportPurchaseService implements ALevelReportPurchaseUs
         if (existing.isPresent() && existing.orElseThrow().status() != ALevelEntitlementStatus.FAILED) {
             throw new PaymentUnavailableException("a purchase already exists for this assessment");
         }
-        if (isSubjectProfile(assessmentId)) {
-            throw new PaymentUnavailableException("the detailed report is not yet available for this assessment");
-        }
-        ALevelReport paidReport = reportService.assemble(assessmentId, ALevelReportTier.PAID)
-                .orElseThrow(() -> new IllegalArgumentException("assessment does not exist"));
-        if (paidReport.measures().size() != 6) {
+        if (!eligible(assessmentId)) {
             throw new PaymentUnavailableException("the assessment is not complete enough for a paid report");
         }
         UUID entitlementId = existing.map(ALevelReportEntitlement::entitlementId).orElseGet(UUID::randomUUID);
@@ -222,7 +220,20 @@ public final class ALevelReportPurchaseService implements ALevelReportPurchaseUs
             return Optional.empty();
         }
         return purchaseStore.findSnapshotByAssessmentId(assessmentId)
-                .map(PurchasedALevelReportSnapshot::report);
+                .flatMap(PurchasedALevelReportSnapshot::purchasedReport);
+    }
+
+    /** The report version of the ACTIVE purchase, which decides which paid report the customer receives. */
+    @Override
+    public Optional<String> activePurchaseVersion(UUID assessmentId) {
+        Optional<ALevelReportEntitlement> entitlement =
+                purchaseStore.findEntitlementByAssessmentId(Objects.requireNonNull(assessmentId));
+        if (entitlement.map(ALevelReportEntitlement::status)
+                .filter(status -> status == ALevelEntitlementStatus.ACTIVE).isEmpty()) {
+            return Optional.empty();
+        }
+        return purchaseStore.findSnapshotByAssessmentId(assessmentId)
+                .map(PurchasedALevelReportSnapshot::reportVersion);
     }
 
     @Override
@@ -267,21 +278,17 @@ public final class ALevelReportPurchaseService implements ALevelReportPurchaseUs
     private ComplimentaryRedemptionResult grant(UUID assessmentId) {
         var existing = purchaseStore.findEntitlementByAssessmentId(assessmentId);
         if (existing.isPresent()) return redemptionFor(existing.orElseThrow());
-        if (isSubjectProfile(assessmentId)) return ComplimentaryRedemptionResult.NOT_ELIGIBLE;
-        ALevelReport paidReport = reportService.assemble(assessmentId, ALevelReportTier.PAID)
-                .orElseThrow(() -> new IllegalArgumentException("assessment does not exist"));
-        if (paidReport.measures().size() != 6) return ComplimentaryRedemptionResult.NOT_ELIGIBLE;
+        if (!eligible(assessmentId)) return ComplimentaryRedemptionResult.NOT_ELIGIBLE;
         UUID entitlementId = UUID.randomUUID();
         Instant now = Instant.now(clock);
+        PurchasedALevelReportSnapshot snapshot = freeze(entitlementId, assessmentId, now);
         // The checkout columns are required by the payment schema. These values name the grant
         // rather than a provider session, and no gateway is ever asked about them.
         var entitlement = new ALevelReportEntitlement(entitlementId, assessmentId, ALevelReportTier.PAID,
                 ALevelEntitlementStatus.ACTIVE, ALevelPaymentProvider.COMPLIMENTARY,
                 "complimentary_" + entitlementId,
                 applicationBaseUrl.resolve("/a-level-assessment/" + assessmentId + "/report"), "complimentary",
-                Optional.empty(), Optional.of(paidReport.reportVersion()), now, Optional.of(now));
-        var snapshot = new PurchasedALevelReportSnapshot(entitlementId, assessmentId,
-                paidReport.reportVersion(), now, paidReport);
+                Optional.empty(), Optional.of(snapshot.reportVersion()), now, Optional.of(now));
         try {
             purchaseStore.saveComplimentary(entitlement, snapshot);
         }
@@ -294,15 +301,6 @@ public final class ALevelReportPurchaseService implements ALevelReportPurchaseUs
         return ComplimentaryRedemptionResult.UNLOCKED;
     }
 
-    /**
-     * An {@code a-level-decision-v2} subject profile has no paid report yet: only the historical
-     * a-level-report-v1 can be bought, and a v2 assessment is never turned into one. Checkout and complimentary
-     * access are therefore refused for it until the v2 paid report exists.
-     */
-    private boolean isSubjectProfile(UUID assessmentId) {
-        return reportService.stored(assessmentId).filter(stored -> stored.result().usesSubjectProfile()).isPresent();
-    }
-
     private static ComplimentaryRedemptionResult redemptionFor(ALevelReportEntitlement existing) {
         return existing.status() == ALevelEntitlementStatus.ACTIVE
                 ? ComplimentaryRedemptionResult.ALREADY_ACTIVE
@@ -310,10 +308,33 @@ public final class ALevelReportPurchaseService implements ALevelReportPurchaseUs
     }
 
     private PurchasedALevelReportSnapshot freezeCurrentPaidReport(ALevelReportEntitlement entitlement) {
-        ALevelReport report = reportService.assemble(entitlement.assessmentId(), ALevelReportTier.PAID)
+        return freeze(entitlement.entitlementId(), entitlement.assessmentId(), Instant.now(clock));
+    }
+
+    /**
+     * Routed by the assessment's stored decision version, never the current application version: a v1 assessment
+     * freezes its a-level-report-v1 document; a v2 subject profile records an a-level-report-v2 purchase, whose
+     * detailed report is prepared later on the customer's explicit request. Activation never generates a report.
+     */
+    private PurchasedALevelReportSnapshot freeze(UUID entitlementId, UUID assessmentId, Instant at) {
+        if (reportService.stored(assessmentId).map(StoredALevelAssessment::result)
+                .filter(ALevelAssessmentResult::usesSubjectProfile).isPresent()) {
+            return PurchasedALevelReportSnapshot.subjectProfile(entitlementId, assessmentId, at);
+        }
+        ALevelReport report = reportService.assemble(assessmentId, ALevelReportTier.PAID)
                 .orElseThrow(() -> new InvalidPaymentNotificationException("assessment no longer exists"));
-        return new PurchasedALevelReportSnapshot(entitlement.entitlementId(), entitlement.assessmentId(),
-                report.reportVersion(), Instant.now(clock), report);
+        return new PurchasedALevelReportSnapshot(entitlementId, assessmentId, report.reportVersion(), at, report);
+    }
+
+    /** A v2 subject profile is eligible unless more information was required; a v1 report needs all six measures. */
+    private boolean eligible(UUID assessmentId) {
+        var result = reportService.stored(assessmentId).map(StoredALevelAssessment::result);
+        if (result.filter(ALevelAssessmentResult::usesSubjectProfile).isPresent()) {
+            return result.get().headline().status() != AssessmentStatus.MORE_INFORMATION_REQUIRED;
+        }
+        ALevelReport paidReport = reportService.assemble(assessmentId, ALevelReportTier.PAID)
+                .orElseThrow(() -> new IllegalArgumentException("assessment does not exist"));
+        return paidReport.measures().size() == 6;
     }
 
     private void validateEvent(ALevelReportEntitlement entitlement, ALevelPaymentEvent event) {

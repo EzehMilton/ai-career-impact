@@ -296,7 +296,7 @@ class ALevelAssessmentControllerTest {
     }
 
     @Test
-    void aV2AssessmentRendersTheSubjectProfileWithNoHeadlineScoreOrPurchase() throws Exception {
+    void aV2AssessmentRendersTheSubjectProfileWithNoHeadlineScoreAndOffersTheV2Report() throws Exception {
         var v2 = com.chikere.futureai.assessment.alevel.application.ALevelTestAssessments.subjectProfile(ID,
                 "english_history_politics", AssessmentSource.LOCAL_FIXTURE);
         when(reportService.stored(ID)).thenReturn(Optional.of(v2));
@@ -313,10 +313,10 @@ class ALevelAssessmentControllerTest {
                 "Options Kept Open", "Capability Profile", "Analytical &amp; Quantitative",
                 "Communication, Interpretation &amp; Context", "Learning Alongside AI", "neither side is better",
                 "does not replace developing your own understanding", "Development mode");
+        assertThat(html).contains("Explore your subject profile in more detail");
         assertThat(html).doesNotContain("Future Optionality", "Future Readiness", "AI Career Impact Report",
-                "employability", "Overall score", "Explore your A-level choices in more detail", "checkout");
+                "employability", "Overall score", "Explore your A-level choices in more detail");
         org.mockito.Mockito.verify(reportService, org.mockito.Mockito.never()).assemble(any(), any());
-        org.mockito.Mockito.verifyNoInteractions(purchaseService);
     }
 
     @Test

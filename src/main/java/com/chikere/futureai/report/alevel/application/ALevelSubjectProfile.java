@@ -30,6 +30,11 @@ public record ALevelSubjectProfile(
         }
     }
 
+    /** Options Kept Open and Learning Alongside AI: the two single-score cards around the Capability Profile. */
+    public List<Measure> singleMeasures() {
+        return moreInformationRequired ? List.of() : List.of(optionsKeptOpen, learningAlongsideAi);
+    }
+
     /**
      * One scored dimension.
      *

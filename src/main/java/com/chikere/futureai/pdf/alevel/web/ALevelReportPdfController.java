@@ -1,5 +1,8 @@
 package com.chikere.futureai.pdf.alevel.web;
 
+import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseUseCase;
+import com.chikere.futureai.report.alevel.application.ALevelReportVersions;
+import com.chikere.futureai.report.alevel.detailed.ALevelDetailedReportPdfService;
 import com.chikere.futureai.pdf.alevel.application.ALevelReportPdfAccessDeniedException;
 import com.chikere.futureai.pdf.alevel.application.ALevelReportPdfUseCase;
 import com.chikere.futureai.pdf.alevel.application.PurchasedALevelReportPdf;
@@ -28,18 +31,41 @@ public final class ALevelReportPdfController {
     private static final CacheControl PRIVATE_NO_STORE = CacheControl.noStore().cachePrivate();
     private final ALevelReportPdfUseCase pdfService;
     private final JourneyMetrics metrics;
+    private final ObjectProvider<ALevelReportPurchaseUseCase> purchases;
+    private final ObjectProvider<ALevelDetailedReportPdfService> detailedPdfs;
 
-    /** Metrics resolve optionally so a sliced web test without a registry still loads this controller. */
-    public ALevelReportPdfController(ALevelReportPdfUseCase pdfService,
-            ObjectProvider<JourneyMetrics> metrics) {
+    /**
+     * Metrics, purchases and the v2 PDF resolve optionally so a sliced web test without them still loads this
+     * controller. An a-level-report-v2 purchase is rendered on demand from its stored detailed report; every other
+     * purchase keeps the historical v1 path and its stored PDF bytes.
+     */
+    public ALevelReportPdfController(ALevelReportPdfUseCase pdfService, ObjectProvider<JourneyMetrics> metrics,
+            ObjectProvider<ALevelReportPurchaseUseCase> purchases,
+            ObjectProvider<ALevelDetailedReportPdfService> detailedPdfs) {
         this.pdfService = pdfService;
         this.metrics = metrics.getIfAvailable(JourneyMetrics::disabled);
+        this.purchases = purchases;
+        this.detailedPdfs = detailedPdfs;
     }
 
     @GetMapping("/a-level-assessment/{assessmentId}/report.pdf")
     public ResponseEntity<?> download(@PathVariable String assessmentId) {
         try {
-            PurchasedALevelReportPdf artifact = pdfService.getOrCreate(UUID.fromString(assessmentId));
+            UUID id = UUID.fromString(assessmentId);
+            ALevelDetailedReportPdfService detailed = detailedPdfs.getIfAvailable();
+            ALevelReportPurchaseUseCase purchase = purchases.getIfAvailable();
+            if (detailed != null && purchase != null
+                    && purchase.activePurchaseVersion(id).filter(ALevelReportVersions.V2::equals).isPresent()) {
+                // A provisional report has no stored snapshot, so this is refused until a final report exists.
+                var pdf = detailed.render(id);
+                return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).cacheControl(PRIVATE_NO_STORE)
+                        .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+                                .filename(pdf.filename(), StandardCharsets.UTF_8).build().toString())
+                        .contentLength(pdf.bytes().length)
+                        .header("X-Content-Type-Options", "nosniff")
+                        .body(pdf.bytes());
+            }
+            PurchasedALevelReportPdf artifact = pdfService.getOrCreate(id);
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF)
                     .cacheControl(PRIVATE_NO_STORE)
                     .header(HttpHeaders.CONTENT_DISPOSITION,

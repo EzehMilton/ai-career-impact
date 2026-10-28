@@ -85,6 +85,48 @@
     </details>
   </th:block>
 
+  <section class="panel unlock-panel alevel-unlock-panel" aria-labelledby="unlock-heading" th:unless="${profile.moreInformationRequired}">
+    <p class="eyebrow">Optional detailed report</p>
+    <h2 id="unlock-heading">Explore your subject profile in more detail</h2>
+    <div class="tier-grid">
+      <div class="tier tier-included">
+        <h3>Free assessment — included</h3>
+        <ul>
+          <li>Your subject profile: Options Kept Open, Capability Profile and Learning Alongside AI</li>
+          <li>What each part means and what builds it</li>
+          <li>A short summary</li>
+        </ul>
+      </div>
+      <div class="tier">
+        <h3>Detailed report</h3>
+        <ul>
+          <li>What your combination gives you, and strengths to develop further</li>
+          <li>Areas to strengthen, and how to read your options before applying</li>
+          <li>How to use AI to support your learning without weakening it</li>
+          <li>Skill priorities, safeguards and a three-stage action plan</li>
+          <li>A downloadable PDF</li>
+        </ul>
+      </div>
+    </div>
+    <p class="helper">Your subject profile stays the same. The detailed report adds depth; it does not change or re-run your assessment.</p>
+    <p class="price-line" th:if="${purchase.displayPrice != null}">Detailed report: <strong th:text="${purchase.displayPrice}">Configured price</strong></p>
+    <p class="page-action" th:if="${purchase.active}"><a class="button-link" th:href="@{/a-level-assessment/{id}/report(id=${assessmentId})}">Open your detailed report</a></p>
+    <th:block th:if="${purchase.pending}"><div th:replace="~{fragments/payment-confirmation :: panel(
+        statusUrl=@{/a-level-assessment/{id}/payment-status(id=${assessmentId})},
+        reportUrl=@{/a-level-assessment/{id}/report(id=${assessmentId})},
+        resultUrl=@{/a-level-assessment/{id}(id=${assessmentId})},
+        checkoutUrl=@{/a-level-assessment/{id}/checkout(id=${assessmentId})},
+        mode=${paymentPanel})}"></div></th:block>
+    <p class="notice" th:if="${purchase.denied}">Paid report access is not currently active.</p>
+    <form th:if="${purchase.checkoutAvailable}" method="post" th:action="@{/a-level-assessment/{id}/checkout(id=${assessmentId})}">
+      <button type="submit">Get my detailed report</button>
+    </form>
+    <p class="helper" th:if="${purchase.noEntitlement and !purchase.checkoutAvailable}">Paid report checkout is not currently available.</p>
+    <div th:replace="~{fragments/complimentary-access :: form(
+        actionUrl=@{/a-level-assessment/{id}/complimentary-access(id=${assessmentId})},
+        available=${purchase.complimentaryAvailable})}"></div>
+  </section>
+
   <section class="panel report-caveat" aria-labelledby="caveat-heading">
     <h2 id="caveat-heading">About your assessment</h2>
     <p>This is a structured reading of the subjects you listed. It is not an admissions decision, not official careers guidance and not a ranking of subjects. Always check the published entry requirements of any course you are considering.</p>

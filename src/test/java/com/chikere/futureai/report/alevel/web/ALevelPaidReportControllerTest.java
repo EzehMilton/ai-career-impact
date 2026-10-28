@@ -17,6 +17,8 @@ import com.chikere.futureai.report.alevel.application.ALevelReport;
 import com.chikere.futureai.report.alevel.application.ALevelReportAssembler;
 import com.chikere.futureai.report.alevel.application.ALevelReportSource;
 import com.chikere.futureai.report.alevel.application.ALevelReportTier;
+import com.chikere.futureai.report.alevel.detailed.ALevelDetailedReportFixtures;
+import com.chikere.futureai.report.alevel.detailed.ALevelDetailedReportUseCase;
 import com.chikere.futureai.security.WebSecurityConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,8 +35,13 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
@@ -46,6 +53,120 @@ class ALevelPaidReportControllerTest {
 
     @Autowired MockMvc mvc;
     @MockitoBean ALevelReportPurchaseUseCase purchaseService;
+    @MockitoBean ALevelDetailedReportUseCase detailedReports;
+
+    // ---- a-level-report-v2 ----
+
+    private void v2Purchase() {
+        when(purchaseService.activePurchaseVersion(ID)).thenReturn(Optional.of("a-level-report-v2"));
+    }
+
+    @Test
+    void aStoredV2ReportRendersEverySectionWithAPdfLinkAndNoDiagnostics() throws Exception {
+        v2Purchase();
+        when(detailedReports.find(ID)).thenReturn(Optional.of(
+                ALevelDetailedReportFixtures.stored(ID)));
+
+        String html = mvc.perform(get("/a-level-assessment/" + ID + "/report"))
+                .andExpect(status().isOk()).andExpect(view().name("a-level-assessment/paid-report-v2"))
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("Your A-level subject profile", "Options Kept Open", "Capability Profile",
+                "Learning Alongside AI", "What this combination gives you", "Options and applications",
+                "What it cannot say", "Using AI to support your learning",
+                "does not mean AI use is permitted in assessed work", "Skill priorities", "Your action plan",
+                "During Year 13 and the rest of sixth form", "Applications and next-step decisions", "Safeguards",
+                "Perspective and limitations", "Download PDF");
+        assertThat(html).doesNotContain("Add the personalised explanation", "a-level-paid-narrative", "AVAILABLE",
+                "provenance", "Future Optionality", "AI Career Impact Report", "currently unavailable",
+                "Course information from published sources");
+        verify(detailedReports, never()).prepare(any());
+        verify(purchaseService, never()).findPurchasedReport(any());
+    }
+
+    @Test
+    void afterARetryableNarrativeTheDeterministicReportIsShownWithARetryAndNoPdf() throws Exception {
+        v2Purchase();
+        when(detailedReports.find(ID)).thenReturn(Optional.empty());
+        when(detailedReports.provisional(ID)).thenReturn(Optional.of(
+                ALevelDetailedReportFixtures.report("mixed_balanced")));
+
+        String html = mvc.perform(get("/a-level-assessment/" + ID + "/report").param("preparation", "provisional"))
+                .andExpect(status().isOk()).andExpect(view().name("a-level-assessment/paid-report-v2"))
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("Add the personalised explanation", "Your action plan").doesNotContain("Download PDF");
+        verify(detailedReports, never()).prepare(any());
+    }
+
+    @Test
+    void anActiveV2PurchaseWithoutAReportShowsThePrepareStep() throws Exception {
+        v2Purchase();
+        when(detailedReports.find(ID)).thenReturn(Optional.empty());
+        when(detailedReports.preparation(ID)).thenReturn(Optional.of(
+                new ALevelDetailedReportUseCase.Preparation(false)));
+
+        String html = mvc.perform(get("/a-level-assessment/" + ID + "/report"))
+                .andExpect(status().isOk()).andExpect(view().name("a-level-assessment/paid-report-v2-prepare"))
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("Prepare my detailed report", "it is prepared only once");
+        verify(detailedReports, never()).prepare(any());
+        verify(detailedReports, never()).provisional(any());
+    }
+
+    @Test
+    void preparingRedirectsToTheStoredOrProvisionalReport() throws Exception {
+        var stored = ALevelDetailedReportFixtures.stored(ID);
+        when(detailedReports.prepare(ID)).thenReturn(new com.chikere.futureai.report.alevel.detailed
+                .ALevelDetailedReportUseCase.Outcome(Optional.of(stored), stored.report(), false));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .post("/a-level-assessment/" + ID + "/report/prepare").with(org.springframework.security.test
+                                .web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .redirectedUrl("/a-level-assessment/" + ID + "/report"));
+
+        when(detailedReports.prepare(ID)).thenReturn(new com.chikere.futureai.report.alevel.detailed
+                .ALevelDetailedReportUseCase.Outcome(Optional.empty(), stored.report(), false));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .post("/a-level-assessment/" + ID + "/report/prepare").with(org.springframework.security.test
+                                .web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .redirectedUrl("/a-level-assessment/" + ID + "/report?preparation=provisional"));
+
+        when(detailedReports.prepare(ID)).thenThrow(new IllegalStateException("provider detail"));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .post("/a-level-assessment/" + ID + "/report/prepare").with(org.springframework.security.test
+                                .web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .redirectedUrl("/a-level-assessment/" + ID + "/report?preparation=failed"));
+    }
+
+    @Test
+    void preparingWithoutAnActiveEntitlementIsForbidden() throws Exception {
+        when(detailedReports.prepare(ID)).thenThrow(new com.chikere.futureai.report.alevel.detailed
+                .ALevelDetailedReportUnavailableException(com.chikere.futureai.report.alevel.detailed
+                .ALevelDetailedReportUnavailableException.Reason.NOT_ENTITLED, "no"));
+        when(purchaseService.accessFor(any())).thenReturn(new ALevelPurchaseAccess(
+                Optional.of(ALevelEntitlementStatus.PENDING), false, Optional.empty()));
+
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .post("/a-level-assessment/" + ID + "/report/prepare").with(org.springframework.security.test
+                                .web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isForbidden())
+                .andExpect(view().name("a-level-assessment/paid-report-unavailable"));
+    }
+
+    @Test
+    void aHistoricalV1PurchaseNeverReachesTheV2Lifecycle() throws Exception {
+        when(purchaseService.activePurchaseVersion(ID)).thenReturn(Optional.of("a-level-report-v1"));
+        when(purchaseService.findPurchasedReport(ID)).thenReturn(Optional.of(frozenPaidReport()));
+
+        mvc.perform(get("/a-level-assessment/" + ID + "/report"))
+                .andExpect(status().isOk()).andExpect(view().name("a-level-assessment/paid-report"));
+
+        verifyNoInteractions(detailedReports);
+    }
 
     @Test
     void anActiveEntitlementRendersOnlyTheFrozenPurchasedSnapshot() throws Exception {

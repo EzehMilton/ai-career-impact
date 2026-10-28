@@ -103,7 +103,7 @@ public final class ALevelAssessmentController {
             // Routed by the stored decision version: a v2 subject profile has its own page, a v1 assessment keeps v1.
             var stored = reportService.stored(id);
             if (stored.filter(value -> value.result().usesSubjectProfile()).isPresent()) {
-                return subjectProfile(stored.get(), model);
+                return subjectProfile(stored.get(), checkout, model);
             }
             var report = reportService.assemble(id, ALevelReportTier.FREE);
             if (report.isEmpty()) {
@@ -130,8 +130,14 @@ public final class ALevelAssessmentController {
         }
     }
 
-    /** The deterministic v2 free result. It offers no purchase: the v2 paid report does not exist yet. */
-    private String subjectProfile(StoredALevelAssessment assessment, Model model) {
+    /** The deterministic v2 free result, with the a-level-report-v2 purchase panel. */
+    private String subjectProfile(StoredALevelAssessment assessment, String checkout, Model model) {
+        var purchase = ALevelPurchaseViewModel.from(purchaseService.accessFor(assessment.id()));
+        if ("returned".equals(checkout) && purchase.active()) {
+            return "redirect:/a-level-assessment/" + assessment.id() + "/report";
+        }
+        model.addAttribute("purchase", purchase);
+        model.addAttribute("paymentPanel", paymentPanel(checkout));
         model.addAttribute("assessmentId", assessment.id());
         model.addAttribute("subjects", assessment.state().selectedSubjects());
         model.addAttribute("developmentFixture", assessment.result().source() == AssessmentSource.LOCAL_FIXTURE);
