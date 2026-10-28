@@ -1,6 +1,7 @@
 package com.chikere.futureai.judgment.typesafe.professional;
 
 import com.chikere.futureai.assessment.domain.JourneyType;
+import com.chikere.futureai.judgment.typesafe.JevResponseValidation;
 import com.chikere.futureai.judgment.typesafe.JevTraceRendering;
 import com.chikere.futureai.trace.AssessmentTrace;
 import com.chikere.futureai.trace.TraceStage;
@@ -84,6 +85,7 @@ public final class ProfessionalJevJudgmentService implements ProfessionalJudgmen
         SystemOneResponse response = trace.timed(JourneyType.PROFESSIONAL, TraceStage.DECISION_MODEL_PROVIDER_RESPONSE,
                 null, () -> typeSafeClient.systemOne(state, schema.questions()), JevTraceRendering::response);
         recordUsage(response);
+        JevResponseValidation.requireExactAnswers(response, schema.questions());
 
         List<DimensionJudgment> judgments = schema.questions().keySet().stream()
                 .map(questionId -> toDomainJudgment(questionId, response))

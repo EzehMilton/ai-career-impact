@@ -8,6 +8,7 @@ import com.chikere.futureai.cost.ProviderCostTracker;
 import com.chikere.futureai.cost.ProviderUsage;
 import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
 import com.chikere.futureai.judgment.domain.DimensionJudgment;
+import com.chikere.futureai.judgment.typesafe.JevResponseValidation;
 import com.chikere.futureai.judgment.typesafe.JevTraceRendering;
 import com.chikere.futureai.trace.AssessmentTrace;
 import com.chikere.futureai.trace.TraceStage;
@@ -53,6 +54,7 @@ public final class ALevelV2JevJudgmentService implements ALevelJudgmentProvider 
         SystemOneResponse response = trace.timed(JourneyType.A_LEVEL, TraceStage.DECISION_MODEL_PROVIDER_RESPONSE,
                 null, () -> typeSafeClient.systemOne(state, schema.questions()), JevTraceRendering::response);
         recordUsage(response);
+        JevResponseValidation.requireExactAnswers(response, schema.questions());
 
         List<DimensionJudgment> judgments = schema.questions().keySet().stream()
                 .map(questionId -> toDomainJudgment(questionId, response))

@@ -18,7 +18,6 @@ public record DimensionJudgment(
         OptionalDouble confidenceValue,
         Map<String, Double> probabilityDistribution) {
 
-    private static final double PROBABILITY_TOLERANCE = 1.0e-9;
 
     public DimensionJudgment {
         dimensionId = requiredText(dimensionId, "dimensionId");
@@ -74,7 +73,7 @@ public record DimensionJudgment(
         });
         if (!copy.isEmpty()) {
             double total = copy.values().stream().mapToDouble(Double::doubleValue).sum();
-            if (Math.abs(total - 1.0) > PROBABILITY_TOLERANCE) {
+            if (!ProbabilityDistributions.sumsToOne(total)) {
                 throw new IllegalArgumentException("probabilityDistribution must sum to 1");
             }
         }

@@ -1,5 +1,7 @@
 package com.chikere.futureai.responsibility.professional.application;
 
+import com.chikere.futureai.judgment.domain.ProbabilityDistributions;
+
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
@@ -22,8 +24,11 @@ public record ResponsibilityScoredJudgment(
 
     public static final int MINIMUM_LEVEL = 0;
     public static final int MAXIMUM_LEVEL = 4;
-    /** Providers round probabilities; a distribution may sum to 1 within this tolerance. */
-    public static final double DISTRIBUTION_TOLERANCE = 0.01;
+    /**
+     * The shared rule: providers round probabilities, so a distribution may sum to 1 within this tolerance, with the
+     * shared floating-point allowance so that a sum meant as exactly 0.99 or 1.01 is accepted.
+     */
+    public static final double DISTRIBUTION_TOLERANCE = ProbabilityDistributions.TOLERANCE;
 
     public ResponsibilityScoredJudgment {
         if (!Double.isFinite(value) || value < MINIMUM_LEVEL || value > MAXIMUM_LEVEL) {
@@ -42,7 +47,7 @@ public record ResponsibilityScoredJudgment(
             }
             total += probability;
         }
-        if (!distribution.isEmpty() && Math.abs(total - 1.0) > DISTRIBUTION_TOLERANCE) {
+        if (!distribution.isEmpty() && !ProbabilityDistributions.sumsToOne(total)) {
             throw new IllegalArgumentException("distribution probabilities must sum to 1, were " + total);
         }
         distribution = Collections.unmodifiableMap(new TreeMap<>(distribution));
