@@ -767,6 +767,12 @@ Findings for the Stage 5D classification policy:
 - `ai_learning_assistance` is high almost everywhere (about 2.53–3.78, mean 3.52), so a module must never be classified from it alone. Classification must combine it with independent demonstration, human judgement, interpersonal work, practical application, professional standards and, where relevant, technical/quantitative context.
 - **Invariant:** AI learning assistance describes where AI may support learning or preparation. It does not determine what use is permitted in assessed work. High AI learning assistance together with high independent demonstration is an integrity-sensitive combination, never permission to use AI in assessment; the paid report must defer to institution and module policies.
 
+### University module classification (`university-module-policy-v1`, frozen)
+
+`UniversityModulePolicyV1` gives each module one primary category and safeguard flags; nothing persists or uses it yet. On the 0–4 scale HIGH is at least 2.5 (MODERATE from 1.5), a characteristic dominates when it is HIGH and leads the others by 0.25, and comparisons carry a 1e-9 allowance. Only practical application, human demand (the stronger of human judgement and interpersonal work) and technical depth compete; AI learning assistance never does, and `described_clearly` is not read. Rules, first match wins: UM1 practical dominance; UM1B hands-on work with people (practical and interpersonal both HIGH, practical within the margin of human demand and ahead of technical by it); UM2 human judgement; UM3 technical core; UM4 AI with strong independent demonstration (no dominance, AI and independent demonstration HIGH); UM5 AI-assisted learning (nothing HIGH, AI HIGH, independent demonstration not HIGH); UM6 mixed.
+
+Flags never change the category. `INDEPENDENT_DEMONSTRATION_SENSITIVE` needs AI assistance at least 2.5 and independent demonstration at least 3.5 (17 of the 56 live modules). `PROFESSIONAL_STANDARDS_RELEVANT` needs a professional-standards judgement of at least 0.75, or at least 0.50 with practical and interpersonal work both HIGH (8 of 56). An internal close-call note records values within 0.15 of HIGH or leads within 0.15 of the margin; it is never shown to customers.
+
 ### University limitations and next sub-phases
 
 - There is no live university evidence adapter yet. Only the port, model, persistence and deterministic fixture exist.
