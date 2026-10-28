@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en-GB" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Your detailed course report')}"></head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('university')}"></header>
+
+<main class="page-shell paid-report paid-report-refined detailed-report university-detailed-report" id="main" th:with="r=${report}">
+  <meta name="robots" content="noindex,nofollow">
+
+  <section class="panel detailed-preparation" th:if="${provisional}" aria-labelledby="ur-retry">
+    <h2 id="ur-retry">Your detailed report is ready</h2>
+    <p>Everything in this report is complete. The personalised explanation that goes alongside it could not be added just now. You can try again; nothing else in your report will change.</p>
+    <p class="notice" role="status" th:if="${preparationStatus == 'failed'}">We still could not add the personalised explanation. Please try again a little later.</p>
+    <form method="post" th:action="@{/university-assessment/{id}/report/prepare(id=${assessmentId})}">
+      <button type="submit" class="button-link button-secondary">Add the personalised explanation</button>
+    </form>
+  </section>
+
+  <div class="page-header paid-report-header">
+    <p class="eyebrow">Your detailed course report</p>
+    <h1 th:text="${r.profile.heading}">Your course profile in an AI-shaped world</h1>
+    <p class="intro"><strong th:text="${r.courseTitle}">Your course</strong><span th:if="${!r.institution.isEmpty()}"> at <span th:text="${r.institution}">your university</span></span></p>
+    <p class="paid-report-header-actions" th:unless="${provisional}">
+      <a class="button-link" th:href="@{/university-assessment/{id}/report.pdf(id=${assessmentId})}">Download PDF <span aria-hidden="true">&#8595;</span></a>
+    </p>
+  </div>
+
+  <!--/* 1. Course profile */-->
+  <section class="results-section" aria-labelledby="ur-profile">
+    <div class="paid-section-heading">
+      <h2 id="ur-profile">Your course profile</h2>
+      <p class="helper">Three separate measures of the course as you described it. They are not added together, and a higher number is not automatically better or worse.</p>
+    </div>
+    <div class="measure-grid paid-measure-grid">
+      <article class="panel measure-card paid-measure-card" th:each="measure : ${r.profile.measures}">
+        <h3 th:text="${measure.name}">Measure</h3>
+        <p class="paid-measure-band" th:text="${measure.bandLabel}">Moderate</p>
+        <dl class="measure-details"><div><dt>Score</dt><dd><span th:text="${measure.score}">0.00</span> / 10</dd></div></dl>
+        <p class="paid-measure-explanation" th:text="${measure.explanation}">Explanation</p>
+        <th:block th:if="${!measure.strengthenedBy.isEmpty()}">
+          <h4>What strengthens this measure</h4>
+          <ul><li th:each="item : ${measure.strengthenedBy}" th:text="${item}">Driver</li></ul>
+        </th:block>
+        <th:block th:if="${!measure.heldBackBy.isEmpty()}">
+          <h4>What holds it back</h4>
+          <ul><li th:each="item : ${measure.heldBackBy}" th:text="${item}">Limit</li></ul>
+        </th:block>
+        <p class="helper" th:if="${!measure.confidenceNote.isEmpty()}" th:text="${measure.confidenceNote}">Lower confidence</p>
+      </article>
+    </div>
+  </section>
+
+  <!--/* 2. What this means */-->
+  <section class="panel paid-overview" aria-labelledby="ur-means">
+    <h2 id="ur-means">What this means</h2>
+    <p th:text="${r.perspectives.overall}">Overall</p>
+    <p th:text="${r.perspectives.transferable}">Transferable</p>
+  </section>
+
+  <!--/* 3. Modules */-->
+  <section class="results-section" aria-labelledby="ur-modules">
+    <div class="paid-section-heading">
+      <h2 id="ur-modules">Your modules</h2>
+      <p class="helper" th:text="${r.modules.selectionNote}">Selection note</p>
+    </div>
+    <div class="detailed-card-grid">
+      <article class="panel detailed-card" th:each="module : ${r.modules.cards}">
+        <h3 th:text="${module.title}">Module</h3>
+        <p class="eyebrow" th:text="${module.classification}">Classification</p>
+        <p th:text="${module.explanation}">Explanation</p>
+        <ul th:if="${!module.notes.isEmpty()}"><li th:each="note : ${module.notes}" th:text="${note}">Note</li></ul>
+      </article>
+    </div>
+  </section>
+
+  <!--/* 4. AI learning */-->
+  <section class="panel" aria-labelledby="ur-ai">
+    <h2 id="ur-ai">Where AI can help your learning</h2>
+    <p class="notice" th:text="${r.aiLearningCaution}">Caution</p>
+    <p th:text="${r.perspectives.aiLearning}">Perspective</p>
+    <article th:each="entry : ${r.aiLearning}"><h3 th:text="${entry.title}">Title</h3><p th:text="${entry.text}">Text</p></article>
+  </section>
+
+  <!--/* 5. Own capability */-->
+  <section class="panel" aria-labelledby="ur-own">
+    <h2 id="ur-own">Where your own capability matters most</h2>
+    <p th:text="${r.perspectives.humanPractical}">Perspective</p>
+    <article th:each="entry : ${r.ownCapability}"><h3 th:text="${entry.title}">Title</h3><p th:text="${entry.text}">Text</p></article>
+  </section>
+
+  <!--/* 6. Technical foundations: only when there are any */-->
+  <section class="panel" th:if="${!r.technicalFoundations.isEmpty()}" aria-labelledby="ur-tech">
+    <h2 id="ur-tech">Technical and analytical foundations</h2>
+    <article th:each="entry : ${r.technicalFoundations}"><h3 th:text="${entry.title}">Title</h3><p th:text="${entry.text}">Text</p></article>
+  </section>
+
+  <!--/* 7. Skills */-->
+  <section class="results-section" aria-labelledby="ur-skills">
+    <h2 id="ur-skills">Skills to strengthen</h2>
+    <div class="detailed-card-grid">
+      <article class="panel detailed-card" th:each="skill : ${r.skills}">
+        <h3 th:text="${skill.title}">Skill</h3>
+        <p th:text="${skill.explanation}">Explanation</p>
+      </article>
+    </div>
+  </section>
+
+  <!--/* 8. Safeguards */-->
+  <section class="panel" aria-labelledby="ur-safeguards">
+    <h2 id="ur-safeguards">Safeguards</h2>
+    <article th:each="entry : ${r.safeguards}"><h3 th:text="${entry.title}">Title</h3><p th:text="${entry.text}">Text</p></article>
+  </section>
+
+  <!--/* 9. Action plan */-->
+  <section class="results-section" aria-labelledby="ur-plan">
+    <h2 id="ur-plan">Your action plan</h2>
+    <p th:text="${r.perspectives.actionPlanIntroduction}">Introduction</p>
+    <div class="detailed-card-grid">
+      <article class="panel detailed-card" th:each="phase : ${r.plan}">
+        <h3 th:text="${phase.title}">Phase</h3>
+        <ul><li th:each="action : ${phase.actions}" th:text="${action}">Action</li></ul>
+      </article>
+    </div>
+  </section>
+
+  <!--/* 10. Limitations */-->
+  <section class="panel report-caveat" aria-labelledby="ur-limits">
+    <h2 id="ur-limits">Perspective and limitations</h2>
+    <ul><li th:each="item : ${r.limitations}" th:text="${item}">Limitation</li></ul>
+  </section>
+
+  <nav class="page-action university-bottom-actions" aria-label="Report navigation">
+    <a class="button-link button-secondary" th:href="@{/university-assessment/{id}(id=${assessmentId})}">Back to your course profile</a>
+  </nav>
+</main>
+
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
+</body>
+</html>

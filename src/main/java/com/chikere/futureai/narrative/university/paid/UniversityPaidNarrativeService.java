@@ -1,0 +1,138 @@
+package com.chikere.futureai.narrative.university.paid;
+
+import com.chikere.futureai.assessment.domain.JourneyType;
+import com.chikere.futureai.trace.AssessmentTrace;
+import com.chikere.futureai.trace.NarrativeRuleViolation;
+import com.chikere.futureai.trace.TraceStage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Supplier;
+
+/**
+ * One paid-narrative attempt: a provider call, validation and at most one repair. Nothing is stored here; the
+ * detailed-report lifecycle freezes an AVAILABLE or final FALLBACK outcome into the report snapshot, and keeps a
+ * RETRYABLE_FALLBACK provisional, so a transient outage never becomes the canonical result.
+ *
+ * <ul>
+ *   <li>Validated prose is AVAILABLE.</li>
+ *   <li>Prose that still fails validation after its one repair is a final FALLBACK.</li>
+ *   <li>No usable provider response (not configured, provider error or an empty response) is RETRYABLE_FALLBACK.</li>
+ * </ul>
+ */
+public final class UniversityPaidNarrativeService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(UniversityPaidNarrativeService.class);
+
+    private final Supplier<Optional<UniversityPaidNarrativeGenerator>> generator;
+    private final UniversityPaidNarrativeValidator validator;
+    private final AssessmentTrace trace;
+
+    public UniversityPaidNarrativeService(Supplier<Optional<UniversityPaidNarrativeGenerator>> generator,
+            UniversityPaidNarrativeValidator validator, AssessmentTrace trace) {
+        this.generator = Objects.requireNonNull(generator);
+        this.validator = Objects.requireNonNull(validator);
+        this.trace = Objects.requireNonNull(trace);
+    }
+
+    public UniversityPaidNarrativeOutcome generate(UniversityPaidNarrativeContext context) {
+        Objects.requireNonNull(context, "context must not be null");
+        Optional<UniversityPaidNarrativeGenerator> provider = generator.get();
+        if (provider.isEmpty()) {
+            return retryable(context, "none", Optional.empty(), "PROVIDER_NOT_CONFIGURED", 0);
+        }
+        UniversityPaidNarrativeGenerator active = provider.get();
+        trace.event(JourneyType.UNIVERSITY, TraceStage.PAID_NARRATIVE_REQUEST, () -> request(context, active));
+        UniversityPaidNarrativeGenerator.GeneratedNarrative first;
+        try {
+            first = active.generate(context);
+        }
+        catch (RuntimeException failure) {
+            return retryable(context, active.providerIdentifier(), active.modelIdentifier(),
+                    "PROVIDER_ERROR:" + failure.getClass().getSimpleName(), 1);
+        }
+        try {
+            return available(active, first, 1, validator.validate(first.narrative(), context));
+        }
+        catch (NarrativeRuleViolation violation) {
+            if (!UniversityPaidNarrativeValidator.REPAIRABLE.contains(violation.rule())) {
+                return retryable(context, active.providerIdentifier(), model(active, first), "EMPTY_PROVIDER_RESPONSE", 1);
+            }
+            var feedback = new UniversityPaidNarrativeGenerator.RepairFeedback(violation.rule(), violation.reason(),
+                    violation.triggeringText());
+            trace.event(JourneyType.UNIVERSITY, TraceStage.PAID_NARRATIVE_REPAIR, () -> Map.of(
+                    "attempt", 2, "failedRule", violation.rule(), "rejectedDraftStored", false));
+            UniversityPaidNarrativeGenerator.GeneratedNarrative second;
+            try {
+                second = active.repair(context, feedback);
+            }
+            catch (RuntimeException failure) {
+                return retryable(context, active.providerIdentifier(), model(active, first),
+                        "REPAIR_PROVIDER_ERROR:" + failure.getClass().getSimpleName(), 2);
+            }
+            try {
+                return available(active, second, 2, validator.validate(second.narrative(), context));
+            }
+            catch (NarrativeRuleViolation repairFailure) {
+                if (!UniversityPaidNarrativeValidator.REPAIRABLE.contains(repairFailure.rule())) {
+                    return retryable(context, active.providerIdentifier(), model(active, second),
+                            "EMPTY_PROVIDER_RESPONSE", 2);
+                }
+                String reason = "VALIDATION_FAILED_AFTER_REPAIR:" + violation.rule() + ">" + repairFailure.rule();
+                LOGGER.warn("Paid narrative journey=university assessmentId={} outcome=FALLBACK final=true reason={}",
+                        context.assessmentId(), reason);
+                trace.event(JourneyType.UNIVERSITY, TraceStage.PAID_NARRATIVE_FALLBACK, () -> Map.of(
+                        "status", UniversityPaidNarrativeStatus.FALLBACK, "reason", reason, "attempts", 2,
+                        "deterministicCopyUsed", true));
+                return new UniversityPaidNarrativeOutcome(UniversityPaidNarrativeStatus.FALLBACK, Optional.empty(),
+                        UniversityPaidNarrativeVersions.CURRENT, active.providerIdentifier(), model(active, second),
+                        second.providerRequestId(), 2, Optional.of(reason));
+            }
+        }
+    }
+
+    private UniversityPaidNarrativeOutcome available(UniversityPaidNarrativeGenerator provider,
+            UniversityPaidNarrativeGenerator.GeneratedNarrative generated, int attempts,
+            UniversityPaidNarrative narrative) {
+        return new UniversityPaidNarrativeOutcome(UniversityPaidNarrativeStatus.AVAILABLE, Optional.of(narrative),
+                UniversityPaidNarrativeVersions.CURRENT, provider.providerIdentifier(), model(provider, generated),
+                generated.providerRequestId(), attempts, Optional.empty());
+    }
+
+    private UniversityPaidNarrativeOutcome retryable(UniversityPaidNarrativeContext context, String provider,
+            Optional<String> model, String reason, int attempts) {
+        LOGGER.warn("Paid narrative journey=university assessmentId={} outcome=RETRYABLE_FALLBACK reason={} attempts={}",
+                context.assessmentId(), reason, attempts);
+        trace.event(JourneyType.UNIVERSITY, TraceStage.PAID_NARRATIVE_FALLBACK, () -> {
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("status", UniversityPaidNarrativeStatus.RETRYABLE_FALLBACK);
+            payload.put("reason", reason);
+            payload.put("attempts", attempts);
+            payload.put("stored", false);
+            payload.put("deterministicCopyUsed", true);
+            return payload;
+        });
+        return new UniversityPaidNarrativeOutcome(UniversityPaidNarrativeStatus.RETRYABLE_FALLBACK, Optional.empty(),
+                UniversityPaidNarrativeVersions.CURRENT, provider, model, Optional.empty(), attempts, Optional.of(reason));
+    }
+
+    private static Optional<String> model(UniversityPaidNarrativeGenerator provider,
+            UniversityPaidNarrativeGenerator.GeneratedNarrative generated) {
+        return generated.model().or(provider::modelIdentifier);
+    }
+
+    private static Map<String, Object> request(UniversityPaidNarrativeContext context,
+            UniversityPaidNarrativeGenerator provider) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("narrativeVersion", UniversityPaidNarrativeVersions.CURRENT);
+        payload.put("provider", provider.providerIdentifier());
+        payload.put("model", provider.modelIdentifier().orElse(null));
+        payload.put("moduleAnalysisId", context.moduleAnalysisId());
+        payload.put("prompt", context.prompt());
+        return payload;
+    }
+}

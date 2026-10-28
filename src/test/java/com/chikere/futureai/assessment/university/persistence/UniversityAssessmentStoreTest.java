@@ -69,10 +69,10 @@ class UniversityAssessmentStoreTest {
 
     @Test
     void allMigrationsAreAppliedAndUniversityTablesAreSeparateFromProfessionalOnes() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("21");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("23");
         assertThat(flyway.info().applied()).extracting(info -> info.getVersion().getVersion())
                 .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
-                        "13", "14", "15", "16", "17", "18", "19", "20", "21");
+                        "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23");
     }
 
     @Test
@@ -112,6 +112,23 @@ class UniversityAssessmentStoreTest {
         assertThat(loaded.result().decision().topDevelopmentOpportunities()).isNotEmpty();
         assertThat(loaded.state().institution()).contains("A UK university");
         assertThat(store.findById(UUID.randomUUID())).isEmpty();
+    }
+
+    @Test
+    void aUniversityDecisionV2AssessmentRoundTripsItsCourseProfileWithNoV1Measures() {
+        var v2 = com.chikere.futureai.coursemodule.university.analysis.ModuleAnalysisTestData
+                .courseProfileAssessment(UUID.randomUUID(), 3);
+
+        store.save(v2);
+        var loaded = store.findById(v2.id()).orElseThrow();
+
+        assertThat(loaded).isEqualTo(v2);
+        assertThat(loaded.result().usesCourseProfile()).isTrue();
+        assertThat(loaded.result().decisionPolicyVersion()).isEqualTo("university-decision-v2");
+        assertThat(loaded.result().profile()).isEqualTo(v2.result().profile());
+        assertThat(loaded.result().profile().measures()).hasSize(3);
+        assertThat(loaded.result().legacyDecision()).isEmpty();
+        assertThatThrownBy(() -> loaded.result().decision()).isInstanceOf(IllegalStateException.class);
     }
 
     @Test

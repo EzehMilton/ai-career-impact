@@ -147,6 +147,61 @@ class UniversityReportPurchaseServiceTest {
     }
 
     @Test
+    void aV1AssessmentPurchasedAfterStage5GStillFreezesTheHistoricalV1Report() {
+        // The running application decides new submissions with university-decision-v2, but the purchase follows the
+        // assessment's stored decision version: a stored v1 assessment is never silently upgraded.
+        var gateway = mock(UniversityPaymentGateway.class);
+        stubAssessment();
+        when(gateway.provider()).thenReturn(UniversityPaymentProvider.STRIPE);
+        doReturn(Optional.of(event())).when(gateway).verifyPaymentNotification(any());
+        when(purchaseStore.findEntitlementById(ENTITLEMENT))
+                .thenReturn(Optional.of(entitlement(UniversityEntitlementStatus.PENDING)));
+        when(purchaseStore.findSnapshotByAssessmentId(ASSESSMENT)).thenReturn(Optional.empty());
+        when(purchaseStore.confirmAndFreeze(any(), any()))
+                .thenReturn(UniversityPurchaseStore.PurchaseConfirmationResult.ACTIVATED);
+
+        service(Optional.of(gateway)).processPaymentNotification(new UniversityPaymentNotification("p", "s"));
+
+        ArgumentCaptor<PurchasedUniversityReportSnapshot> frozen =
+                ArgumentCaptor.forClass(PurchasedUniversityReportSnapshot.class);
+        verify(purchaseStore).confirmAndFreeze(any(), frozen.capture());
+        assertThat(frozen.getValue().isCourseProfilePurchase()).isFalse();
+        assertThat(frozen.getValue().reportVersion()).isEqualTo("university-report-v1");
+        assertThat(frozen.getValue().report().measures()).hasSize(5);
+        assertThat(snapshot().result().decisionPolicyVersion()).isEqualTo("university-decision-v1");
+
+        when(purchaseStore.findEntitlementByAssessmentId(ASSESSMENT))
+                .thenReturn(Optional.of(entitlement(UniversityEntitlementStatus.ACTIVE)));
+        when(purchaseStore.findSnapshotByAssessmentId(ASSESSMENT)).thenReturn(Optional.of(frozen.getValue()));
+        assertThat(service(Optional.of(gateway)).activePurchaseVersion(ASSESSMENT)).contains("university-report-v1");
+        assertThat(service(Optional.of(gateway)).findPurchasedReport(ASSESSMENT)).contains(frozen.getValue().report());
+    }
+
+    @Test
+    void aV2AssessmentPurchaseFreezesOnlyTheCourseProfileMarker() {
+        var gateway = mock(UniversityPaymentGateway.class);
+        when(assessmentStore.findById(ASSESSMENT)).thenReturn(Optional.of(
+                com.chikere.futureai.coursemodule.university.analysis.ModuleAnalysisTestData
+                        .courseProfileAssessment(ASSESSMENT, 4)));
+        when(gateway.provider()).thenReturn(UniversityPaymentProvider.STRIPE);
+        doReturn(Optional.of(event())).when(gateway).verifyPaymentNotification(any());
+        when(purchaseStore.findEntitlementById(ENTITLEMENT))
+                .thenReturn(Optional.of(entitlement(UniversityEntitlementStatus.PENDING)));
+        when(purchaseStore.findSnapshotByAssessmentId(ASSESSMENT)).thenReturn(Optional.empty());
+        when(purchaseStore.confirmAndFreeze(any(), any()))
+                .thenReturn(UniversityPurchaseStore.PurchaseConfirmationResult.ACTIVATED);
+
+        service(Optional.of(gateway)).processPaymentNotification(new UniversityPaymentNotification("p", "s"));
+
+        ArgumentCaptor<PurchasedUniversityReportSnapshot> frozen =
+                ArgumentCaptor.forClass(PurchasedUniversityReportSnapshot.class);
+        verify(purchaseStore).confirmAndFreeze(any(), frozen.capture());
+        assertThat(frozen.getValue().isCourseProfilePurchase()).isTrue();
+        assertThat(frozen.getValue().reportVersion()).isEqualTo("university-report-v2");
+        assertThat(frozen.getValue().purchasedReport()).isEmpty();
+    }
+
+    @Test
     void aDuplicateOrUnknownEventNeverRebuildsOrDuplicatesTheReport() {
         var gateway = mock(UniversityPaymentGateway.class);
         when(gateway.provider()).thenReturn(UniversityPaymentProvider.STRIPE);

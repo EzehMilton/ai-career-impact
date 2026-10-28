@@ -1,5 +1,8 @@
 package com.chikere.futureai.assessment.university.web;
 
+import com.chikere.futureai.assessment.university.application.AssessmentSource;
+import com.chikere.futureai.assessment.university.application.StoredUniversityAssessment;
+
 import com.chikere.futureai.assessment.domain.UniversityAssessmentState;
 import com.chikere.futureai.assessment.university.application.UniversityAssessmentUseCase;
 import com.chikere.futureai.payment.university.application.UniversityReportPurchaseUseCase;
@@ -93,6 +96,10 @@ public final class UniversityAssessmentController {
             return "university-assessment/not-found";
         }
         try {
+            var stored = reportService.stored(id);
+            if (stored.filter(value -> value.result().usesCourseProfile()).isPresent()) {
+                return courseProfile(stored.get(), checkout, model);
+            }
             var report = reportService.assemble(id, UniversityReportTier.FREE);
             if (report.isEmpty()) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -122,6 +129,25 @@ public final class UniversityAssessmentController {
      * Which pending-payment panel to show. Only presentation: a PENDING purchase stays PENDING until
      * the verified webhook activates it, whatever the browser claims about where it came from.
      */
+    /**
+     * The free result of a university-decision-v2 assessment: its deterministic three-measure course profile. Routed by
+     * the stored decision version; a historical v1 assessment keeps its five-measure page.
+     */
+    private String courseProfile(StoredUniversityAssessment assessment, String checkout, Model model) {
+        var purchase = UniversityPurchaseViewModel.from(purchaseService.accessFor(assessment.id()));
+        if ("returned".equals(checkout) && purchase.active()) {
+            return "redirect:/university-assessment/" + assessment.id() + "/report";
+        }
+        model.addAttribute("assessmentId", assessment.id());
+        model.addAttribute("courseTitle", assessment.state().courseTitle());
+        model.addAttribute("institution", assessment.state().institution().orElse(null));
+        model.addAttribute("developmentFixture", assessment.result().source() == AssessmentSource.LOCAL_FIXTURE);
+        model.addAttribute("profile", reportService.courseProfile(assessment.id()).orElseThrow());
+        model.addAttribute("purchase", purchase);
+        model.addAttribute("paymentPanel", paymentPanel(checkout));
+        return "university-assessment/result-v2";
+    }
+
     private static String paymentPanel(String checkout) {
         if ("returned".equals(checkout)) return "confirming";
         if ("cancelled".equals(checkout)) return "cancelled";

@@ -344,8 +344,12 @@ class LiveSmokeModeTest {
     void universityAndALevelSmokeCasesAlsoReachTheirDetailedReportsAndPdfsWithoutPayment() throws Exception {
         UUID university = submit(catalog.find(LiveSmokeJourney.UNIVERSITY, "computer-science").orElseThrow());
         assertThat(universityPurchase.accessFor(university).status().map(Enum::name)).contains("ACTIVE");
-        mvc.perform(get("/university-assessment/" + university + "/report")).andExpect(status().isOk());
-        mvc.perform(get("/university-assessment/" + university + "/report.pdf")).andExpect(status().isOk());
+        // university-report-v2: the complimentary unlock opens the preparation step. The report is generated only
+        // by an explicit POST, and its PDF exists only once a final report is stored.
+        String universityReport = mvc.perform(get("/university-assessment/" + university + "/report"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(universityReport).contains("Prepare my detailed report");
+        mvc.perform(get("/university-assessment/" + university + "/report.pdf")).andExpect(status().isForbidden());
 
         UUID aLevel = submit(catalog.find(LiveSmokeJourney.A_LEVEL, "maths-economics-geography").orElseThrow());
         assertThat(aLevelPurchase.accessFor(aLevel).status().map(Enum::name)).contains("ACTIVE");

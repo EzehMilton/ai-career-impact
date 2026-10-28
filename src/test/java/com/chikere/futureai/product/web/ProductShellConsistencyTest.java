@@ -55,7 +55,8 @@ class ProductShellConsistencyTest {
     void onlyThePaidReportPagesOfferThePdfDownload() throws IOException {
         for (Map.Entry<Path, String> page : pages().entrySet()) {
             String name = page.getKey().getFileName().toString();
-            boolean paidReport = name.equals("paid-report.html") || name.equals("paid-report-v3.html");
+            boolean paidReport = name.equals("paid-report.html") || name.equals("paid-report-v3.html")
+                    || name.equals("paid-report-v2.html");
             // Strip parser comments (<!--/* ... */-->) — they are never sent to the browser,
             // so a sample link placeholder inside one is not a real download offer.
             String live = page.getValue().replaceAll("(?s)<!--/\\*.*?\\*/-->", "");
@@ -77,10 +78,10 @@ class ProductShellConsistencyTest {
                     || rendered.contains("Development shortcuts")
                     || rendered.contains("Development mode");
             if (mentionsDevelopment) {
-                // Two guards are legitimate: the shell's profile flag, and a stored report's own
-                // fixture provenance. Either keeps the wording off a production page.
+                // Two guards are legitimate: the shell's profile flag, and a stored report's or
+                // assessment's own fixture provenance. Either keeps the wording off a production page.
                 assertThat(rendered).as("%s development wording is unguarded", page.getKey())
-                        .containsAnyOf("${developmentMode}", "${report.developmentFixture}");
+                        .containsAnyOf("${developmentMode}", "${report.developmentFixture}", "${developmentFixture}");
             }
         }
     }

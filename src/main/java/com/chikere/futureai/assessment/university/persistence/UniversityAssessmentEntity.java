@@ -4,10 +4,12 @@ import com.chikere.futureai.assessment.domain.AssessmentConfidence;
 import com.chikere.futureai.assessment.domain.AssessmentStatus;
 import com.chikere.futureai.assessment.domain.JourneyType;
 import com.chikere.futureai.assessment.university.application.AssessmentSource;
+import com.chikere.futureai.decision.university.ProfileBand;
 import com.chikere.futureai.decision.university.ReadinessBand;
 import com.chikere.futureai.decision.university.UniversityFactorDirection;
 import com.chikere.futureai.decision.university.UniversityFactorEffect;
 import com.chikere.futureai.decision.university.UniversityMeasure;
+import com.chikere.futureai.decision.university.UniversityProfileMeasure;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -72,6 +74,15 @@ class UniversityAssessmentEntity {
     @CollectionTable(name = "university_assessment_measure", joinColumns = @JoinColumn(name = "assessment_id"))
     List<MeasureRow> measures = new ArrayList<>();
 
+    /** The three university-decision-v2 measures; empty for a historical v1 assessment. */
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "university_assessment_profile_measure", joinColumns = @JoinColumn(name = "assessment_id"))
+    List<ProfileMeasureRow> profileMeasures = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "university_assessment_profile_factor", joinColumns = @JoinColumn(name = "assessment_id"))
+    List<ProfileFactorRow> profileFactors = new ArrayList<>();
+
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "university_assessment_factor", joinColumns = @JoinColumn(name = "assessment_id"))
     List<FactorRow> factors = new ArrayList<>();
@@ -114,5 +125,28 @@ class UniversityAssessmentEntity {
         @Column(nullable = false) double weight;
         @Column(name = "signed_effect", nullable = false) double signedEffect;
         protected FactorRow() { }
+    }
+
+    @Embeddable
+    static class ProfileMeasureRow {
+        @Enumerated(EnumType.STRING) @Column(nullable = false) UniversityProfileMeasure measure;
+        @Column(nullable = false) double indicator;
+        @Enumerated(EnumType.STRING) @Column(nullable = false) ProfileBand band;
+        @Column(nullable = false) double confidence;
+        @Column(name = "lower_confidence", nullable = false) boolean lowerConfidence;
+        protected ProfileMeasureRow() { }
+    }
+
+    @Embeddable
+    static class ProfileFactorRow {
+        @Enumerated(EnumType.STRING) @Column(nullable = false) UniversityProfileMeasure measure;
+        @Column(nullable = false) int position;
+        @Column(name = "dimension_id", nullable = false) String dimensionId;
+        @Column(nullable = false) double score;
+        @Column(nullable = false) double weight;
+        @Column(nullable = false) double effect;
+        @Column(name = "driver_position") Integer driverPosition;
+        @Column(name = "limiting_position") Integer limitingPosition;
+        protected ProfileFactorRow() { }
     }
 }

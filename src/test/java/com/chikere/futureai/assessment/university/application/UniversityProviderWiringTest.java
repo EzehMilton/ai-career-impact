@@ -1,7 +1,6 @@
 package com.chikere.futureai.assessment.university.application;
 
 import com.chikere.futureai.assessment.domain.UniversityAssessmentState;
-import com.chikere.futureai.decision.university.UniversityMeasure;
 import com.chikere.futureai.evidence.university.application.EvidenceSource;
 import com.chikere.futureai.evidence.university.application.UniversityEvidenceProvider;
 import com.chikere.futureai.evidence.university.application.UniversityEvidenceStore;
@@ -80,8 +79,11 @@ class UniversityProviderWiringTest {
                                     "Programming, algorithms, systems and a final-year project.",
                                     List.of("Algorithms"), List.of("Programming"), List.of(),
                                     Optional.empty(), Optional.empty()));
-                    assertThat(result.decision().measure(UniversityMeasure.FUTURE_READINESS)
-                            .orElseThrow().indicator()).isBetween(8.74, 8.76);
+                    // New submissions are decided by university-decision-v2: a three-measure course profile.
+                    assertThat(result.usesCourseProfile()).isTrue();
+                    assertThat(result.decisionPolicyVersion())
+                            .isEqualTo(com.chikere.futureai.decision.university.UniversityDecisionPolicyV2.POLICY_VERSION);
+                    assertThat(result.profile().measures()).hasSize(3);
 
                     assertThat(context.getBean(UniversityNarrativeGenerator.class))
                             .isInstanceOf(LocalFixtureUniversityNarrativeGenerator.class);

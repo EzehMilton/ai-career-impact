@@ -5,6 +5,9 @@ import com.chikere.futureai.pdf.university.application.UniversityReportPdfAccess
 import com.chikere.futureai.pdf.university.application.UniversityReportPdfUseCase;
 import com.chikere.futureai.configuration.FailureDescription;
 import com.chikere.futureai.configuration.JourneyMetrics;
+import com.chikere.futureai.payment.university.application.UniversityReportPurchaseUseCase;
+import com.chikere.futureai.report.university.application.UniversityReportVersions;
+import com.chikere.futureai.report.university.detailed.UniversityDetailedReportPdfService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.CacheControl;
@@ -28,18 +31,35 @@ public final class UniversityReportPdfController {
     private static final CacheControl PRIVATE_NO_STORE = CacheControl.noStore().cachePrivate();
     private final UniversityReportPdfUseCase pdfService;
     private final JourneyMetrics metrics;
+    private final ObjectProvider<UniversityReportPurchaseUseCase> purchases;
+    private final ObjectProvider<UniversityDetailedReportPdfService> detailedPdfs;
 
-    /** Metrics resolve optionally so a sliced web test without a registry still loads this controller. */
+    /**
+     * Metrics, purchases and the v2 PDF resolve optionally so a sliced web test without them still loads this
+     * controller. A university-report-v2 purchase is rendered from its stored detailed report; every other purchase
+     * keeps the historical v1 PDF path.
+     */
     public UniversityReportPdfController(UniversityReportPdfUseCase pdfService,
-            ObjectProvider<JourneyMetrics> metrics) {
+            ObjectProvider<JourneyMetrics> metrics, ObjectProvider<UniversityReportPurchaseUseCase> purchases,
+            ObjectProvider<UniversityDetailedReportPdfService> detailedPdfs) {
         this.pdfService = pdfService;
         this.metrics = metrics.getIfAvailable(JourneyMetrics::disabled);
+        this.purchases = purchases;
+        this.detailedPdfs = detailedPdfs;
     }
 
     @GetMapping("/university-assessment/{assessmentId}/report.pdf")
     public ResponseEntity<?> download(@PathVariable String assessmentId) {
         try {
-            PurchasedUniversityReportPdf artifact = pdfService.getOrCreate(UUID.fromString(assessmentId));
+            UUID id = UUID.fromString(assessmentId);
+            UniversityDetailedReportPdfService detailed = detailedPdfs.getIfAvailable();
+            UniversityReportPurchaseUseCase purchase = purchases.getIfAvailable();
+            if (detailed != null && purchase != null
+                    && purchase.activePurchaseVersion(id).filter(UniversityReportVersions.V2::equals).isPresent()) {
+                var pdf = detailed.render(id);
+                return pdf(pdf.filename(), pdf.bytes());
+            }
+            PurchasedUniversityReportPdf artifact = pdfService.getOrCreate(id);
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF)
                     .cacheControl(PRIVATE_NO_STORE)
                     .header(HttpHeaders.CONTENT_DISPOSITION,
@@ -63,5 +83,15 @@ public final class UniversityReportPdfController {
                     .contentType(new MediaType("text", "plain", StandardCharsets.UTF_8))
                     .body("Your report is available online, but the PDF could not be generated right now.");
         }
+    }
+
+    private static ResponseEntity<byte[]> pdf(String filename, byte[] bytes) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF)
+                .cacheControl(PRIVATE_NO_STORE)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(filename, StandardCharsets.UTF_8).build().toString())
+                .contentLength(bytes.length)
+                .header("X-Content-Type-Options", "nosniff")
+                .body(bytes);
     }
 }

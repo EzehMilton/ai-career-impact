@@ -162,7 +162,7 @@ class JpaUniversityPurchaseStore implements UniversityPurchaseStore {
         entity.assessmentId = snapshot.assessmentId();
         entity.reportVersion = snapshot.reportVersion();
         entity.frozenAt = snapshot.frozenAt();
-        entity.reportJson = snapshotCodec.write(snapshot.report());
+        entity.reportJson = snapshotCodec.write(snapshot.reportVersion(), snapshot.purchasedReport());
         return entity;
     }
 

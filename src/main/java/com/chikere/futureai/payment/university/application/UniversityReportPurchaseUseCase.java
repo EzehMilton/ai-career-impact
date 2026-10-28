@@ -17,6 +17,11 @@ public interface UniversityReportPurchaseUseCase {
 
     Optional<UniversityReportEntitlement> findEntitlement(UUID assessmentId);
 
+    /** The report version of an ACTIVE purchase (v1 document or v2 detailed report), or empty without one. */
+    default Optional<String> activePurchaseVersion(UUID assessmentId) {
+        return Optional.empty();
+    }
+
     /**
      * Grants the ordinary full report for a valid complimentary access code, without any payment
      * provider. Idempotent per assessment: an already ACTIVE entitlement is left untouched.

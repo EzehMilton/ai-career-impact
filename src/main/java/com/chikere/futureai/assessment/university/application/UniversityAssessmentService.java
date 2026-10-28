@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 
 import com.chikere.futureai.assessment.domain.UniversityAssessmentState;
 import com.chikere.futureai.decision.university.UniversityDecisionPolicyV1;
+import com.chikere.futureai.decision.university.UniversityDecisionPolicyV2;
+import com.chikere.futureai.decision.university.UniversityProfileDecisionResult;
 import com.chikere.futureai.decision.university.UniversityDecisionResult;
 import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
 
@@ -19,16 +21,21 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 
 /**
  * Coordinates exactly one judgment-provider call and one decision-policy call, then stores an
  * immutable snapshot. It never scores a course itself.
+ *
+ * <p>Production submissions are decided by {@code university-decision-v2} (a three-measure course profile). The
+ * {@code university-decision-v1} constructors remain for the historical behaviour; a stored v1 assessment is never
+ * re-decided.</p>
  */
 public final class UniversityAssessmentService implements UniversityAssessmentSubmission {
     private static final Logger LOGGER = LoggerFactory.getLogger(UniversityAssessmentService.class);
 
     private final UniversityJudgmentProvider judgmentProvider;
-    private final UniversityDecisionPolicyV1 decisionPolicy;
+    private final Function<AssessmentJudgmentSet, Decided> decisionPolicy;
     private final UniversityAssessmentStore store;
     private final Clock clock;
     private final JourneyMetrics metrics;
@@ -64,9 +71,32 @@ public final class UniversityAssessmentService implements UniversityAssessmentSu
             Clock clock,
             JourneyMetrics metrics,
             AssessmentTrace trace) {
+        this(judgmentProvider, v1(Objects.requireNonNull(decisionPolicy, "decisionPolicy must not be null")), store,
+                clock, metrics, trace);
+    }
+
+    /** New submissions: decided by {@code university-decision-v2}. */
+    public UniversityAssessmentService(
+            UniversityJudgmentProvider judgmentProvider,
+            UniversityDecisionPolicyV2 decisionPolicy,
+            UniversityAssessmentStore store,
+            Clock clock,
+            JourneyMetrics metrics,
+            AssessmentTrace trace) {
+        this(judgmentProvider, v2(Objects.requireNonNull(decisionPolicy, "decisionPolicy must not be null")), store,
+                clock, metrics, trace);
+    }
+
+    private UniversityAssessmentService(
+            UniversityJudgmentProvider judgmentProvider,
+            Function<AssessmentJudgmentSet, Decided> decisionPolicy,
+            UniversityAssessmentStore store,
+            Clock clock,
+            JourneyMetrics metrics,
+            AssessmentTrace trace) {
         this.trace = Objects.requireNonNull(trace, "trace must not be null");
         this.judgmentProvider = Objects.requireNonNull(judgmentProvider, "judgmentProvider must not be null");
-        this.decisionPolicy = Objects.requireNonNull(decisionPolicy, "decisionPolicy must not be null");
+        this.decisionPolicy = decisionPolicy;
         this.store = store;
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
         this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
@@ -117,9 +147,8 @@ public final class UniversityAssessmentService implements UniversityAssessmentSu
             metrics.judgmentFailed("university");
             throw failure;
         }
-        UniversityDecisionResult decision = trace.measured("decisionPolicyMs", () -> decisionPolicy.decide(judgments));
-        UniversityAssessmentResult result = new UniversityAssessmentResult(
-                decision, judgmentProvider.source(), judgments.schemaVersion(), decision.policyVersion());
+        Decided decided = trace.measured("decisionPolicyMs", () -> decisionPolicy.apply(judgments));
+        UniversityAssessmentResult result = decided.result(judgmentProvider.source(), judgments.schemaVersion());
         trace.event(JourneyType.UNIVERSITY, TraceStage.DETERMINISTIC_ASSESSMENT, () -> deterministicAssessment(result));
         return new Execution(judgments, result);
     }
@@ -150,5 +179,24 @@ public final class UniversityAssessmentService implements UniversityAssessmentSu
     }
 
     private record Execution(AssessmentJudgmentSet judgments, UniversityAssessmentResult result) {
+    }
+
+    /** One policy's decision, before the provider's source and schema are attached. */
+    private interface Decided {
+        UniversityAssessmentResult result(AssessmentSource source, String schemaVersion);
+    }
+
+    private static Function<AssessmentJudgmentSet, Decided> v1(UniversityDecisionPolicyV1 policy) {
+        return judgments -> {
+            UniversityDecisionResult decision = policy.decide(judgments);
+            return (source, schema) -> new UniversityAssessmentResult(decision, source, schema, decision.policyVersion());
+        };
+    }
+
+    private static Function<AssessmentJudgmentSet, Decided> v2(UniversityDecisionPolicyV2 policy) {
+        return judgments -> {
+            UniversityProfileDecisionResult profile = policy.decide(judgments);
+            return (source, schema) -> new UniversityAssessmentResult(profile, source, schema, profile.policyVersion());
+        };
     }
 }

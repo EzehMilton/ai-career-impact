@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Your course profile')}"></head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div th:replace="~{fragments/layout :: devBanner}"></div>
+<header th:replace="~{fragments/layout :: siteHeader('university')}"></header>
+
+<main class="page-shell university-results-refined university-profile" id="main">
+  <div th:replace="~{fragments/live-smoke :: resultPanel('/university-assessment')}"></div>
+  <meta name="robots" content="noindex,nofollow">
+  <div class="page-header university-results-header">
+    <p class="eyebrow">Free university course assessment</p>
+    <h1 th:text="${profile.heading}">Your course profile in an AI-shaped world</h1>
+    <p class="intro">For <strong th:text="${courseTitle}">your course</strong><span th:if="${institution != null}"> at <span th:text="${institution}">your university</span></span></p>
+  </div>
+
+  <aside class="fixture-warning" th:if="${developmentFixture}" role="status">
+    <strong>Development mode</strong>
+    <p>This assessment uses local fixture data and is not a live AI assessment.</p>
+  </aside>
+
+  <section class="panel university-results-overview" aria-labelledby="summary-heading">
+    <h2 id="summary-heading">What this means</h2>
+    <p class="narrative-summary" th:text="${profile.summary}">Deterministic summary</p>
+    <p class="notice" th:if="${profile.moreInformationRequired}">Please start a new course assessment with more information about its modules, topics or skills.</p>
+  </section>
+
+  <section class="results-section" th:unless="${profile.moreInformationRequired}" aria-labelledby="measures-heading">
+    <h2 id="measures-heading">Your course profile</h2>
+    <div class="measure-grid university-measure-grid">
+      <article class="panel measure-card university-measure-card" th:each="measure : ${profile.measures}">
+        <h3 th:text="${measure.name}">Measure</h3>
+        <p class="university-measure-score"><strong th:text="${measure.score}">0.00</strong> / 10</p>
+        <p class="university-measure-band" th:text="${measure.bandLabel}">Moderate measure</p>
+        <p class="university-measure-explanation" th:text="${measure.explanation}">Explanation</p>
+        <p class="helper" th:if="${!measure.confidenceNote.isEmpty()}" th:text="${measure.confidenceNote}">Lower confidence</p>
+      </article>
+    </div>
+    <details class="university-scale-details panel">
+      <summary>How to understand your course profile</summary>
+      <div class="university-scale-content">
+        <p>Each measure runs from 0 to 10 and is shown as Low (below 3.5), Moderate (3.5 to below 7) or High (7 and above). A higher number means more of the characteristic being measured, not a better or worse course.</p>
+        <p>The three measures are shown side by side. They are not added together into one score, and they describe the <strong>course</strong>, not your abilities, your future career, employment or salary.</p>
+      </div>
+    </details>
+  </section>
+
+  <section class="panel unlock-panel university-unlock-panel" aria-labelledby="unlock-heading">
+    <p class="eyebrow">Optional detailed report</p>
+    <h2 id="unlock-heading">Explore your course in more detail</h2>
+    <div class="tier-grid">
+      <div class="tier tier-included">
+        <h3>Free assessment — included</h3>
+        <ul>
+          <li>Your three-measure course profile</li>
+          <li>What each measure means</li>
+          <li>A short summary of the profile</li>
+        </ul>
+      </div>
+      <div class="tier">
+        <h3>Detailed report</h3>
+        <ul>
+          <li>What strengthens and holds back each measure</li>
+          <li>A look at your course's modules</li>
+          <li>Where AI may help your learning, and where your own capability matters most</li>
+          <li>Skills to strengthen, safeguards and a three-stage action plan</li>
+          <li>A downloadable PDF</li>
+        </ul>
+      </div>
+    </div>
+    <p class="helper university-tier-note">Your course profile stays the same. The detailed report adds depth; it does not change or re-run your assessment.</p>
+    <p class="price-line" th:if="${purchase.displayPrice != null}">Detailed report: <span th:text="${purchase.displayPrice}">Configured price</span></p>
+    <p class="page-action" th:if="${purchase.active}">
+      <a class="button-link" th:href="@{/university-assessment/{id}/report(id=${assessmentId})}">Open your detailed report</a>
+    </p>
+    <th:block th:if="${purchase.pending}"><div th:replace="~{fragments/payment-confirmation :: panel(
+        statusUrl=@{/university-assessment/{id}/payment-status(id=${assessmentId})},
+        reportUrl=@{/university-assessment/{id}/report(id=${assessmentId})},
+        resultUrl=@{/university-assessment/{id}(id=${assessmentId})},
+        checkoutUrl=@{/university-assessment/{id}/checkout(id=${assessmentId})},
+        mode=${paymentPanel})}"></div></th:block>
+    <p class="notice" th:if="${purchase.denied}">Paid report access is not currently active.</p>
+    <form th:if="${purchase.checkoutAvailable and !profile.moreInformationRequired}" method="post" th:action="@{/university-assessment/{id}/checkout(id=${assessmentId})}">
+      <button type="submit">Get my detailed report</button>
+    </form>
+    <p class="helper" th:if="${purchase.noEntitlement and !purchase.checkoutAvailable}">Paid report checkout is not currently available.</p>
+    <div th:replace="~{fragments/complimentary-access :: form(
+        actionUrl=@{/university-assessment/{id}/complimentary-access(id=${assessmentId})},
+        available=${purchase.complimentaryAvailable})}"></div>
+  </section>
+
+  <section class="panel report-caveat university-context" aria-labelledby="caveat-heading">
+    <h2 id="caveat-heading">About your assessment</h2>
+    <p>This is a structured assessment of the course as you described it, not a ranking, an official source, or a verdict on whether you should study it.</p>
+    <p>Keep your result link private and save it if you want to return to this page. <a th:href="@{/methodology}" href="/methodology">Read how this works</a>.</p>
+  </section>
+
+  <nav class="page-action university-bottom-actions" aria-label="Assessment navigation">
+    <a class="button-link button-secondary" th:href="@{/university-assessment}" href="/university-assessment">Assess another course</a>
+    <a class="button-link button-secondary" th:href="@{/}" href="/">Back to home</a>
+  </nav>
+</main>
+
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
+</body>
+</html>

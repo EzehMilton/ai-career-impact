@@ -83,6 +83,15 @@ class AssessmentTraceJourneyTest {
             "DECISION_MODEL_REQUEST", "DECISION_MODEL_RESPONSE", "INFORMATION_SUFFICIENCY", "ASSESSMENT_CONFIDENCE",
             "SCORE_CALCULATION", "FACTOR_SELECTION", "DETERMINISTIC_ASSESSMENT", "PERSISTENCE", "NARRATIVE_REQUEST",
             "NARRATIVE_RESPONSE", "NARRATIVE_VALIDATION", "EVIDENCE_REQUEST", "EVIDENCE_RESPONSE", "SUMMARY");
+    /**
+     * A university-decision-v2 submission: each of its three measures is scored and explained before information
+     * sufficiency; confidence is per measure, so there is no global confidence stage; and its free result has no
+     * narrative to request.
+     */
+    private static final List<String> COURSE_PROFILE_STAGES = List.of("START", "FORM_INPUT", "DOMAIN_INPUT",
+            "DECISION_MODEL_REQUEST", "DECISION_MODEL_RESPONSE", "SCORE_CALCULATION", "FACTOR_SELECTION",
+            "INFORMATION_SUFFICIENCY", "DETERMINISTIC_ASSESSMENT", "PERSISTENCE", "EVIDENCE_REQUEST",
+            "EVIDENCE_RESPONSE", "SUMMARY");
 
     @Autowired MockMvc mvc;
     @Autowired ProviderCalls calls;
@@ -112,7 +121,7 @@ class AssessmentTraceJourneyTest {
                 .param("skills", "Architecture\nCommunication").param("yearsOfExperience", "14"),
                 "/professional-assessment/");
 
-        assertSubmissionTraced(id, "senior_software_architect", 4);
+        assertSubmissionTraced(id, "senior_software_architect", 4, true);
         assertThat(log.stages()).contains("OCCUPATION_CLASSIFICATION");
         // The raw form and what it became after trimming and splitting are both visible.
         assertThat(log.only(TraceStage.FORM_INPUT).at("/payload/profession").asText()).isEqualTo("  Software Architect ");
@@ -134,11 +143,23 @@ class AssessmentTraceJourneyTest {
                 .param("preferredCareerAreas", "Software engineering"),
                 "/university-assessment/");
 
-        assertSubmissionTraced(id, "computer_science", 5);
+        // New submissions are decided by university-decision-v2: three course-profile measures and no free narrative.
+        assertSubmissionTraced(id, "computer_science", 3, false);
         assertThat(log.only(TraceStage.DOMAIN_INPUT).at("/payload/state/keyModules").size()).isEqualTo(2);
 
-        assertReportsTraced(id, "/university-assessment/",
-                () -> universityReports.assemble(id, UniversityReportTier.PAID));
+        // The free course profile is traced as the free result; it is never assembled as a v1 report. The paid
+        // university-report-v2 is prepared explicitly and traced by its own lifecycle stages.
+        log.clear();
+        mvc.perform(get("/university-assessment/" + id)).andExpect(status().isOk());
+        JsonNode free = log.only(TraceStage.FREE_ASSESSMENT_COMPLETE);
+        assertThat(free.get("assessmentId").asText()).isEqualTo(id.toString());
+        assertThat(free.at("/payload/tier").asText()).isEqualTo("FREE");
+        assertThat(free.at("/payload/report/measures").size()).isEqualTo(3);
+        assertThat(log.only(TraceStage.REPORT_SUMMARY).at("/payload/timings").has("reportAssemblyMs")).isTrue();
+        assertThat(universityReports.assemble(id, UniversityReportTier.PAID)).isEmpty();
+        assertThat(calls.judgments.get()).as("viewing reports re-runs nothing").isEqualTo(1);
+        assertThat(calls.narratives.get()).isZero();
+        assertNoSecrets();
     }
 
     @Test
@@ -149,7 +170,7 @@ class AssessmentTraceJourneyTest {
                 .param("preferredDegreeAreas", "Economics"),
                 "/a-level-assessment/");
 
-        assertSubmissionTraced(id, "maths_economics_geography", 6);
+        assertSubmissionTraced(id, "maths_economics_geography", 6, true);
         assertThat(log.only(TraceStage.FORM_INPUT).at("/payload/selectedSubjects").asText())
                 .isEqualTo("Mathematics\nEconomics\nGeography");
         assertThat(log.only(TraceStage.DOMAIN_INPUT).at("/payload/state/selectedSubjects").size()).isEqualTo(3);
@@ -164,8 +185,8 @@ class AssessmentTraceJourneyTest {
         return UUID.fromString(location.substring(route.length()));
     }
 
-    private void assertSubmissionTraced(UUID id, String fixtureId, int measures) {
-        assertThat(log.stages()).containsSubsequence(SUBMISSION_STAGES);
+    private void assertSubmissionTraced(UUID id, String fixtureId, int measures, boolean freeNarrative) {
+        assertThat(log.stages()).containsSubsequence(freeNarrative ? SUBMISSION_STAGES : COURSE_PROFILE_STAGES);
         assertThat(log.events(TraceStage.SCORE_CALCULATION)).hasSize(measures);
 
         // One submission, one trace id, and the persisted assessment id from persistence onwards.
@@ -184,23 +205,31 @@ class AssessmentTraceJourneyTest {
         assertThat(decision.get("status").asText()).isEqualTo("SUCCEEDED");
         assertThat(decision.has("durationMs")).isTrue();
         assertThat(decision.at("/result/judgments").size()).isGreaterThan(measures);
-        assertThat(log.only(TraceStage.NARRATIVE_REQUEST).at("/payload/provider").asText()).isEqualTo("LOCAL_FIXTURE");
-        JsonNode narrative = log.only(TraceStage.NARRATIVE_RESPONSE).get("payload");
-        assertThat(narrative.get("status").asText()).isEqualTo("SUCCEEDED");
-        assertThat(narrative.has("durationMs")).isTrue();
-        assertThat(log.only(TraceStage.NARRATIVE_VALIDATION).at("/payload/outcome").asText()).isEqualTo("ACCEPTED");
+        if (freeNarrative) {
+            assertThat(log.only(TraceStage.NARRATIVE_REQUEST).at("/payload/provider").asText()).isEqualTo("LOCAL_FIXTURE");
+            JsonNode narrative = log.only(TraceStage.NARRATIVE_RESPONSE).get("payload");
+            assertThat(narrative.get("status").asText()).isEqualTo("SUCCEEDED");
+            assertThat(narrative.has("durationMs")).isTrue();
+            assertThat(log.only(TraceStage.NARRATIVE_VALIDATION).at("/payload/outcome").asText()).isEqualTo("ACCEPTED");
+        }
+        else {
+            assertThat(log.events(TraceStage.NARRATIVE_REQUEST)).isEmpty();
+        }
         assertThat(log.only(TraceStage.DETERMINISTIC_ASSESSMENT).at("/payload/boundary").asText())
                 .contains("FINAL DETERMINISTIC ASSESSMENT");
 
         JsonNode timings = log.only(TraceStage.SUMMARY).at("/payload/timings");
-        for (String timing : List.of("formToDomainMs", "decisionModelMs", "decisionPolicyMs", "persistenceMs",
-                "narrativeModelMs", "evidenceMs", "totalAssessmentMs")) {
+        for (String timing : freeNarrative
+                ? List.of("formToDomainMs", "decisionModelMs", "decisionPolicyMs", "persistenceMs",
+                        "narrativeModelMs", "evidenceMs", "totalAssessmentMs")
+                : List.of("formToDomainMs", "decisionModelMs", "decisionPolicyMs", "persistenceMs", "evidenceMs",
+                        "totalAssessmentMs")) {
             assertThat(timings.has(timing)).as(timing).isTrue();
         }
 
         // Tracing adds no provider calls of its own.
         assertThat(calls.judgments.get()).isEqualTo(1);
-        assertThat(calls.narratives.get()).isEqualTo(1);
+        assertThat(calls.narratives.get()).isEqualTo(freeNarrative ? 1 : 0);
         assertNoSecrets();
     }
 

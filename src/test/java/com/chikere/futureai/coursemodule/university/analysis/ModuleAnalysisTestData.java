@@ -10,6 +10,7 @@ import com.chikere.futureai.coursemodule.university.application.UniversityModule
 import com.chikere.futureai.coursemodule.university.application.UniversityModuleJudgmentSource;
 import com.chikere.futureai.coursemodule.university.policy.ModuleProbeFixtures;
 import com.chikere.futureai.decision.university.UniversityDecisionPolicyV1;
+import com.chikere.futureai.decision.university.UniversityDecisionPolicyV2;
 import com.chikere.futureai.judgment.fixture.university.LocalFixtureUniversityJudgmentProvider;
 import com.chikere.futureai.payment.university.application.UniversityEntitlementStatus;
 import com.chikere.futureai.payment.university.application.UniversityPaymentProvider;
@@ -48,6 +49,20 @@ public final class ModuleAnalysisTestData {
         return new StoredUniversityAssessment(id, ASSESSED_AT, state, judgments,
                 new UniversityAssessmentResult(decision, AssessmentSource.LOCAL_FIXTURE, judgments.schemaVersion(),
                         decision.policyVersion()), Optional.empty());
+    }
+
+    /** A {@code university-decision-v2} assessment, as every new submission is decided since Stage 5G. */
+    public static StoredUniversityAssessment courseProfileAssessment(UUID id, int modules) {
+        return courseProfileAssessment(id, IntStream.rangeClosed(1, modules).mapToObj(index -> "Module " + index)
+                .toList());
+    }
+
+    public static StoredUniversityAssessment courseProfileAssessment(UUID id, List<String> modules) {
+        var v1 = assessment(id, modules);
+        var profile = new UniversityDecisionPolicyV2().decide(v1.judgments());
+        return new StoredUniversityAssessment(id, ASSESSED_AT, v1.state(), v1.judgments(),
+                new UniversityAssessmentResult(profile, AssessmentSource.LOCAL_FIXTURE,
+                        v1.judgments().schemaVersion(), profile.policyVersion()), Optional.empty());
     }
 
     public static UniversityReportEntitlement entitlement(UUID assessmentId, UniversityEntitlementStatus status) {

@@ -43,6 +43,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -142,6 +143,44 @@ class UniversityAssessmentControllerTest {
                 "Skills worth developing alongside the course", "Illustrative evidence title",
                 "secret-provider", "/report.pdf", "Download PDF",
                 "AI Exposure", "future-proof", "bad degree", "You will struggle");
+    }
+
+    @Test
+    void aV2AssessmentRendersTheThreeMeasureCourseProfileWithNoOverallHeadline() throws Exception {
+        var v2 = com.chikere.futureai.coursemodule.university.analysis.ModuleAnalysisTestData
+                .courseProfileAssessment(ID, 4);
+        when(reportService.stored(ID)).thenReturn(Optional.of(v2));
+        when(reportService.courseProfile(ID)).thenReturn(Optional.of(
+                new com.chikere.futureai.report.university.application.UniversityCourseProfileComposer()
+                        .compose(v2.result().profile())));
+
+        String html = mvc.perform(get("/university-assessment/" + ID)).andExpect(status().isOk())
+                .andExpect(view().name("university-assessment/result-v2"))
+                .andExpect(header().string("Cache-Control", "private, no-store"))
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("Your course profile in an AI-shaped world", "BSc Nursing (Adult)",
+                "Working Alongside AI", "Human and Practical Capability", "Transferable Capability",
+                "Explore your course in more detail", "Development mode");
+        assertThat(html.split("university-measure-card\"", -1)).hasSize(4);
+        assertThat(html).doesNotContain("Future Readiness", "AI Complementarity", "Human Differentiation",
+                "Skill Transferability", "Career Adaptability", "Overall score", "strongest measure");
+        verify(reportService, never()).assemble(any(), any());
+    }
+
+    @Test
+    void aStoredV1AssessmentKeepsTheHistoricalV1ResultPage() throws Exception {
+        when(reportService.stored(ID)).thenReturn(Optional.of(
+                com.chikere.futureai.coursemodule.university.analysis.ModuleAnalysisTestData.assessment(ID, 4)));
+        when(reportService.assemble(ID, UniversityReportTier.FREE))
+                .thenReturn(Optional.of(report(UniversityReportTier.FREE, true, true)));
+
+        String html = mvc.perform(get("/university-assessment/" + ID)).andExpect(status().isOk())
+                .andExpect(view().name("university-assessment/result"))
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("Future Readiness", "Career Adaptability")
+                .doesNotContain("Your course profile in an AI-shaped world");
     }
 
     @Test

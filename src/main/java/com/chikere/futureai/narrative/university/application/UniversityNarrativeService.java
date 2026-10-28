@@ -83,6 +83,11 @@ public final class UniversityNarrativeService implements UniversityNarrativeGene
         var assessment = assessmentStore.findById(assessmentId)
                 .orElseThrow(() -> new IllegalArgumentException("assessment does not exist"));
         Instant attemptedAt = Instant.now(clock);
+        if (assessment.result().usesCourseProfile()) {
+            // This narrative explains the five university-decision-v1 measures. A v2 course profile has a deterministic
+            // free result and its own paid narrative, so no provider is called and nothing is stored.
+            return stored(assessmentId, NarrativeStatus.NOT_REQUESTED, Optional.empty(), attemptedAt, Optional.empty());
+        }
         narrativeStore.save(stored(assessmentId, NarrativeStatus.PENDING, Optional.empty(),
                 attemptedAt, Optional.empty()));
         try {

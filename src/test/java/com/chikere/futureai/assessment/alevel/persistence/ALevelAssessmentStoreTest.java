@@ -77,10 +77,10 @@ class ALevelAssessmentStoreTest {
 
     @Test
     void allMigrationsAreAppliedAndALevelTablesAreSeparate() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("21");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("23");
         assertThat(flyway.info().applied()).extracting(info -> info.getVersion().getVersion())
                 .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
-                        "13", "14", "15", "16", "17", "18", "19", "20", "21");
+                        "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23");
     }
 
     @Test

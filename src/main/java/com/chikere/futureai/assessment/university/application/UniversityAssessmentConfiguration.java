@@ -1,7 +1,7 @@
 package com.chikere.futureai.assessment.university.application;
 
 import com.chikere.futureai.payment.complimentary.ComplimentaryReportAccess;
-import com.chikere.futureai.decision.university.UniversityDecisionPolicyV1;
+import com.chikere.futureai.decision.university.UniversityDecisionPolicyV2;
 import com.chikere.futureai.evidence.university.application.UniversityEvidenceProvider;
 import com.chikere.futureai.evidence.university.application.UniversityEvidenceRequestFactory;
 import com.chikere.futureai.evidence.university.application.UniversityEvidenceService;
@@ -31,15 +31,16 @@ import java.util.Optional;
 @Configuration(proxyBeanMethods = false)
 public class UniversityAssessmentConfiguration {
 
+    /** New University submissions are decided by university-decision-v2; stored v1 assessments are never re-decided. */
     @Bean
-    UniversityDecisionPolicyV1 universityDecisionPolicyV1(ObjectProvider<AssessmentTrace> trace) {
-        return new UniversityDecisionPolicyV1(trace.getIfAvailable(AssessmentTrace::disabled));
+    UniversityDecisionPolicyV2 universityDecisionPolicyV2(ObjectProvider<AssessmentTrace> trace) {
+        return new UniversityDecisionPolicyV2(trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean
     UniversityAssessmentService universityAssessmentService(
             UniversityJudgmentProvider judgmentProvider,
-            UniversityDecisionPolicyV1 decisionPolicy,
+            UniversityDecisionPolicyV2 decisionPolicy,
             UniversityAssessmentStore store,
             ObjectProvider<JourneyMetrics> metrics,
             ObjectProvider<AssessmentTrace> trace) {

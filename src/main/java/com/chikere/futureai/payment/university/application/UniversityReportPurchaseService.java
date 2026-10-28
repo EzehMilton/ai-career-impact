@@ -1,5 +1,7 @@
 package com.chikere.futureai.payment.university.application;
 
+import com.chikere.futureai.assessment.domain.AssessmentStatus;
+import com.chikere.futureai.assessment.university.application.UniversityAssessmentResult;
 import com.chikere.futureai.report.university.application.UniversityReport;
 import com.chikere.futureai.report.university.application.UniversityReportQuery;
 import com.chikere.futureai.report.university.application.UniversityReportTier;
@@ -78,9 +80,7 @@ public final class UniversityReportPurchaseService implements UniversityReportPu
         if (existing.isPresent() && existing.orElseThrow().status() != UniversityEntitlementStatus.FAILED) {
             throw new PaymentUnavailableException("a purchase already exists for this assessment");
         }
-        UniversityReport paidReport = reportService.assemble(assessmentId, UniversityReportTier.PAID)
-                .orElseThrow(() -> new IllegalArgumentException("assessment does not exist"));
-        if (paidReport.measures().size() != 5) {
+        if (!eligible(assessmentId)) {
             throw new PaymentUnavailableException("the assessment is not complete enough for a paid report");
         }
         UUID entitlementId = existing.map(UniversityReportEntitlement::entitlementId).orElseGet(UUID::randomUUID);
@@ -220,7 +220,19 @@ public final class UniversityReportPurchaseService implements UniversityReportPu
             return Optional.empty();
         }
         return purchaseStore.findSnapshotByAssessmentId(assessmentId)
-                .map(PurchasedUniversityReportSnapshot::report);
+                .flatMap(PurchasedUniversityReportSnapshot::purchasedReport);
+    }
+
+    @Override
+    public Optional<String> activePurchaseVersion(UUID assessmentId) {
+        Optional<UniversityReportEntitlement> entitlement =
+                purchaseStore.findEntitlementByAssessmentId(Objects.requireNonNull(assessmentId));
+        if (entitlement.map(UniversityReportEntitlement::status)
+                .filter(status -> status == UniversityEntitlementStatus.ACTIVE).isEmpty()) {
+            return Optional.empty();
+        }
+        return purchaseStore.findSnapshotByAssessmentId(assessmentId)
+                .map(PurchasedUniversityReportSnapshot::reportVersion);
     }
 
     @Override
@@ -265,20 +277,17 @@ public final class UniversityReportPurchaseService implements UniversityReportPu
     private ComplimentaryRedemptionResult grant(UUID assessmentId) {
         var existing = purchaseStore.findEntitlementByAssessmentId(assessmentId);
         if (existing.isPresent()) return redemptionFor(existing.orElseThrow());
-        UniversityReport paidReport = reportService.assemble(assessmentId, UniversityReportTier.PAID)
-                .orElseThrow(() -> new IllegalArgumentException("assessment does not exist"));
-        if (paidReport.measures().size() != 5) return ComplimentaryRedemptionResult.NOT_ELIGIBLE;
+        if (!eligible(assessmentId)) return ComplimentaryRedemptionResult.NOT_ELIGIBLE;
         UUID entitlementId = UUID.randomUUID();
         Instant now = Instant.now(clock);
+        PurchasedUniversityReportSnapshot snapshot = freeze(entitlementId, assessmentId, now);
         // The checkout columns are required by the payment schema. These values name the grant
         // rather than a provider session, and no gateway is ever asked about them.
         var entitlement = new UniversityReportEntitlement(entitlementId, assessmentId, UniversityReportTier.PAID,
                 UniversityEntitlementStatus.ACTIVE, UniversityPaymentProvider.COMPLIMENTARY,
                 "complimentary_" + entitlementId,
                 applicationBaseUrl.resolve("/university-assessment/" + assessmentId + "/report"), "complimentary",
-                Optional.empty(), Optional.of(paidReport.reportVersion()), now, Optional.of(now));
-        var snapshot = new PurchasedUniversityReportSnapshot(entitlementId, assessmentId,
-                paidReport.reportVersion(), now, paidReport);
+                Optional.empty(), Optional.of(snapshot.reportVersion()), now, Optional.of(now));
         try {
             purchaseStore.saveComplimentary(entitlement, snapshot);
         }
@@ -298,10 +307,32 @@ public final class UniversityReportPurchaseService implements UniversityReportPu
     }
 
     private PurchasedUniversityReportSnapshot freezeCurrentPaidReport(UniversityReportEntitlement entitlement) {
-        UniversityReport report = reportService.assemble(entitlement.assessmentId(), UniversityReportTier.PAID)
+        return freeze(entitlement.entitlementId(), entitlement.assessmentId(), Instant.now(clock));
+    }
+
+    /**
+     * Routed by the assessment's stored decision version, never the current application version: a v1 assessment
+     * freezes its university-report-v1 document; a v2 course profile records a university-report-v2 purchase.
+     */
+    private PurchasedUniversityReportSnapshot freeze(UUID entitlementId, UUID assessmentId, Instant at) {
+        if (reportService.stored(assessmentId).map(stored -> stored.result())
+                .filter(UniversityAssessmentResult::usesCourseProfile).isPresent()) {
+            return PurchasedUniversityReportSnapshot.courseProfile(entitlementId, assessmentId, at);
+        }
+        UniversityReport report = reportService.assemble(assessmentId, UniversityReportTier.PAID)
                 .orElseThrow(() -> new InvalidPaymentNotificationException("assessment no longer exists"));
-        return new PurchasedUniversityReportSnapshot(entitlement.entitlementId(), entitlement.assessmentId(),
-                report.reportVersion(), Instant.now(clock), report);
+        return new PurchasedUniversityReportSnapshot(entitlementId, assessmentId, report.reportVersion(), at, report);
+    }
+
+    /** A v2 course profile is eligible unless more information was required; a v1 report needs all five measures. */
+    private boolean eligible(UUID assessmentId) {
+        var result = reportService.stored(assessmentId).map(stored -> stored.result());
+        if (result.filter(UniversityAssessmentResult::usesCourseProfile).isPresent()) {
+            return result.get().headline().status() != AssessmentStatus.MORE_INFORMATION_REQUIRED;
+        }
+        UniversityReport paidReport = reportService.assemble(assessmentId, UniversityReportTier.PAID)
+                .orElseThrow(() -> new IllegalArgumentException("assessment does not exist"));
+        return paidReport.measures().size() == 5;
     }
 
     private void validateEvent(UniversityReportEntitlement entitlement, UniversityPaymentEvent event) {

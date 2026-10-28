@@ -17,6 +17,7 @@ public final class UniversityReportService implements UniversityReportQuery {
     private final UniversityEvidenceStore evidenceStore;
     private final UniversityReportAssembler assembler;
     private final AssessmentTrace trace;
+    private final UniversityCourseProfileComposer profiles = new UniversityCourseProfileComposer();
 
     public UniversityReportService(UniversityAssessmentStore assessmentStore,
             UniversityNarrativeStore narrativeStore, UniversityEvidenceStore evidenceStore,
@@ -39,8 +40,26 @@ public final class UniversityReportService implements UniversityReportQuery {
         Objects.requireNonNull(assessmentId);
         Objects.requireNonNull(tier);
         return trace.report(JourneyType.UNIVERSITY, assessmentId, tier == UniversityReportTier.PAID,
-                () -> assessmentStore.findById(assessmentId).map(assessment -> assembler.assemble(
+                () -> assessmentStore.findById(assessmentId)
+                        .filter(assessment -> !assessment.result().usesCourseProfile())
+                        .map(assessment -> assembler.assemble(
                 new UniversityReportSource(assessment, narrativeStore.findByAssessmentId(assessmentId),
                         evidenceStore.findByAssessmentId(assessmentId)), tier)));
+    }
+
+    /** Traced as the free result, exactly like the v1 free report, so both versions are observable. */
+    @Override
+    public Optional<UniversityCourseProfile> courseProfile(UUID assessmentId) {
+        Objects.requireNonNull(assessmentId);
+        return trace.report(JourneyType.UNIVERSITY, assessmentId, false,
+                () -> assessmentStore.findById(assessmentId)
+                        .filter(assessment -> assessment.result().usesCourseProfile())
+                        .map(assessment -> profiles.compose(assessment.result().profile())));
+    }
+
+    @Override
+    public Optional<com.chikere.futureai.assessment.university.application.StoredUniversityAssessment> stored(
+            UUID assessmentId) {
+        return assessmentStore.findById(Objects.requireNonNull(assessmentId));
     }
 }
