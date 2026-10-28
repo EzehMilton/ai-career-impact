@@ -1,0 +1,383 @@
+{
+  "caseId" : "nursing",
+  "mode" : "LIVE",
+  "capturedAt" : "2026-10-28T05:59:31.877818Z",
+  "input" : {
+    "courseTitle" : "BSc Nursing (Adult)",
+    "courseDescription" : "A three-year pre-registration course leading to eligibility to apply for registration as an adult nurse. Half of the course is spent on clinical placements in hospital and community settings under the supervision of registered nurses. University study covers anatomy and physiology, pharmacology, evidence-based practice, communication, and professional, legal and ethical standards, with clinical skills practised in simulation suites before placement.",
+    "keyModules" : [ "Foundations of Nursing Practice", "Anatomy and Physiology", "Clinical Skills and Simulation", "Pharmacology and Medicines Management", "Communication and Compassionate Care", "Evidence-Based Practice", "Acute and Long-Term Conditions", "Professional, Legal and Ethical Practice", "Leadership and Management of Care", "Clinical Placements" ],
+    "skillsDeveloped" : [ "Patient assessment", "Clinical skills", "Communication", "Care planning", "Medicines management", "Teamwork", "Professional judgement", "Record keeping" ],
+    "preferredCareerAreas" : [ "Adult nursing", "Community nursing" ],
+    "institution" : null,
+    "country" : "United Kingdom"
+  },
+  "provider" : {
+    "source" : "JEV",
+    "configuredModel" : "jev-latest",
+    "jevCalls" : 1,
+    "durationMs" : 43002,
+    "error" : null,
+    "note" : "rawProviderResponse holds Jev's answers before the adapter mapped them."
+  },
+  "rawProviderResponse" : {
+    "model" : "jev-1.14.0",
+    "requestId" : "req_01a1811846a37a6fb73ff9838e63dd23",
+    "inputTokens" : 1750,
+    "outputTokens" : 180,
+    "answers" : {
+      "information_sufficient" : {
+        "type" : "NOUL",
+        "value" : 0.96
+      },
+      "technical_digital_depth" : {
+        "type" : "SCORE",
+        "value" : 1.07,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some technical or digital tools are used, but they are not central to the course.",
+        "confidence" : 0.77,
+        "probabilities" : {
+          "0" : 0.11,
+          "1" : 0.73,
+          "2" : 0.15,
+          "3" : 0.01,
+          "4" : 0.0
+        }
+      },
+      "analytical_reasoning" : {
+        "type" : "SCORE",
+        "value" : 1.68,
+        "nearestLevel" : 2,
+        "nearestLabel" : "The course mixes analytical work with other kinds of study in roughly equal measure.",
+        "confidence" : 0.62,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.38,
+          "2" : 0.55,
+          "3" : 0.07,
+          "4" : 0.0
+        }
+      },
+      "original_judgment_creativity" : {
+        "type" : "SCORE",
+        "value" : 2.17,
+        "nearestLevel" : 2,
+        "nearestLabel" : "The course regularly mixes established methods with independent judgment.",
+        "confidence" : 0.81,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.03,
+          "2" : 0.77,
+          "3" : 0.2,
+          "4" : 0.0
+        }
+      },
+      "human_relationship_dependency" : {
+        "type" : "SCORE",
+        "value" : 3.36,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Communication, collaboration, empathy or stakeholder capability is important to the course.",
+        "confidence" : 0.69,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.63,
+          "4" : 0.36
+        }
+      },
+      "contextual_complexity" : {
+        "type" : "SCORE",
+        "value" : 3.16,
+        "nearestLevel" : 3,
+        "nearestLabel" : "The course frequently requires working with ambiguous, multi-factor or changing situations.",
+        "confidence" : 0.82,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.03,
+          "3" : 0.78,
+          "4" : 0.19
+        }
+      },
+      "practical_real_world_application" : {
+        "type" : "SCORE",
+        "value" : 3.34,
+        "nearestLevel" : 4,
+        "nearestLabel" : "Extensive real-world practice, placement, clinical, studio or project work defines the course.",
+        "confidence" : 0.45,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.2,
+          "3" : 0.26,
+          "4" : 0.54
+        }
+      },
+      "ai_complementarity" : {
+        "type" : "SCORE",
+        "value" : 3.49,
+        "nearestLevel" : 4,
+        "nearestLabel" : "There is very strong potential for productive AI augmentation while human judgment, relationships, responsibility or practical capability remain valuable.",
+        "confidence" : 0.57,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.05,
+          "3" : 0.41,
+          "4" : 0.54
+        }
+      },
+      "skill_transferability" : {
+        "type" : "SCORE",
+        "value" : 1.86,
+        "nearestLevel" : 1,
+        "nearestLabel" : "The capabilities apply mainly within one field, with limited wider use.",
+        "confidence" : 0.28,
+        "probabilities" : {
+          "0" : 0.01,
+          "1" : 0.41,
+          "2" : 0.32,
+          "3" : 0.24,
+          "4" : 0.02
+        }
+      },
+      "career_breadth" : {
+        "type" : "SCORE",
+        "value" : 1.0,
+        "nearestLevel" : 1,
+        "nearestLabel" : "The course points mainly towards one field with a few adjacent options.",
+        "confidence" : 0.94,
+        "probabilities" : {
+          "0" : 0.04,
+          "1" : 0.93,
+          "2" : 0.03,
+          "3" : 0.0,
+          "4" : 0.0
+        }
+      }
+    },
+    "note" : "Raw answers as Jev returned them, before the application maps them to judgments.",
+    "probabilitySums" : {
+      "technical_digital_depth" : 1.0,
+      "analytical_reasoning" : 1.0,
+      "original_judgment_creativity" : 1.0,
+      "human_relationship_dependency" : 1.0,
+      "contextual_complexity" : 1.0,
+      "practical_real_world_application" : 1.0,
+      "ai_complementarity" : 1.0,
+      "skill_transferability" : 1.0,
+      "career_breadth" : 1.0
+    }
+  },
+  "judgmentSet" : {
+    "journey" : "UNIVERSITY",
+    "schemaVersion" : "university-v1",
+    "judgments" : [ {
+      "dimensionId" : "information_sufficient",
+      "name" : "Information sufficiency",
+      "numericValue" : 0.96,
+      "categoricalValue" : null,
+      "confidence" : null,
+      "confidenceValue" : null,
+      "probabilityDistribution" : { }
+    }, {
+      "dimensionId" : "technical_digital_depth",
+      "name" : "Technical and digital depth",
+      "numericValue" : 1.07,
+      "categoricalValue" : "Some technical or digital tools are used, but they are not central to the course.",
+      "confidence" : null,
+      "confidenceValue" : 0.77,
+      "probabilityDistribution" : {
+        "0" : 0.11,
+        "1" : 0.73,
+        "2" : 0.15,
+        "3" : 0.01,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "analytical_reasoning",
+      "name" : "Analytical reasoning",
+      "numericValue" : 1.68,
+      "categoricalValue" : "The course mixes analytical work with other kinds of study in roughly equal measure.",
+      "confidence" : null,
+      "confidenceValue" : 0.62,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.38,
+        "2" : 0.55,
+        "3" : 0.07,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "original_judgment_creativity",
+      "name" : "Original judgment and creativity",
+      "numericValue" : 2.17,
+      "categoricalValue" : "The course regularly mixes established methods with independent judgment.",
+      "confidence" : null,
+      "confidenceValue" : 0.81,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.03,
+        "2" : 0.77,
+        "3" : 0.2,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "human_relationship_dependency",
+      "name" : "Human and relationship capability",
+      "numericValue" : 3.36,
+      "categoricalValue" : "Communication, collaboration, empathy or stakeholder capability is important to the course.",
+      "confidence" : null,
+      "confidenceValue" : 0.69,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.01,
+        "3" : 0.63,
+        "4" : 0.36
+      }
+    }, {
+      "dimensionId" : "contextual_complexity",
+      "name" : "Contextual complexity",
+      "numericValue" : 3.16,
+      "categoricalValue" : "The course frequently requires working with ambiguous, multi-factor or changing situations.",
+      "confidence" : null,
+      "confidenceValue" : 0.82,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.03,
+        "3" : 0.78,
+        "4" : 0.19
+      }
+    }, {
+      "dimensionId" : "practical_real_world_application",
+      "name" : "Practical real-world application",
+      "numericValue" : 3.34,
+      "categoricalValue" : "Extensive real-world practice, placement, clinical, studio or project work defines the course.",
+      "confidence" : null,
+      "confidenceValue" : 0.45,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.2,
+        "3" : 0.26,
+        "4" : 0.54
+      }
+    }, {
+      "dimensionId" : "ai_complementarity",
+      "name" : "AI complementarity",
+      "numericValue" : 3.49,
+      "categoricalValue" : "There is very strong potential for productive AI augmentation while human judgment, relationships, responsibility or practical capability remain valuable.",
+      "confidence" : null,
+      "confidenceValue" : 0.57,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.05,
+        "3" : 0.41,
+        "4" : 0.54
+      }
+    }, {
+      "dimensionId" : "skill_transferability",
+      "name" : "Skill transferability",
+      "numericValue" : 1.86,
+      "categoricalValue" : "The capabilities apply mainly within one field, with limited wider use.",
+      "confidence" : null,
+      "confidenceValue" : 0.28,
+      "probabilityDistribution" : {
+        "0" : 0.01,
+        "1" : 0.41,
+        "2" : 0.32,
+        "3" : 0.24,
+        "4" : 0.02
+      }
+    }, {
+      "dimensionId" : "career_breadth",
+      "name" : "Career breadth",
+      "numericValue" : 1.0,
+      "categoricalValue" : "The course points mainly towards one field with a few adjacent options.",
+      "confidence" : null,
+      "confidenceValue" : 0.94,
+      "probabilityDistribution" : {
+        "0" : 0.04,
+        "1" : 0.93,
+        "2" : 0.03,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    } ]
+  },
+  "decision" : {
+    "policyVersion" : "university-decision-v1",
+    "informationSufficiency" : 0.96,
+    "status" : "READY_WITH_CAUTION",
+    "confidence" : "MODERATE",
+    "headline" : "DEVELOPING FUTURE READINESS",
+    "measures" : {
+      "FUTURE_READINESS" : {
+        "indicator" : 5.10125,
+        "band" : "DEVELOPING",
+        "confidence" : 0.6645
+      },
+      "AI_COMPLEMENTARITY" : {
+        "indicator" : 7.13875,
+        "band" : "STRONG",
+        "confidence" : 0.6074999999999999
+      },
+      "HUMAN_DIFFERENTIATION" : {
+        "indicator" : 7.3975,
+        "band" : "STRONG",
+        "confidence" : 0.704
+      },
+      "SKILL_TRANSFERABILITY" : {
+        "indicator" : 4.130000000000001,
+        "band" : "DEVELOPING",
+        "confidence" : 0.48
+      },
+      "CAREER_ADAPTABILITY" : {
+        "indicator" : 5.12125,
+        "band" : "DEVELOPING",
+        "confidence" : 0.6375
+      }
+    },
+    "topStrengths" : [ {
+      "dimensionId" : "ai_complementarity",
+      "direction" : "HIGH_AI_COMPLEMENTARITY",
+      "score" : 3.49,
+      "weight" : 0.12,
+      "signedEffect" : 0.044700000000000004
+    }, {
+      "dimensionId" : "human_relationship_dependency",
+      "direction" : "HIGH_HUMAN_RELATIONSHIP_DEPENDENCY",
+      "score" : 3.36,
+      "weight" : 0.1,
+      "signedEffect" : 0.033999999999999996
+    }, {
+      "dimensionId" : "practical_real_world_application",
+      "direction" : "HIGH_PRACTICAL_REAL_WORLD_APPLICATION",
+      "score" : 3.34,
+      "weight" : 0.1,
+      "signedEffect" : 0.033499999999999995
+    } ],
+    "topDevelopmentOpportunities" : [ {
+      "dimensionId" : "technical_digital_depth",
+      "direction" : "LOW_TECHNICAL_DIGITAL_DEPTH",
+      "score" : 1.07,
+      "weight" : 0.12,
+      "signedEffect" : -0.027899999999999998
+    }, {
+      "dimensionId" : "career_breadth",
+      "direction" : "LOW_CAREER_BREADTH",
+      "score" : 1.0,
+      "weight" : 0.08,
+      "signedEffect" : -0.02
+    }, {
+      "dimensionId" : "analytical_reasoning",
+      "direction" : "LOW_ANALYTICAL_REASONING",
+      "score" : 1.68,
+      "weight" : 0.15,
+      "signedEffect" : -0.012000000000000002
+    } ]
+  }
+}

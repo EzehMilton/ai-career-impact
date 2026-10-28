@@ -1,0 +1,233 @@
+{
+  "caseId" : "law",
+  "mode" : "LIVE",
+  "capturedAt" : "2026-10-27T21:44:29.517129Z",
+  "input" : {
+    "courseTitle" : "LLB Law",
+    "courseDescription" : "The course covers the core areas of English law, including contract, tort, criminal, public, land, equity and trusts, and EU and international law. Students learn through lectures and small-group tutorials, and develop legal research, analysis and writing through problem questions and essays. Mooting, a law clinic option and a final-year dissertation give opportunities to apply legal reasoning.",
+    "keyModules" : [ "Legal Method and Skills", "Contract Law", "Law of Tort", "Criminal Law", "Constitutional and Administrative Law", "Land Law", "Equity and Trusts", "EU and International Law", "Law Clinic", "Dissertation" ],
+    "skillsDeveloped" : [ "Legal research", "Legal analysis", "Written argument", "Oral advocacy", "Critical reading", "Attention to detail", "Problem solving" ],
+    "preferredCareerAreas" : [ "Legal practice", "Policy", "Compliance" ],
+    "institution" : null,
+    "country" : "United Kingdom"
+  },
+  "provider" : {
+    "source" : "JEV",
+    "configuredModel" : "jev-latest",
+    "jevCalls" : 1,
+    "durationMs" : 152,
+    "error" : null,
+    "note" : "Provider request ID, resolved model and token usage are not exposed by the adapter."
+  },
+  "judgmentSet" : {
+    "journey" : "UNIVERSITY",
+    "schemaVersion" : "university-v1",
+    "judgments" : [ {
+      "dimensionId" : "information_sufficient",
+      "name" : "Information sufficiency",
+      "numericValue" : 0.97,
+      "categoricalValue" : null,
+      "confidence" : null,
+      "confidenceValue" : null,
+      "probabilityDistribution" : { }
+    }, {
+      "dimensionId" : "technical_digital_depth",
+      "name" : "Technical and digital depth",
+      "numericValue" : 0.29,
+      "categoricalValue" : "The course develops little technical or digital capability.",
+      "confidence" : null,
+      "confidenceValue" : 0.76,
+      "probabilityDistribution" : {
+        "0" : 0.71,
+        "1" : 0.29,
+        "2" : 0.0,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "analytical_reasoning",
+      "name" : "Analytical reasoning",
+      "numericValue" : 2.99,
+      "categoricalValue" : "The course develops substantial analytical, quantitative or reasoning capability.",
+      "confidence" : null,
+      "confidenceValue" : 0.91,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.06,
+        "3" : 0.89,
+        "4" : 0.05
+      }
+    }, {
+      "dimensionId" : "original_judgment_creativity",
+      "name" : "Original judgment and creativity",
+      "numericValue" : 2.26,
+      "categoricalValue" : "The course regularly mixes established methods with independent judgment.",
+      "confidence" : null,
+      "confidenceValue" : 0.68,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.06,
+        "2" : 0.62,
+        "3" : 0.32,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "human_relationship_dependency",
+      "name" : "Human and relationship capability",
+      "numericValue" : 2.21,
+      "categoricalValue" : "Interpersonal capability is developed alongside other priorities.",
+      "confidence" : null,
+      "confidenceValue" : 0.72,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.06,
+        "2" : 0.66,
+        "3" : 0.28,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "contextual_complexity",
+      "name" : "Contextual complexity",
+      "numericValue" : 2.97,
+      "categoricalValue" : "The course frequently requires working with ambiguous, multi-factor or changing situations.",
+      "confidence" : null,
+      "confidenceValue" : 0.88,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.08,
+        "3" : 0.86,
+        "4" : 0.06
+      }
+    }, {
+      "dimensionId" : "practical_real_world_application",
+      "name" : "Practical real-world application",
+      "numericValue" : 1.1,
+      "categoricalValue" : "There is a limited applied element alongside mostly theoretical study.",
+      "confidence" : null,
+      "confidenceValue" : 0.92,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.91,
+        "2" : 0.08,
+        "3" : 0.01,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "ai_complementarity",
+      "name" : "AI complementarity",
+      "numericValue" : 3.59,
+      "categoricalValue" : "There is very strong potential for productive AI augmentation while human judgment, relationships, responsibility or practical capability remain valuable.",
+      "confidence" : null,
+      "confidenceValue" : 0.67,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.01,
+        "3" : 0.38,
+        "4" : 0.61
+      }
+    }, {
+      "dimensionId" : "skill_transferability",
+      "name" : "Skill transferability",
+      "numericValue" : 2.86,
+      "categoricalValue" : "The capabilities are useful across a range of roles or sectors.",
+      "confidence" : null,
+      "confidenceValue" : 0.69,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.06,
+        "2" : 0.13,
+        "3" : 0.69,
+        "4" : 0.12
+      }
+    }, {
+      "dimensionId" : "career_breadth",
+      "name" : "Career breadth",
+      "numericValue" : 1.46,
+      "categoricalValue" : "The course points mainly towards one field with a few adjacent options.",
+      "confidence" : null,
+      "confidenceValue" : 0.62,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.68,
+        "2" : 0.18,
+        "3" : 0.14,
+        "4" : 0.0
+      }
+    } ]
+  },
+  "decision" : {
+    "policyVersion" : "university-decision-v1",
+    "informationSufficiency" : 0.97,
+    "status" : "READY_WITH_CAUTION",
+    "confidence" : "MODERATE",
+    "headline" : "DEVELOPING FUTURE READINESS",
+    "measures" : {
+      "FUTURE_READINESS" : {
+        "indicator" : 5.9775,
+        "band" : "DEVELOPING",
+        "confidence" : 0.752
+      },
+      "AI_COMPLEMENTARITY" : {
+        "indicator" : 7.512499999999999,
+        "band" : "STRONG",
+        "confidence" : 0.7195
+      },
+      "HUMAN_DIFFERENTIATION" : {
+        "indicator" : 5.387499999999999,
+        "band" : "DEVELOPING",
+        "confidence" : 0.78
+      },
+      "SKILL_TRANSFERABILITY" : {
+        "indicator" : 6.515,
+        "band" : "DEVELOPING",
+        "confidence" : 0.72
+      },
+      "CAREER_ADAPTABILITY" : {
+        "indicator" : 6.654999999999999,
+        "band" : "DEVELOPING",
+        "confidence" : 0.742
+      }
+    },
+    "topStrengths" : [ {
+      "dimensionId" : "ai_complementarity",
+      "direction" : "HIGH_AI_COMPLEMENTARITY",
+      "score" : 3.59,
+      "weight" : 0.12,
+      "signedEffect" : 0.04769999999999999
+    }, {
+      "dimensionId" : "analytical_reasoning",
+      "direction" : "HIGH_ANALYTICAL_REASONING",
+      "score" : 2.99,
+      "weight" : 0.15,
+      "signedEffect" : 0.037125000000000005
+    }, {
+      "dimensionId" : "contextual_complexity",
+      "direction" : "HIGH_CONTEXTUAL_COMPLEXITY",
+      "score" : 2.97,
+      "weight" : 0.1,
+      "signedEffect" : 0.024250000000000008
+    } ],
+    "topDevelopmentOpportunities" : [ {
+      "dimensionId" : "technical_digital_depth",
+      "direction" : "LOW_TECHNICAL_DIGITAL_DEPTH",
+      "score" : 0.29,
+      "weight" : 0.12,
+      "signedEffect" : -0.0513
+    }, {
+      "dimensionId" : "practical_real_world_application",
+      "direction" : "LOW_PRACTICAL_REAL_WORLD_APPLICATION",
+      "score" : 1.1,
+      "weight" : 0.1,
+      "signedEffect" : -0.0225
+    }, {
+      "dimensionId" : "career_breadth",
+      "direction" : "LOW_CAREER_BREADTH",
+      "score" : 1.46,
+      "weight" : 0.08,
+      "signedEffect" : -0.0108
+    } ]
+  }
+}

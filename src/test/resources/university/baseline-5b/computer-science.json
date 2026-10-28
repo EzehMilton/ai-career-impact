@@ -1,0 +1,221 @@
+{
+  "caseId" : "computer-science",
+  "mode" : "LIVE",
+  "capturedAt" : "2026-10-27T21:44:29.517129Z",
+  "input" : {
+    "courseTitle" : "BSc Computer Science",
+    "courseDescription" : "The course covers programming, algorithms, data structures, databases, computer systems, networks and software engineering, with options in artificial intelligence and cybersecurity. Teaching combines lectures, weekly laboratory programming sessions, individual coursework and a second-year group software project. The final year includes an individual project in which students research, design, build and evaluate a substantial piece of software.",
+    "keyModules" : [ "Programming Fundamentals", "Object-Oriented Programming", "Algorithms and Data Structures", "Discrete Mathematics", "Databases", "Computer Systems and Architecture", "Operating Systems and Networks", "Software Engineering Group Project", "Artificial Intelligence", "Cybersecurity", "Final-Year Individual Project" ],
+    "skillsDeveloped" : [ "Programming", "Problem solving", "Software design", "Mathematical reasoning", "Testing", "Teamwork", "Technical writing", "Independent research" ],
+    "preferredCareerAreas" : [ "Software development", "Data and AI", "Cybersecurity" ],
+    "institution" : null,
+    "country" : "United Kingdom"
+  },
+  "provider" : {
+    "source" : "JEV",
+    "configuredModel" : "jev-latest",
+    "jevCalls" : 1,
+    "durationMs" : 7822,
+    "error" : null,
+    "note" : "Provider request ID, resolved model and token usage are not exposed by the adapter."
+  },
+  "judgmentSet" : {
+    "journey" : "UNIVERSITY",
+    "schemaVersion" : "university-v1",
+    "judgments" : [ {
+      "dimensionId" : "information_sufficient",
+      "name" : "Information sufficiency",
+      "numericValue" : 0.97,
+      "categoricalValue" : null,
+      "confidence" : null,
+      "confidenceValue" : null,
+      "probabilityDistribution" : { }
+    }, {
+      "dimensionId" : "technical_digital_depth",
+      "name" : "Technical and digital depth",
+      "numericValue" : 3.99,
+      "categoricalValue" : "Technical or digital capability development is a core, sustained part of the course.",
+      "confidence" : null,
+      "confidenceValue" : 0.99,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.01,
+        "4" : 0.99
+      }
+    }, {
+      "dimensionId" : "analytical_reasoning",
+      "name" : "Analytical reasoning",
+      "numericValue" : 3.66,
+      "categoricalValue" : "Rigorous analysis, quantitative reasoning or systematic problem solving defines the course.",
+      "confidence" : null,
+      "confidenceValue" : 0.72,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.34,
+        "4" : 0.66
+      }
+    }, {
+      "dimensionId" : "original_judgment_creativity",
+      "name" : "Original judgment and creativity",
+      "numericValue" : 2.78,
+      "categoricalValue" : "Synthesis, independent judgment, design or creativity is important throughout the course.",
+      "confidence" : null,
+      "confidenceValue" : 0.81,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.22,
+        "3" : 0.77,
+        "4" : 0.01
+      }
+    }, {
+      "dimensionId" : "human_relationship_dependency",
+      "name" : "Human and relationship capability",
+      "numericValue" : 1.31,
+      "categoricalValue" : "Some communication or group work occurs, but it is not central.",
+      "confidence" : null,
+      "confidenceValue" : 0.74,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.69,
+        "2" : 0.31,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "contextual_complexity",
+      "name" : "Contextual complexity",
+      "numericValue" : 2.28,
+      "categoricalValue" : "The course mixes structured contexts with genuinely ambiguous ones.",
+      "confidence" : null,
+      "confidenceValue" : 0.71,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.04,
+        "2" : 0.65,
+        "3" : 0.31,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "practical_real_world_application",
+      "name" : "Practical real-world application",
+      "numericValue" : 2.97,
+      "categoricalValue" : "The course has a strong applied component such as substantial projects, labs or placements.",
+      "confidence" : null,
+      "confidenceValue" : 0.97,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.03,
+        "3" : 0.97,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "ai_complementarity",
+      "name" : "AI complementarity",
+      "numericValue" : 3.77,
+      "categoricalValue" : "There is very strong potential for productive AI augmentation while human judgment, relationships, responsibility or practical capability remain valuable.",
+      "confidence" : null,
+      "confidenceValue" : 0.82,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.22,
+        "4" : 0.78
+      }
+    }, {
+      "dimensionId" : "skill_transferability",
+      "name" : "Skill transferability",
+      "numericValue" : 3.14,
+      "categoricalValue" : "The capabilities are useful across a range of roles or sectors.",
+      "confidence" : null,
+      "confidenceValue" : 0.58,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.06,
+        "2" : 0.06,
+        "3" : 0.56,
+        "4" : 0.32
+      }
+    }, {
+      "dimensionId" : "career_breadth",
+      "name" : "Career breadth",
+      "numericValue" : 2.4,
+      "categoricalValue" : "The course opens a broad range of plausible pathways across several fields.",
+      "confidence" : null,
+      "confidenceValue" : 0.42,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.23,
+        "2" : 0.19,
+        "3" : 0.54,
+        "4" : 0.04
+      }
+    } ]
+  },
+  "decision" : {
+    "policyVersion" : "university-decision-v1",
+    "informationSufficiency" : 0.97,
+    "status" : "READY_WITH_CAUTION",
+    "confidence" : "MODERATE",
+    "headline" : "STRONG FUTURE READINESS",
+    "measures" : {
+      "FUTURE_READINESS" : {
+        "indicator" : 8.13,
+        "band" : "STRONG",
+        "confidence" : 0.737
+      },
+      "AI_COMPLEMENTARITY" : {
+        "indicator" : 9.466249999999999,
+        "band" : "STRONG",
+        "confidence" : 0.8304999999999999
+      },
+      "HUMAN_DIFFERENTIATION" : {
+        "indicator" : 5.692500000000001,
+        "band" : "DEVELOPING",
+        "confidence" : 0.8009999999999999
+      },
+      "SKILL_TRANSFERABILITY" : {
+        "indicator" : 7.74,
+        "band" : "STRONG",
+        "confidence" : 0.576
+      },
+      "CAREER_ADAPTABILITY" : {
+        "indicator" : 7.56125,
+        "band" : "STRONG",
+        "confidence" : 0.6234999999999999
+      }
+    },
+    "topStrengths" : [ {
+      "dimensionId" : "analytical_reasoning",
+      "direction" : "HIGH_ANALYTICAL_REASONING",
+      "score" : 3.66,
+      "weight" : 0.15,
+      "signedEffect" : 0.06225
+    }, {
+      "dimensionId" : "technical_digital_depth",
+      "direction" : "HIGH_TECHNICAL_DIGITAL_DEPTH",
+      "score" : 3.99,
+      "weight" : 0.12,
+      "signedEffect" : 0.0597
+    }, {
+      "dimensionId" : "ai_complementarity",
+      "direction" : "HIGH_AI_COMPLEMENTARITY",
+      "score" : 3.77,
+      "weight" : 0.12,
+      "signedEffect" : 0.0531
+    } ],
+    "topDevelopmentOpportunities" : [ {
+      "dimensionId" : "human_relationship_dependency",
+      "direction" : "LOW_HUMAN_RELATIONSHIP_DEPENDENCY",
+      "score" : 1.31,
+      "weight" : 0.1,
+      "signedEffect" : -0.017249999999999998
+    } ]
+  }
+}

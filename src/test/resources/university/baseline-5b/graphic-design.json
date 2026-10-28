@@ -1,0 +1,227 @@
+{
+  "caseId" : "graphic-design",
+  "mode" : "LIVE",
+  "capturedAt" : "2026-10-27T21:44:29.517129Z",
+  "input" : {
+    "courseTitle" : "BA Graphic Design",
+    "courseDescription" : "A studio-based course in visual communication. Students develop typography, layout, branding, illustration, motion and digital design through briefs set by tutors and, in later years, by external clients and competitions. Work is reviewed in group critiques, and the course covers design history, research methods and professional practice. The final year centres on a self-directed major project and a public portfolio show.",
+    "keyModules" : [ "Design Fundamentals", "Typography", "Visual Identity and Branding", "Illustration", "Digital and Interaction Design", "Motion Graphics", "Design History and Theory", "Live Briefs", "Professional Practice", "Final Major Project" ],
+    "skillsDeveloped" : [ "Visual communication", "Typography", "Concept development", "Design software", "Presenting and critiquing work", "Working to a brief", "Portfolio building" ],
+    "preferredCareerAreas" : [ "Graphic design", "Branding", "Digital design" ],
+    "institution" : null,
+    "country" : "United Kingdom"
+  },
+  "provider" : {
+    "source" : "JEV",
+    "configuredModel" : "jev-latest",
+    "jevCalls" : 1,
+    "durationMs" : 188,
+    "error" : null,
+    "note" : "Provider request ID, resolved model and token usage are not exposed by the adapter."
+  },
+  "judgmentSet" : {
+    "journey" : "UNIVERSITY",
+    "schemaVersion" : "university-v1",
+    "judgments" : [ {
+      "dimensionId" : "information_sufficient",
+      "name" : "Information sufficiency",
+      "numericValue" : 0.96,
+      "categoricalValue" : null,
+      "confidence" : null,
+      "confidenceValue" : null,
+      "probabilityDistribution" : { }
+    }, {
+      "dimensionId" : "technical_digital_depth",
+      "name" : "Technical and digital depth",
+      "numericValue" : 2.82,
+      "categoricalValue" : "The course develops substantial technical or digital capability.",
+      "confidence" : null,
+      "confidenceValue" : 0.56,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.35,
+        "3" : 0.47000000000000003,
+        "4" : 0.18
+      }
+    }, {
+      "dimensionId" : "analytical_reasoning",
+      "name" : "Analytical reasoning",
+      "numericValue" : 0.99,
+      "categoricalValue" : "Some analysis is required, but it is not a defining part of the course.",
+      "confidence" : null,
+      "confidenceValue" : 0.93,
+      "probabilityDistribution" : {
+        "0" : 0.05,
+        "1" : 0.91,
+        "2" : 0.04,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "original_judgment_creativity",
+      "name" : "Original judgment and creativity",
+      "numericValue" : 3.95,
+      "categoricalValue" : "The course fundamentally depends on original synthesis, judgment, design or creative work.",
+      "confidence" : null,
+      "confidenceValue" : 0.97,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.04,
+        "4" : 0.96
+      }
+    }, {
+      "dimensionId" : "human_relationship_dependency",
+      "name" : "Human and relationship capability",
+      "numericValue" : 2.34,
+      "categoricalValue" : "Interpersonal capability is developed alongside other priorities.",
+      "confidence" : null,
+      "confidenceValue" : 0.67,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.03,
+        "2" : 0.6,
+        "3" : 0.37,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "contextual_complexity",
+      "name" : "Contextual complexity",
+      "numericValue" : 2.97,
+      "categoricalValue" : "The course frequently requires working with ambiguous, multi-factor or changing situations.",
+      "confidence" : null,
+      "confidenceValue" : 0.86,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.1,
+        "3" : 0.83,
+        "4" : 0.07
+      }
+    }, {
+      "dimensionId" : "practical_real_world_application",
+      "name" : "Practical real-world application",
+      "numericValue" : 3.82,
+      "categoricalValue" : "Extensive real-world practice, placement, clinical, studio or project work defines the course.",
+      "confidence" : null,
+      "confidenceValue" : 0.85,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.18,
+        "4" : 0.82
+      }
+    }, {
+      "dimensionId" : "ai_complementarity",
+      "name" : "AI complementarity",
+      "numericValue" : 3.61,
+      "categoricalValue" : "There is very strong potential for productive AI augmentation while human judgment, relationships, responsibility or practical capability remain valuable.",
+      "confidence" : null,
+      "confidenceValue" : 0.68,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.01,
+        "3" : 0.37,
+        "4" : 0.62
+      }
+    }, {
+      "dimensionId" : "skill_transferability",
+      "name" : "Skill transferability",
+      "numericValue" : 2.21,
+      "categoricalValue" : "The capabilities are useful across a range of roles or sectors.",
+      "confidence" : null,
+      "confidenceValue" : 0.32,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.26,
+        "2" : 0.28,
+        "3" : 0.44,
+        "4" : 0.02
+      }
+    }, {
+      "dimensionId" : "career_breadth",
+      "name" : "Career breadth",
+      "numericValue" : 1.46,
+      "categoricalValue" : "The course points mainly towards one field with a few adjacent options.",
+      "confidence" : null,
+      "confidenceValue" : 0.62,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.64,
+        "2" : 0.27,
+        "3" : 0.09,
+        "4" : 0.0
+      }
+    } ]
+  },
+  "decision" : {
+    "policyVersion" : "university-decision-v1",
+    "informationSufficiency" : 0.96,
+    "status" : "READY_WITH_CAUTION",
+    "confidence" : "MODERATE",
+    "headline" : "DEVELOPING FUTURE READINESS",
+    "measures" : {
+      "FUTURE_READINESS" : {
+        "indicator" : 6.32375,
+        "band" : "DEVELOPING",
+        "confidence" : 0.7135
+      },
+      "AI_COMPLEMENTARITY" : {
+        "indicator" : 7.746249999999999,
+        "band" : "STRONG",
+        "confidence" : 0.6995
+      },
+      "HUMAN_DIFFERENTIATION" : {
+        "indicator" : 8.1125,
+        "band" : "STRONG",
+        "confidence" : 0.8340000000000001
+      },
+      "SKILL_TRANSFERABILITY" : {
+        "indicator" : 4.539999999999999,
+        "band" : "DEVELOPING",
+        "confidence" : 0.502
+      },
+      "CAREER_ADAPTABILITY" : {
+        "indicator" : 5.25625,
+        "band" : "DEVELOPING",
+        "confidence" : 0.652
+      }
+    },
+    "topStrengths" : [ {
+      "dimensionId" : "original_judgment_creativity",
+      "direction" : "HIGH_ORIGINAL_JUDGMENT_CREATIVITY",
+      "score" : 3.95,
+      "weight" : 0.13,
+      "signedEffect" : 0.06337500000000001
+    }, {
+      "dimensionId" : "ai_complementarity",
+      "direction" : "HIGH_AI_COMPLEMENTARITY",
+      "score" : 3.61,
+      "weight" : 0.12,
+      "signedEffect" : 0.048299999999999996
+    }, {
+      "dimensionId" : "practical_real_world_application",
+      "direction" : "HIGH_PRACTICAL_REAL_WORLD_APPLICATION",
+      "score" : 3.82,
+      "weight" : 0.1,
+      "signedEffect" : 0.0455
+    } ],
+    "topDevelopmentOpportunities" : [ {
+      "dimensionId" : "analytical_reasoning",
+      "direction" : "LOW_ANALYTICAL_REASONING",
+      "score" : 0.99,
+      "weight" : 0.15,
+      "signedEffect" : -0.037875
+    }, {
+      "dimensionId" : "career_breadth",
+      "direction" : "LOW_CAREER_BREADTH",
+      "score" : 1.46,
+      "weight" : 0.08,
+      "signedEffect" : -0.0108
+    } ]
+  }
+}

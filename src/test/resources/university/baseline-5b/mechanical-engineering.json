@@ -1,0 +1,227 @@
+{
+  "caseId" : "mechanical-engineering",
+  "mode" : "LIVE",
+  "capturedAt" : "2026-10-27T21:44:29.517129Z",
+  "input" : {
+    "courseTitle" : "BEng Mechanical Engineering",
+    "courseDescription" : "An engineering degree covering mechanics, thermodynamics, fluid mechanics, materials, mechanical design and control systems, built on engineering mathematics. Students carry out laboratory experiments, use computer-aided design and simulation, and complete design-and-build group projects. The course is designed to meet the academic requirements for professional engineering registration and ends with an individual project.",
+    "keyModules" : [ "Engineering Mathematics", "Statics and Dynamics", "Thermodynamics", "Fluid Mechanics", "Materials Science", "Mechanical Design and CAD", "Control Systems", "Manufacturing Processes", "Engineering Design-and-Build Project", "Individual Project" ],
+    "skillsDeveloped" : [ "Mathematical modelling", "Engineering design", "Laboratory work", "CAD and simulation", "Problem solving", "Teamwork", "Technical reporting" ],
+    "preferredCareerAreas" : [ "Mechanical engineering", "Manufacturing", "Energy" ],
+    "institution" : null,
+    "country" : "United Kingdom"
+  },
+  "provider" : {
+    "source" : "JEV",
+    "configuredModel" : "jev-latest",
+    "jevCalls" : 1,
+    "durationMs" : 150,
+    "error" : null,
+    "note" : "Provider request ID, resolved model and token usage are not exposed by the adapter."
+  },
+  "judgmentSet" : {
+    "journey" : "UNIVERSITY",
+    "schemaVersion" : "university-v1",
+    "judgments" : [ {
+      "dimensionId" : "information_sufficient",
+      "name" : "Information sufficiency",
+      "numericValue" : 0.97,
+      "categoricalValue" : null,
+      "confidence" : null,
+      "confidenceValue" : null,
+      "probabilityDistribution" : { }
+    }, {
+      "dimensionId" : "technical_digital_depth",
+      "name" : "Technical and digital depth",
+      "numericValue" : 3.96,
+      "categoricalValue" : "Technical or digital capability development is a core, sustained part of the course.",
+      "confidence" : null,
+      "confidenceValue" : 0.97,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.04,
+        "4" : 0.96
+      }
+    }, {
+      "dimensionId" : "analytical_reasoning",
+      "name" : "Analytical reasoning",
+      "numericValue" : 3.93,
+      "categoricalValue" : "Rigorous analysis, quantitative reasoning or systematic problem solving defines the course.",
+      "confidence" : null,
+      "confidenceValue" : 0.94,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.07,
+        "4" : 0.93
+      }
+    }, {
+      "dimensionId" : "original_judgment_creativity",
+      "name" : "Original judgment and creativity",
+      "numericValue" : 2.86,
+      "categoricalValue" : "Synthesis, independent judgment, design or creativity is important throughout the course.",
+      "confidence" : null,
+      "confidenceValue" : 0.87,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.15,
+        "3" : 0.84,
+        "4" : 0.01
+      }
+    }, {
+      "dimensionId" : "human_relationship_dependency",
+      "name" : "Human and relationship capability",
+      "numericValue" : 1.51,
+      "categoricalValue" : "Interpersonal capability is developed alongside other priorities.",
+      "confidence" : null,
+      "confidenceValue" : 0.59,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.49,
+        "2" : 0.51,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "contextual_complexity",
+      "name" : "Contextual complexity",
+      "numericValue" : 2.48,
+      "categoricalValue" : "The course frequently requires working with ambiguous, multi-factor or changing situations.",
+      "confidence" : null,
+      "confidenceValue" : 0.57,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.03,
+        "2" : 0.46,
+        "3" : 0.51,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "practical_real_world_application",
+      "name" : "Practical real-world application",
+      "numericValue" : 2.93,
+      "categoricalValue" : "The course has a strong applied component such as substantial projects, labs or placements.",
+      "confidence" : null,
+      "confidenceValue" : 0.94,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.07,
+        "3" : 0.93,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "ai_complementarity",
+      "name" : "AI complementarity",
+      "numericValue" : 3.72,
+      "categoricalValue" : "There is very strong potential for productive AI augmentation while human judgment, relationships, responsibility or practical capability remain valuable.",
+      "confidence" : null,
+      "confidenceValue" : 0.77,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.27,
+        "4" : 0.73
+      }
+    }, {
+      "dimensionId" : "skill_transferability",
+      "name" : "Skill transferability",
+      "numericValue" : 2.71,
+      "categoricalValue" : "The capabilities are useful across a range of roles or sectors.",
+      "confidence" : null,
+      "confidenceValue" : 0.62,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.1,
+        "2" : 0.17,
+        "3" : 0.64,
+        "4" : 0.09
+      }
+    }, {
+      "dimensionId" : "career_breadth",
+      "name" : "Career breadth",
+      "numericValue" : 1.68,
+      "categoricalValue" : "The course points mainly towards one field with a few adjacent options.",
+      "confidence" : null,
+      "confidenceValue" : 0.45,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.55,
+        "2" : 0.24,
+        "3" : 0.21,
+        "4" : 0.0
+      }
+    } ]
+  },
+  "decision" : {
+    "policyVersion" : "university-decision-v1",
+    "informationSufficiency" : 0.97,
+    "status" : "READY_WITH_CAUTION",
+    "confidence" : "MODERATE",
+    "headline" : "STRONG FUTURE READINESS",
+    "measures" : {
+      "FUTURE_READINESS" : {
+        "indicator" : 7.973749999999999,
+        "band" : "STRONG",
+        "confidence" : 0.7745
+      },
+      "AI_COMPLEMENTARITY" : {
+        "indicator" : 9.46875,
+        "band" : "STRONG",
+        "confidence" : 0.8254999999999999
+      },
+      "HUMAN_DIFFERENTIATION" : {
+        "indicator" : 5.9825,
+        "band" : "DEVELOPING",
+        "confidence" : 0.74
+      },
+      "SKILL_TRANSFERABILITY" : {
+        "indicator" : 6.869999999999999,
+        "band" : "DEVELOPING",
+        "confidence" : 0.65
+      },
+      "CAREER_ADAPTABILITY" : {
+        "indicator" : 7.0337499999999995,
+        "band" : "STRONG",
+        "confidence" : 0.6565
+      }
+    },
+    "topStrengths" : [ {
+      "dimensionId" : "analytical_reasoning",
+      "direction" : "HIGH_ANALYTICAL_REASONING",
+      "score" : 3.93,
+      "weight" : 0.15,
+      "signedEffect" : 0.07237500000000001
+    }, {
+      "dimensionId" : "technical_digital_depth",
+      "direction" : "HIGH_TECHNICAL_DIGITAL_DEPTH",
+      "score" : 3.96,
+      "weight" : 0.12,
+      "signedEffect" : 0.0588
+    }, {
+      "dimensionId" : "ai_complementarity",
+      "direction" : "HIGH_AI_COMPLEMENTARITY",
+      "score" : 3.72,
+      "weight" : 0.12,
+      "signedEffect" : 0.05160000000000001
+    } ],
+    "topDevelopmentOpportunities" : [ {
+      "dimensionId" : "human_relationship_dependency",
+      "direction" : "LOW_HUMAN_RELATIONSHIP_DEPENDENCY",
+      "score" : 1.51,
+      "weight" : 0.1,
+      "signedEffect" : -0.01225
+    }, {
+      "dimensionId" : "career_breadth",
+      "direction" : "LOW_CAREER_BREADTH",
+      "score" : 1.68,
+      "weight" : 0.08,
+      "signedEffect" : -0.006400000000000001
+    } ]
+  }
+}

@@ -1,0 +1,233 @@
+{
+  "caseId" : "english-literature",
+  "mode" : "LIVE",
+  "capturedAt" : "2026-10-27T21:44:29.517129Z",
+  "input" : {
+    "courseTitle" : "BA English Literature",
+    "courseDescription" : "The course studies literature in English from the medieval period to the present, including poetry, drama and the novel, alongside literary theory and criticism. Students learn through lectures and seminar discussion and are assessed mainly through essays, close-reading exercises and some examinations. Optional modules include creative writing, and the final year includes an independent dissertation.",
+    "keyModules" : [ "Approaches to Literature", "Medieval and Renaissance Literature", "Shakespeare", "Romantic and Victorian Literature", "Modernism", "Contemporary Fiction", "Literary Theory", "Creative Writing", "Dissertation" ],
+    "skillsDeveloped" : [ "Close reading", "Essay writing", "Argument", "Interpretation", "Research", "Seminar discussion", "Independent study" ],
+    "preferredCareerAreas" : [ "Publishing", "Journalism", "Teaching" ],
+    "institution" : null,
+    "country" : "United Kingdom"
+  },
+  "provider" : {
+    "source" : "JEV",
+    "configuredModel" : "jev-latest",
+    "jevCalls" : 1,
+    "durationMs" : 127,
+    "error" : null,
+    "note" : "Provider request ID, resolved model and token usage are not exposed by the adapter."
+  },
+  "judgmentSet" : {
+    "journey" : "UNIVERSITY",
+    "schemaVersion" : "university-v1",
+    "judgments" : [ {
+      "dimensionId" : "information_sufficient",
+      "name" : "Information sufficiency",
+      "numericValue" : 0.95,
+      "categoricalValue" : null,
+      "confidence" : null,
+      "confidenceValue" : null,
+      "probabilityDistribution" : { }
+    }, {
+      "dimensionId" : "technical_digital_depth",
+      "name" : "Technical and digital depth",
+      "numericValue" : 0.02,
+      "categoricalValue" : "The course develops little technical or digital capability.",
+      "confidence" : null,
+      "confidenceValue" : 0.98,
+      "probabilityDistribution" : {
+        "0" : 0.98,
+        "1" : 0.02,
+        "2" : 0.0,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "analytical_reasoning",
+      "name" : "Analytical reasoning",
+      "numericValue" : 2.17,
+      "categoricalValue" : "The course develops substantial analytical, quantitative or reasoning capability.",
+      "confidence" : null,
+      "confidenceValue" : 0.3,
+      "probabilityDistribution" : {
+        "0" : 0.04,
+        "1" : 0.24,
+        "2" : 0.24,
+        "3" : 0.48,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "original_judgment_creativity",
+      "name" : "Original judgment and creativity",
+      "numericValue" : 2.93,
+      "categoricalValue" : "Synthesis, independent judgment, design or creativity is important throughout the course.",
+      "confidence" : null,
+      "confidenceValue" : 0.89,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.1,
+        "3" : 0.87,
+        "4" : 0.03
+      }
+    }, {
+      "dimensionId" : "human_relationship_dependency",
+      "name" : "Human and relationship capability",
+      "numericValue" : 1.73,
+      "categoricalValue" : "Interpersonal capability is developed alongside other priorities.",
+      "confidence" : null,
+      "confidenceValue" : 0.7,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.32,
+        "2" : 0.64,
+        "3" : 0.04,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "contextual_complexity",
+      "name" : "Contextual complexity",
+      "numericValue" : 3.15,
+      "categoricalValue" : "The course frequently requires working with ambiguous, multi-factor or changing situations.",
+      "confidence" : null,
+      "confidenceValue" : 0.78,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.05,
+        "3" : 0.74,
+        "4" : 0.21
+      }
+    }, {
+      "dimensionId" : "practical_real_world_application",
+      "name" : "Practical real-world application",
+      "numericValue" : 0.73,
+      "categoricalValue" : "There is a limited applied element alongside mostly theoretical study.",
+      "confidence" : null,
+      "confidenceValue" : 0.77,
+      "probabilityDistribution" : {
+        "0" : 0.27,
+        "1" : 0.73,
+        "2" : 0.0,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "ai_complementarity",
+      "name" : "AI complementarity",
+      "numericValue" : 3.21,
+      "categoricalValue" : "AI could substantially increase capability while important human contribution remains.",
+      "confidence" : null,
+      "confidenceValue" : 0.67,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.09,
+        "3" : 0.6,
+        "4" : 0.31
+      }
+    }, {
+      "dimensionId" : "skill_transferability",
+      "name" : "Skill transferability",
+      "numericValue" : 3.31,
+      "categoricalValue" : "The capabilities are useful across a range of roles or sectors.",
+      "confidence" : null,
+      "confidenceValue" : 0.68,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.04,
+        "3" : 0.61,
+        "4" : 0.35
+      }
+    }, {
+      "dimensionId" : "career_breadth",
+      "name" : "Career breadth",
+      "numericValue" : 2.13,
+      "categoricalValue" : "The course opens a moderate range of plausible pathways.",
+      "confidence" : null,
+      "confidenceValue" : 0.54,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.21,
+        "2" : 0.46,
+        "3" : 0.32,
+        "4" : 0.01
+      }
+    } ]
+  },
+  "decision" : {
+    "policyVersion" : "university-decision-v1",
+    "informationSufficiency" : 0.95,
+    "status" : "READY_WITH_CAUTION",
+    "confidence" : "MODERATE",
+    "headline" : "DEVELOPING FUTURE READINESS",
+    "measures" : {
+      "FUTURE_READINESS" : {
+        "indicator" : 5.95625,
+        "band" : "DEVELOPING",
+        "confidence" : 0.675
+      },
+      "AI_COMPLEMENTARITY" : {
+        "indicator" : 6.43875,
+        "band" : "DEVELOPING",
+        "confidence" : 0.6609999999999999
+      },
+      "HUMAN_DIFFERENTIATION" : {
+        "indicator" : 5.435,
+        "band" : "DEVELOPING",
+        "confidence" : 0.787
+      },
+      "SKILL_TRANSFERABILITY" : {
+        "indicator" : 7.115,
+        "band" : "STRONG",
+        "confidence" : 0.5760000000000001
+      },
+      "CAREER_ADAPTABILITY" : {
+        "indicator" : 6.869999999999999,
+        "band" : "DEVELOPING",
+        "confidence" : 0.5825
+      }
+    },
+    "topStrengths" : [ {
+      "dimensionId" : "ai_complementarity",
+      "direction" : "HIGH_AI_COMPLEMENTARITY",
+      "score" : 3.21,
+      "weight" : 0.12,
+      "signedEffect" : 0.0363
+    }, {
+      "dimensionId" : "skill_transferability",
+      "direction" : "HIGH_SKILL_TRANSFERABILITY",
+      "score" : 3.31,
+      "weight" : 0.1,
+      "signedEffect" : 0.03275
+    }, {
+      "dimensionId" : "original_judgment_creativity",
+      "direction" : "HIGH_ORIGINAL_JUDGMENT_CREATIVITY",
+      "score" : 2.93,
+      "weight" : 0.13,
+      "signedEffect" : 0.030225000000000005
+    } ],
+    "topDevelopmentOpportunities" : [ {
+      "dimensionId" : "technical_digital_depth",
+      "direction" : "LOW_TECHNICAL_DIGITAL_DEPTH",
+      "score" : 0.02,
+      "weight" : 0.12,
+      "signedEffect" : -0.059399999999999994
+    }, {
+      "dimensionId" : "practical_real_world_application",
+      "direction" : "LOW_PRACTICAL_REAL_WORLD_APPLICATION",
+      "score" : 0.73,
+      "weight" : 0.1,
+      "signedEffect" : -0.03175
+    }, {
+      "dimensionId" : "human_relationship_dependency",
+      "direction" : "LOW_HUMAN_RELATIONSHIP_DEPENDENCY",
+      "score" : 1.73,
+      "weight" : 0.1,
+      "signedEffect" : -0.006750000000000001
+    } ]
+  }
+}

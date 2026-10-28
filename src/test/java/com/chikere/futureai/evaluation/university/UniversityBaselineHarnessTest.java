@@ -246,7 +246,7 @@ class UniversityBaselineHarnessTest {
     }
 
     /** Offline stand-in for Jev, keyed by course title; optionally fails one course. */
-    private static final class Synthetic implements UniversityJudgmentProvider {
+    static final class Synthetic implements UniversityJudgmentProvider {
         final List<String> calls = new ArrayList<>();
         private final String failing;
 

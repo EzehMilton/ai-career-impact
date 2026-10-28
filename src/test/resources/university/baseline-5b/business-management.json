@@ -1,0 +1,227 @@
+{
+  "caseId" : "business-management",
+  "mode" : "LIVE",
+  "capturedAt" : "2026-10-27T21:44:29.517129Z",
+  "input" : {
+    "courseTitle" : "BA Business Management",
+    "courseDescription" : "The course introduces how organisations are run, covering management, marketing, finance and accounting, human resource management, operations and strategy. Students learn through lectures, seminars, case studies, group presentations and reports. An optional placement year is available, and the final year includes a strategy module and a research-based dissertation or consultancy project.",
+    "keyModules" : [ "Principles of Management", "Introduction to Marketing", "Financial and Management Accounting", "Organisational Behaviour", "Human Resource Management", "Operations Management", "Business Analytics", "Entrepreneurship", "Strategic Management", "Dissertation or Consultancy Project" ],
+    "skillsDeveloped" : [ "Business analysis", "Report writing", "Presentation", "Teamwork", "Basic financial analysis", "Decision making", "Research" ],
+    "preferredCareerAreas" : [ "Management", "Marketing", "Human resources", "Consulting" ],
+    "institution" : null,
+    "country" : "United Kingdom"
+  },
+  "provider" : {
+    "source" : "JEV",
+    "configuredModel" : "jev-latest",
+    "jevCalls" : 1,
+    "durationMs" : 176,
+    "error" : null,
+    "note" : "Provider request ID, resolved model and token usage are not exposed by the adapter."
+  },
+  "judgmentSet" : {
+    "journey" : "UNIVERSITY",
+    "schemaVersion" : "university-v1",
+    "judgments" : [ {
+      "dimensionId" : "information_sufficient",
+      "name" : "Information sufficiency",
+      "numericValue" : 0.95,
+      "categoricalValue" : null,
+      "confidence" : null,
+      "confidenceValue" : null,
+      "probabilityDistribution" : { }
+    }, {
+      "dimensionId" : "technical_digital_depth",
+      "name" : "Technical and digital depth",
+      "numericValue" : 1.0,
+      "categoricalValue" : "Some technical or digital tools are used, but they are not central to the course.",
+      "confidence" : null,
+      "confidenceValue" : 0.9,
+      "probabilityDistribution" : {
+        "0" : 0.06,
+        "1" : 0.88,
+        "2" : 0.06,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "analytical_reasoning",
+      "name" : "Analytical reasoning",
+      "numericValue" : 1.98,
+      "categoricalValue" : "The course mixes analytical work with other kinds of study in roughly equal measure.",
+      "confidence" : null,
+      "confidenceValue" : 0.84,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.1,
+        "2" : 0.81,
+        "3" : 0.09,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "original_judgment_creativity",
+      "name" : "Original judgment and creativity",
+      "numericValue" : 2.13,
+      "categoricalValue" : "The course regularly mixes established methods with independent judgment.",
+      "confidence" : null,
+      "confidenceValue" : 0.82,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.04,
+        "2" : 0.79,
+        "3" : 0.17,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "human_relationship_dependency",
+      "name" : "Human and relationship capability",
+      "numericValue" : 2.25,
+      "categoricalValue" : "Interpersonal capability is developed alongside other priorities.",
+      "confidence" : null,
+      "confidenceValue" : 0.77,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.01,
+        "2" : 0.72,
+        "3" : 0.27,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "contextual_complexity",
+      "name" : "Contextual complexity",
+      "numericValue" : 2.81,
+      "categoricalValue" : "The course frequently requires working with ambiguous, multi-factor or changing situations.",
+      "confidence" : null,
+      "confidenceValue" : 0.82,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.2,
+        "3" : 0.79,
+        "4" : 0.01
+      }
+    }, {
+      "dimensionId" : "practical_real_world_application",
+      "name" : "Practical real-world application",
+      "numericValue" : 2.17,
+      "categoricalValue" : "Applied and theoretical work are present in roughly equal measure.",
+      "confidence" : null,
+      "confidenceValue" : 0.51,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.21,
+        "2" : 0.41,
+        "3" : 0.38,
+        "4" : 0.0
+      }
+    }, {
+      "dimensionId" : "ai_complementarity",
+      "name" : "AI complementarity",
+      "numericValue" : 3.73,
+      "categoricalValue" : "There is very strong potential for productive AI augmentation while human judgment, relationships, responsibility or practical capability remain valuable.",
+      "confidence" : null,
+      "confidenceValue" : 0.78,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.26,
+        "4" : 0.74
+      }
+    }, {
+      "dimensionId" : "skill_transferability",
+      "name" : "Skill transferability",
+      "numericValue" : 3.75,
+      "categoricalValue" : "The capabilities are broadly useful across many different roles and sectors.",
+      "confidence" : null,
+      "confidenceValue" : 0.8,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.24,
+        "4" : 0.76
+      }
+    }, {
+      "dimensionId" : "career_breadth",
+      "name" : "Career breadth",
+      "numericValue" : 2.82,
+      "categoricalValue" : "The course opens a broad range of plausible pathways across several fields.",
+      "confidence" : null,
+      "confidenceValue" : 0.73,
+      "probabilityDistribution" : {
+        "0" : 0.0,
+        "1" : 0.05,
+        "2" : 0.15,
+        "3" : 0.73,
+        "4" : 0.07
+      }
+    } ]
+  },
+  "decision" : {
+    "policyVersion" : "university-decision-v1",
+    "informationSufficiency" : 0.95,
+    "status" : "READY_WITH_CAUTION",
+    "confidence" : "MODERATE",
+    "headline" : "DEVELOPING FUTURE READINESS",
+    "measures" : {
+      "FUTURE_READINESS" : {
+        "indicator" : 6.37625,
+        "band" : "DEVELOPING",
+        "confidence" : 0.818
+      },
+      "AI_COMPLEMENTARITY" : {
+        "indicator" : 7.645,
+        "band" : "STRONG",
+        "confidence" : 0.8069999999999999
+      },
+      "HUMAN_DIFFERENTIATION" : {
+        "indicator" : 5.775,
+        "band" : "DEVELOPING",
+        "confidence" : 0.743
+      },
+      "SKILL_TRANSFERABILITY" : {
+        "indicator" : 8.025,
+        "band" : "STRONG",
+        "confidence" : 0.794
+      },
+      "CAREER_ADAPTABILITY" : {
+        "indicator" : 7.54875,
+        "band" : "STRONG",
+        "confidence" : 0.7905
+      }
+    },
+    "topStrengths" : [ {
+      "dimensionId" : "ai_complementarity",
+      "direction" : "HIGH_AI_COMPLEMENTARITY",
+      "score" : 3.73,
+      "weight" : 0.12,
+      "signedEffect" : 0.051899999999999995
+    }, {
+      "dimensionId" : "skill_transferability",
+      "direction" : "HIGH_SKILL_TRANSFERABILITY",
+      "score" : 3.75,
+      "weight" : 0.1,
+      "signedEffect" : 0.043750000000000004
+    }, {
+      "dimensionId" : "contextual_complexity",
+      "direction" : "HIGH_CONTEXTUAL_COMPLEXITY",
+      "score" : 2.81,
+      "weight" : 0.1,
+      "signedEffect" : 0.020250000000000004
+    } ],
+    "topDevelopmentOpportunities" : [ {
+      "dimensionId" : "technical_digital_depth",
+      "direction" : "LOW_TECHNICAL_DIGITAL_DEPTH",
+      "score" : 1.0,
+      "weight" : 0.12,
+      "signedEffect" : -0.03
+    }, {
+      "dimensionId" : "analytical_reasoning",
+      "direction" : "LOW_ANALYTICAL_REASONING",
+      "score" : 1.98,
+      "weight" : 0.15,
+      "signedEffect" : -7.500000000000007E-4
+    } ]
+  }
+}
