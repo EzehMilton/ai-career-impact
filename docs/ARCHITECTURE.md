@@ -758,11 +758,13 @@ Decisions locked by the Stage 5C live probe (seven courses, eight modules each, 
 
 - **One Jev call for up to eight modules.** No batching fallback. Strict checks remain for missing and unexpected answers, wrong types, invalid ranges and module identity or order.
 - **Distributions may differ from 1.0 by at most 0.01**, because providers round probabilities. The comparison carries a 1e-9 floating-point allowance: two live answers summing to 0.99 were first rejected because |0.99 − 1.0| evaluates to 0.010000000000000009. The business tolerance is unchanged, and the course-level `university-v1` check is unchanged.
-- **`described_clearly` is diagnostic only**, never a gate or a downgrade. Across the 40 modules first accepted it ranged 0.41–0.94 (mean 0.80); the only value below 0.50 was "Approaches to Literature" (0.41), which is still analysable from the course context.
+- **`described_clearly` is diagnostic only**: it never excludes or downgrades a module and never directly determines a classification. Across the 40 modules first accepted it ranged 0.41–0.94 (mean 0.80); the only value below 0.50 was "Approaches to Literature" (0.41), which is still analysable from the course context.
+
+The seven accepted live captures are frozen in `src/test/resources/university/module-probe-v1/` (Computer Science and Mechanical Engineering from their reruns after the tolerance fix), so Stage 5D works offline without further Jev calls.
 
 Findings for the Stage 5D classification policy:
 
-- `ai_learning_assistance` is high almost everywhere (about 2.53–3.78, mean 3.52), so on its own it is not evidence for an AI-assistance category. Classification must combine it with independent demonstration, human judgement, interpersonal work, practical application, professional standards and, where relevant, technical/quantitative context.
+- `ai_learning_assistance` is high almost everywhere (about 2.53–3.78, mean 3.52), so a module must never be classified from it alone. Classification must combine it with independent demonstration, human judgement, interpersonal work, practical application, professional standards and, where relevant, technical/quantitative context.
 - **Invariant:** AI learning assistance describes where AI may support learning or preparation. It does not determine what use is permitted in assessed work. High AI learning assistance together with high independent demonstration is an integrity-sensitive combination, never permission to use AI in assessment; the paid report must defer to institution and module policies.
 
 ### University limitations and next sub-phases

@@ -1,0 +1,1472 @@
+{
+  "caseId" : "english-literature",
+  "mode" : "LIVE",
+  "capturedAt" : "2026-10-28T06:50:55.070076Z",
+  "schemaVersion" : "university-module-v1",
+  "courseContext" : {
+    "courseTitle" : "BA English Literature",
+    "courseDescription" : "The course studies literature in English from the medieval period to the present, including poetry, drama and the novel, alongside literary theory and criticism. Students learn through lectures and seminar discussion and are assessed mainly through essays, close-reading exercises and some examinations. Optional modules include creative writing, and the final year includes an independent dissertation.",
+    "skillsDeveloped" : [ "Close reading", "Essay writing", "Argument", "Interpretation", "Research", "Seminar discussion", "Independent study" ],
+    "allModules" : [ "Approaches to Literature", "Medieval and Renaissance Literature", "Shakespeare", "Romantic and Victorian Literature", "Modernism", "Contemporary Fiction", "Literary Theory", "Creative Writing", "Dissertation" ],
+    "preferredCareerAreas" : "not sent: career areas must not influence module judgments"
+  },
+  "selectedModules" : [ {
+    "title" : "Approaches to Literature",
+    "id" : "m1"
+  }, {
+    "title" : "Shakespeare",
+    "id" : "m2"
+  }, {
+    "title" : "Romantic and Victorian Literature",
+    "id" : "m3"
+  }, {
+    "title" : "Modernism",
+    "id" : "m4"
+  }, {
+    "title" : "Contemporary Fiction",
+    "id" : "m5"
+  }, {
+    "title" : "Literary Theory",
+    "id" : "m6"
+  }, {
+    "title" : "Creative Writing",
+    "id" : "m7"
+  }, {
+    "title" : "Dissertation",
+    "id" : "m8"
+  } ],
+  "omittedModules" : [ "Medieval and Renaissance Literature" ],
+  "selectionNote" : "Period study, theory, creative writing and the dissertation; omits medieval and Renaissance. Probe selection only, not production behaviour.",
+  "provider" : {
+    "configuredModel" : "jev-latest",
+    "jevCalls" : 1,
+    "durationMs" : 211,
+    "model" : "jev-1.14.0",
+    "requestId" : "req_01a181474636770aa7eff696203f060b",
+    "inputTokens" : 9950,
+    "outputTokens" : 1332,
+    "error" : null
+  },
+  "validation" : {
+    "adapterStatus" : "ACCEPTED",
+    "expectedAnswers" : 64,
+    "receivedAnswers" : 64,
+    "missing" : [ ],
+    "unexpected" : [ ],
+    "invalid" : [ ],
+    "validModules" : 8
+  },
+  "aiLearningAssistanceInvariant" : "AI learning assistance describes where AI may support learning or preparation. It does not determine what use is permitted in assessed work.",
+  "moduleJudgments" : [ {
+    "id" : "m1",
+    "title" : "Approaches to Literature",
+    "described_clearly" : 0.41,
+    "professional_standards" : 0.03,
+    "ai_learning_assistance" : {
+      "value" : 3.7,
+      "confidence" : 0.75,
+      "nearestLevel" : 4,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.02,
+        "3" : 0.26,
+        "4" : 0.72
+      }
+    },
+    "independent_demonstration" : {
+      "value" : 2.97,
+      "confidence" : 0.52,
+      "nearestLevel" : 3,
+      "distribution" : {
+        "0" : 0.02,
+        "1" : 0.04,
+        "2" : 0.16,
+        "3" : 0.5,
+        "4" : 0.28
+      }
+    },
+    "human_judgement" : {
+      "value" : 3.41,
+      "confidence" : 0.52,
+      "nearestLevel" : 4,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.01,
+        "2" : 0.07,
+        "3" : 0.41,
+        "4" : 0.51
+      }
+    },
+    "interpersonal_work" : {
+      "value" : 1.3,
+      "confidence" : 0.62,
+      "nearestLevel" : 1,
+      "distribution" : {
+        "0" : 0.08,
+        "1" : 0.59,
+        "2" : 0.29,
+        "3" : 0.04,
+        "4" : 0.0
+      }
+    },
+    "practical_application" : {
+      "value" : 0.03,
+      "confidence" : 0.97,
+      "nearestLevel" : 0,
+      "distribution" : {
+        "0" : 0.97,
+        "1" : 0.03,
+        "2" : 0.0,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    },
+    "technical_quantitative" : {
+      "value" : 0.0,
+      "confidence" : 1.0,
+      "nearestLevel" : 0,
+      "distribution" : {
+        "0" : 1.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    }
+  }, {
+    "id" : "m2",
+    "title" : "Shakespeare",
+    "described_clearly" : 0.86,
+    "professional_standards" : 0.03,
+    "ai_learning_assistance" : {
+      "value" : 3.78,
+      "confidence" : 0.82,
+      "nearestLevel" : 4,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.01,
+        "3" : 0.2,
+        "4" : 0.79
+      }
+    },
+    "independent_demonstration" : {
+      "value" : 3.15,
+      "confidence" : 0.62,
+      "nearestLevel" : 3,
+      "distribution" : {
+        "0" : 0.02,
+        "1" : 0.01,
+        "2" : 0.08,
+        "3" : 0.59,
+        "4" : 0.3
+      }
+    },
+    "human_judgement" : {
+      "value" : 3.81,
+      "confidence" : 0.85,
+      "nearestLevel" : 4,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.18,
+        "4" : 0.8200000000000001
+      }
+    },
+    "interpersonal_work" : {
+      "value" : 1.24,
+      "confidence" : 0.66,
+      "nearestLevel" : 1,
+      "distribution" : {
+        "0" : 0.09,
+        "1" : 0.61,
+        "2" : 0.28,
+        "3" : 0.02,
+        "4" : 0.0
+      }
+    },
+    "practical_application" : {
+      "value" : 0.06,
+      "confidence" : 0.96,
+      "nearestLevel" : 0,
+      "distribution" : {
+        "0" : 0.95,
+        "1" : 0.05,
+        "2" : 0.0,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    },
+    "technical_quantitative" : {
+      "value" : 0.0,
+      "confidence" : 1.0,
+      "nearestLevel" : 0,
+      "distribution" : {
+        "0" : 1.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    }
+  }, {
+    "id" : "m3",
+    "title" : "Romantic and Victorian Literature",
+    "described_clearly" : 0.88,
+    "professional_standards" : 0.02,
+    "ai_learning_assistance" : {
+      "value" : 3.75,
+      "confidence" : 0.79,
+      "nearestLevel" : 4,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.01,
+        "3" : 0.23,
+        "4" : 0.76
+      }
+    },
+    "independent_demonstration" : {
+      "value" : 3.13,
+      "confidence" : 0.64,
+      "nearestLevel" : 3,
+      "distribution" : {
+        "0" : 0.02,
+        "1" : 0.01,
+        "2" : 0.07,
+        "3" : 0.62,
+        "4" : 0.28
+      }
+    },
+    "human_judgement" : {
+      "value" : 3.71,
+      "confidence" : 0.77,
+      "nearestLevel" : 4,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.01,
+        "3" : 0.26,
+        "4" : 0.73
+      }
+    },
+    "interpersonal_work" : {
+      "value" : 1.17,
+      "confidence" : 0.7,
+      "nearestLevel" : 1,
+      "distribution" : {
+        "0" : 0.1,
+        "1" : 0.65,
+        "2" : 0.24,
+        "3" : 0.01,
+        "4" : 0.0
+      }
+    },
+    "practical_application" : {
+      "value" : 0.02,
+      "confidence" : 0.98,
+      "nearestLevel" : 0,
+      "distribution" : {
+        "0" : 0.98,
+        "1" : 0.02,
+        "2" : 0.0,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    },
+    "technical_quantitative" : {
+      "value" : 0.0,
+      "confidence" : 1.0,
+      "nearestLevel" : 0,
+      "distribution" : {
+        "0" : 1.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    }
+  }, {
+    "id" : "m4",
+    "title" : "Modernism",
+    "described_clearly" : 0.75,
+    "professional_standards" : 0.02,
+    "ai_learning_assistance" : {
+      "value" : 3.74,
+      "confidence" : 0.79,
+      "nearestLevel" : 4,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.01,
+        "3" : 0.23,
+        "4" : 0.76
+      }
+    },
+    "independent_demonstration" : {
+      "value" : 3.12,
+      "confidence" : 0.64,
+      "nearestLevel" : 3,
+      "distribution" : {
+        "0" : 0.01,
+        "1" : 0.02,
+        "2" : 0.08,
+        "3" : 0.61,
+        "4" : 0.28
+      }
+    },
+    "human_judgement" : {
+      "value" : 3.79,
+      "confidence" : 0.82,
+      "nearestLevel" : 4,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.01,
+        "3" : 0.19,
+        "4" : 0.8
+      }
+    },
+    "interpersonal_work" : {
+      "value" : 1.19,
+      "confidence" : 0.69,
+      "nearestLevel" : 1,
+      "distribution" : {
+        "0" : 0.09,
+        "1" : 0.65,
+        "2" : 0.24,
+        "3" : 0.02,
+        "4" : 0.0
+      }
+    },
+    "practical_application" : {
+      "value" : 0.02,
+      "confidence" : 0.98,
+      "nearestLevel" : 0,
+      "distribution" : {
+        "0" : 0.98,
+        "1" : 0.02,
+        "2" : 0.0,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    },
+    "technical_quantitative" : {
+      "value" : 0.0,
+      "confidence" : 1.0,
+      "nearestLevel" : 0,
+      "distribution" : {
+        "0" : 1.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    }
+  }, {
+    "id" : "m5",
+    "title" : "Contemporary Fiction",
+    "described_clearly" : 0.72,
+    "professional_standards" : 0.02,
+    "ai_learning_assistance" : {
+      "value" : 3.67,
+      "confidence" : 0.73,
+      "nearestLevel" : 4,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.02,
+        "3" : 0.28,
+        "4" : 0.7
+      }
+    },
+    "independent_demonstration" : {
+      "value" : 3.36,
+      "confidence" : 0.48,
+      "nearestLevel" : 4,
+      "distribution" : {
+        "0" : 0.01,
+        "1" : 0.01,
+        "2" : 0.05,
+        "3" : 0.45,
+        "4" : 0.48
+      }
+    },
+    "human_judgement" : {
+      "value" : 3.74,
+      "confidence" : 0.78,
+      "nearestLevel" : 4,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.01,
+        "3" : 0.24,
+        "4" : 0.75
+      }
+    },
+    "interpersonal_work" : {
+      "value" : 0.91,
+      "confidence" : 0.72,
+      "nearestLevel" : 1,
+      "distribution" : {
+        "0" : 0.21,
+        "1" : 0.67,
+        "2" : 0.11,
+        "3" : 0.01,
+        "4" : 0.0
+      }
+    },
+    "practical_application" : {
+      "value" : 0.07,
+      "confidence" : 0.97,
+      "nearestLevel" : 0,
+      "distribution" : {
+        "0" : 0.96,
+        "1" : 0.04,
+        "2" : 0.0,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    },
+    "technical_quantitative" : {
+      "value" : 0.0,
+      "confidence" : 1.0,
+      "nearestLevel" : 0,
+      "distribution" : {
+        "0" : 1.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    }
+  }, {
+    "id" : "m6",
+    "title" : "Literary Theory",
+    "described_clearly" : 0.82,
+    "professional_standards" : 0.03,
+    "ai_learning_assistance" : {
+      "value" : 3.66,
+      "confidence" : 0.73,
+      "nearestLevel" : 4,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.02,
+        "3" : 0.29,
+        "4" : 0.69
+      }
+    },
+    "independent_demonstration" : {
+      "value" : 3.17,
+      "confidence" : 0.58,
+      "nearestLevel" : 3,
+      "distribution" : {
+        "0" : 0.01,
+        "1" : 0.02,
+        "2" : 0.1,
+        "3" : 0.54,
+        "4" : 0.33
+      }
+    },
+    "human_judgement" : {
+      "value" : 3.78,
+      "confidence" : 0.82,
+      "nearestLevel" : 4,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.01,
+        "3" : 0.2,
+        "4" : 0.79
+      }
+    },
+    "interpersonal_work" : {
+      "value" : 1.0,
+      "confidence" : 0.68,
+      "nearestLevel" : 1,
+      "distribution" : {
+        "0" : 0.19,
+        "1" : 0.63,
+        "2" : 0.17,
+        "3" : 0.01,
+        "4" : 0.0
+      }
+    },
+    "practical_application" : {
+      "value" : 0.03,
+      "confidence" : 0.98,
+      "nearestLevel" : 0,
+      "distribution" : {
+        "0" : 0.98,
+        "1" : 0.02,
+        "2" : 0.0,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    },
+    "technical_quantitative" : {
+      "value" : 0.01,
+      "confidence" : 0.99,
+      "nearestLevel" : 0,
+      "distribution" : {
+        "0" : 0.99,
+        "1" : 0.01,
+        "2" : 0.0,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    }
+  }, {
+    "id" : "m7",
+    "title" : "Creative Writing",
+    "described_clearly" : 0.69,
+    "professional_standards" : 0.03,
+    "ai_learning_assistance" : {
+      "value" : 3.39,
+      "confidence" : 0.49,
+      "nearestLevel" : 4,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.01,
+        "2" : 0.08,
+        "3" : 0.42,
+        "4" : 0.49
+      }
+    },
+    "independent_demonstration" : {
+      "value" : 3.91,
+      "confidence" : 0.93,
+      "nearestLevel" : 4,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.01,
+        "3" : 0.06,
+        "4" : 0.93
+      }
+    },
+    "human_judgement" : {
+      "value" : 3.52,
+      "confidence" : 0.59,
+      "nearestLevel" : 4,
+      "distribution" : {
+        "0" : 0.01,
+        "1" : 0.01,
+        "2" : 0.06,
+        "3" : 0.3,
+        "4" : 0.62
+      }
+    },
+    "interpersonal_work" : {
+      "value" : 1.13,
+      "confidence" : 0.6,
+      "nearestLevel" : 1,
+      "distribution" : {
+        "0" : 0.18,
+        "1" : 0.56,
+        "2" : 0.22,
+        "3" : 0.04,
+        "4" : 0.0
+      }
+    },
+    "practical_application" : {
+      "value" : 3.29,
+      "confidence" : 0.51,
+      "nearestLevel" : 3,
+      "distribution" : {
+        "0" : 0.02,
+        "1" : 0.01,
+        "2" : 0.07,
+        "3" : 0.46,
+        "4" : 0.44
+      }
+    },
+    "technical_quantitative" : {
+      "value" : 0.01,
+      "confidence" : 1.0,
+      "nearestLevel" : 0,
+      "distribution" : {
+        "0" : 1.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    }
+  }, {
+    "id" : "m8",
+    "title" : "Dissertation",
+    "described_clearly" : 0.89,
+    "professional_standards" : 0.1,
+    "ai_learning_assistance" : {
+      "value" : 3.65,
+      "confidence" : 0.71,
+      "nearestLevel" : 4,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.03,
+        "3" : 0.29,
+        "4" : 0.68
+      }
+    },
+    "independent_demonstration" : {
+      "value" : 3.99,
+      "confidence" : 0.99,
+      "nearestLevel" : 4,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.01,
+        "4" : 0.99
+      }
+    },
+    "human_judgement" : {
+      "value" : 3.91,
+      "confidence" : 0.93,
+      "nearestLevel" : 4,
+      "distribution" : {
+        "0" : 0.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.09,
+        "4" : 0.91
+      }
+    },
+    "interpersonal_work" : {
+      "value" : 0.64,
+      "confidence" : 0.62,
+      "nearestLevel" : 1,
+      "distribution" : {
+        "0" : 0.41,
+        "1" : 0.55,
+        "2" : 0.04,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    },
+    "practical_application" : {
+      "value" : 0.13,
+      "confidence" : 0.92,
+      "nearestLevel" : 0,
+      "distribution" : {
+        "0" : 0.95,
+        "1" : 0.03,
+        "2" : 0.0,
+        "3" : 0.01,
+        "4" : 0.01
+      }
+    },
+    "technical_quantitative" : {
+      "value" : 0.01,
+      "confidence" : 1.0,
+      "nearestLevel" : 0,
+      "distribution" : {
+        "0" : 1.0,
+        "1" : 0.0,
+        "2" : 0.0,
+        "3" : 0.0,
+        "4" : 0.0
+      }
+    }
+  } ],
+  "rawProviderResponse" : {
+    "model" : "jev-1.14.0",
+    "requestId" : "req_01a181474636770aa7eff696203f060b",
+    "inputTokens" : 9950,
+    "outputTokens" : 1332,
+    "answers" : {
+      "m1__described_clearly" : {
+        "type" : "NOUL",
+        "value" : 0.41
+      },
+      "m1__ai_learning_assistance" : {
+        "type" : "SCORE",
+        "value" : 3.7,
+        "nearestLevel" : 4,
+        "nearestLabel" : "AI tools could support most of the preparation, research, analysis and practice in this module.",
+        "confidence" : 0.75,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.02,
+          "3" : 0.26,
+          "4" : 0.72
+        }
+      },
+      "m1__independent_demonstration" : {
+        "type" : "SCORE",
+        "value" : 2.97,
+        "nearestLevel" : 3,
+        "nearestLabel" : "The module substantially depends on the student directly demonstrating their own capability.",
+        "confidence" : 0.52,
+        "probabilities" : {
+          "0" : 0.02,
+          "1" : 0.04,
+          "2" : 0.16,
+          "3" : 0.5,
+          "4" : 0.28
+        }
+      },
+      "m1__human_judgement" : {
+        "type" : "SCORE",
+        "value" : 3.41,
+        "nearestLevel" : 4,
+        "nearestLabel" : "The module is dominated by interpretation and context-sensitive judgement.",
+        "confidence" : 0.52,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.07,
+          "3" : 0.41,
+          "4" : 0.51
+        }
+      },
+      "m1__interpersonal_work" : {
+        "type" : "SCORE",
+        "value" : 1.3,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interpersonal activity occurs, but it is not central.",
+        "confidence" : 0.62,
+        "probabilities" : {
+          "0" : 0.08,
+          "1" : 0.59,
+          "2" : 0.29,
+          "3" : 0.04,
+          "4" : 0.0
+        }
+      },
+      "m1__practical_application" : {
+        "type" : "SCORE",
+        "value" : 0.03,
+        "nearestLevel" : 0,
+        "nearestLabel" : "The module involves no meaningful hands-on activity.",
+        "confidence" : 0.97,
+        "probabilities" : {
+          "0" : 0.97,
+          "1" : 0.03,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        }
+      },
+      "m1__technical_quantitative" : {
+        "type" : "SCORE",
+        "value" : 0.0,
+        "nearestLevel" : 0,
+        "nearestLabel" : "The module involves little technical or quantitative work.",
+        "confidence" : 1.0,
+        "probabilities" : {
+          "0" : 1.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        }
+      },
+      "m1__professional_standards" : {
+        "type" : "NOUL",
+        "value" : 0.03
+      },
+      "m2__described_clearly" : {
+        "type" : "NOUL",
+        "value" : 0.86
+      },
+      "m2__ai_learning_assistance" : {
+        "type" : "SCORE",
+        "value" : 3.78,
+        "nearestLevel" : 4,
+        "nearestLabel" : "AI tools could support most of the preparation, research, analysis and practice in this module.",
+        "confidence" : 0.82,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.2,
+          "4" : 0.79
+        }
+      },
+      "m2__independent_demonstration" : {
+        "type" : "SCORE",
+        "value" : 3.15,
+        "nearestLevel" : 3,
+        "nearestLabel" : "The module substantially depends on the student directly demonstrating their own capability.",
+        "confidence" : 0.62,
+        "probabilities" : {
+          "0" : 0.02,
+          "1" : 0.01,
+          "2" : 0.08,
+          "3" : 0.59,
+          "4" : 0.3
+        }
+      },
+      "m2__human_judgement" : {
+        "type" : "SCORE",
+        "value" : 3.81,
+        "nearestLevel" : 4,
+        "nearestLabel" : "The module is dominated by interpretation and context-sensitive judgement.",
+        "confidence" : 0.85,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.18,
+          "4" : 0.8200000000000001
+        }
+      },
+      "m2__interpersonal_work" : {
+        "type" : "SCORE",
+        "value" : 1.24,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interpersonal activity occurs, but it is not central.",
+        "confidence" : 0.66,
+        "probabilities" : {
+          "0" : 0.09,
+          "1" : 0.61,
+          "2" : 0.28,
+          "3" : 0.02,
+          "4" : 0.0
+        }
+      },
+      "m2__practical_application" : {
+        "type" : "SCORE",
+        "value" : 0.06,
+        "nearestLevel" : 0,
+        "nearestLabel" : "The module involves no meaningful hands-on activity.",
+        "confidence" : 0.96,
+        "probabilities" : {
+          "0" : 0.95,
+          "1" : 0.05,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        }
+      },
+      "m2__technical_quantitative" : {
+        "type" : "SCORE",
+        "value" : 0.0,
+        "nearestLevel" : 0,
+        "nearestLabel" : "The module involves little technical or quantitative work.",
+        "confidence" : 1.0,
+        "probabilities" : {
+          "0" : 1.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        }
+      },
+      "m2__professional_standards" : {
+        "type" : "NOUL",
+        "value" : 0.03
+      },
+      "m3__described_clearly" : {
+        "type" : "NOUL",
+        "value" : 0.88
+      },
+      "m3__ai_learning_assistance" : {
+        "type" : "SCORE",
+        "value" : 3.75,
+        "nearestLevel" : 4,
+        "nearestLabel" : "AI tools could support most of the preparation, research, analysis and practice in this module.",
+        "confidence" : 0.79,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.23,
+          "4" : 0.76
+        }
+      },
+      "m3__independent_demonstration" : {
+        "type" : "SCORE",
+        "value" : 3.13,
+        "nearestLevel" : 3,
+        "nearestLabel" : "The module substantially depends on the student directly demonstrating their own capability.",
+        "confidence" : 0.64,
+        "probabilities" : {
+          "0" : 0.02,
+          "1" : 0.01,
+          "2" : 0.07,
+          "3" : 0.62,
+          "4" : 0.28
+        }
+      },
+      "m3__human_judgement" : {
+        "type" : "SCORE",
+        "value" : 3.71,
+        "nearestLevel" : 4,
+        "nearestLabel" : "The module is dominated by interpretation and context-sensitive judgement.",
+        "confidence" : 0.77,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.26,
+          "4" : 0.73
+        }
+      },
+      "m3__interpersonal_work" : {
+        "type" : "SCORE",
+        "value" : 1.17,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interpersonal activity occurs, but it is not central.",
+        "confidence" : 0.7,
+        "probabilities" : {
+          "0" : 0.1,
+          "1" : 0.65,
+          "2" : 0.24,
+          "3" : 0.01,
+          "4" : 0.0
+        }
+      },
+      "m3__practical_application" : {
+        "type" : "SCORE",
+        "value" : 0.02,
+        "nearestLevel" : 0,
+        "nearestLabel" : "The module involves no meaningful hands-on activity.",
+        "confidence" : 0.98,
+        "probabilities" : {
+          "0" : 0.98,
+          "1" : 0.02,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        }
+      },
+      "m3__technical_quantitative" : {
+        "type" : "SCORE",
+        "value" : 0.0,
+        "nearestLevel" : 0,
+        "nearestLabel" : "The module involves little technical or quantitative work.",
+        "confidence" : 1.0,
+        "probabilities" : {
+          "0" : 1.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        }
+      },
+      "m3__professional_standards" : {
+        "type" : "NOUL",
+        "value" : 0.02
+      },
+      "m4__described_clearly" : {
+        "type" : "NOUL",
+        "value" : 0.75
+      },
+      "m4__ai_learning_assistance" : {
+        "type" : "SCORE",
+        "value" : 3.74,
+        "nearestLevel" : 4,
+        "nearestLabel" : "AI tools could support most of the preparation, research, analysis and practice in this module.",
+        "confidence" : 0.79,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.23,
+          "4" : 0.76
+        }
+      },
+      "m4__independent_demonstration" : {
+        "type" : "SCORE",
+        "value" : 3.12,
+        "nearestLevel" : 3,
+        "nearestLabel" : "The module substantially depends on the student directly demonstrating their own capability.",
+        "confidence" : 0.64,
+        "probabilities" : {
+          "0" : 0.01,
+          "1" : 0.02,
+          "2" : 0.08,
+          "3" : 0.61,
+          "4" : 0.28
+        }
+      },
+      "m4__human_judgement" : {
+        "type" : "SCORE",
+        "value" : 3.79,
+        "nearestLevel" : 4,
+        "nearestLabel" : "The module is dominated by interpretation and context-sensitive judgement.",
+        "confidence" : 0.82,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.19,
+          "4" : 0.8
+        }
+      },
+      "m4__interpersonal_work" : {
+        "type" : "SCORE",
+        "value" : 1.19,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interpersonal activity occurs, but it is not central.",
+        "confidence" : 0.69,
+        "probabilities" : {
+          "0" : 0.09,
+          "1" : 0.65,
+          "2" : 0.24,
+          "3" : 0.02,
+          "4" : 0.0
+        }
+      },
+      "m4__practical_application" : {
+        "type" : "SCORE",
+        "value" : 0.02,
+        "nearestLevel" : 0,
+        "nearestLabel" : "The module involves no meaningful hands-on activity.",
+        "confidence" : 0.98,
+        "probabilities" : {
+          "0" : 0.98,
+          "1" : 0.02,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        }
+      },
+      "m4__technical_quantitative" : {
+        "type" : "SCORE",
+        "value" : 0.0,
+        "nearestLevel" : 0,
+        "nearestLabel" : "The module involves little technical or quantitative work.",
+        "confidence" : 1.0,
+        "probabilities" : {
+          "0" : 1.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        }
+      },
+      "m4__professional_standards" : {
+        "type" : "NOUL",
+        "value" : 0.02
+      },
+      "m5__described_clearly" : {
+        "type" : "NOUL",
+        "value" : 0.72
+      },
+      "m5__ai_learning_assistance" : {
+        "type" : "SCORE",
+        "value" : 3.67,
+        "nearestLevel" : 4,
+        "nearestLabel" : "AI tools could support most of the preparation, research, analysis and practice in this module.",
+        "confidence" : 0.73,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.02,
+          "3" : 0.28,
+          "4" : 0.7
+        }
+      },
+      "m5__independent_demonstration" : {
+        "type" : "SCORE",
+        "value" : 3.36,
+        "nearestLevel" : 4,
+        "nearestLabel" : "The module fundamentally consists of the student directly demonstrating their own knowledge, reasoning, skill or authorship.",
+        "confidence" : 0.48,
+        "probabilities" : {
+          "0" : 0.01,
+          "1" : 0.01,
+          "2" : 0.05,
+          "3" : 0.45,
+          "4" : 0.48
+        }
+      },
+      "m5__human_judgement" : {
+        "type" : "SCORE",
+        "value" : 3.74,
+        "nearestLevel" : 4,
+        "nearestLabel" : "The module is dominated by interpretation and context-sensitive judgement.",
+        "confidence" : 0.78,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.24,
+          "4" : 0.75
+        }
+      },
+      "m5__interpersonal_work" : {
+        "type" : "SCORE",
+        "value" : 0.91,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interpersonal activity occurs, but it is not central.",
+        "confidence" : 0.72,
+        "probabilities" : {
+          "0" : 0.21,
+          "1" : 0.67,
+          "2" : 0.11,
+          "3" : 0.01,
+          "4" : 0.0
+        }
+      },
+      "m5__practical_application" : {
+        "type" : "SCORE",
+        "value" : 0.07,
+        "nearestLevel" : 0,
+        "nearestLabel" : "The module involves no meaningful hands-on activity.",
+        "confidence" : 0.97,
+        "probabilities" : {
+          "0" : 0.96,
+          "1" : 0.04,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        }
+      },
+      "m5__technical_quantitative" : {
+        "type" : "SCORE",
+        "value" : 0.0,
+        "nearestLevel" : 0,
+        "nearestLabel" : "The module involves little technical or quantitative work.",
+        "confidence" : 1.0,
+        "probabilities" : {
+          "0" : 1.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        }
+      },
+      "m5__professional_standards" : {
+        "type" : "NOUL",
+        "value" : 0.02
+      },
+      "m6__described_clearly" : {
+        "type" : "NOUL",
+        "value" : 0.82
+      },
+      "m6__ai_learning_assistance" : {
+        "type" : "SCORE",
+        "value" : 3.66,
+        "nearestLevel" : 4,
+        "nearestLabel" : "AI tools could support most of the preparation, research, analysis and practice in this module.",
+        "confidence" : 0.73,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.02,
+          "3" : 0.29,
+          "4" : 0.69
+        }
+      },
+      "m6__independent_demonstration" : {
+        "type" : "SCORE",
+        "value" : 3.17,
+        "nearestLevel" : 3,
+        "nearestLabel" : "The module substantially depends on the student directly demonstrating their own capability.",
+        "confidence" : 0.58,
+        "probabilities" : {
+          "0" : 0.01,
+          "1" : 0.02,
+          "2" : 0.1,
+          "3" : 0.54,
+          "4" : 0.33
+        }
+      },
+      "m6__human_judgement" : {
+        "type" : "SCORE",
+        "value" : 3.78,
+        "nearestLevel" : 4,
+        "nearestLabel" : "The module is dominated by interpretation and context-sensitive judgement.",
+        "confidence" : 0.82,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.2,
+          "4" : 0.79
+        }
+      },
+      "m6__interpersonal_work" : {
+        "type" : "SCORE",
+        "value" : 1.0,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interpersonal activity occurs, but it is not central.",
+        "confidence" : 0.68,
+        "probabilities" : {
+          "0" : 0.19,
+          "1" : 0.63,
+          "2" : 0.17,
+          "3" : 0.01,
+          "4" : 0.0
+        }
+      },
+      "m6__practical_application" : {
+        "type" : "SCORE",
+        "value" : 0.03,
+        "nearestLevel" : 0,
+        "nearestLabel" : "The module involves no meaningful hands-on activity.",
+        "confidence" : 0.98,
+        "probabilities" : {
+          "0" : 0.98,
+          "1" : 0.02,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        }
+      },
+      "m6__technical_quantitative" : {
+        "type" : "SCORE",
+        "value" : 0.01,
+        "nearestLevel" : 0,
+        "nearestLabel" : "The module involves little technical or quantitative work.",
+        "confidence" : 0.99,
+        "probabilities" : {
+          "0" : 0.99,
+          "1" : 0.01,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        }
+      },
+      "m6__professional_standards" : {
+        "type" : "NOUL",
+        "value" : 0.03
+      },
+      "m7__described_clearly" : {
+        "type" : "NOUL",
+        "value" : 0.69
+      },
+      "m7__ai_learning_assistance" : {
+        "type" : "SCORE",
+        "value" : 3.39,
+        "nearestLevel" : 4,
+        "nearestLabel" : "AI tools could support most of the preparation, research, analysis and practice in this module.",
+        "confidence" : 0.49,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.01,
+          "2" : 0.08,
+          "3" : 0.42,
+          "4" : 0.49
+        }
+      },
+      "m7__independent_demonstration" : {
+        "type" : "SCORE",
+        "value" : 3.91,
+        "nearestLevel" : 4,
+        "nearestLabel" : "The module fundamentally consists of the student directly demonstrating their own knowledge, reasoning, skill or authorship.",
+        "confidence" : 0.93,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.01,
+          "3" : 0.06,
+          "4" : 0.93
+        }
+      },
+      "m7__human_judgement" : {
+        "type" : "SCORE",
+        "value" : 3.52,
+        "nearestLevel" : 4,
+        "nearestLabel" : "The module is dominated by interpretation and context-sensitive judgement.",
+        "confidence" : 0.59,
+        "probabilities" : {
+          "0" : 0.01,
+          "1" : 0.01,
+          "2" : 0.06,
+          "3" : 0.3,
+          "4" : 0.62
+        }
+      },
+      "m7__interpersonal_work" : {
+        "type" : "SCORE",
+        "value" : 1.13,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interpersonal activity occurs, but it is not central.",
+        "confidence" : 0.6,
+        "probabilities" : {
+          "0" : 0.18,
+          "1" : 0.56,
+          "2" : 0.22,
+          "3" : 0.04,
+          "4" : 0.0
+        }
+      },
+      "m7__practical_application" : {
+        "type" : "SCORE",
+        "value" : 3.29,
+        "nearestLevel" : 3,
+        "nearestLabel" : "Hands-on activity is an important part of the module.",
+        "confidence" : 0.51,
+        "probabilities" : {
+          "0" : 0.02,
+          "1" : 0.01,
+          "2" : 0.07,
+          "3" : 0.46,
+          "4" : 0.44
+        }
+      },
+      "m7__technical_quantitative" : {
+        "type" : "SCORE",
+        "value" : 0.01,
+        "nearestLevel" : 0,
+        "nearestLabel" : "The module involves little technical or quantitative work.",
+        "confidence" : 1.0,
+        "probabilities" : {
+          "0" : 1.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        }
+      },
+      "m7__professional_standards" : {
+        "type" : "NOUL",
+        "value" : 0.03
+      },
+      "m8__described_clearly" : {
+        "type" : "NOUL",
+        "value" : 0.89
+      },
+      "m8__ai_learning_assistance" : {
+        "type" : "SCORE",
+        "value" : 3.65,
+        "nearestLevel" : 4,
+        "nearestLabel" : "AI tools could support most of the preparation, research, analysis and practice in this module.",
+        "confidence" : 0.71,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.03,
+          "3" : 0.29,
+          "4" : 0.68
+        }
+      },
+      "m8__independent_demonstration" : {
+        "type" : "SCORE",
+        "value" : 3.99,
+        "nearestLevel" : 4,
+        "nearestLabel" : "The module fundamentally consists of the student directly demonstrating their own knowledge, reasoning, skill or authorship.",
+        "confidence" : 0.99,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.01,
+          "4" : 0.99
+        }
+      },
+      "m8__human_judgement" : {
+        "type" : "SCORE",
+        "value" : 3.91,
+        "nearestLevel" : 4,
+        "nearestLabel" : "The module is dominated by interpretation and context-sensitive judgement.",
+        "confidence" : 0.93,
+        "probabilities" : {
+          "0" : 0.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.09,
+          "4" : 0.91
+        }
+      },
+      "m8__interpersonal_work" : {
+        "type" : "SCORE",
+        "value" : 0.64,
+        "nearestLevel" : 1,
+        "nearestLabel" : "Some interpersonal activity occurs, but it is not central.",
+        "confidence" : 0.62,
+        "probabilities" : {
+          "0" : 0.41,
+          "1" : 0.55,
+          "2" : 0.04,
+          "3" : 0.0,
+          "4" : 0.0
+        }
+      },
+      "m8__practical_application" : {
+        "type" : "SCORE",
+        "value" : 0.13,
+        "nearestLevel" : 0,
+        "nearestLabel" : "The module involves no meaningful hands-on activity.",
+        "confidence" : 0.92,
+        "probabilities" : {
+          "0" : 0.95,
+          "1" : 0.03,
+          "2" : 0.0,
+          "3" : 0.01,
+          "4" : 0.01
+        }
+      },
+      "m8__technical_quantitative" : {
+        "type" : "SCORE",
+        "value" : 0.01,
+        "nearestLevel" : 0,
+        "nearestLabel" : "The module involves little technical or quantitative work.",
+        "confidence" : 1.0,
+        "probabilities" : {
+          "0" : 1.0,
+          "1" : 0.0,
+          "2" : 0.0,
+          "3" : 0.0,
+          "4" : 0.0
+        }
+      },
+      "m8__professional_standards" : {
+        "type" : "NOUL",
+        "value" : 0.1
+      }
+    },
+    "note" : "Raw answers as Jev returned them, before the application maps them to judgments.",
+    "probabilitySums" : {
+      "m1__ai_learning_assistance" : 1.0,
+      "m1__independent_demonstration" : 1.0,
+      "m1__human_judgement" : 1.0,
+      "m1__interpersonal_work" : 0.9999999999999999,
+      "m1__practical_application" : 1.0,
+      "m1__technical_quantitative" : 1.0,
+      "m2__ai_learning_assistance" : 1.0,
+      "m2__independent_demonstration" : 1.0,
+      "m2__human_judgement" : 1.0,
+      "m2__interpersonal_work" : 1.0,
+      "m2__practical_application" : 1.0,
+      "m2__technical_quantitative" : 1.0,
+      "m3__ai_learning_assistance" : 1.0,
+      "m3__independent_demonstration" : 1.0,
+      "m3__human_judgement" : 1.0,
+      "m3__interpersonal_work" : 1.0,
+      "m3__practical_application" : 1.0,
+      "m3__technical_quantitative" : 1.0,
+      "m4__ai_learning_assistance" : 1.0,
+      "m4__independent_demonstration" : 1.0,
+      "m4__human_judgement" : 1.0,
+      "m4__interpersonal_work" : 1.0,
+      "m4__practical_application" : 1.0,
+      "m4__technical_quantitative" : 1.0,
+      "m5__ai_learning_assistance" : 1.0,
+      "m5__independent_demonstration" : 1.0,
+      "m5__human_judgement" : 1.0,
+      "m5__interpersonal_work" : 1.0,
+      "m5__practical_application" : 1.0,
+      "m5__technical_quantitative" : 1.0,
+      "m6__ai_learning_assistance" : 1.0,
+      "m6__independent_demonstration" : 1.0,
+      "m6__human_judgement" : 1.0,
+      "m6__interpersonal_work" : 1.0,
+      "m6__practical_application" : 1.0,
+      "m6__technical_quantitative" : 1.0,
+      "m7__ai_learning_assistance" : 1.0,
+      "m7__independent_demonstration" : 1.0,
+      "m7__human_judgement" : 1.0,
+      "m7__interpersonal_work" : 1.0,
+      "m7__practical_application" : 1.0,
+      "m7__technical_quantitative" : 1.0,
+      "m8__ai_learning_assistance" : 1.0,
+      "m8__independent_demonstration" : 1.0,
+      "m8__human_judgement" : 1.0,
+      "m8__interpersonal_work" : 1.0,
+      "m8__practical_application" : 1.0,
+      "m8__technical_quantitative" : 1.0
+    }
+  }
+}

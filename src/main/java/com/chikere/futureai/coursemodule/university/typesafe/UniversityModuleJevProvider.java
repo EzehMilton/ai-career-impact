@@ -31,7 +31,8 @@ import java.util.TreeSet;
 import static com.chikere.futureai.coursemodule.university.typesafe.UniversityModuleSchema.answerName;
 
 /**
- * Module analysis through one Jev System One call for up to eight modules.
+ * Module analysis through one Jev System One call for up to eight modules. This call strategy is locked by the
+ * Stage 5C live probe, in which every call returned all 64 expected answers; there is no batching fallback.
  *
  * <p>Mapping is strict: the response must answer exactly the questions asked, each with the expected answer type
  * and a valid value and distribution, and the mapped result must name exactly the requested modules in order. A

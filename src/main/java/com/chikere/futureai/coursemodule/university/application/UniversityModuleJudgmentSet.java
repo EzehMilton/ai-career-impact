@@ -5,10 +5,13 @@ import java.util.Objects;
 /**
  * The judgments for one selected module, exactly as provided.
  *
- * <p>{@code describedClearly} and {@code professionalStandards} are the provider's 0-1 truth answers. Clarity is
- * diagnostic only: deciding what counts as too vague belongs to a later classification policy, not here.
- * {@code aiLearningAssistance} describes where AI may support learning or preparation; it never says what use is
- * permitted in assessed work.</p>
+ * <p>{@code describedClearly} and {@code professionalStandards} are the provider's 0-1 truth answers.
+ * {@code describedClearly} is diagnostic only (decided in Stage 5C): it must never exclude a module, downgrade one,
+ * or directly determine its classification; it is kept for tracing, QA and possible later wording.</p>
+ *
+ * <p>{@code aiLearningAssistance} describes where AI may support learning or preparation. It does not determine
+ * what use is permitted in assessed work. It was high for almost every probed module, so no module may be
+ * classified from it alone.</p>
  */
 public record UniversityModuleJudgmentSet(
         int moduleIndex,
