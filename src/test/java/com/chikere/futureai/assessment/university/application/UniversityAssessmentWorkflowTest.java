@@ -37,7 +37,7 @@ class UniversityAssessmentWorkflowTest {
                 NarrativeSource.LOCAL_FIXTURE, "fixture", Optional.empty(), "university-narrative-v1",
                 Instant.EPOCH, Optional.empty());
         when(assessmentService.submitUniversityAssessment(state())).thenReturn(ID);
-        when(narrativeService.generateFor(ID)).thenReturn(saved);
+        when(narrativeService.generateIfApplicable(ID)).thenReturn(Optional.of(saved));
         assertThat(new UniversityAssessmentWorkflow(assessmentService, narrativeService,
                 mock(UniversityEvidenceGathering.class), metrics).submit(state())).isEqualTo(ID);
         assertThat(registry.counter("narrative.failures", "journey", "university").count()).isEqualTo(1.0);
@@ -57,7 +57,7 @@ class UniversityAssessmentWorkflowTest {
         assertThat(id).isEqualTo(ID);
         InOrder order = inOrder(assessmentService, narrativeService, evidenceService);
         order.verify(assessmentService).submitUniversityAssessment(state);
-        order.verify(narrativeService).generateFor(ID);
+        order.verify(narrativeService).generateIfApplicable(ID);
         order.verify(evidenceService).gatherFor(ID);
         order.verifyNoMoreInteractions();
     }
@@ -69,14 +69,14 @@ class UniversityAssessmentWorkflowTest {
         var evidenceService = mock(UniversityEvidenceGathering.class);
         var state = state();
         when(assessmentService.submitUniversityAssessment(state)).thenReturn(ID);
-        doThrow(new IllegalStateException("narrative store down")).when(narrativeService).generateFor(ID);
+        doThrow(new IllegalStateException("narrative store down")).when(narrativeService).generateIfApplicable(ID);
         doThrow(new IllegalStateException("evidence store down")).when(evidenceService).gatherFor(ID);
 
         UUID id = new UniversityAssessmentWorkflow(assessmentService, narrativeService, evidenceService)
                 .submit(state);
 
         assertThat(id).isEqualTo(ID);
-        verify(narrativeService).generateFor(ID);
+        verify(narrativeService).generateIfApplicable(ID);
         verify(evidenceService).gatherFor(ID);
     }
 

@@ -128,6 +128,23 @@ class UniversityNarrativeServiceTest {
         verify(assessmentStore, never()).findById(any());
     }
 
+    @Test
+    void aV2CourseProfileHasNoFreeNarrativeAndNeverFails() {
+        var assessmentStore = mock(UniversityAssessmentStore.class);
+        var narrativeStore = mock(UniversityNarrativeStore.class);
+        var generator = mock(UniversityNarrativeGenerator.class);
+        when(assessmentStore.findById(ID)).thenReturn(Optional.of(
+                com.chikere.futureai.coursemodule.university.analysis.ModuleAnalysisTestData
+                        .courseProfileAssessment(ID, 3)));
+        when(narrativeStore.findByAssessmentId(ID)).thenReturn(Optional.empty());
+
+        // Before the fix this path built a NOT_REQUESTED record that its own invariant rejects.
+        assertThat(service(assessmentStore, narrativeStore, generator).generateIfApplicable(ID)).isEmpty();
+
+        verify(generator, never()).generate(any());
+        verify(narrativeStore, never()).save(any());
+    }
+
     private UniversityNarrativeService service(UniversityAssessmentStore assessmentStore,
             UniversityNarrativeStore narrativeStore, UniversityNarrativeGenerator generator) {
         return new UniversityNarrativeService(assessmentStore, narrativeStore, generator,

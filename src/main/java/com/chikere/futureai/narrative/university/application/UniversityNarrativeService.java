@@ -72,6 +72,21 @@ public final class UniversityNarrativeService implements UniversityNarrativeGene
         this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
     }
 
+    /**
+     * Only a historical v1 assessment has a free narrative. A v2 profile has a deterministic free result and will
+     * have its own paid narrative, so for it nothing is called or stored and the result is empty.
+     */
+    @Override
+    public Optional<StoredUniversityNarrative> generateIfApplicable(UUID assessmentId) {
+        Objects.requireNonNull(assessmentId, "assessmentId must not be null");
+        var assessment = assessmentStore.findById(assessmentId)
+                .orElseThrow(() -> new IllegalArgumentException("assessment does not exist"));
+        if (assessment.result().usesCourseProfile()) {
+            return Optional.empty();
+        }
+        return Optional.of(generateFor(assessmentId));
+    }
+
     @Override
     public StoredUniversityNarrative generateFor(UUID assessmentId) {
         Objects.requireNonNull(assessmentId, "assessmentId must not be null");
@@ -84,9 +99,7 @@ public final class UniversityNarrativeService implements UniversityNarrativeGene
                 .orElseThrow(() -> new IllegalArgumentException("assessment does not exist"));
         Instant attemptedAt = Instant.now(clock);
         if (assessment.result().usesCourseProfile()) {
-            // This narrative explains the five university-decision-v1 measures. A v2 course profile has a deterministic
-            // free result and its own paid narrative, so no provider is called and nothing is stored.
-            return stored(assessmentId, NarrativeStatus.NOT_REQUESTED, Optional.empty(), attemptedAt, Optional.empty());
+            throw new IllegalStateException("a v2 profile has no free narrative; use generateIfApplicable");
         }
         narrativeStore.save(stored(assessmentId, NarrativeStatus.PENDING, Optional.empty(),
                 attemptedAt, Optional.empty()));
