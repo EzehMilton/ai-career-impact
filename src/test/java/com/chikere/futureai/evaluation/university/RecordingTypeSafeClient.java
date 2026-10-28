@@ -15,7 +15,8 @@ import java.util.Optional;
  * The real TypeSafe client, remembering the last raw response the production University adapter received. The
  * capture survives an adapter mapping failure, so one live call is enough to see what Jev actually returned.
  */
-final class RecordingTypeSafeClient extends TypeSafeClient implements UniversityBaselineHarness.RawResponses {
+final class RecordingTypeSafeClient extends TypeSafeClient
+        implements UniversityBaselineHarness.RawResponses, UniversityModuleProbe.RawResponses {
 
     private SystemOneResponse last;
 
@@ -36,11 +37,21 @@ final class RecordingTypeSafeClient extends TypeSafeClient implements University
         return response;
     }
 
+    /** The last raw response itself, taken once; kept even when the adapter rejected it. */
     @Override
-    public Optional<Map<String, Object>> take() {
+    public Optional<SystemOneResponse> takeResponse() {
         SystemOneResponse response = last;
         last = null;
-        if (response == null) return Optional.empty();
+        return Optional.ofNullable(response);
+    }
+
+    @Override
+    public Optional<Map<String, Object>> take() {
+        return takeResponse().map(RecordingTypeSafeClient::render);
+    }
+
+    /** Jev's raw answers as rendered for traces, plus each score answer's probability sum. */
+    static Map<String, Object> render(SystemOneResponse response) {
         Map<String, Object> raw = new LinkedHashMap<>(JevTraceRendering.response(response));
         // The probability sum of each score answer, exactly as returned, for the distribution contract check.
         Map<String, Object> sums = new LinkedHashMap<>();
@@ -52,6 +63,6 @@ final class RecordingTypeSafeClient extends TypeSafeClient implements University
             });
         }
         raw.put("probabilitySums", sums);
-        return Optional.of(raw);
+        return raw;
     }
 }

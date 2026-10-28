@@ -169,3 +169,18 @@ It writes `results.json`, `README.md` and one capture per course (input, judgmen
 `.live-smoke/university/<timestamp>/`. Add `-Duniversity.baseline.case=nursing` to run one case (one Jev call); each
 capture also keeps Jev's raw answers and their probability sums. `UniversityBaselineHarnessTest` runs the same harness offline with synthetic
 judgments and writes `target/university-baseline-dry-run/`.
+
+## University module probe
+
+`UniversityModuleProbeLiveIT` (Stage 5C) makes one real `university-module-v1` Jev call per representative course,
+for up to eight modules each, through the production module adapter. It never calls OpenAI, Stripe or the database,
+and it is never part of `./mvnw verify`:
+
+```
+TYPESAFE_API_KEY=... ./mvnw -Plive-university-module-probe verify -Dtest=NoSuchTest -Dsurefire.failIfNoSpecifiedTests=false
+```
+
+Add `-Duniversity.module.probe.case=nursing` for one course. Output goes to `.live-smoke/university-module/<timestamp>/`:
+`results.json`, `README.md` and one capture per course with the selected modules and ids, the raw Jev answers, the
+mapped judgments and an independent validation of the raw answers. The module selection is a probe convenience; the
+product will ask the student to choose when a course has more than eight usable modules.
