@@ -1957,6 +1957,8 @@ dd { margin: 0; font-weight: 700; text-align: right; }
 .detailed-essential { margin: 0 0 0.25rem; text-transform: uppercase; letter-spacing: 0.04em; }
 .detailed-together { margin-top: var(--space-4); }
 .detailed-phase { border-left: 4px solid #0f766e; }
+.detailed-report .plan-action { grid-template-columns: 2.75rem minmax(0, 1fr); }
+.detailed-report .plan-action-content { min-width: 0; }
 .detailed-preparation { margin-bottom: var(--space-5); }
 .detailed-selection { border: 0; padding: 0; margin: var(--space-3) 0 var(--space-4); }
 .detailed-selection legend { font-weight: 700; margin-bottom: var(--space-2); }

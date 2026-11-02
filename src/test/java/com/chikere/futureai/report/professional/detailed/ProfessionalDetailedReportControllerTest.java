@@ -63,9 +63,15 @@ class ProfessionalDetailedReportControllerTest {
                 "Skills to strengthen", "Responsible AI use", "Your 90-day plan",
                 "What this assessment does and does not mean", "Next steps");
         assertThat(html).contains("Electrician", "Install electrical wiring and equipment", "Complete safety documentation",
-                "Days 31–60", "Safety-critical limits", "/professional-assessment/" + id + "/report.pdf")
+                "Days 31–60", "Safety-critical limits", "/professional-assessment/" + id + "/report.pdf",
+                "class=\"plan-action\"", "class=\"plan-action-content\"")
                 .doesNotContainPattern("\\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\\b")
                 .doesNotContain("probabilit", "confidence", "professional-paid-narrative", "Prepare your detailed report");
+
+        // The badge is the action's only direct grid item; every textual field shares the main content column.
+        assertThat(html).doesNotContainPattern("<li class=\"plan-action\"[^>]*>\\s*<(strong|p)[ >]");
+        assertThat(html).containsPattern("(?s)<div class=\"plan-action-content\">.*?"
+                + "Formal obligations or close oversight apply to parts of this work\\..*?</div>");
 
         // The PDF renders the same view: every card and action text the page shows is in the PDF source too.
         var view = new ProfessionalDetailedReportViewMapper().toView(snapshot);

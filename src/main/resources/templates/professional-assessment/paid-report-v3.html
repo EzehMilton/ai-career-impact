@@ -174,11 +174,13 @@
     <article class="panel detailed-phase" th:each="phase : ${r.plan.phases}">
       <h3><span th:text="${phase.heading}">Days 1–30</span>: <span th:text="${phase.purpose}">Observe and prepare</span></h3>
       <ol class="paid-action-list">
-        <li th:each="action : ${phase.actions}">
-          <strong th:text="${action.title}">Action</strong>
-          <p th:text="${action.rationale}">Rationale</p>
-          <p class="helper" th:if="${!action.reviewNote.isBlank()}" th:text="${action.reviewNote}">Review note</p>
-          <p th:if="${action.note != null}" th:text="${action.note}">Note</p>
+        <li class="plan-action" th:each="action : ${phase.actions}">
+          <div class="plan-action-content">
+            <strong th:text="${action.title}">Action</strong>
+            <p th:text="${action.rationale}">Rationale</p>
+            <p class="helper" th:if="${!action.reviewNote.isBlank()}" th:text="${action.reviewNote}">Review note</p>
+            <p th:if="${action.note != null}" th:text="${action.note}">Note</p>
+          </div>
         </li>
       </ol>
     </article>
