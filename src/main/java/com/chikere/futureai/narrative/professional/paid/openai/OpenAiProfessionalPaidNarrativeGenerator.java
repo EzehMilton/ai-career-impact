@@ -66,7 +66,9 @@ public final class OpenAiProfessionalPaidNarrativeGenerator implements Professio
             forecast how the work, role or profession will change; "monitor" means areas of the workflow to keep
             watching, never a claim about what will happen. Do not claim certainty about what AI can or cannot do:
             never say AI cannot do something, that AI will replace anyone, or that any work is safe from AI, AI-proof
-            or future-proof. Do not say tasks can be automated, handled or taken over by AI; describe AI as something
+            or future-proof. Never call the person or role indispensable or irreplaceable, or imply guaranteed
+            employment; say instead that a contribution remains important or that a responsibility depends strongly on
+            the person's judgement, presence or accountability. Do not say tasks can be automated, handled or taken over by AI; describe AI as something
             that may assist with parts of the work while the person reviews the result. Do not make claims about
             everyone in the occupation. Never suggest leaving decisions, judgement or review to AI, relying on AI
             output without checking it, or setting aside any procedure, policy, safety requirement, confidentiality
@@ -106,7 +108,10 @@ public final class OpenAiProfessionalPaidNarrativeGenerator implements Professio
             skillInsights: per skill, explanation (one or two sentences) and inYourWorkThisMeans (two or three short,
             concrete ways the skill shows up in this person's own responsibilities). Keep the skill itself unchanged.
             planIntroduction: how to use the three-phase plan as given.
-            planActionNotes: one practical note per action, without adding steps. For the action marked pilotTrial,
+            planActionNotes: one practical note per action, without adding steps. The action text is shown directly
+            above the note, so never restate or paraphrase it: add what it does not say, such as why it matters in
+            this work, which existing material to use, what to look for or review, or what a good outcome looks like.
+            For the action marked pilotTrial,
             say what to test, which existing inputs to use, what to review, and what to judge success against (time
             saved, accuracy, number of corrections, review effort, usefulness, consistency, whether quality improved
             or declined), without numerical targets.

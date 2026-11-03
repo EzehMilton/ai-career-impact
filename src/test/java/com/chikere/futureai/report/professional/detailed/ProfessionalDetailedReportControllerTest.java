@@ -127,6 +127,16 @@ class ProfessionalDetailedReportControllerTest {
         assertThat(html).contains("Also apply, from Responsible AI use: <span>Human review; Approved tools and "
                         + "confidentiality</span>")
                 .doesNotContain("Use only tools your organisation has approved for this kind of information.");
+
+        // The experiment callout is a themed class, never an inline style, and that class uses the dark theme's
+        // tokens: a light fill under the inherited light text made it unreadable.
+        assertThat(html).containsPattern("<div class=\"detailed-experiment\">\\s*<h4>A sensible first experiment</h4>")
+                .doesNotContain("style=\"");
+        String css = java.nio.file.Files.readString(java.nio.file.Path.of("src/main/resources/static/css/app.css"));
+        java.util.regex.Matcher rule = java.util.regex.Pattern.compile("\\.detailed-experiment \\{([^}]*)}").matcher(css);
+        assertThat(rule.find()).isTrue();
+        assertThat(rule.group(1)).contains("background: var(--surface-sunken)", "color: var(--ink)",
+                "border-left: 4px solid var(--brand-accent)").doesNotContainPattern("#[0-9a-fA-F]{3,6}");
     }
 
     @Test
