@@ -17,7 +17,9 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
  * The live paid-narrative harness's setup, with an offline generator instead of OpenAI: every role's assessment
- * really exists, the real orchestration runs end to end, Jev is never called and guidance is decided exactly once.
+ * really exists, the real orchestration runs end to end, Jev is never called, guidance is decided exactly once, the
+ * richer v2 narrative needs exactly one provider call (the calibrated Nurse and Accountant fixtures included), and
+ * reuse makes none.
  */
 class PaidNarrativeHarnessTest {
 
@@ -52,6 +54,9 @@ class PaidNarrativeHarnessTest {
             assertThat(guidance.guidance()).isEqualTo(new ProfessionalGuidancePolicyV1().decide(analysis));
             var snapshot = outcome.snapshot().orElseThrow();
             assertThat(snapshot.paidNarrativeStatus()).isEqualTo(PaidNarrativeStatus.AVAILABLE);
+            assertThat(snapshot.reportVersion()).isEqualTo(ProfessionalDetailedReportVersions.REPORT_V4);
+            assertThat(snapshot.report().opportunities().items()).as(run)
+                    .allSatisfy(item -> assertThat(item.practicalAiUses()).isNotEmpty());
             assertThat(snapshot.entitlementId()).isEqualTo(entitlement.entitlementId());
             assertThat(snapshot.analysisId()).isEqualTo(analysis.snapshotId());
             assertThat(harness.reportStore.reports.get(id)).isEqualTo(snapshot);

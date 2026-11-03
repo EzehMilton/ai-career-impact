@@ -1,0 +1,300 @@
+{
+  "reportVersion" : "professional-report-v3",
+  "provenance" : {
+    "roleReportVersion" : "professional-report-v2",
+    "judgmentSchemaVersion" : "professional-v1",
+    "decisionPolicyVersion" : "professional-decision-v2",
+    "roleNarrativeVersion" : null,
+    "responsibilitySchemaVersion" : "professional-responsibility-v1",
+    "responsibilityPolicyVersion" : "professional-responsibility-policy-v1",
+    "guidancePolicyVersion" : "professional-guidance-policy-v1",
+    "paidNarrativeVersion" : "professional-paid-narrative-v1"
+  },
+  "developmentFixture" : true,
+  "cover" : {
+    "title" : "Professional AI Career Impact Report",
+    "profession" : "Customer-service Adviser",
+    "assessedAt" : 1793091600.000000000,
+    "subtitle" : "How AI may affect your work, where it can assist, and where your human contribution remains important."
+  },
+  "narrativeStatus" : "AVAILABLE",
+  "executiveSummary" : [ "Your work combines information tasks where AI may assist with responsibilities that depend on your own judgement and contact with people.", "The sections below set out where assistance may help and where your contribution matters most." ],
+  "measures" : [ {
+    "measure" : "AI_EXPOSURE",
+    "name" : "AI Exposure",
+    "indicator" : 4.810499999999999,
+    "band" : "MODERATE",
+    "explanation" : "How much the work overlaps with characteristics AI can perform through digital systems."
+  }, {
+    "measure" : "HUMAN_ADVANTAGE",
+    "name" : "Human Advantage",
+    "indicator" : 6.67875,
+    "band" : "MODERATE",
+    "explanation" : "How strongly the work relies on human trust, context, physical presence, judgement and accountability."
+  }, {
+    "measure" : "AI_COMPLEMENTARITY",
+    "name" : "AI Complementarity",
+    "indicator" : 8.025,
+    "band" : "HIGH",
+    "explanation" : "How much scope there is for AI assistance while meaningful human contribution remains."
+  }, {
+    "measure" : "ROLE_ADAPTABILITY",
+    "name" : "Role Adaptability",
+    "indicator" : 8.405000000000001,
+    "band" : "HIGH",
+    "explanation" : "How much the structure of the role can accommodate technological change while retaining meaningful human contribution."
+  } ],
+  "scoresTogether" : "Read together, your measures describe work with some scope for AI assistance alongside a clear need for your own judgement.",
+  "factors" : {
+    "raising" : [ "Much of the work can be performed digitally", "The work requires little physical-world presence" ],
+    "lowering" : [ "The work is less repetitive or standardised", "The work depends on understanding complex or changing situations", "Trust, persuasion or relationships matter to successful performance" ],
+    "raisingEmpty" : "No strong exposure drivers were identified.",
+    "loweringEmpty" : "No strong factors reducing AI Exposure were identified."
+  },
+  "responsibilities" : {
+    "introduction" : "Each responsibility you listed was looked at separately. The label describes the scope for AI assistance in that responsibility; it is not a score.",
+    "narrative" : "Across your responsibilities, some involve information work where AI may assist, while others depend on being present or on your interaction with people.",
+    "oversightNote" : null,
+    "cards" : [ {
+      "key" : "r1",
+      "text" : "Respond to customer enquiries",
+      "category" : "HUMAN_LED_AI_SUPPORTING",
+      "categoryLabel" : "Human-led, with AI support",
+      "explanation" : "Human interaction or judgement is more central here than the scope for AI assistance, so AI is best kept to supporting preparation around your own work.",
+      "signals" : [ "Centred on human interaction" ],
+      "showOversight" : false
+    }, {
+      "key" : "r2",
+      "text" : "Explain products and services",
+      "category" : "HUMAN_LED_AI_SUPPORTING",
+      "categoryLabel" : "Human-led, with AI support",
+      "explanation" : "Human interaction or judgement is more central here than the scope for AI assistance, so AI is best kept to supporting preparation around your own work.",
+      "signals" : [ "Centred on human interaction" ],
+      "showOversight" : false
+    }, {
+      "key" : "r3",
+      "text" : "Resolve straightforward complaints",
+      "category" : "HUMAN_LED_AI_SUPPORTING",
+      "categoryLabel" : "Human-led, with AI support",
+      "explanation" : "Human interaction or judgement is more central here than the scope for AI assistance, so AI is best kept to supporting preparation around your own work.",
+      "signals" : [ "Centred on human interaction" ],
+      "showOversight" : false
+    }, {
+      "key" : "r4",
+      "text" : "Investigate account problems",
+      "category" : "GOOD_AI_ASSISTANCE_OPPORTUNITY",
+      "categoryLabel" : "Good opportunity for AI assistance",
+      "explanation" : "Much of this responsibility involves information, drafting or checking, where AI may assist while you review the result.",
+      "signals" : [ "Broad scope for AI assistance" ],
+      "showOversight" : false
+    }, {
+      "key" : "r5",
+      "text" : "Escalate complex complaints",
+      "category" : "AI_ASSISTANCE_WITH_HUMAN_JUDGEMENT",
+      "categoryLabel" : "AI may assist with parts",
+      "explanation" : "AI may assist with some parts of this responsibility, while other parts depend on your judgement or your interaction with people.",
+      "signals" : [ "Broad scope for AI assistance", "Centred on human interaction" ],
+      "showOversight" : false
+    }, {
+      "key" : "r6",
+      "text" : "Update customer records",
+      "category" : "GOOD_AI_ASSISTANCE_OPPORTUNITY",
+      "categoryLabel" : "Good opportunity for AI assistance",
+      "explanation" : "Much of this responsibility involves information, drafting or checking, where AI may assist while you review the result.",
+      "signals" : [ "Broad scope for AI assistance", "Carries significant accountability" ],
+      "showOversight" : true
+    }, {
+      "key" : "r7",
+      "text" : "Handle sensitive customer information",
+      "category" : "GOOD_AI_ASSISTANCE_OPPORTUNITY",
+      "categoryLabel" : "Good opportunity for AI assistance",
+      "explanation" : "Much of this responsibility involves information, drafting or checking, where AI may assist while you review the result.",
+      "signals" : [ "Broad scope for AI assistance", "Carries significant accountability" ],
+      "showOversight" : true
+    }, {
+      "key" : "r8",
+      "text" : "Communicate difficult decisions to customers",
+      "category" : "HUMAN_LED_AI_SUPPORTING",
+      "categoryLabel" : "Human-led, with AI support",
+      "explanation" : "Human interaction or judgement is more central here than the scope for AI assistance, so AI is best kept to supporting preparation around your own work.",
+      "signals" : [ "Centred on human interaction", "Carries significant accountability" ],
+      "showOversight" : true
+    } ]
+  },
+  "opportunities" : {
+    "introduction" : "These are the responsibilities where AI may assist most, in order. Each comes with conditions that keep your review and judgement in place.",
+    "items" : [ {
+      "rank" : 1,
+      "key" : "r4",
+      "responsibility" : "Investigate account problems",
+      "categoryLabel" : "Good opportunity for AI assistance",
+      "whyCandidate" : "Much of this responsibility involves information, drafting or checking, and relatively little of it depends on in-person interaction or physical presence.",
+      "howAiMayAssist" : "Use AI to support preparation, drafting, checking or information handling, with you reviewing the result.",
+      "conditions" : [ "Review every AI-assisted output before it is used.", "Use only tools your organisation has approved for this kind of information." ],
+      "explanation" : "This is a sensible place to try AI assistance with preparation and checking, keeping your review in place."
+    }, {
+      "rank" : 2,
+      "key" : "r6",
+      "responsibility" : "Update customer records",
+      "categoryLabel" : "Good opportunity for AI assistance",
+      "whyCandidate" : "Much of this responsibility involves information, drafting or checking, and relatively little of it depends on in-person interaction or physical presence.",
+      "howAiMayAssist" : "Use AI to support preparation, drafting, checking or information handling, with you reviewing the result.",
+      "conditions" : [ "Review every AI-assisted output before it is used.", "Use only tools your organisation has approved for this kind of information.", "This responsibility needs close human oversight." ],
+      "explanation" : "This is a sensible place to try AI assistance with preparation and checking, keeping your review in place."
+    }, {
+      "rank" : 3,
+      "key" : "r7",
+      "responsibility" : "Handle sensitive customer information",
+      "categoryLabel" : "Good opportunity for AI assistance",
+      "whyCandidate" : "Much of this responsibility involves information, drafting or checking, and relatively little of it depends on in-person interaction or physical presence.",
+      "howAiMayAssist" : "Use AI to support preparation, drafting, checking or information handling, with you reviewing the result.",
+      "conditions" : [ "Review every AI-assisted output before it is used.", "Use only tools your organisation has approved for this kind of information.", "This responsibility needs close human oversight." ],
+      "explanation" : "This is a sensible place to try AI assistance with preparation and checking, keeping your review in place."
+    } ]
+  },
+  "humanValue" : {
+    "introduction" : "These are the responsibilities where your own interaction, judgement, presence or accountability matters most.",
+    "items" : [ {
+      "rank" : 1,
+      "key" : "r8",
+      "responsibility" : "Communicate difficult decisions to customers",
+      "reason" : "Human interaction",
+      "reasonExplanation" : "Trust, communication and relationship handling are central here. It also relies on your accountability for the outcome.",
+      "explanation" : "Your own contribution matters here because it depends on your judgement and your relationships with people."
+    }, {
+      "rank" : 2,
+      "key" : "r1",
+      "responsibility" : "Respond to customer enquiries",
+      "reason" : "Human interaction",
+      "reasonExplanation" : "In “Respond to customer enquiries”, trust, communication and relationship handling are central.",
+      "explanation" : "Your own contribution matters here because it depends on your judgement and your relationships with people."
+    }, {
+      "rank" : 3,
+      "key" : "r3",
+      "responsibility" : "Resolve straightforward complaints",
+      "reason" : "Human interaction",
+      "reasonExplanation" : "In “Resolve straightforward complaints”, trust, communication and relationship handling are central.",
+      "explanation" : "Your own contribution matters here because it depends on your judgement and your relationships with people."
+    } ]
+  },
+  "skills" : {
+    "introduction" : "These skills follow from the pattern of your responsibilities, in priority order. They describe what to strengthen, not a course to take.",
+    "narrative" : "These skills help you use AI assistance carefully while strengthening the parts of your work that rely on you.",
+    "items" : [ {
+      "rank" : 1,
+      "label" : "Communication and relationship skills",
+      "reason" : "Trust and communication are central to some of your responsibilities; continue strengthening them.",
+      "supportingResponsibilities" : [ "Respond to customer enquiries", "Explain products and services", "Resolve straightforward complaints", "Communicate difficult decisions to customers" ],
+      "explanation" : "This skill supports the responsibilities linked to it and keeps your review at the centre of your work."
+    }, {
+      "rank" : 2,
+      "label" : "Responsible and approved use of AI",
+      "reason" : "The work operates under formal obligations or needs close human oversight, so how AI is used matters as much as whether it is used.",
+      "supportingResponsibilities" : [ "Update customer records", "Handle sensitive customer information", "Communicate difficult decisions to customers" ],
+      "explanation" : "This skill supports the responsibilities linked to it and keeps your review at the centre of your work."
+    }, {
+      "rank" : 3,
+      "label" : "Verification and quality checking",
+      "reason" : "Checking AI-assisted work is what keeps it trustworthy wherever you use it.",
+      "supportingResponsibilities" : [ "Investigate account problems", "Update customer records", "Handle sensitive customer information" ],
+      "explanation" : "This skill supports the responsibilities linked to it and keeps your review at the centre of your work."
+    }, {
+      "rank" : 4,
+      "label" : "Using AI assistance within your workflow",
+      "reason" : "Several of your responsibilities have clear scope for AI assistance under your review.",
+      "supportingResponsibilities" : [ "Investigate account problems", "Update customer records", "Handle sensitive customer information" ],
+      "explanation" : "This skill supports the responsibilities linked to it and keeps your review at the centre of your work."
+    } ]
+  },
+  "safeguards" : {
+    "introduction" : "Keep these in place whenever AI assists with any part of your work.",
+    "items" : [ {
+      "title" : "Approved tools and confidentiality",
+      "guidance" : "Follow your employer's and profession's policies, and do not put confidential or personal information into tools that are not approved for it.",
+      "essential" : false
+    }, {
+      "title" : "Human review",
+      "guidance" : "Review AI-assisted work yourself before it is used or shared.",
+      "essential" : false
+    }, {
+      "title" : "Verify facts, figures and sources",
+      "guidance" : "Check facts, figures and sources in AI-assisted work against the originals.",
+      "essential" : false
+    } ]
+  },
+  "plan" : {
+    "introduction" : "Three short phases, each building on the last. Work through the actions in order.",
+    "narrative" : "Work through the three phases in order, keeping each step small and reviewed.",
+    "phases" : [ {
+      "heading" : "Days 1–30",
+      "purpose" : "Observe and prepare",
+      "actions" : [ {
+        "title" : "Confirm your organisation's policy and approved tools before trying any AI assistance.",
+        "rationale" : "Formal obligations or close oversight apply to parts of this work.",
+        "reviewNote" : "Use only approved tools for any work-related information.",
+        "note" : "Keep this step small and note what you learn."
+      }, {
+        "title" : "Map how you currently carry out “Investigate account problems” and “Update customer records”, noting which steps involve preparing, drafting, checking or organising information.",
+        "rationale" : "These are the responsibilities with the clearest scope for AI assistance.",
+        "reviewNote" : "",
+        "note" : "Keep this step small and note what you learn."
+      }, {
+        "title" : "Write down what must always be checked or decided by you in those responsibilities.",
+        "rationale" : "Assistance stays useful only where its limits are explicit.",
+        "reviewNote" : "These responsibilities need close human oversight.",
+        "note" : "Keep this step small and note what you learn."
+      }, {
+        "title" : "Note where “Communicate difficult decisions to customers” and “Respond to customer enquiries” depend on your judgement, relationships or presence, so any AI use stays around them.",
+        "rationale" : "These are the responsibilities where your contribution matters most.",
+        "reviewNote" : "",
+        "note" : "Keep this step small and note what you learn."
+      } ]
+    }, {
+      "heading" : "Days 31–60",
+      "purpose" : "Run controlled experiments",
+      "actions" : [ {
+        "title" : "Try AI assistance on “Investigate account problems” for a few weeks, reviewing every output, and compare time, quality and errors with your usual approach.",
+        "rationale" : "It is the highest-ranked opportunity with the least need for oversight, so a trial carries the least risk.",
+        "reviewNote" : "Review every output before it is used.",
+        "note" : "Keep this step small and note what you learn."
+      }, {
+        "title" : "Record where AI help was useful, where it was wrong and what you had to correct.",
+        "rationale" : "Evidence from your own work decides what to keep.",
+        "reviewNote" : "",
+        "note" : "Keep this step small and note what you learn."
+      }, {
+        "title" : "Practise communication and relationship skills deliberately in “Respond to customer enquiries” and “Explain products and services”.",
+        "rationale" : "Trust and communication are central to some of your responsibilities; continue strengthening them.",
+        "reviewNote" : "",
+        "note" : "Keep this step small and note what you learn."
+      } ]
+    }, {
+      "heading" : "Days 61–90",
+      "purpose" : "Standardise what works",
+      "actions" : [ {
+        "title" : "Keep what worked as a checklist or template, and stop anything that did not save time or protect quality.",
+        "rationale" : "Only practice that proved useful should become routine.",
+        "reviewNote" : "",
+        "note" : "Keep this step small and note what you learn."
+      }, {
+        "title" : "Write down the safeguards you follow, such as review, approved tools and escalation, so they are repeatable.",
+        "rationale" : "Parts of this work need strong safeguards.",
+        "reviewNote" : "",
+        "note" : "Keep this step small and note what you learn."
+      }, {
+        "title" : "Choose the next responsibility to try: “Update customer records”.",
+        "rationale" : "It is the next-ranked opportunity in your analysis.",
+        "reviewNote" : "This responsibility needs close human oversight.",
+        "note" : "Keep this step small and note what you learn."
+      }, {
+        "title" : "Keep strengthening communication and relationship skills where your contribution matters most: “Communicate difficult decisions to customers” and “Respond to customer enquiries”.",
+        "rationale" : "These responsibilities depend most on you.",
+        "reviewNote" : "",
+        "note" : "Keep this step small and note what you learn."
+      } ]
+    } ]
+  },
+  "limitations" : [ "This report describes characteristics of the work you described. It does not assess you as a person.", "It is not a prediction of job loss, and it does not forecast your career.", "AI capabilities, and the way workplaces adopt them, keep changing.", "The actual effect on your work depends on your organisation, the tools it approves, regulation and how changes are introduced.", "Use these results to support your own judgement, not to replace it." ],
+  "nextSteps" : [ "Use the 90-day plan, starting with the small, reviewed trial on “Investigate account problems”.", "Keep human review in place for anything AI assists with, and follow your organisation's policies.", "Look back at what you have learned at the end of the 90 days.", "Revisit the assessment if your role or responsibilities change materially." ],
+  "closingPerspective" : "Small, reviewed steps let you adapt your work in a practical way while keeping your judgement central."
+}

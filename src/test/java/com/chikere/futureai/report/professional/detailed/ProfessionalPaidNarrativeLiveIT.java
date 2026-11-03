@@ -33,14 +33,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
- * Explicit live evaluation of professional-paid-narrative-v1 against REAL OpenAI for the seven calibration roles.
+ * Explicit live evaluation of professional-paid-narrative-v2 against REAL OpenAI for the seven calibration roles.
  * Never selected by normal Surefire or verify: run only with
  * {@code ./mvnw -Plive-paid-narrative verify} and OPENAI_API_KEY set.
  *
  * <p>Each role runs the real orchestration through {@link PaidNarrativeHarness}: a stored assessment, the real
  * complimentary grant freezing the v2 report, and the captured seven-role live Jev analysis as the stored snapshot (Jev
  * is NOT called again: the provider is a mock that must stay untouched). Guidance, the paid narrative with real
- * validation and repair, report-v3 assembly and the v5 PDF are all real. Results are written to
+ * validation and repair, report-v4 assembly and the v6 PDF are all real. Results are written to
  * {@code .live-smoke/paid-narrative/<timestamp>/}. With {@code -Dopenai.paid.narrative.live.dry-run=true} the same
  * run uses an offline generator and writes to {@code target/paid-narrative-dry-run/}.</p>
  */
@@ -162,26 +162,44 @@ class ProfessionalPaidNarrativeLiveIT {
         if (report.responsibilities().narrative() != null) {
             out.append("\n### Responsibility pattern\n").append(report.responsibilities().narrative()).append("\n");
         }
-        out.append("\n### Opportunity explanations\n");
+        out.append("\n### Opportunity insights\n");
         report.opportunities().items().forEach(o -> out.append("- ").append(o.responsibility()).append(": ")
-                .append(o.explanation()).append("\n"));
-        out.append("\n### Human-value explanations\n");
+                .append(o.explanation()).append("\n  - Uses: ").append(String.join(" | ", o.practicalAiUses()))
+                .append("\n  - Yours: ").append(String.join(" | ", o.humanOwnership()))
+                .append("\n  - Experiment: ").append(o.firstExperiment()).append("\n"));
+        out.append("\n### Human-value insights\n");
         report.humanValue().items().forEach(h -> out.append("- ").append(h.responsibility()).append(": ")
-                .append(h.explanation()).append("\n"));
-        out.append("\n### Skills\n").append(report.skills().narrative()).append("\n");
-        report.skills().items().forEach(s -> out.append("- ").append(s.label()).append(": ").append(s.explanation()).append("\n"));
+                .append(h.explanation()).append("\n  - Strengthen: ").append(h.strengthen()).append("\n"));
+        out.append("\n### Skills\n");
+        report.skills().items().forEach(s -> out.append("- ").append(s.label()).append(": ").append(s.explanation())
+                .append("\n  - In your work: ").append(String.join(" | ", s.inYourWork())).append("\n"));
         out.append("\n### Plan\n").append(report.plan().narrative()).append("\n");
         report.plan().phases().forEach(p -> p.actions().forEach(a -> out.append("- ").append(a.title()).append(" -> ")
                 .append(a.note()).append("\n")));
+        var strategy = report.adaptationStrategy();
+        out.append("\n### Adaptation strategy (personalised=").append(strategy.personalised()).append(")\n")
+                .append("- Protect: ").append(String.join(" | ", strategy.protect())).append("\n")
+                .append("- Learn: ").append(String.join(" | ", strategy.learn())).append("\n")
+                .append("- Experiment: ").append(String.join(" | ", strategy.experiment())).append("\n")
+                .append("- Strengthen: ").append(String.join(" | ", strategy.strengthen())).append("\n")
+                .append("- Monitor: ").append(String.join(" | ", strategy.monitor())).append("\n");
         out.append("\n### Closing\n").append(report.closingPerspective()).append("\n");
         return out.toString();
     }
 
-    /** The dry run's generator: valid hand-written copy for exactly the context's ids, never a network call. */
+    /**
+     * The dry run's generator, never a network call: the calibrated fixture for the Registered Nurse and Management
+     * Accountant chains, otherwise valid hand-written copy for exactly the context's ids.
+     */
     static final class Offline implements ProfessionalPaidNarrativeGenerator {
         @Override
         public GeneratedPaidNarrative generate(ProfessionalPaidNarrativeContext context) {
-            return new GeneratedPaidNarrative(DetailedReportFixtures.validNarrative(context), Optional.empty(), Optional.empty());
+            var narrative = java.util.stream.Stream.of(PaidNarrativeCalibrationFixtures.NURSE,
+                            PaidNarrativeCalibrationFixtures.ACCOUNTANT)
+                    .filter(run -> AnalysisSnapshots.live(run).assessmentId().equals(context.assessmentId())).findFirst()
+                    .flatMap(PaidNarrativeCalibrationFixtures::forRun)
+                    .orElseGet(() -> DetailedReportFixtures.validNarrative(context));
+            return new GeneratedPaidNarrative(narrative, Optional.empty(), Optional.empty());
         }
 
         @Override

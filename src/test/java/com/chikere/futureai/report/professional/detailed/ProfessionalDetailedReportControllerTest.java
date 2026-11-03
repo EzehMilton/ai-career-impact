@@ -36,7 +36,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/** The paid report page: v3 when stored, otherwise the purchased v2 report with the explicit preparation step. */
+/**
+ * The paid report page: a stored detailed report on the page of its own version (v3 or v4), otherwise the purchased
+ * v2 report with the explicit preparation step.
+ */
 @WebMvcTest(ProfessionalPaidReportController.class)
 @Import({WebSecurityConfiguration.class, ProfessionalReportViewMapper.class, ProfessionalDetailedReportViewMapper.class})
 class ProfessionalDetailedReportControllerTest {
@@ -46,7 +49,7 @@ class ProfessionalDetailedReportControllerTest {
     @MockitoBean ProfessionalDetailedReportUseCase detailed;
 
     @Test
-    void aStoredV3ReportRendersEveryCustomerSectionFromTheSameViewAsThePdf() throws Exception {
+    void aStoredV4ReportRendersEveryCustomerSectionFromTheSameViewAsThePdf() throws Exception {
         var chain = DetailedReportFixtures.chain("electrician-8");
         UUID id = chain.analysis().assessmentId();
         var snapshot = DetailedReportFixtures.snapshot(chain, DetailedReportFixtures.fallback(chain));
@@ -54,13 +57,14 @@ class ProfessionalDetailedReportControllerTest {
         when(detailed.find(id)).thenReturn(Optional.of(snapshot));
 
         String html = mvc.perform(get("/professional-assessment/" + id + "/report")).andExpect(status().isOk())
-                .andExpect(view().name("professional-assessment/paid-report-v3"))
+                .andExpect(view().name("professional-assessment/paid-report-v4"))
                 .andExpect(header().string("Cache-Control", "private, no-store"))
                 .andReturn().getResponse().getContentAsString();
         assertThat(html).containsSubsequence("Professional AI Career Impact Report", "Executive summary",
                 "Your four measures", "What increases AI Exposure", "Your work, responsibility by responsibility",
                 "Best opportunities for AI assistance", "Where your human contribution matters most",
-                "Skills to strengthen", "Responsible AI use", "Your 90-day plan",
+                "Skills to strengthen", "Responsible AI use", "Your 90-day plan", "Your AI adaptation strategy",
+                "Protect", "Learn", "Experiment", "Strengthen", "Monitor",
                 "What this assessment does and does not mean", "Next steps");
         assertThat(html).contains("Electrician", "Install electrical wiring and equipment", "Complete safety documentation",
                 "Days 31–60", "Safety-critical limits", "/professional-assessment/" + id + "/report.pdf",
@@ -80,6 +84,10 @@ class ProfessionalDetailedReportControllerTest {
             assertThat(html).contains(card.text(), card.categoryLabel());
             assertThat(pdfSource).contains(card.text(), card.categoryLabel());
         }
+        for (var note : view.categoryNotes()) {
+            assertThat(html).contains(note.explanation());
+            assertThat(pdfSource).contains(note.explanation());
+        }
         for (var measure : view.measures()) {
             assertThat(html).contains("<span>" + measure.score() + "</span> / 10");
             assertThat(pdfSource).contains(measure.score() + " / 10");
@@ -88,7 +96,41 @@ class ProfessionalDetailedReportControllerTest {
     }
 
     @Test
-    void withoutAV3ReportTheV2ReportShowsTheExplicitPreparationStepAndNothingIsGeneratedOnView() throws Exception {
+    void aStoredV3ReportKeepsItsOwnPageAndIsNeverShownAsV4() throws Exception {
+        var snapshot = DetailedReportFixtures.historicalV3Snapshot();
+        UUID id = purchased(snapshot.assessmentId());
+        when(detailed.find(id)).thenReturn(Optional.of(snapshot));
+        String html = mvc.perform(get("/professional-assessment/" + id + "/report")).andExpect(status().isOk())
+                .andExpect(view().name("professional-assessment/paid-report-v3")).andReturn().getResponse()
+                .getContentAsString();
+        assertThat(html).contains("Best opportunities for AI assistance", "Investigate account problems",
+                        "Use only tools your organisation has approved for this kind of information.")
+                .doesNotContain("Your AI adaptation strategy", "What this could look like", "Also apply, from");
+        verify(detailed, never()).prepare(any(), any());
+    }
+
+    @Test
+    void aV4ReportWithItsNarrativeShowsThePracticalLayerOnThePage() throws Exception {
+        var chain = DetailedReportFixtures.chain(PaidNarrativeCalibrationFixtures.ACCOUNTANT);
+        var narrative = PaidNarrativeCalibrationFixtures.managementAccountant();
+        var snapshot = DetailedReportFixtures.snapshot(chain, DetailedReportFixtures.available(chain, narrative));
+        UUID id = purchased(snapshot.assessmentId());
+        when(detailed.find(id)).thenReturn(Optional.of(snapshot));
+        String html = mvc.perform(get("/professional-assessment/" + id + "/report")).andExpect(status().isOk())
+                .andExpect(view().name("professional-assessment/paid-report-v4")).andReturn().getResponse()
+                .getContentAsString();
+        assertThat(html).containsSubsequence("What this could look like", "Flagging material variances against budget",
+                "What stays yours", "Deciding whether forecasts or assumptions should change", "A sensible first experiment",
+                "Why you matter here", "What to deliberately strengthen", "In your work, this means",
+                "Checking AI-generated variance commentary against the source numbers", "Your AI adaptation strategy",
+                "Your commercial judgement about which numbers matter");
+        assertThat(html).contains("Also apply, from Responsible AI use: <span>Human review; Approved tools and "
+                        + "confidentiality</span>")
+                .doesNotContain("Use only tools your organisation has approved for this kind of information.");
+    }
+
+    @Test
+    void withoutADetailedReportTheV2ReportShowsTheExplicitPreparationStepAndNothingIsGeneratedOnView() throws Exception {
         UUID id = purchased(UUID.randomUUID());
         when(detailed.find(id)).thenReturn(Optional.empty());
         when(detailed.preparation(id)).thenReturn(Optional.of(new DetailedReportPreparation(false, false, false,
@@ -160,7 +202,7 @@ class ProfessionalDetailedReportControllerTest {
         when(detailed.find(id)).thenReturn(Optional.empty());
         when(detailed.provisional(id)).thenReturn(Optional.of(provisional));
         String html = mvc.perform(get("/professional-assessment/" + id + "/report")).andExpect(status().isOk())
-                .andExpect(view().name("professional-assessment/paid-report-v3")).andReturn().getResponse().getContentAsString();
+                .andExpect(view().name("professional-assessment/paid-report-v4")).andReturn().getResponse().getContentAsString();
         assertThat(html).contains("Your detailed report is ready", "Add the personalised explanation",
                 "/professional-assessment/" + id + "/report/prepare", "Plan lessons", "Your 90-day plan")
                 .doesNotContain("We still could not add");
