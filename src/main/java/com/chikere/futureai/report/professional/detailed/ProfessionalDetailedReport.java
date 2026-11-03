@@ -10,9 +10,13 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * The immutable {@value ProfessionalDetailedReportVersions#REPORT} content, assembled once from stored artefacts. Every
- * customer-facing sentence is fixed here, so HTML and PDF only present it. Fields documented as nullable hold the paid
- * narrative's explanation and are null when the narrative is unavailable; every section is complete without them.
+ * The immutable detailed-report content, assembled once from stored artefacts. Every customer-facing sentence is fixed
+ * here, so HTML and PDF only present it. Fields documented as nullable hold the paid narrative's explanation and are
+ * null when the narrative is unavailable; every section is complete without them.
+ *
+ * <p>One record serves both stored versions. Fields added for {@value ProfessionalDetailedReportVersions#REPORT_V4}
+ * are absent from a stored {@value ProfessionalDetailedReportVersions#REPORT_V3} document and read back as null or
+ * empty, so a v3 report deserialises exactly as it was stored and its own template never shows them.</p>
  */
 public record ProfessionalDetailedReport(
         String reportVersion,
@@ -30,6 +34,7 @@ public record ProfessionalDetailedReport(
         SkillSection skills,
         SafeguardSection safeguards,
         PlanSection plan,
+        AdaptationStrategy adaptationStrategy,
         List<String> limitations,
         List<String> nextSteps,
         String closingPerspective) {
@@ -94,11 +99,19 @@ public record ProfessionalDetailedReport(
         }
     }
 
-    /** {@code explanation} is the paid narrative's, nullable. */
+    /**
+     * {@code explanation}, {@code practicalAiUses}, {@code humanOwnership} and {@code firstExperiment} are the paid
+     * narrative's (nullable or empty). In v4 {@code conditions} holds only conditions specific to this responsibility
+     * or not covered by a listed safeguard; {@code appliedSafeguards} names the listed safeguards that also apply.
+     */
     public record Opportunity(int rank, String key, String responsibility, String categoryLabel, String whyCandidate,
-            String howAiMayAssist, List<String> conditions, String explanation) {
+            String howAiMayAssist, List<String> conditions, String explanation, List<String> practicalAiUses,
+            List<String> humanOwnership, String firstExperiment, List<String> appliedSafeguards) {
         public Opportunity {
             conditions = List.copyOf(conditions);
+            practicalAiUses = copy(practicalAiUses);
+            humanOwnership = copy(humanOwnership);
+            appliedSafeguards = copy(appliedSafeguards);
         }
     }
 
@@ -108,9 +121,9 @@ public record ProfessionalDetailedReport(
         }
     }
 
-    /** {@code explanation} is the paid narrative's, nullable. */
+    /** {@code explanation} ("why you matter here") and {@code strengthen} are the paid narrative's, nullable. */
     public record HumanValue(int rank, String key, String responsibility, String reason, String reasonExplanation,
-            String explanation) {
+            String explanation, String strengthen) {
     }
 
     /** {@code narrative} is nullable. */
@@ -120,11 +133,12 @@ public record ProfessionalDetailedReport(
         }
     }
 
-    /** {@code explanation} is the paid narrative's, nullable. */
+    /** {@code explanation} and {@code inYourWork} ("in your work, this means") are the paid narrative's. */
     public record Skill(int rank, String label, String reason, List<String> supportingResponsibilities,
-            String explanation) {
+            String explanation, List<String> inYourWork) {
         public Skill {
             supportingResponsibilities = List.copyOf(supportingResponsibilities);
+            inYourWork = copy(inYourWork);
         }
     }
 
@@ -152,5 +166,25 @@ public record ProfessionalDetailedReport(
 
     /** {@code reviewNote} may be empty; {@code note} is the paid narrative's, nullable. */
     public record Action(String title, String rationale, String reviewNote, String note) {
+    }
+
+    /**
+     * v4: Protect, Learn, Experiment, Strengthen, Monitor. From the paid narrative when available ({@code
+     * personalised}), otherwise composed deterministically from the stored guidance. Never a prediction.
+     */
+    public record AdaptationStrategy(List<String> protect, List<String> learn, List<String> experiment,
+            List<String> strengthen, List<String> monitor, boolean personalised) {
+        public AdaptationStrategy {
+            protect = copy(protect);
+            learn = copy(learn);
+            experiment = copy(experiment);
+            strengthen = copy(strengthen);
+            monitor = copy(monitor);
+        }
+    }
+
+    /** Lists added in v4 are absent from a stored v3 document. */
+    private static List<String> copy(List<String> values) {
+        return values == null ? List.of() : List.copyOf(values);
     }
 }

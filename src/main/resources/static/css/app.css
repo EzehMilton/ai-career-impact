@@ -1946,7 +1946,7 @@ dd { margin: 0; font-weight: 700; text-align: right; }
 .live-smoke-status-bad { color: #b42318; font-weight: 700; }
 .live-smoke-actions { display: flex; flex-wrap: wrap; gap: .75rem; list-style: none; padding: 0; }
 
-/* Detailed professional report (professional-report-v3) and its preparation step. */
+/* Detailed professional report (professional-report-v3 and v4) and its preparation step. */
 .detailed-card-grid { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr)); }
 .detailed-report .detailed-item + .detailed-item, .detailed-report .detailed-phase + .detailed-phase { margin-top: var(--space-4); }
 .detailed-report .detailed-card h3, .detailed-report .detailed-item h3 { margin-top: 0.25rem; }
@@ -1964,7 +1964,23 @@ dd { margin: 0; font-weight: 700; text-align: right; }
 .detailed-selection legend { font-weight: 700; margin-bottom: var(--space-2); }
 .detailed-selection .checkbox-row { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.35rem 0; }
 .detailed-selection input[type="checkbox"] { margin-top: 0.3rem; width: 1.1rem; height: 1.1rem; flex: none; }
+/* professional-report-v4: practical opportunity blocks and the adaptation strategy. */
+.detailed-practical { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); margin-top: var(--space-3); }
+.detailed-practical h4 { margin-top: 0; }
+.detailed-practical ul, .detailed-in-your-work { margin: 0.25rem 0 0; padding-left: 1.2rem; }
+.detailed-experiment { background: #f0fdfa; border-left: 4px solid #0f766e; padding: var(--space-3); margin-top: var(--space-3); border-radius: 4px; }
+.detailed-experiment h4 { margin-top: 0; }
+.detailed-applies { font-size: 0.9rem; color: #475569; margin-top: var(--space-3); }
+.detailed-strengthen { border-top: 1px solid #e2e8f0; margin-top: var(--space-3); padding-top: var(--space-2); }
+.detailed-strategy-grid { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); }
+.detailed-strategy-grid h3 { margin-top: 0; }
+.detailed-strategy-grid ul { margin: 0.25rem 0 0; padding-left: 1.2rem; }
+.detailed-legend { margin: 0 0 var(--space-4); }
+.detailed-legend div { margin-bottom: 0.4rem; }
+.detailed-legend dt { display: inline; font-weight: 700; }
+.detailed-legend dt::after { content: ": "; }
+.detailed-legend dd { display: inline; margin: 0; }
 @media print {
-  .detailed-report .detailed-card, .detailed-report .detailed-item, .detailed-report .detailed-phase { break-inside: avoid; }
+  .detailed-report .detailed-card, .detailed-report .detailed-item, .detailed-report .detailed-phase, .detailed-report .detailed-strategy-grid .panel { break-inside: avoid; }
   .detailed-report .paid-report-header-actions, .detailed-report .paid-report-bottom-actions, .live-smoke-panel { display: none; }
 }

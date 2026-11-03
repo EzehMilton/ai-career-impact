@@ -60,8 +60,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * The detailed report on migrated PostgreSQL (V21): paid narrative, report-v3 snapshot and PDF-v5 bytes, each stored
- * once and read back exactly. The responsibility provider is a mock and the paid narrative is scripted.
+ * The detailed report on migrated PostgreSQL (V21, no new migration): paid narrative v2, report-v4 snapshot and PDF-v6
+ * bytes, each stored once and read back exactly; historical v3 reports, v5 PDFs and v1 narratives stay as stored. The
+ * responsibility provider is a mock and the paid narrative is scripted.
  */
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
@@ -108,23 +109,27 @@ class ProfessionalDetailedReportPersistenceTest {
         assertThat(narrative.model()).contains("scripted-model");
         assertThat(narrative.providerRequestId()).contains("req_scripted");
         var row = new JdbcTemplate(dataSource).queryForMap("select * from professional_detailed_report where assessment_id = ?", id);
-        assertThat(row).containsEntry("report_version", "professional-report-v3")
-                .containsEntry("pdf_version", "professional-report-pdf-v5")
+        assertThat(row).containsEntry("report_version", "professional-report-v4")
+                .containsEntry("pdf_version", "professional-report-pdf-v6")
                 .containsEntry("role_report_version", "professional-report-v2")
                 .containsEntry("decision_policy_version", "professional-decision-v2")
                 .containsEntry("responsibility_schema_version", "professional-responsibility-v1")
                 .containsEntry("responsibility_policy_version", "professional-responsibility-policy-v1")
                 .containsEntry("guidance_policy_version", "professional-guidance-policy-v1")
-                .containsEntry("paid_narrative_version", "professional-paid-narrative-v1")
+                .containsEntry("paid_narrative_version", "professional-paid-narrative-v2")
                 .containsEntry("paid_narrative_status", "AVAILABLE");
 
-        // The v5 PDF is rendered once from the stored report and its bytes are reused.
+        // The v6 PDF is rendered once from the stored report and its bytes are reused.
         var pdfService = new ProfessionalDetailedReportPdfService(purchases, reports, service(jev, openAi), pdfs,
                 new ProfessionalDetailedReportViewMapper(), new OpenHtmlProfessionalDetailedReportPdfRenderer(), 5_242_880, CLOCK);
         var pdf = pdfService.findOrCreate(id).orElseThrow();
         assertThat(pdf.bytes()).startsWith("%PDF-".getBytes());
         assertThat(pdf.provisional()).isFalse();
-        assertThat(pdfs.findByReportId(snapshot.reportId()).orElseThrow().pdfVersion()).isEqualTo("professional-report-pdf-v5");
+        assertThat(pdfs.findByReportId(snapshot.reportId()).orElseThrow().pdfVersion()).isEqualTo("professional-report-pdf-v6");
+        // The richer v2 narrative and the v4 practical layer are stored and read back.
+        assertThat(narrative.narrative().orElseThrow().adaptationStrategy()).isNotNull();
+        assertThat(snapshot.report().opportunities().items()).allSatisfy(item -> assertThat(item.practicalAiUses()).isNotEmpty());
+        assertThat(snapshot.report().adaptationStrategy().personalised()).isTrue();
         assertThat(pdfService.findOrCreate(id).orElseThrow().bytes()).isEqualTo(pdf.bytes());
         assertThat(count("professional_detailed_report_pdf", id)).isEqualTo(1);
 
@@ -175,6 +180,78 @@ class ProfessionalDetailedReportPersistenceTest {
         var served = service(provider(), openAi).prepare(id, Optional.empty()).snapshot().orElseThrow();
         assertThat(served.report().executiveSummary().getFirst()).isEqualTo("An older summary");
         assertThat(openAi).hasValue(1);
+    }
+
+    @Test
+    void aStoredV3ReportIsServedAsV3WithAV5PdfAndIsNeverReassembledAsV4() throws Exception {
+        var id = purchasedAssessment(List.of("Prepare monthly accounts", "Meet department managers"));
+        var openAi = new AtomicInteger();
+        service(provider(), openAi).prepare(id, Optional.empty());
+        // The row as the pre-v4 code stored it: a captured v3 document with its own versions.
+        var jdbc = new JdbcTemplate(dataSource);
+        jdbc.update("update professional_detailed_report set report = ?::jsonb, report_version = 'professional-report-v3', "
+                + "pdf_version = 'professional-report-pdf-v5', paid_narrative_version = 'professional-paid-narrative-v1' "
+                + "where assessment_id = ?", DetailedReportFixtures.historical("professional-report-v3-customer-service-adviser.json"), id);
+        String storedDocument = jdbc.queryForObject("select report::text from professional_detailed_report where assessment_id = ?",
+                String.class, id);
+
+        var served = service(provider(), openAi).prepare(id, Optional.empty());
+        assertThat(served.reused()).isTrue();
+        var snapshot = served.snapshot().orElseThrow();
+        assertThat(snapshot.reportVersion()).isEqualTo("professional-report-v3");
+        assertThat(snapshot.pdfVersion()).isEqualTo("professional-report-pdf-v5");
+        assertThat(snapshot.report().adaptationStrategy()).isNull();
+        assertThat(openAi).hasValue(1);
+
+        var pdfService = new ProfessionalDetailedReportPdfService(purchases, reports, service(provider(), openAi), pdfs,
+                new ProfessionalDetailedReportViewMapper(), new OpenHtmlProfessionalDetailedReportPdfRenderer(), 5_242_880, CLOCK);
+        var pdf = pdfService.findOrCreate(id).orElseThrow();
+        assertThat(pdfs.findByReportId(snapshot.reportId()).orElseThrow().pdfVersion()).isEqualTo("professional-report-pdf-v5");
+        try (var document = org.apache.pdfbox.Loader.loadPDF(pdf.bytes())) {
+            assertThat(new org.apache.pdfbox.text.PDFTextStripper().getText(document)).contains("professional-report-v3",
+                    "professional-report-pdf-v5").doesNotContain("Your AI adaptation strategy");
+        }
+        // Nothing rewrote the stored document or its versions.
+        assertThat(jdbc.queryForObject("select report::text from professional_detailed_report where assessment_id = ?",
+                String.class, id)).isEqualTo(storedDocument);
+        assertThat(jdbc.queryForMap("select report_version, pdf_version from professional_detailed_report where "
+                + "assessment_id = ?", id)).containsEntry("report_version", "professional-report-v3")
+                .containsEntry("pdf_version", "professional-report-pdf-v5");
+        assertThat(count("professional_detailed_report", id)).isEqualTo(1);
+        // A v3 snapshot is never stored anew by today's code.
+        assertThatThrownBy(() -> reports.saveIfAbsent(new ProfessionalDetailedReportSnapshot(UUID.randomUUID(),
+                UUID.randomUUID(), snapshot.entitlementId(), snapshot.analysisId(), snapshot.guidanceId(),
+                snapshot.paidNarrativeId(), snapshot.paidNarrativeStatus(), snapshot.reportVersion(), snapshot.pdfVersion(),
+                snapshot.generatedAt(), snapshot.report()))).hasMessageContaining("only the current detailed report version");
+    }
+
+    @Test
+    void aStoredV1NarrativeIsReadBackWithItsExplanationsAndNeverRegenerated() {
+        var id = purchasedAssessment(List.of("Prepare monthly accounts", "Meet department managers"));
+        var openAi = new AtomicInteger();
+        service(provider(), openAi).prepare(id, Optional.empty());
+        var jdbc = new JdbcTemplate(dataSource);
+        jdbc.update("delete from professional_detailed_report_pdf where assessment_id = ?", id);
+        jdbc.update("delete from professional_detailed_report where assessment_id = ?", id);
+        jdbc.update("update professional_paid_narrative set narrative = ?::jsonb, narrative_version = "
+                + "'professional-paid-narrative-v1' where assessment_id = ?",
+                DetailedReportFixtures.historical("professional-paid-narrative-v1-customer-service-adviser.json"), id);
+
+        var stored = narratives.findByAssessmentId(id).orElseThrow();
+        assertThat(stored.narrativeVersion()).isEqualTo("professional-paid-narrative-v1");
+        var narrative = stored.narrative().orElseThrow();
+        assertThat(narrative.executiveSummary()).startsWith("Your work combines information tasks");
+        assertThat(narrative.opportunityInsights()).isNotEmpty().allSatisfy(item -> {
+            assertThat(item.explanation()).startsWith("This is a sensible place");
+            assertThat(item.practicalAiUses()).isEmpty();
+        });
+        assertThat(narrative.adaptationStrategy()).isNull();
+
+        // Preparing again reuses the stored v1 narrative: no provider call, and its version is recorded as provenance.
+        var report = service(provider(), openAi).prepare(id, Optional.empty()).snapshot().orElseThrow();
+        assertThat(openAi).hasValue(1);
+        assertThat(report.report().provenance().paidNarrativeVersion()).isEqualTo("professional-paid-narrative-v1");
+        assertThat(report.report().adaptationStrategy().personalised()).isFalse();
     }
 
     @Test

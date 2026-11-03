@@ -18,16 +18,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * professional-report-pdf-v5 for the seven captured roles, with the deterministic (fallback) copy and once with a
- * validated narrative. Structural assertions only, no byte comparison. A Markdown preview of each role's report is
- * written to target/detailed-report-preview for review.
+ * professional-report-pdf-v6 for the seven captured roles, with the deterministic (fallback) copy and once with a
+ * validated narrative, and a stored professional-report-v3 still rendered exactly as professional-report-pdf-v5.
+ * Structural assertions only for v6, no byte comparison. A Markdown preview of each role's report is written to
+ * target/detailed-report-preview for review.
  */
 class ProfessionalDetailedReportPdfCalibrationTest {
 
     private static final List<String> HEADINGS = List.of("Executive summary", "Your four measures",
             "What drives your AI Exposure", "Your work, responsibility by responsibility",
             "Best opportunities for AI assistance", "Where your human contribution matters most", "Skills to strengthen",
-            "Responsible AI use", "Your 90-day plan", "What this assessment does and does not mean", "Next steps");
+            "Responsible AI use", "Your 90-day plan", "Your AI adaptation strategy",
+            "What this assessment does and does not mean", "Next steps");
 
     private final OpenHtmlProfessionalDetailedReportPdfRenderer renderer = new OpenHtmlProfessionalDetailedReportPdfRenderer();
     private final ProfessionalDetailedReportViewMapper views = new ProfessionalDetailedReportViewMapper();
@@ -46,13 +48,17 @@ class ProfessionalDetailedReportPdfCalibrationTest {
             assertThat(bytes).as(run).startsWith("%PDF-".getBytes());
             try (var document = Loader.loadPDF(bytes)) {
                 pages.add(run + "=" + document.getNumberOfPages());
-                assertThat(document.getNumberOfPages()).as(run).isBetween(5, 16);
+                assertThat(document.getNumberOfPages()).as(run).isBetween(5, 12);
                 String text = new PDFTextStripper().getText(document).replaceAll("\\s+", " ");
                 assertThat(text).as(run).contains(HEADINGS.toArray(String[]::new))
                         .contains("Professional AI Career Impact Report", DetailedReportFixtures.ROLES.get(run),
-                                "Days 1–30", "Days 31–60", "Days 61–90", "professional-report-v3", "professional-report-pdf-v5");
+                                "Days 1–30", "Days 31–60", "Days 61–90", "professional-report-v4", "professional-report-pdf-v6");
                 for (var card : view.report().responsibilities().cards()) {
                     assertThat(text).as(run).contains(card.text());
+                }
+                // Each stored classification sentence is shown once, not once per card that shares it.
+                for (var note : view.categoryNotes()) {
+                    assertThat(text.split(java.util.regex.Pattern.quote(note.explanation()), -1)).as(run).hasSize(2);
                 }
                 for (var measure : view.measures()) {
                     assertThat(text).as(run).contains(measure.score() + " / 10");
@@ -77,7 +83,33 @@ class ProfessionalDetailedReportPdfCalibrationTest {
         try (var document = Loader.loadPDF(renderer.render(view))) {
             String text = new PDFTextStripper().getText(document).replaceAll("\\s+", " ");
             assertThat(text).contains("Your work combines information tasks", "This is a sensible place to try AI",
-                    "Investigate account problems", "Use only tools your organisation has approved");
+                    "Investigate account problems", "What this could look like", "Organising your existing notes",
+                    "A sensible first experiment", "Also apply, from Responsible AI use: Human review; Approved tools and "
+                            + "confidentiality", "Your AI adaptation strategy")
+                    .doesNotContain("Use only tools your organisation has approved for this kind of information.");
+            // The approved-tools condition is stated once, in Responsible AI use, not on every opportunity.
+            assertThat(text.split("Follow your employer's and profession's policies", -1)).hasSize(2);
+        }
+    }
+
+    @Test
+    void aStoredV3ReportIsStillRenderedExactlyAsTheV5PdfRenderedIt() throws Exception {
+        var snapshot = DetailedReportFixtures.historicalV3Snapshot();
+        var view = views.toView(snapshot);
+        assertThat(view.reportVersion()).isEqualTo("professional-report-v3");
+        assertThat(view.pdfVersion()).isEqualTo("professional-report-pdf-v5");
+        assertThat(view.report().adaptationStrategy()).isNull();
+        assertThat(view.report().opportunities().items()).allSatisfy(item -> {
+            assertThat(item.practicalAiUses()).isEmpty();
+            assertThat(item.appliedSafeguards()).isEmpty();
+        });
+        // Byte-identical to the HTML the pre-v4 renderer produced for this stored report.
+        assertThat(renderer.html(view)).isEqualTo(DetailedReportFixtures.historical(
+                "professional-report-pdf-v5-customer-service-adviser.html"));
+        try (var document = Loader.loadPDF(renderer.render(view))) {
+            String text = new PDFTextStripper().getText(document).replaceAll("\\s+", " ");
+            assertThat(text).contains("professional-report-v3", "professional-report-pdf-v5")
+                    .doesNotContain("Your AI adaptation strategy", "What this could look like");
         }
     }
 

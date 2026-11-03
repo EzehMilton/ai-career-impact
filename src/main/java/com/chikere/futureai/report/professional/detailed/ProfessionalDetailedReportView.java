@@ -15,12 +15,21 @@ public record ProfessionalDetailedReportView(
         boolean narrativeAvailable,
         String reportVersion,
         String pdfVersion,
-        boolean provisional) {
+        boolean provisional,
+        List<CategoryNote> categoryNotes) {
 
     public ProfessionalDetailedReportView {
         measures = List.copyOf(measures);
+        categoryNotes = List.copyOf(categoryNotes);
     }
 
     public record MeasureView(String name, String score, String band, String explanation) {
+    }
+
+    /**
+     * v4 presentation: each distinct stored classification sentence once, under its label, in order of first use,
+     * instead of the same sentence on every responsibility card that shares it.
+     */
+    public record CategoryNote(String label, String explanation) {
     }
 }

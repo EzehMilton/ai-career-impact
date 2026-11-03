@@ -3,6 +3,7 @@ package com.chikere.futureai.narrative.professional.paid.persistence;
 import com.chikere.futureai.narrative.professional.paid.PaidNarrativeStatus;
 import com.chikere.futureai.narrative.professional.paid.ProfessionalPaidNarrative;
 import com.chikere.futureai.narrative.professional.paid.ProfessionalPaidNarrativeStore;
+import com.chikere.futureai.narrative.professional.paid.ProfessionalPaidNarrativeVersions;
 import com.chikere.futureai.narrative.professional.paid.StoredProfessionalPaidNarrative;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
@@ -76,7 +77,9 @@ class JpaProfessionalPaidNarrativeStore implements ProfessionalPaidNarrativeStor
     private static StoredProfessionalPaidNarrative toStored(ProfessionalPaidNarrativeEntity entity) {
         try {
             Optional<ProfessionalPaidNarrative> narrative = entity.narrative == null ? Optional.empty()
-                    : Optional.of(JSON.treeToValue(entity.narrative, ProfessionalPaidNarrative.class));
+                    : Optional.of(ProfessionalPaidNarrativeVersions.V1.equals(entity.narrativeVersion)
+                            ? JSON.treeToValue(entity.narrative, ProfessionalPaidNarrativeV1Document.class).toCurrent()
+                            : JSON.treeToValue(entity.narrative, ProfessionalPaidNarrative.class));
             return new StoredProfessionalPaidNarrative(entity.id, entity.assessmentId, entity.analysisId,
                     entity.guidanceId, entity.narrativeVersion, PaidNarrativeStatus.valueOf(entity.status),
                     entity.provider, Optional.ofNullable(entity.model), Optional.ofNullable(entity.providerRequestId),

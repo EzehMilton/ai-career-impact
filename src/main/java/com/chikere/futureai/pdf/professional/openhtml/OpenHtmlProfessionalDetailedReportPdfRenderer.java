@@ -3,6 +3,7 @@ package com.chikere.futureai.pdf.professional.openhtml;
 import com.chikere.futureai.pdf.professional.application.ProfessionalReportPdfGenerationException;
 import com.chikere.futureai.report.professional.detailed.ProfessionalDetailedReport;
 import com.chikere.futureai.report.professional.detailed.ProfessionalDetailedReportPdfRenderer;
+import com.chikere.futureai.report.professional.detailed.ProfessionalDetailedReportVersions;
 import com.chikere.futureai.report.professional.detailed.ProfessionalDetailedReportView;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import org.springframework.stereotype.Component;
@@ -11,9 +12,12 @@ import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 /**
- * professional-report-pdf-v5: the detailed report from the same view model as the web page. Customer-facing
- * content only: no rule identifiers, raw judgments or internal confidence. Each section heading is kept with its
- * first block, and cards are never split across pages.
+ * The detailed report PDF, from the same view model as the web page, in the PDF version the stored report records:
+ * professional-report-pdf-v5 for a stored professional-report-v3 (unchanged, below) and professional-report-pdf-v6
+ * for professional-report-v4 ({@link DetailedReportPdfV6Html}). Customer-facing content only: no rule identifiers,
+ * raw judgments or internal confidence.
+ *
+ * <p>v5: each section heading is kept with its first block, and cards are never split across pages.</p>
  */
 @Component
 public final class OpenHtmlProfessionalDetailedReportPdfRenderer implements ProfessionalDetailedReportPdfRenderer {
@@ -56,6 +60,12 @@ public final class OpenHtmlProfessionalDetailedReportPdfRenderer implements Prof
     }
 
     public String html(ProfessionalDetailedReportView view) {
+        return ProfessionalDetailedReportVersions.PDF_V5.equals(view.pdfVersion()) ? htmlV5(view)
+                : DetailedReportPdfV6Html.html(view);
+    }
+
+    /** professional-report-pdf-v5, kept exactly as it rendered stored professional-report-v3 reports. */
+    private String htmlV5(ProfessionalDetailedReportView view) {
         ProfessionalDetailedReport report = view.report();
         StringBuilder out = new StringBuilder(48_000);
         out.append("<html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en-GB\"><head><meta charset=\"UTF-8\" /><style>")

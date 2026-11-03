@@ -71,7 +71,7 @@ public class LiveSmokeController {
     }
 
     /**
-     * The stored professional-report-v3 snapshot, read-only, for inspecting what was assembled (including the paid
+     * The stored detailed-report snapshot (v3 or v4), read-only, for inspecting what was assembled (including the paid
      * narrative status). Generation goes through the customer's normal prepare route.
      */
     @GetMapping("/dev/live-smoke/professional/{assessmentId}/detailed-report")

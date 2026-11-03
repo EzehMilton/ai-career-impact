@@ -28,7 +28,9 @@ public final class ProfessionalDetailedReportViewMapper {
                 report.measures().stream().map(measure -> new ProfessionalDetailedReportView.MeasureView(measure.name(),
                         ProfessionalScoreDisplayFormatter.format(measure.indicator(), measure.band()),
                         band(measure.band().name()), measure.explanation())).toList(),
-                report.narrativeStatus() == PaidNarrativeStatus.AVAILABLE, reportVersion, pdfVersion, provisional);
+                report.narrativeStatus() == PaidNarrativeStatus.AVAILABLE, reportVersion, pdfVersion, provisional,
+                report.responsibilities().cards().stream().map(card -> new ProfessionalDetailedReportView.CategoryNote(
+                        card.categoryLabel(), card.explanation())).distinct().toList());
     }
 
     private static String band(String name) {

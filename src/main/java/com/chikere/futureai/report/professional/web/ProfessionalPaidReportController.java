@@ -3,6 +3,7 @@ package com.chikere.futureai.report.professional.web;
 import com.chikere.futureai.payment.professional.application.ProfessionalReportPurchaseUseCase;
 import com.chikere.futureai.payment.professional.web.ProfessionalPurchaseViewModel;
 import com.chikere.futureai.report.professional.detailed.ProfessionalDetailedReportUseCase;
+import com.chikere.futureai.report.professional.detailed.ProfessionalDetailedReportVersions;
 import com.chikere.futureai.report.professional.detailed.ProfessionalDetailedReportViewMapper;
 import com.chikere.futureai.responsibility.professional.analysis.ResponsibilityAnalysisFailedException;
 import com.chikere.futureai.responsibility.professional.analysis.ResponsibilityAnalysisUnavailableException;
@@ -23,7 +24,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * The paid Professional report. A stored professional-report-v3 is shown when it exists. Otherwise the frozen
+ * The paid Professional report. A stored detailed report (v3 or v4, each with its own page) is shown when it exists. Otherwise the frozen
  * role-level report (professional-report-v2) is shown with the step that prepares the detailed report, which is an
  * explicit POST: viewing a page never generates anything. Access always requires an ACTIVE entitlement.
  */
@@ -64,8 +65,9 @@ public final class ProfessionalPaidReportController {
             if (detailed != null) {
                 var stored = detailed.find(id);
                 if (stored.isPresent()) {
+                    // A stored report keeps the page of the version it was assembled as; v3 is never re-rendered as v4.
                     model.addAttribute("detailed", detailedViews.getObject().toView(stored.get()));
-                    return "professional-assessment/paid-report-v3";
+                    return ProfessionalDetailedReportVersions.template(stored.get().reportVersion());
                 }
                 // Prepared, but the paid narrative is still retryable: the complete deterministic report, not stored.
                 var provisional = detailed.provisional(id);
@@ -73,7 +75,7 @@ public final class ProfessionalPaidReportController {
                     model.addAttribute("detailed", detailedViews.getObject().toProvisionalView(provisional.get()));
                     model.addAttribute("preparationStatus",
                             "failed".equals(preparationStatus) ? preparationStatus : null);
-                    return "professional-assessment/paid-report-v3";
+                    return ProfessionalDetailedReportVersions.template(provisional.get().reportVersion());
                 }
                 model.addAttribute("preparation", detailed.preparation(id).orElse(null));
                 model.addAttribute("preparationStatus",

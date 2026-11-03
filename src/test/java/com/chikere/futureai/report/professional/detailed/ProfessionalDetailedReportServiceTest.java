@@ -114,8 +114,8 @@ class ProfessionalDetailedReportServiceTest {
             entitlement(id, ProfessionalEntitlementStatus.ACTIVE, source);
             var outcome = service(AssessmentTrace.disabled()).prepare(id, Optional.empty());
             assertThat(outcome.reused()).as(source.name()).isFalse();
-            assertThat(outcome.snapshot().orElseThrow().reportVersion()).isEqualTo("professional-report-v3");
-            assertThat(outcome.snapshot().orElseThrow().pdfVersion()).isEqualTo("professional-report-pdf-v5");
+            assertThat(outcome.snapshot().orElseThrow().reportVersion()).isEqualTo("professional-report-v4");
+            assertThat(outcome.snapshot().orElseThrow().pdfVersion()).isEqualTo("professional-report-pdf-v6");
             assertThat(outcome.snapshot().orElseThrow().paidNarrativeStatus()).isEqualTo(PaidNarrativeStatus.AVAILABLE);
         }
         verify(jev, times(2)).judge(any());
@@ -422,11 +422,8 @@ class ProfessionalDetailedReportServiceTest {
             }
             var narrative = DetailedReportFixtures.validNarrative(context);
             if (invalidContent) {
-                narrative = new com.chikere.futureai.narrative.professional.paid.ProfessionalPaidNarrative(
-                        narrative.executiveSummary() + " AI will replace much of this work.", narrative.scoresTogether(),
-                        narrative.responsibilityPattern(), narrative.opportunityExplanations(),
-                        narrative.humanValueExplanations(), narrative.skillDevelopment(), narrative.skillExplanations(),
-                        narrative.planIntroduction(), narrative.planActionNotes(), narrative.closingPerspective());
+                narrative = com.chikere.futureai.narrative.professional.paid.Narratives.summary(narrative,
+                        narrative.executiveSummary() + " AI will replace much of this work.");
             }
             return new GeneratedPaidNarrative(narrative, Optional.of("req_" + calls), Optional.of("scripted"));
         }

@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** professional-report-v3 keeps every frozen artefact exactly, with or without the paid narrative. */
+/** professional-report-v4 keeps every frozen artefact exactly, with or without the paid narrative. */
 class ProfessionalDetailedReportAssemblerTest {
 
     private final ProfessionalDetailedReportAssembler assembler = new ProfessionalDetailedReportAssembler();
@@ -36,7 +36,7 @@ class ProfessionalDetailedReportAssemblerTest {
             var report = assembler.assemble(chain.role(), chain.analysis(), chain.guidance(),
                     DetailedReportFixtures.fallback(chain));
 
-            assertThat(report.reportVersion()).isEqualTo("professional-report-v3");
+            assertThat(report.reportVersion()).isEqualTo("professional-report-v4");
             // Scores and bands exactly as purchased.
             assertThat(report.measures()).extracting(ProfessionalDetailedReport.Measure::measure)
                     .containsExactlyElementsOf(role.measures().stream().map(m -> m.measure()).toList());
@@ -57,9 +57,17 @@ class ProfessionalDetailedReportAssemblerTest {
                     .containsExactlyElementsOf(guidance.opportunities().stream().map(AiAssistanceOpportunity::responsibilityKey).toList());
             assertThat(report.opportunities().items()).extracting(ProfessionalDetailedReport.Opportunity::howAiMayAssist)
                     .containsExactlyElementsOf(guidance.opportunities().stream().map(AiAssistanceOpportunity::guidance).toList());
+            // Every stored condition is still there: on the card, or by name when Responsible AI use states it.
+            var listed = report.safeguards().items().stream().map(ProfessionalDetailedReport.Safeguard::title).toList();
             for (int i = 0; i < guidance.opportunities().size(); i++) {
-                assertThat(report.opportunities().items().get(i).conditions()).containsAll(guidance.opportunities().get(i)
-                        .constraints().stream().map(SafeUseConstraint::guidance).toList());
+                var item = report.opportunities().items().get(i);
+                assertThat(listed).as(run).containsAll(item.appliedSafeguards());
+                assertThat(item.conditions().size() + item.appliedSafeguards().size()).as(run)
+                        .isGreaterThanOrEqualTo(guidance.opportunities().get(i).constraints().size());
+                for (SafeUseConstraint constraint : guidance.opportunities().get(i).constraints()) {
+                    assertThat(item.conditions().contains(constraint.guidance())
+                            || item.appliedSafeguards().contains(covering(constraint))).as(run + " " + constraint).isTrue();
+                }
             }
             assertThat(report.humanValue().items()).extracting(ProfessionalDetailedReport.HumanValue::key)
                     .containsExactlyElementsOf(guidance.humanValueAreas().stream().map(HumanValueArea::responsibilityKey).toList());
@@ -85,7 +93,12 @@ class ProfessionalDetailedReportAssemblerTest {
         assertThat(report.executiveSummary()).hasSizeGreaterThanOrEqualTo(3);
         assertThat(String.join(" ", report.executiveSummary())).contains("eight responsibilities",
                 "Complete safety documentation", "Install electrical wiring and equipment");
-        assertThat(report.opportunities().items()).isNotEmpty().allSatisfy(item -> assertThat(item.explanation()).isNull());
+        assertThat(report.opportunities().items()).isNotEmpty().allSatisfy(item -> {
+            assertThat(item.explanation()).isNull();
+            assertThat(item.practicalAiUses()).isEmpty();
+            assertThat(item.humanOwnership()).isEmpty();
+            assertThat(item.firstExperiment()).isNull();
+        });
         assertThat(report.humanValue().items()).isNotEmpty().allSatisfy(item -> assertThat(item.explanation()).isNull());
         assertThat(report.skills().narrative()).isNull();
         assertThat(report.plan().narrative()).isNull();
@@ -94,6 +107,26 @@ class ProfessionalDetailedReportAssemblerTest {
         assertThat(report.plan().phases()).hasSize(3).allSatisfy(phase -> assertThat(phase.actions()).hasSizeBetween(2, 4));
         assertThat(report.limitations()).anySatisfy(line -> assertThat(line).contains("not a prediction of job loss"));
         assertThat(report.nextSteps().getFirst()).contains("Complete safety documentation");
+        // Without the narrative the adaptation strategy is composed from the stored guidance alone.
+        var strategy = report.adaptationStrategy();
+        assertThat(strategy.personalised()).isFalse();
+        assertThat(strategy.experiment()).singleElement().asString().contains("Complete safety documentation");
+        assertThat(List.of(strategy.protect(), strategy.learn(), strategy.strengthen(), strategy.monitor()))
+                .allSatisfy(items -> assertThat(items).isNotEmpty().allSatisfy(line -> assertThat(line).isNotBlank()));
+    }
+
+    @Test
+    void universalConditionsAreNamedOnceButAConditionWithoutAListedSafeguardStaysOnItsCard() {
+        // The live Nurse guidance lists four safeguards, without "Keep decisions human" (the limit is four).
+        var chain = DetailedReportFixtures.chain("registered-nurse-8");
+        var report = assembler.assemble(chain.role(), chain.analysis(), chain.guidance(), DetailedReportFixtures.fallback(chain));
+        assertThat(report.safeguards().items()).extracting(ProfessionalDetailedReport.Safeguard::title)
+                .doesNotContain("Keep decisions human");
+        var coordinate = report.opportunities().items().get(1);
+        assertThat(coordinate.conditions()).containsExactly(SafeUseConstraint.KEEP_DECISIONS_HUMAN.guidance());
+        assertThat(coordinate.appliedSafeguards()).containsExactly("Human review", "Approved tools and confidentiality");
+        assertThat(report.opportunities().items().getFirst().conditions()).isEmpty();
+        assertThat(report.nextSteps()).noneMatch(step -> step.contains("Keep human review in place"));
     }
 
     @Test
@@ -107,8 +140,15 @@ class ProfessionalDetailedReportAssemblerTest {
                 DetailedReportFixtures.fallback(chain));
         assertThat(report.narrativeStatus()).isEqualTo(PaidNarrativeStatus.AVAILABLE);
         assertThat(report.executiveSummary()).hasSize(2).first().asString().startsWith("Your work combines");
-        assertThat(report.opportunities().items()).allSatisfy(item -> assertThat(item.explanation())
-                .startsWith("This is a sensible place"));
+        assertThat(report.opportunities().items()).allSatisfy(item -> {
+            assertThat(item.explanation()).startsWith("This is a sensible place");
+            assertThat(item.practicalAiUses()).hasSize(2).allSatisfy(use -> assertThat(use).contains(item.responsibility()));
+            assertThat(item.firstExperiment()).contains(item.responsibility());
+        });
+        assertThat(report.humanValue().items()).allSatisfy(item -> assertThat(item.strengthen()).contains(item.responsibility()));
+        assertThat(report.skills().items()).allSatisfy(skill -> assertThat(skill.inYourWork()).hasSize(2));
+        assertThat(report.adaptationStrategy().personalised()).isTrue();
+        assertThat(report.adaptationStrategy().protect()).containsExactly("The judgement and relationships your work depends on.");
         assertThat(report.plan().phases().getFirst().actions()).allSatisfy(action -> assertThat(action.note())
                 .isEqualTo("Keep this step small and note what you learn."));
         // The deterministic content is identical with and without the narrative.
@@ -117,6 +157,14 @@ class ProfessionalDetailedReportAssemblerTest {
         assertThat(report.safeguards()).isEqualTo(fallback.safeguards());
         assertThat(report.measures()).isEqualTo(fallback.measures());
         assertThat(report.responsibilities().cards()).isEqualTo(fallback.responsibilities().cards());
+    }
+
+    private static String covering(SafeUseConstraint constraint) {
+        return switch (constraint) {
+            case REVIEW_EVERY_OUTPUT -> "Human review";
+            case APPROVED_TOOLS_ONLY -> "Approved tools and confidentiality";
+            case KEEP_DECISIONS_HUMAN -> "Keep decisions human";
+        };
     }
 
     @Test
@@ -221,7 +269,8 @@ class ProfessionalDetailedReportAssemblerTest {
                     DetailedReportFixtures.fallback(chain));
             String customerFacing = new ObjectMapper().findAndRegisterModules().writeValueAsString(Stream.of(
                     report.executiveSummary(), report.responsibilities(), report.opportunities(), report.humanValue(),
-                    report.skills(), report.safeguards(), report.plan(), report.limitations(), report.nextSteps()).toList());
+                    report.skills(), report.safeguards(), report.plan(), report.adaptationStrategy(), report.limitations(),
+                    report.nextSteps()).toList());
             // The stored category enum is data for the template, never displayed; everything else must be free of codes.
             for (var category : com.chikere.futureai.responsibility.professional.policy.ResponsibilityCategory.values()) {
                 customerFacing = customerFacing.replace("\"" + category.name() + "\"", "\"\"");

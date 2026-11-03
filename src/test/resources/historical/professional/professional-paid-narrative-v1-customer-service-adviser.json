@@ -1,0 +1,75 @@
+{
+  "executiveSummary" : "Your work combines information tasks where AI may assist with responsibilities that depend on your own judgement and contact with people.\n\nThe sections below set out where assistance may help and where your contribution matters most.",
+  "scoresTogether" : "Read together, your measures describe work with some scope for AI assistance alongside a clear need for your own judgement.",
+  "responsibilityPattern" : "Across your responsibilities, some involve information work where AI may assist, while others depend on being present or on your interaction with people.",
+  "opportunityExplanations" : [ {
+    "id" : "opportunity-1-r4",
+    "explanation" : "This is a sensible place to try AI assistance with preparation and checking, keeping your review in place."
+  }, {
+    "id" : "opportunity-2-r6",
+    "explanation" : "This is a sensible place to try AI assistance with preparation and checking, keeping your review in place."
+  }, {
+    "id" : "opportunity-3-r7",
+    "explanation" : "This is a sensible place to try AI assistance with preparation and checking, keeping your review in place."
+  } ],
+  "humanValueExplanations" : [ {
+    "id" : "human-value-1-r8",
+    "explanation" : "Your own contribution matters here because it depends on your judgement and your relationships with people."
+  }, {
+    "id" : "human-value-2-r1",
+    "explanation" : "Your own contribution matters here because it depends on your judgement and your relationships with people."
+  }, {
+    "id" : "human-value-3-r3",
+    "explanation" : "Your own contribution matters here because it depends on your judgement and your relationships with people."
+  } ],
+  "skillDevelopment" : "These skills help you use AI assistance carefully while strengthening the parts of your work that rely on you.",
+  "skillExplanations" : [ {
+    "id" : "skill-1-communication-and-relationships",
+    "explanation" : "This skill supports the responsibilities linked to it and keeps your review at the centre of your work."
+  }, {
+    "id" : "skill-2-responsible-ai-use",
+    "explanation" : "This skill supports the responsibilities linked to it and keeps your review at the centre of your work."
+  }, {
+    "id" : "skill-3-verification-and-quality-checking",
+    "explanation" : "This skill supports the responsibilities linked to it and keeps your review at the centre of your work."
+  }, {
+    "id" : "skill-4-ai-assisted-workflow",
+    "explanation" : "This skill supports the responsibilities linked to it and keeps your review at the centre of your work."
+  } ],
+  "planIntroduction" : "Work through the three phases in order, keeping each step small and reviewed.",
+  "planActionNotes" : [ {
+    "id" : "action-1-p1-confirm-policy-and-tools",
+    "explanation" : "Keep this step small and note what you learn."
+  }, {
+    "id" : "action-1-p1-map-current-workflow",
+    "explanation" : "Keep this step small and note what you learn."
+  }, {
+    "id" : "action-1-p1-define-human-review",
+    "explanation" : "Keep this step small and note what you learn."
+  }, {
+    "id" : "action-1-p1-note-human-contribution",
+    "explanation" : "Keep this step small and note what you learn."
+  }, {
+    "id" : "action-2-p2-pilot-with-review",
+    "explanation" : "Keep this step small and note what you learn."
+  }, {
+    "id" : "action-2-p2-record-what-works",
+    "explanation" : "Keep this step small and note what you learn."
+  }, {
+    "id" : "action-2-p2-practise-human-skill",
+    "explanation" : "Keep this step small and note what you learn."
+  }, {
+    "id" : "action-3-p3-adopt-or-stop",
+    "explanation" : "Keep this step small and note what you learn."
+  }, {
+    "id" : "action-3-p3-document-safeguards",
+    "explanation" : "Keep this step small and note what you learn."
+  }, {
+    "id" : "action-3-p3-choose-next-opportunity",
+    "explanation" : "Keep this step small and note what you learn."
+  }, {
+    "id" : "action-3-p3-strengthen-human-contribution",
+    "explanation" : "Keep this step small and note what you learn."
+  } ],
+  "closingPerspective" : "Small, reviewed steps let you adapt your work in a practical way while keeping your judgement central."
+}

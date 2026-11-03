@@ -182,7 +182,7 @@ class LiveSmokeModeTest {
                 java.util.Optional.of("test-model")));
         UUID id = submit(catalog.find(LiveSmokeJourney.PROFESSIONAL, "registered-nurse").orElseThrow());
         String result = mvc.perform(get("/professional-assessment/" + id)).andReturn().getResponse().getContentAsString();
-        assertThat(result).contains("Prepare detailed report v3", "/professional-assessment/" + id + "/report/prepare",
+        assertThat(result).contains("Prepare detailed report (real Jev and OpenAI", "/professional-assessment/" + id + "/report/prepare",
                 "/dev/live-smoke/professional/" + id + "/detailed-report");
         mvc.perform(get("/dev/live-smoke/professional/" + id + "/detailed-report")).andExpect(status().isNotFound());
 
@@ -194,13 +194,13 @@ class LiveSmokeModeTest {
         org.mockito.Mockito.verify(paidNarrative, org.mockito.Mockito.times(1)).generate(any());
 
         String page = mvc.perform(get("/professional-assessment/" + id + "/report")).andExpect(status().isOk())
-                .andExpect(view().name("professional-assessment/paid-report-v3")).andReturn().getResponse().getContentAsString();
+                .andExpect(view().name("professional-assessment/paid-report-v4")).andReturn().getResponse().getContentAsString();
         assertThat(page).contains("Your work, responsibility by responsibility", "Your 90-day plan",
                 "Live smoke: detailed report", "paid narrative AVAILABLE", "This is a sensible place to try AI");
         String json = mvc.perform(get("/dev/live-smoke/professional/" + id + "/detailed-report")).andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        assertThat(json).contains("\"reportVersion\" : \"professional-report-v3\"",
-                "\"pdfVersion\" : \"professional-report-pdf-v5\"", "\"paidNarrativeStatus\" : \"AVAILABLE\"");
+        assertThat(json).contains("\"reportVersion\" : \"professional-report-v4\"",
+                "\"pdfVersion\" : \"professional-report-pdf-v6\"", "\"paidNarrativeStatus\" : \"AVAILABLE\"");
         byte[] pdf = mvc.perform(get("/professional-assessment/" + id + "/report.pdf")).andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsByteArray();
         assertThat(pdf).startsWith("%PDF-".getBytes());
@@ -251,7 +251,7 @@ class LiveSmokeModeTest {
         assertThat(request.getValue().responsibilities()).containsExactly("Custom responsibility number 3",
                 "Custom responsibility number 7", "Custom responsibility number 10");
         String report = mvc.perform(get(path)).andExpect(status().isOk())
-                .andExpect(view().name("professional-assessment/paid-report-v3")).andReturn().getResponse().getContentAsString();
+                .andExpect(view().name("professional-assessment/paid-report-v4")).andReturn().getResponse().getContentAsString();
         assertThat(report).containsSubsequence("Custom responsibility number 3", "Custom responsibility number 7",
                 "Custom responsibility number 10").doesNotContain("Custom responsibility number 1<",
                 "Choose up to 8 responsibilities");

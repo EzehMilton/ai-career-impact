@@ -7,8 +7,8 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * One immutable assembled {@value ProfessionalDetailedReportVersions#REPORT} for an assessment, with references to
- * every artefact it was assembled from. Reproducible from its own content; never reassembled under later code.
+ * One immutable assembled detailed report for an assessment (professional-report-v3 or v4, as {@code reportVersion}
+ * records), with references to every artefact it was assembled from. Never reassembled under later code.
  */
 public record ProfessionalDetailedReportSnapshot(
         UUID reportId,

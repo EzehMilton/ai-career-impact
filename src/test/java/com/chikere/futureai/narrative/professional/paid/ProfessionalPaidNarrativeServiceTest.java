@@ -51,7 +51,7 @@ class ProfessionalPaidNarrativeServiceTest {
             assertThat(first.attempts()).isEqualTo(1);
             assertThat(first.providerRequestId()).contains("req_1");
             assertThat(first.model()).contains("scripted-model");
-            assertThat(first.narrativeVersion()).isEqualTo("professional-paid-narrative-v1");
+            assertThat(first.narrativeVersion()).isEqualTo("professional-paid-narrative-v2");
             assertThat(again).isEqualTo(first);
             assertThat(generator.calls).isEqualTo(1);
             assertThat(log.stages()).containsSubsequence("PAID_NARRATIVE_REQUEST", "PAID_NARRATIVE_RESPONSE",
@@ -62,10 +62,7 @@ class ProfessionalPaidNarrativeServiceTest {
 
     @Test
     void aMalformedDraftGetsExactlyOneRepairWithTheFailedRule() {
-        var malformed = new ProfessionalPaidNarrative(valid.executiveSummary(), valid.scoresTogether(),
-                valid.responsibilityPattern(), valid.opportunityExplanations().subList(0, 1), valid.humanValueExplanations(),
-                valid.skillDevelopment(), valid.skillExplanations(), valid.planIntroduction(), valid.planActionNotes(),
-                valid.closingPerspective());
+        var malformed = Narratives.opportunities(valid, valid.opportunityInsights().subList(0, 1));
         var generator = new Scripted(attempt -> attempt == 1 ? malformed : valid);
         try (TraceLogCapture log = TraceLogCapture.start()) {
             var stored = service(Optional.of(generator), AssessmentTrace.enabled()).generateOrGet(context).stored().orElseThrow();
@@ -81,10 +78,7 @@ class ProfessionalPaidNarrativeServiceTest {
 
     @Test
     void contentThatStillFailsAfterItsRepairBecomesTheImmutableFinalFallbackAndIsNeverRetried() {
-        var invalid = new ProfessionalPaidNarrative(valid.executiveSummary() + " Your job is at risk.",
-                valid.scoresTogether(), valid.responsibilityPattern(), valid.opportunityExplanations(),
-                valid.humanValueExplanations(), valid.skillDevelopment(), valid.skillExplanations(),
-                valid.planIntroduction(), valid.planActionNotes(), valid.closingPerspective());
+        var invalid = Narratives.summary(valid, valid.executiveSummary() + " Your job is at risk.");
         var failing = new Scripted(attempt -> invalid);
         try (TraceLogCapture log = TraceLogCapture.start()) {
             var result = service(Optional.of(failing), AssessmentTrace.enabled()).generateOrGet(context);
@@ -135,9 +129,7 @@ class ProfessionalPaidNarrativeServiceTest {
         var empty = new Scripted(attempt -> null);
         assertThat(service(Optional.of(empty), AssessmentTrace.disabled()).generateOrGet(context).retryReason())
                 .contains("EMPTY_PROVIDER_RESPONSE");
-        var malformed = new ProfessionalPaidNarrative(valid.executiveSummary(), valid.scoresTogether(),
-                valid.responsibilityPattern(), List.of(), valid.humanValueExplanations(), valid.skillDevelopment(),
-                valid.skillExplanations(), valid.planIntroduction(), valid.planActionNotes(), valid.closingPerspective());
+        var malformed = Narratives.opportunities(valid, List.of());
         var repairOutage = new Scripted(attempt -> {
             if (attempt == 1) {
                 return malformed;
