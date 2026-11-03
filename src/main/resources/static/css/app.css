@@ -1968,10 +1968,12 @@ dd { margin: 0; font-weight: 700; text-align: right; }
 .detailed-practical { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); margin-top: var(--space-3); }
 .detailed-practical h4 { margin-top: 0; }
 .detailed-practical ul, .detailed-in-your-work { margin: 0.25rem 0 0; padding-left: 1.2rem; }
-.detailed-experiment { background: #f0fdfa; border-left: 4px solid #0f766e; padding: var(--space-3); margin-top: var(--space-3); border-radius: 4px; }
-.detailed-experiment h4 { margin-top: 0; }
-.detailed-applies { font-size: 0.9rem; color: #475569; margin-top: var(--space-3); }
-.detailed-strengthen { border-top: 1px solid #e2e8f0; margin-top: var(--space-3); padding-top: var(--space-2); }
+/* Theme tokens, not light-theme hex: the site is dark, so a pale fill left the inherited light text unreadable. */
+.detailed-experiment { background: var(--surface-sunken); color: var(--ink); border: 1px solid var(--border); border-left: 4px solid var(--brand-accent); border-radius: var(--radius-sm); padding: var(--space-3); margin-top: var(--space-3); }
+.detailed-experiment h4 { margin-top: 0; color: var(--ink-strong); }
+.detailed-experiment p { margin-bottom: 0; }
+.detailed-applies { font-size: 0.9rem; color: var(--ink-subtle); margin-top: var(--space-3); }
+.detailed-strengthen { border-top: 1px solid var(--rule); margin-top: var(--space-3); padding-top: var(--space-2); }
 .detailed-strategy-grid { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); }
 .detailed-strategy-grid h3 { margin-top: 0; }
 .detailed-strategy-grid ul { margin: 0.25rem 0 0; padding-left: 1.2rem; }

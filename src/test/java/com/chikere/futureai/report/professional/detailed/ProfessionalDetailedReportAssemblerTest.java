@@ -1,5 +1,6 @@
 package com.chikere.futureai.report.professional.detailed;
 
+import com.chikere.futureai.narrative.professional.paid.Narratives;
 import com.chikere.futureai.narrative.professional.paid.PaidNarrativeStatus;
 import com.chikere.futureai.narrative.professional.paid.ProfessionalPaidNarrativeContext;
 import com.chikere.futureai.responsibility.professional.analysis.ResponsibilityAnalysisItem;
@@ -157,6 +158,27 @@ class ProfessionalDetailedReportAssemblerTest {
         assertThat(report.safeguards()).isEqualTo(fallback.safeguards());
         assertThat(report.measures()).isEqualTo(fallback.measures());
         assertThat(report.responsibilities().cards()).isEqualTo(fallback.responsibilities().cards());
+    }
+
+    @Test
+    void aPlanNoteThatOnlyRestatesItsActionIsSuppressedAndTheDeterministicActionStays() {
+        var chain = DetailedReportFixtures.chain("registered-nurse-8");
+        var narrative = DetailedReportFixtures.validNarrative(chain.context());
+        var actions = chain.context().prompt().ninetyDayPlan().stream().flatMap(phase -> phase.actions().stream()).toList();
+        var notes = new java.util.ArrayList<>(narrative.planActionNotes());
+        // As the live Nurse report did: the action repeated, word for word and with trivial changes, as its note.
+        notes.set(0, new com.chikere.futureai.narrative.professional.paid.ProfessionalPaidNarrative.ItemExplanation(
+                notes.get(0).id(), actions.get(0).action()));
+        notes.set(1, new com.chikere.futureai.narrative.professional.paid.ProfessionalPaidNarrative.ItemExplanation(
+                notes.get(1).id(), actions.get(1).action().replace(",", "").replace("“", "\"").replace("”", "\"")));
+        var report = assembler.assemble(chain.role(), chain.analysis(), chain.guidance(),
+                DetailedReportFixtures.available(chain, Narratives.actions(narrative, notes)));
+        var planned = report.plan().phases().stream().flatMap(phase -> phase.actions().stream()).toList();
+        assertThat(planned.get(0).title()).isEqualTo(actions.get(0).action());
+        assertThat(planned.get(0).note()).isNull();
+        assertThat(planned.get(1).note()).isNull();
+        assertThat(planned.subList(2, planned.size())).allSatisfy(action -> assertThat(action.note())
+                .isEqualTo("Keep this step small and note what you learn."));
     }
 
     private static String covering(SafeUseConstraint constraint) {

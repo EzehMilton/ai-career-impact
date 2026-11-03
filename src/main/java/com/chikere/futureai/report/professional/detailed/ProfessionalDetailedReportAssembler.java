@@ -1,6 +1,7 @@
 package com.chikere.futureai.report.professional.detailed;
 
 import com.chikere.futureai.narrative.professional.paid.PaidNarrativeStatus;
+import com.chikere.futureai.narrative.professional.paid.PlanNoteRestatement;
 import com.chikere.futureai.narrative.professional.paid.ProfessionalPaidNarrative;
 import com.chikere.futureai.narrative.professional.paid.ProfessionalPaidNarrative.HumanValueInsight;
 import com.chikere.futureai.narrative.professional.paid.ProfessionalPaidNarrative.ItemExplanation;
@@ -363,10 +364,17 @@ public final class ProfessionalDetailedReportAssembler {
             int phase = index + 1;
             result.add(new Phase(headings[index][0], headings[index][1], phases.get(index).stream().map(action ->
                     new Action(action.title(), action.rationale(), action.reviewNote(),
-                            notes.get(ProfessionalPaidNarrativeContext.actionId(phase, action)))).toList()));
+                            addedNote(notes.get(ProfessionalPaidNarrativeContext.actionId(phase, action)), action)))
+                    .toList()));
         }
         return new PlanSection("Three short phases, each building on the last. Work through the actions in order.",
                 narrative.map(ProfessionalPaidNarrative::planIntroduction).orElse(null), result);
+    }
+
+    /** The narrative note, unless it only restates the action shown above it: the deterministic text stays. */
+    private static String addedNote(String note, PlanAction action) {
+        return note == null || PlanNoteRestatement.restates(note, action.title(), action.rationale(), action.reviewNote())
+                ? null : note;
     }
 
     private static List<String> limitations() {

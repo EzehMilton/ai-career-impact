@@ -186,6 +186,36 @@ class ProfessionalPaidNarrativeValidatorTest {
     }
 
     @Test
+    void aPlanNoteThatOnlyRestatesItsActionIsRejectedButOneThatAddsPracticalDetailIsNot() {
+        var actions = context.prompt().ninetyDayPlan().stream().flatMap(phase -> phase.actions().stream()).toList();
+        var first = actions.getFirst();
+        for (String restated : List.of(first.action(), first.action().replace(",", "").replace(".", ";"),
+                first.action().toLowerCase() + " " + first.rationale())) {
+            rejects(note(0, restated), GENERIC);
+        }
+        assertThat(validator.validate(note(0, "Start with the matters you handle most often, and note where the "
+                + "drafting time actually goes before changing anything."), context)).isNotNull();
+    }
+
+    @Test
+    void indispensableIrreplaceableAndGuaranteedEmploymentClaimsAreRejected() {
+        rejects(summary("Administering medication safely requires your physical presence and accountability, making "
+                + "your role indispensable."), JOB_LOSS);
+        rejects(summary("Your advice makes you indispensable to clients."), JOB_LOSS);
+        rejects(summary("This means your position is guaranteed."), JOB_LOSS);
+        rejects(summary("You cannot be replaced in court."), JOB_LOSS);
+        rejects(summary("Your judgement is irreplaceable here."), CAPABILITY);
+        rejects(summary("Your advocacy work is future-proof."), FUTURE);
+        rejects(summary("Your advocacy work is AI-proof."), CAPABILITY);
+        for (String supported : List.of("Your contribution remains important in advising clients.",
+                "This responsibility depends strongly on your physical presence and accountability.",
+                "Human responsibility remains central to your advice.",
+                "Your review remains necessary before any draft is shared.")) {
+            assertThat(validator.validate(summary(supported), context)).as(supported).isNotNull();
+        }
+    }
+
+    @Test
     void aMeasureDescribedWithAnotherBandIsRejected() {
         var band = context.bandByMeasure().get("AI Exposure").toLowerCase();
         String other = band.equals("high") ? "low" : "high";
@@ -419,6 +449,12 @@ class ProfessionalPaidNarrativeValidatorTest {
 
     private ProfessionalPaidNarrative summary(String extraSentence) {
         return Narratives.summary(valid, valid.executiveSummary() + " " + extraSentence);
+    }
+
+    private ProfessionalPaidNarrative note(int index, String explanation) {
+        var notes = new ArrayList<>(valid.planActionNotes());
+        notes.set(index, new ItemExplanation(notes.get(index).id(), explanation));
+        return Narratives.actions(valid, notes);
     }
 
     private ProfessionalPaidNarrative opportunities(List<OpportunityInsight> opportunities) {

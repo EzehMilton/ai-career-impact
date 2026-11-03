@@ -127,6 +127,56 @@ class ProfessionalDetailedReportControllerTest {
         assertThat(html).contains("Also apply, from Responsible AI use: <span>Human review; Approved tools and "
                         + "confidentiality</span>")
                 .doesNotContain("Use only tools your organisation has approved for this kind of information.");
+
+        // The experiment callout is a themed class, never an inline style, and that class uses the dark theme's
+        // tokens: a light fill under the inherited light text made it unreadable.
+        assertThat(html).containsPattern("<div class=\"detailed-experiment\">\\s*<h4>A sensible first experiment</h4>")
+                .doesNotContain("style=\"");
+        String css = java.nio.file.Files.readString(java.nio.file.Path.of("src/main/resources/static/css/app.css"));
+        java.util.regex.Matcher rule = java.util.regex.Pattern.compile("\\.detailed-experiment \\{([^}]*)}").matcher(css);
+        assertThat(rule.find()).isTrue();
+        assertThat(rule.group(1)).contains("background: var(--surface-sunken)", "color: var(--ink)",
+                "border-left: 4px solid var(--brand-accent)").doesNotContainPattern("#[0-9a-fA-F]{3,6}");
+    }
+
+    @Test
+    void aStoredV4ReportWhoseNoteRestatesItsActionHidesItOnDisplayWithoutChangingTheStoredDocument() throws Exception {
+        // A v4 document as stored before restated notes were dropped at assembly: the first note repeats its action.
+        var chain = DetailedReportFixtures.chain("registered-nurse-8");
+        var assembled = DetailedReportFixtures.snapshot(chain, DetailedReportFixtures.available(chain,
+                DetailedReportFixtures.validNarrative(chain.context())));
+        var json = new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules();
+        var tree = (com.fasterxml.jackson.databind.node.ObjectNode) json.valueToTree(assembled.report());
+        var actions = (com.fasterxml.jackson.databind.node.ArrayNode) tree.at("/plan/phases/0/actions");
+        String duplicated = actions.get(0).get("title").asText();
+        String useful = "Ask which patient information may be used with approved tools, and whether drafts must be "
+                + "marked as AI-assisted in the record.";
+        ((com.fasterxml.jackson.databind.node.ObjectNode) actions.get(0)).put("note", duplicated);
+        ((com.fasterxml.jackson.databind.node.ObjectNode) actions.get(1)).put("note", useful);
+        String stored = json.writeValueAsString(tree);
+        var report = json.readValue(stored, ProfessionalDetailedReport.class);
+        var snapshot = new ProfessionalDetailedReportSnapshot(assembled.reportId(), assembled.assessmentId(),
+                assembled.entitlementId(), assembled.analysisId(), assembled.guidanceId(), assembled.paidNarrativeId(),
+                assembled.paidNarrativeStatus(), ProfessionalDetailedReportVersions.REPORT_V4,
+                ProfessionalDetailedReportVersions.PDF_V6, assembled.generatedAt(), report);
+        UUID id = purchased(snapshot.assessmentId());
+        when(detailed.find(id)).thenReturn(Optional.of(snapshot));
+
+        String html = mvc.perform(get("/professional-assessment/" + id + "/report")).andExpect(status().isOk())
+                .andExpect(view().name("professional-assessment/paid-report-v4")).andReturn().getResponse()
+                .getContentAsString();
+        String pdfSource = new OpenHtmlProfessionalDetailedReportPdfRenderer()
+                .html(new ProfessionalDetailedReportViewMapper().toView(snapshot));
+        String escaped = org.springframework.web.util.HtmlUtils.htmlEscape(duplicated);
+        for (String page : List.of(html, pdfSource)) {
+            assertThat(page.split(java.util.regex.Pattern.quote(escaped), -1)).as("the action is shown once").hasSize(2);
+            assertThat(page).contains("Ask which patient information may be used with approved tools");
+        }
+        // Display only: the stored document still reads back exactly as it was stored.
+        assertThat(json.writeValueAsString(snapshot.report())).isEqualTo(json.writeValueAsString(
+                json.readValue(stored, ProfessionalDetailedReport.class)));
+        assertThat(snapshot.report().plan().phases().getFirst().actions().getFirst().note()).isEqualTo(duplicated);
+        verify(detailed, never()).prepare(any(), any());
     }
 
     @Test

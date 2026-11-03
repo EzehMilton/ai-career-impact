@@ -109,7 +109,12 @@ public final class ProfessionalPaidNarrativeValidator {
                     + "|replacement|being\\s+replaced|job\\s+loss)\\b",
             "\\bautomation\\s+risk\\b", "\\breplacement\\s+(?:risk|probability)\\b",
             // Your earnings, not a business's: practical finance examples talk about company earnings.
-            "\\b(?:salary|salaries|pay\\s+rise|your\\s+earnings|earning\\s+potential|promotion\\s+prospects)\\b");
+            "\\b(?:salary|salaries|pay\\s+rise|your\\s+earnings|earning\\s+potential|promotion\\s+prospects)\\b",
+            // Certainty about the person's or role's standing; "your review remains necessary here" stays allowed.
+            "\\bindispensab\\w*", "\\bguaranteed\\s+(?:a\\s+)?(?:job|employment|role|position|career|future|work)\\b",
+            "\\b(?:job|employment|role|position|career)\\s+(?:is\\s+|will\\s+be\\s+|remains\\s+)?(?:guaranteed|assured)\\b",
+            "\\b(?:you|your\\s+(?:role|job|position|work))\\s+(?:cannot|can\\s+not|can't|could\\s+never|will\\s+never)\\s+be\\s+"
+                    + "replaced\\b");
 
     private static final List<Pattern> CAPABILITY_CLAIMS = patterns(
             "\\b(?:AI|artificial\\s+intelligence|machines?|technology|automation|computers?|algorithms?)\\s+"
@@ -387,9 +392,10 @@ public final class ProfessionalPaidNarrativeValidator {
         checks.check(SECOND_PERSON, person.isPresent(), person::orElseThrow,
                 "the paid narrative must address you directly, in the second person");
         claim(checks, TONE, prose, List.of(HYPE), false, "the paid narrative must keep a calm, restrained tone");
-        Optional<String> generic = genericOrRepeated(narrative);
+        Optional<String> generic = genericOrRepeated(narrative, context);
         checks.check(GENERIC, generic.isPresent(), generic::orElseThrow,
-                "practical content must be specific to each responsibility: no repeated items and no generic category copy");
+                "practical content must be specific to each responsibility: no repeated items, no generic category copy "
+                        + "and no plan note that only restates its action");
         checks.accepted();
         return narrative;
     }
@@ -723,7 +729,8 @@ public final class ProfessionalPaidNarrativeValidator {
      * strengthening suggestion repeated word for word, an opportunity whose ownership list repeats another's, or the
      * generic category sentence ("preparation, drafting, checking or information handling") offered as an example.
      */
-    private static Optional<String> genericOrRepeated(ProfessionalPaidNarrative narrative) {
+    private static Optional<String> genericOrRepeated(ProfessionalPaidNarrative narrative,
+            ProfessionalPaidNarrativeContext context) {
         Optional<String> repeated = Stream.of(
                         repeated(narrative.opportunityInsights().stream().flatMap(item -> item.practicalAiUses().stream())
                                 .toList()),
@@ -747,6 +754,20 @@ public final class ProfessionalPaidNarrativeValidator {
                 if (GENERIC_CATEGORY_COPY.stream().anyMatch(flat::contains)) {
                     return Optional.of(example.strip());
                 }
+            }
+        }
+        return restatedPlanNote(narrative, context);
+    }
+
+    /** A plan note that only repeats its own action's wording, which the report already shows above it. */
+    private static Optional<String> restatedPlanNote(ProfessionalPaidNarrative narrative,
+            ProfessionalPaidNarrativeContext context) {
+        Map<String, ProfessionalPaidNarrativeContext.Prompt.Action> actions = new LinkedHashMap<>();
+        context.prompt().ninetyDayPlan().forEach(phase -> phase.actions().forEach(action -> actions.put(action.id(), action)));
+        for (ItemExplanation note : narrative.planActionNotes()) {
+            var action = actions.get(note.id().strip());
+            if (action != null && PlanNoteRestatement.restates(note.explanation(), action.action(), action.rationale())) {
+                return Optional.of(note.explanation().strip());
             }
         }
         return Optional.empty();
