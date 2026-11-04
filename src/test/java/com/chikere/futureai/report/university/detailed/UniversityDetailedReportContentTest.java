@@ -78,6 +78,6 @@ class UniversityDetailedReportContentTest {
                 report.profile(), report.perspectives(), report.modules(), report.aiLearningCaution(),
                 report.aiLearning(), report.ownCapability(), report.technicalFoundations(), report.skills(),
                 report.safeguards(), report.plan(), report.limitations(), new UniversityDetailedReport.Provenance(
-                        null, null, "", "", "", "", "", "", ""));
+                        null, null, "", "", "", "", "", "", ""), report.practical());
     }
 }

@@ -7,8 +7,8 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * One immutable {@code university-report-v2}: every version and source artefact it was assembled from, and the
- * composed report. Stored once, with an AVAILABLE or final FALLBACK narrative only, and never regenerated: a later
+ * One immutable detailed report ({@code university-report-v2} if stored before v3, {@code university-report-v3}
+ * since): every version and source artefact it was assembled from, and the composed report. Stored once, with an AVAILABLE or final FALLBACK narrative only, and never regenerated: a later
  * model, prompt or policy change never alters it.
  */
 public record UniversityDetailedReportSnapshot(

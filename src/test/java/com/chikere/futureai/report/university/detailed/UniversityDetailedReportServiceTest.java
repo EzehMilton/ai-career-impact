@@ -35,19 +35,26 @@ class UniversityDetailedReportServiceTest {
         assertThat(ports.narrative.calls()).isEqualTo(1);
         var stored = outcome.stored().orElseThrow();
         assertThat(ports.reports).containsEntry(id, stored);
-        assertThat(stored.reportVersion()).isEqualTo("university-report-v2");
-        assertThat(stored.pdfVersion()).isEqualTo("university-report-pdf-v2");
+        assertThat(stored.reportVersion()).isEqualTo("university-report-v3");
+        assertThat(stored.pdfVersion()).isEqualTo("university-report-pdf-v3");
         assertThat(stored.decisionPolicyVersion()).isEqualTo("university-decision-v2");
         assertThat(stored.moduleSchemaVersion()).isEqualTo("university-module-v1");
         assertThat(stored.modulePolicyVersion()).isEqualTo("university-module-policy-v1");
         assertThat(stored.guidancePolicyVersion()).isEqualTo("university-guidance-policy-v1");
-        assertThat(stored.paidNarrativeVersion()).isEqualTo("university-paid-narrative-v1");
+        assertThat(stored.paidNarrativeVersion()).isEqualTo("university-paid-narrative-v2");
         assertThat(stored.paidNarrativeStatus()).isEqualTo(UniversityPaidNarrativeStatus.AVAILABLE);
         assertThat(stored.moduleAnalysisId()).isEqualTo(ports.moduleSnapshots.get(id).snapshotId());
         assertThat(stored.generatedAt()).isEqualTo(DetailedReportTestPorts.CLOCK.instant());
         assertThat(stored.report().perspectives().modelWritten()).isTrue();
-        assertThat(stored.report().perspectives().overall())
-                .isEqualTo(ScriptedPaidNarrativeGenerator.cleanNarrative().overallPerspective());
+        var context = new UniversityDetailedReportAssembler().narrativeContext(ports.assessments.get(id),
+                ports.moduleSnapshots.get(id), new com.chikere.futureai.coursemodule.university.guidance
+                        .UniversityGuidancePolicyV1().decide(ports.moduleSnapshots.get(id)));
+        var narrative = ScriptedPaidNarrativeGenerator.cleanNarrative().apply(context);
+        assertThat(stored.report().perspectives().overall()).isEqualTo(narrative.executiveSummary());
+        assertThat(stored.report().practical().studyStrategy().personalised()).isTrue();
+        assertThat(stored.report().practical().moduleLearning()).extracting(UniversityDetailedReport.ModuleLearning::uses)
+                .containsExactlyElementsOf(narrative.moduleLearningInsights().stream()
+                        .map(insight -> insight.aiLearningUses()).toList());
     }
 
     @Test
@@ -82,8 +89,14 @@ class UniversityDetailedReportServiceTest {
     @Test
     void aFinalNarrativeFallbackIsStoredWithDeterministicCopy() {
         UUID id = ports.paidCourseProfile(8);
-        var forbidden = new com.chikere.futureai.narrative.university.paid.UniversityPaidNarrative(
-                "This course is AI-proof.", "a", "b", "c", "d");
+        java.util.function.Function<com.chikere.futureai.narrative.university.paid.UniversityPaidNarrativeContext,
+                com.chikere.futureai.narrative.university.paid.UniversityPaidNarrative> forbidden = context -> {
+                    var valid = ScriptedPaidNarrativeGenerator.cleanNarrative().apply(context);
+                    return new com.chikere.futureai.narrative.university.paid.UniversityPaidNarrative(
+                            "This course is AI-proof.", valid.measuresTogether(), valid.coursePattern(),
+                            valid.moduleLearningInsights(), valid.humanCapabilityInsights(), valid.skillInsights(),
+                            valid.actionPlanNotes(), valid.aiStudyStrategy(), valid.closingPerspective());
+                };
         ports.narrative.then(forbidden).then(forbidden);
 
         var outcome = ports.service().prepare(id, Optional.empty());
@@ -93,6 +106,14 @@ class UniversityDetailedReportServiceTest {
         assertThat(stored.paidNarrativeStatus()).isEqualTo(UniversityPaidNarrativeStatus.FALLBACK);
         assertThat(stored.report().perspectives().modelWritten()).isFalse();
         assertThat(stored.report().perspectives().overall()).doesNotContain("AI-proof").isNotBlank();
+        // The deterministic copy still gives every section, the AI-study strategy included.
+        assertThat(stored.report().practical().studyStrategy().personalised()).isFalse();
+        assertThat(stored.report().practical().studyStrategy().verify()).isNotEmpty();
+        assertThat(stored.report().practical().moduleLearning()).allSatisfy(module -> {
+            assertThat(module.explanation()).isNull();
+            assertThat(module.uses()).isEmpty();
+            assertThat(module.guidance()).isNotBlank();
+        });
     }
 
     // ---- retryable narrative ----
@@ -123,9 +144,15 @@ class UniversityDetailedReportServiceTest {
         var report = retried.report();
         assertThat(report.profile()).isEqualTo(provisional.report().profile());
         assertThat(report.modules()).isEqualTo(provisional.report().modules());
-        assertThat(report.skills()).isEqualTo(provisional.report().skills());
+        // The narrative adds only interpretation beside them: skill meanings and plan notes.
+        assertThat(report.skills()).extracting(UniversityDetailedReport.Skill::title, UniversityDetailedReport.Skill::explanation)
+                .isEqualTo(provisional.report().skills().stream().map(skill -> org.assertj.core.groups.Tuple.tuple(
+                        skill.title(), skill.explanation())).toList());
         assertThat(report.safeguards()).isEqualTo(provisional.report().safeguards());
-        assertThat(report.plan()).isEqualTo(provisional.report().plan());
+        assertThat(report.plan()).extracting(UniversityDetailedReport.Phase::actions)
+                .isEqualTo(provisional.report().plan().stream().map(UniversityDetailedReport.Phase::actions).toList());
+        assertThat(provisional.report().plan()).allSatisfy(phase -> assertThat(phase.steps()).allSatisfy(step ->
+                assertThat(step.note()).isNull()));
         assertThat(ports.service().provisional(id)).isEmpty();
     }
 

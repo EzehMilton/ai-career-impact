@@ -19,7 +19,12 @@ import com.chikere.futureai.report.university.application.UniversityReportSource
 import com.chikere.futureai.report.university.application.UniversityReportTier;
 import com.chikere.futureai.coursemodule.university.analysis.UniversityModuleAnalysisUnavailableException;
 import com.chikere.futureai.coursemodule.university.analysis.UniversityModuleAnalysisUnavailableException.Reason;
+import com.chikere.futureai.narrative.university.paid.UniversityPaidNarrativeStatus;
+import com.chikere.futureai.report.university.detailed.UniversityCalibrationChains;
+import com.chikere.futureai.report.university.detailed.UniversityDetailedReport;
 import com.chikere.futureai.report.university.detailed.UniversityDetailedReportFixtures;
+import com.chikere.futureai.report.university.detailed.UniversityDetailedReportSnapshot;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.chikere.futureai.report.university.detailed.UniversityDetailedReportUseCase;
 import com.chikere.futureai.security.WebSecurityConfiguration;
 import org.junit.jupiter.api.Test;
@@ -122,18 +127,75 @@ class UniversityPaidReportControllerTest {
     }
 
     @Test
-    void aProvisionalV2ReportIsShownWithARetryAndNoPdfLink() throws Exception {
+    void aProvisionalReportIsTheV3PageWithARetryAndNoPdfLink() throws Exception {
         v2Purchase();
         when(detailedReports.find(ID)).thenReturn(Optional.empty());
-        when(detailedReports.provisional(ID)).thenReturn(Optional.of(UniversityDetailedReportFixtures.report()));
+        when(detailedReports.provisional(ID)).thenReturn(Optional.of(
+                UniversityCalibrationChains.provisional(UniversityCalibrationChains.NURSING)));
 
         String html = mvc.perform(get("/university-assessment/" + ID + "/report").param("preparation", "failed"))
-                .andExpect(status().isOk()).andExpect(view().name("university-assessment/paid-report-v2"))
+                .andExpect(status().isOk()).andExpect(view().name("university-assessment/paid-report-v3"))
                 .andReturn().getResponse().getContentAsString();
 
         assertThat(html).contains("Add the personalised explanation", "We still could not add",
-                "Your action plan").doesNotContain("Download PDF");
+                "Your action plan", "How to study in an AI-shaped university").doesNotContain("Download PDF");
         verify(detailedReports, never()).prepare(any(), any());
+    }
+
+    @Test
+    void aStoredV2DocumentKeepsTheExactPageItWasStoredWith() throws Exception {
+        v2Purchase();
+        var report = new ObjectMapper().findAndRegisterModules().readValue(historical("university-report-v2-nursing.json"),
+                UniversityDetailedReport.class);
+        when(detailedReports.find(ID)).thenReturn(Optional.of(new UniversityDetailedReportSnapshot(UUID.randomUUID(),
+                ID, UUID.randomUUID(), "university-decision-v2", report.provenance().moduleAnalysisId(),
+                "university-module-v1", "university-module-policy-v1", "university-guidance-policy-v1",
+                "university-paid-narrative-v1", UniversityPaidNarrativeStatus.AVAILABLE, "university-report-v2",
+                "university-report-pdf-v2", Instant.parse("2026-10-28T09:00:00Z"), report)));
+
+        String html = mvc.perform(get("/university-assessment/" + ID + "/report")).andExpect(status().isOk())
+                .andExpect(view().name("university-assessment/paid-report-v2")).andReturn().getResponse()
+                .getContentAsString();
+
+        // Captured from the pre-v3 code: the stored v1 narrative's perspectives, on the unchanged v2 page.
+        assertThat(html).isEqualTo(historical("university-report-v2-nursing-page.html"));
+        assertThat(html).doesNotContain("How to study in an AI-shaped university", "How AI could help");
+        verify(detailedReports, never()).prepare(any(), any());
+    }
+
+    @Test
+    void aStoredV3ReportShowsThePracticalLayerOnTheV3Page() throws Exception {
+        v2Purchase();
+        when(detailedReports.find(ID)).thenReturn(Optional.of(UniversityCalibrationChains.stored(
+                UniversityCalibrationChains.NURSING, ID)));
+
+        String html = mvc.perform(get("/university-assessment/" + ID + "/report")).andExpect(status().isOk())
+                .andExpect(view().name("university-assessment/paid-report-v3")).andReturn().getResponse()
+                .getContentAsString();
+
+        assertThat(html).containsSubsequence("Your course profile", "What the measures mean", "Your modules",
+                "Where AI can help your learning", "Anatomy and Physiology", "How AI could help",
+                "Explaining a difficult process, such as the cardiac cycle", "What you should still be able to do yourself",
+                "A sensible study experiment", "Where your own capability matters most", "Clinical Placements",
+                "Why your capability matters here", "What to be able to do without AI",
+                "Technical and analytical foundations", "Skills to strengthen", "In this course, that means",
+                "Safeguards", "Your action plan", "Next 30 days",
+                "Ask your module lead or practice supervisor which guidance", "How to study in an AI-shaped university",
+                "Use AI", "Learn without AI", "Verify", "Demonstrate your own capability", "Build evidence",
+                "Perspective and limitations", "Studying nursing alongside AI works best");
+        // The experiment callout uses the themed class (dark-theme tokens), never an inline style.
+        assertThat(html).containsPattern("<div class=\"detailed-experiment\">\\s*<h4>A sensible study experiment</h4>")
+                .doesNotContain("style=\"");
+        assertThat(html).doesNotContain("module-2", "skill-technical-foundations", "next_30_days", "AVAILABLE",
+                "university-paid-narrative", "explaining concepts, generating practice problems")
+                .doesNotContainPattern("\\b(?:code|coding|debugging|SQL|programming)\\b");
+        // Each classification's explanation once, as a legend, rather than on every card.
+        assertThat(html.split("Technical or quantitative depth is at the core of this module.", -1)).hasSize(2);
+        verify(detailedReports, never()).prepare(any(), any());
+    }
+
+    private static String historical(String name) throws java.io.IOException {
+        return java.nio.file.Files.readString(java.nio.file.Path.of("src/test/resources/historical/university", name));
     }
 
     @Test

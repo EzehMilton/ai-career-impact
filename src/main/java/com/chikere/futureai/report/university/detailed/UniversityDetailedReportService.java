@@ -33,9 +33,10 @@ import java.util.UUID;
 
 /**
  * The paid {@value UniversityReportVersions#V2} lifecycle for a {@code university-decision-v2} assessment: an ACTIVE
- * entitlement and a v2 purchase, then the stored report if it exists; otherwise the module analysis (Stage 5E, the
- * only possible Jev call), the deterministic guidance (Stage 5F), one paid-narrative attempt and one immutable
- * snapshot. When the narrative is only retryable, the deterministic report is returned provisionally and nothing is
+ * entitlement and a v2 purchase, then the stored report if it exists, whatever its document version (a stored
+ * {@value UniversityReportVersions#V2} document is returned as stored, never upgraded); otherwise the module analysis
+ * (Stage 5E, the only possible Jev call), the deterministic guidance (Stage 5F), one paid-narrative attempt and one
+ * immutable {@value UniversityReportVersions#V3} snapshot. When the narrative is only retryable, the deterministic report is returned provisionally and nothing is
  * frozen; the canonical report is stored only with an AVAILABLE or final FALLBACK narrative.
  *
  * <p>Generation happens only here, on the customer's explicit request, never while a page or PDF is rendered and
@@ -173,7 +174,7 @@ public final class UniversityDetailedReportService implements UniversityDetailed
         var candidate = new UniversityDetailedReportSnapshot(UUID.randomUUID(), assessmentId,
                 entitlement.entitlementId(), assessment.result().decisionPolicyVersion(), modules.snapshotId(),
                 modules.schemaVersion(), modules.policyVersion(), guidance.policyVersion(), narrative.narrativeVersion(),
-                narrative.status(), UniversityReportVersions.V2, UniversityReportVersions.PDF_V2, Instant.now(clock),
+                narrative.status(), UniversityReportVersions.V3, UniversityReportVersions.PDF_V3, Instant.now(clock),
                 report);
         UniversityDetailedReportSnapshot stored = store.saveIfAbsent(candidate);
         boolean ours = stored.reportId().equals(candidate.reportId());

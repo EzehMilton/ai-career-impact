@@ -10,9 +10,12 @@ import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.Set;
 
 /**
- * {@code university-report-pdf-v2}: the stored university-report-v2 as a local, pure-Java PDF. Built-in fonts, inline
+ * The stored detailed report as a local, pure-Java PDF, in the layout of its own version: a university-report-v2
+ * document in {@code university-report-pdf-v2}, exactly as before, and a university-report-v3 document in
+ * {@code university-report-pdf-v3} ({@link UniversityDetailedReportPdfV3Html}). Built-in fonts, inline
  * CSS and no network inputs. It shows the customer-facing report only: no rule id, probability, close-call, version
  * diagnostic or fallback marker. Headings stay with their content and cards do not split across pages.
  */
@@ -21,7 +24,12 @@ public final class OpenHtmlUniversityDetailedReportPdfRenderer implements Univer
 
     @Override
     public String pdfVersion() {
-        return UniversityReportVersions.PDF_V2;
+        return UniversityReportVersions.PDF_V3;
+    }
+
+    @Override
+    public Set<String> pdfVersions() {
+        return Set.of(UniversityReportVersions.PDF_V2, UniversityReportVersions.PDF_V3);
     }
 
     @Override
@@ -39,6 +47,12 @@ public final class OpenHtmlUniversityDetailedReportPdfRenderer implements Univer
     }
 
     String html(UniversityDetailedReport report) {
+        return UniversityReportVersions.V2.equals(report.reportVersion()) ? htmlV2(report)
+                : UniversityDetailedReportPdfV3Html.html(report);
+    }
+
+    /** university-report-pdf-v2, unchanged: stored v2 reports render exactly as they always have. */
+    private String htmlV2(UniversityDetailedReport report) {
         StringBuilder out = new StringBuilder(40_000);
         out.append("""
                 <html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta charset="UTF-8" />

@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class UniversityPaidNarrativeServiceTest {
 
     private final ScriptedPaidNarrativeGenerator generator = new ScriptedPaidNarrativeGenerator();
-    private final UniversityPaidNarrativeContext context = UniversityPaidNarrativeValidatorTest.context(false);
+    private final UniversityPaidNarrativeContext context = UniversityPaidNarrativeValidatorTest.context();
 
     private UniversityPaidNarrativeService service() {
         return new UniversityPaidNarrativeService(() -> Optional.of(generator), new UniversityPaidNarrativeValidator(),
@@ -26,13 +26,13 @@ class UniversityPaidNarrativeServiceTest {
         assertThat(outcome.status()).isEqualTo(UniversityPaidNarrativeStatus.AVAILABLE);
         assertThat(outcome.narrative()).contains(UniversityPaidNarrativeValidatorTest.clean());
         assertThat(outcome.attempts()).isEqualTo(1);
-        assertThat(outcome.narrativeVersion()).isEqualTo("university-paid-narrative-v1");
+        assertThat(outcome.narrativeVersion()).isEqualTo("university-paid-narrative-v2");
         assertThat(generator.calls()).isEqualTo(1);
     }
 
     @Test
     void aRejectedDraftIsRepairedOnceWithItsRule() {
-        generator.then(UniversityPaidNarrativeValidatorTest.withOverall("Your score is 7.4."))
+        generator.then(UniversityPaidNarrativeValidatorTest.summary("Your score is 7.4."))
                 .then(UniversityPaidNarrativeValidatorTest.clean());
 
         var outcome = service().generate(context);
@@ -45,8 +45,8 @@ class UniversityPaidNarrativeServiceTest {
 
     @Test
     void aRepairThatStillFailsIsAFinalFallbackWithNoThirdCall() {
-        generator.then(UniversityPaidNarrativeValidatorTest.withOverall("Your score is 7.4."))
-                .then(UniversityPaidNarrativeValidatorTest.withOverall("This course is AI-proof."));
+        generator.then(UniversityPaidNarrativeValidatorTest.summary("Your score is 7.4."))
+                .then(UniversityPaidNarrativeValidatorTest.summary("This course is AI-proof."));
 
         var outcome = service().generate(context);
 
@@ -71,7 +71,7 @@ class UniversityPaidNarrativeServiceTest {
 
     @Test
     void anEmptyResponseIsRetryableWithoutARepair() {
-        generator.then(new UniversityPaidNarrative("", "", "", "", ""));
+        generator.then(new UniversityPaidNarrative("", "", "", null, null, null, null, null, ""));
 
         var outcome = service().generate(context);
 

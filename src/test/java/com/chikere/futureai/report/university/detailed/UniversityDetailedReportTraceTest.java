@@ -68,7 +68,7 @@ class UniversityDetailedReportTraceTest {
             var pdf = new UniversityDetailedReportPdfService(service, new UniversityDetailedReportPdfRenderer() {
                 @Override
                 public String pdfVersion() {
-                    return "university-report-pdf-v2";
+                    return "university-report-pdf-v3";
                 }
 
                 @Override
@@ -78,7 +78,7 @@ class UniversityDetailedReportTraceTest {
             }, trace).render(id);
             var rendered = log.only(TraceStage.UNIVERSITY_REPORT_V2_PDF_RENDERED).get("payload");
             assertThat(rendered.get("reportId").asText()).isEqualTo(stored.reportId().toString());
-            assertThat(rendered.get("pdfVersion").asText()).isEqualTo("university-report-pdf-v2");
+            assertThat(rendered.get("pdfVersion").asText()).isEqualTo("university-report-pdf-v3");
             assertThat(rendered.get("bytes").asInt()).isEqualTo(pdf.bytes().length);
             assertThat(log.all()).doesNotContain("%PDF-");
         }
