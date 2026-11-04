@@ -12,7 +12,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * The PDF of a stored {@code university-report-v2}. It reads only the stored snapshot through the ACTIVE-entitlement
+ * The PDF of a stored detailed report, in the PDF version it was stored for. It reads only the stored snapshot through the ACTIVE-entitlement
  * check and renders it; it never prepares, assembles or calls a provider. A provisional report has no PDF until it is
  * stored. The snapshot records the PDF version it was stored for, and only a renderer of that version may render it.
  */
@@ -37,9 +37,9 @@ public final class UniversityDetailedReportPdfService {
     public Pdf render(UUID assessmentId) {
         UniversityDetailedReportSnapshot snapshot = reports.find(Objects.requireNonNull(assessmentId)).orElseThrow(() ->
                 new UniversityReportPdfAccessDeniedException());
-        if (!renderer.pdfVersion().equals(snapshot.pdfVersion())) {
-            throw new IllegalStateException("stored report needs " + snapshot.pdfVersion() + ", renderer is "
-                    + renderer.pdfVersion());
+        if (!renderer.pdfVersions().contains(snapshot.pdfVersion())) {
+            throw new IllegalStateException("stored report needs " + snapshot.pdfVersion() + ", renderer has "
+                    + renderer.pdfVersions());
         }
         Pdf pdf = new Pdf(filename(snapshot.report().courseTitle()), renderer.render(snapshot.report()));
         trace.scoped(JourneyType.UNIVERSITY, assessmentId, "UNIVERSITY_REPORT_V2_PDF", () -> {

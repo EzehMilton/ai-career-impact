@@ -64,19 +64,13 @@ public final class ScriptedPaidNarrativeGenerator implements UniversityPaidNarra
         return Optional.of("scripted-model");
     }
 
-    /** Validated prose for any context: no numbers, bands or claims. */
-    public static UniversityPaidNarrative cleanNarrative() {
-        return new UniversityPaidNarrative(
-                "Your course profile describes the course as you outlined it, measure by measure.",
-                "AI may help you prepare, explore ideas and check your understanding as you study.",
-                "Much of the course asks you to apply your own judgement and practical skill.",
-                "The reasoning and communication you build here carry into many settings.",
-                "The plan below turns these findings into steps for now, the coming months and later study.");
+    /** A valid narrative for whatever context the service supplies: no numbers, bands or claims. */
+    public static Function<UniversityPaidNarrativeContext, UniversityPaidNarrative> cleanNarrative() {
+        return UniversityNarratives::valid;
     }
 
     /** Different valid prose, to show a stored report ignores a later provider. */
-    public static UniversityPaidNarrative differentNarrative() {
-        return new UniversityPaidNarrative("A different overall perspective.", "A different AI learning view.",
-                "A different human view.", "A different transferable view.", "A different plan introduction.");
+    public static Function<UniversityPaidNarrativeContext, UniversityPaidNarrative> differentNarrative() {
+        return UniversityNarratives::different;
     }
 }

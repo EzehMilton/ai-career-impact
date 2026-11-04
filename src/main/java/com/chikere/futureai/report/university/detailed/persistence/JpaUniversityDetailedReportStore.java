@@ -18,7 +18,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.util.Optional;
 import java.util.UUID;
 
-/** Insert-once university-report-v2 storage; the unique assessment constraint makes one snapshot canonical. */
+/**
+ * Insert-once detailed-report storage; the unique assessment constraint makes one snapshot canonical. Stored v2 rows
+ * are read back exactly as stored; new rows are university-report-v3.
+ */
 @Repository
 class JpaUniversityDetailedReportStore implements UniversityDetailedReportStore {
 
@@ -47,8 +50,10 @@ class JpaUniversityDetailedReportStore implements UniversityDetailedReportStore 
 
     @Override
     public UniversityDetailedReportSnapshot saveIfAbsent(UniversityDetailedReportSnapshot snapshot) {
-        if (!UniversityReportVersions.V2.equals(snapshot.reportVersion())) {
-            throw new IllegalArgumentException("only university-report-v2 is stored here: " + snapshot.reportVersion());
+        // Stored v2 documents stay as they are; only new reports, of the current document version, are added.
+        if (!UniversityReportVersions.V3.equals(snapshot.reportVersion())) {
+            throw new IllegalArgumentException("only new university-report-v3 documents are stored: "
+                    + snapshot.reportVersion());
         }
         try {
             newTransaction.executeWithoutResult(status -> {

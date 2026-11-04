@@ -8,7 +8,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-/** A small, complete university-report-v2 for rendering tests. */
+/** A small, complete university-report-v2 document, as stored before v3, for rendering tests. */
 public final class UniversityDetailedReportFixtures {
 
     private UniversityDetailedReportFixtures() {
@@ -26,7 +26,7 @@ public final class UniversityDetailedReportFixtures {
                 List.of(measure), "Summary.");
         return new UniversityDetailedReport("university-report-v2", "BSc Nursing <Adult>", "A university", profile,
                 new UniversityDetailedReport.Perspectives(true, "Overall view.", "AI learning view.", "Human view.",
-                        "Transferable view.", "Plan introduction."),
+                        "Transferable view.", "Plan introduction.", null, null),
                 new UniversityDetailedReport.Modules("All 1 modules listed for the course are included.",
                         List.of(new UniversityDetailedReport.ModuleCard(1, "Clinical Practice",
                                 "Mainly practical or experiential", "Practical work leads.", List.of("Keep a log.")))),
@@ -35,15 +35,15 @@ public final class UniversityDetailedReportFixtures {
                 List.of(new UniversityDetailedReport.Entry("Revision", "Use AI to quiz yourself.")),
                 List.of(new UniversityDetailedReport.Entry("Placements", "Your own practice.")),
                 technical,
-                List.of(new UniversityDetailedReport.Skill("Clinical reasoning", "Reason through cases.", List.of())),
+                List.of(new UniversityDetailedReport.Skill("Clinical reasoning", "Reason through cases.", List.of(), null)),
                 List.of(new UniversityDetailedReport.Entry("Check the rules", "Check your institution's rules.")),
-                List.of(new UniversityDetailedReport.Phase("Now", List.of("Action one", "Action two")),
-                        new UniversityDetailedReport.Phase("This year", List.of("Action three", "Action four")),
-                        new UniversityDetailedReport.Phase("Later", List.of("Action five", "Action six"))),
+                List.of(new UniversityDetailedReport.Phase("Now", List.of("Action one", "Action two"), null),
+                        new UniversityDetailedReport.Phase("This year", List.of("Action three", "Action four"), null),
+                        new UniversityDetailedReport.Phase("Later", List.of("Action five", "Action six"), null)),
                 List.of("This report assesses the course, not your own ability."),
                 new UniversityDetailedReport.Provenance(UUID.randomUUID(), UUID.randomUUID(), "university-decision-v2",
                         "university-module-v1", "university-module-policy-v1", "university-guidance-policy-v1",
-                        "university-paid-narrative-v1", "AVAILABLE", "university-report-pdf-v2"));
+                        "university-paid-narrative-v1", "AVAILABLE", "university-report-pdf-v2"), null);
     }
 
     /** The report stored for {@code assessmentId}, as the v2 lifecycle freezes it. */

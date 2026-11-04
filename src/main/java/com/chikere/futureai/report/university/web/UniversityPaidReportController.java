@@ -24,7 +24,8 @@ import java.util.UUID;
 
 /**
  * The paid University report, only for an ACTIVE entitlement. A historical purchase renders its frozen v1 snapshot.
- * A university-report-v2 purchase renders its stored detailed report, or its provisional report, or the step that
+ * A university-report-v2 purchase renders its stored detailed report on the page of that document's own version (a
+ * stored v2 document on the v2 page, a v3 document on the v3 page), or its provisional report, or the step that
  * prepares it: preparation is an explicit POST, so viewing a page never generates anything.
  */
 @Controller
@@ -135,14 +136,14 @@ public final class UniversityPaidReportController {
         if (stored.isPresent()) {
             model.addAttribute("report", stored.get().report());
             model.addAttribute("provisional", false);
-            return "university-assessment/paid-report-v2";
+            return UniversityReportVersions.detailedTemplate(stored.get().reportVersion());
         }
         var provisional = detailed.provisional(id);
         if (provisional.isPresent()) {
             model.addAttribute("report", provisional.get());
             model.addAttribute("provisional", true);
             model.addAttribute("preparationStatus", "failed".equals(preparationStatus) ? preparationStatus : null);
-            return "university-assessment/paid-report-v2";
+            return UniversityReportVersions.detailedTemplate(provisional.get().reportVersion());
         }
         var preparation = detailed.preparation(id);
         if (preparation.isEmpty()) {

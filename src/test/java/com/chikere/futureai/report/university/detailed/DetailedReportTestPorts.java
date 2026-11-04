@@ -12,7 +12,7 @@ import com.chikere.futureai.coursemodule.university.application.UniversityModule
 import com.chikere.futureai.coursemodule.university.application.UniversityModuleJudgmentProvider;
 import com.chikere.futureai.coursemodule.university.application.UniversityModuleJudgmentResult;
 import com.chikere.futureai.coursemodule.university.application.UniversityModuleJudgmentSource;
-import com.chikere.futureai.coursemodule.university.guidance.UniversityGuidancePolicyV1;
+import com.chikere.futureai.coursemodule.university.guidance.UniversityGuidancePolicyV2;
 import com.chikere.futureai.coursemodule.university.policy.UniversityModulePolicyV1;
 import com.chikere.futureai.narrative.university.paid.ScriptedPaidNarrativeGenerator;
 import com.chikere.futureai.narrative.university.paid.UniversityPaidNarrativeService;
@@ -138,7 +138,7 @@ final class DetailedReportTestPorts {
                 () -> narrativeConfigured ? Optional.of(narrative) : Optional.empty(),
                 new UniversityPaidNarrativeValidator(trace), trace);
         return new UniversityDetailedReportService(purchases, assessmentStore, moduleAnalyses, moduleStore,
-                new UniversityGuidancePolicyV1(), narratives, new UniversityDetailedReportAssembler(), reportStore,
+                new UniversityGuidancePolicyV2(), narratives, new UniversityDetailedReportAssembler(), reportStore,
                 CLOCK, trace);
     }
 
