@@ -9,7 +9,7 @@ import com.chikere.futureai.coursemodule.university.analysis.UniversityModuleAna
 import com.chikere.futureai.coursemodule.university.analysis.UniversityModuleAnalysisUnavailableException;
 import com.chikere.futureai.coursemodule.university.application.UniversityModuleAnalysisRequest;
 import com.chikere.futureai.coursemodule.university.guidance.UniversityGuidance;
-import com.chikere.futureai.coursemodule.university.guidance.UniversityGuidancePolicyV1;
+import com.chikere.futureai.coursemodule.university.guidance.UniversityGuidancePolicyV2;
 import com.chikere.futureai.narrative.university.paid.UniversityPaidNarrativeOutcome;
 import com.chikere.futureai.narrative.university.paid.UniversityPaidNarrativeService;
 import com.chikere.futureai.narrative.university.paid.UniversityPaidNarrativeStatus;
@@ -55,7 +55,7 @@ public final class UniversityDetailedReportService implements UniversityDetailed
     private final UniversityAssessmentStore assessments;
     private final UniversityModuleAnalysisService moduleAnalyses;
     private final UniversityModuleAnalysisStore moduleSnapshots;
-    private final UniversityGuidancePolicyV1 guidancePolicy;
+    private final UniversityGuidancePolicyV2 guidancePolicy;
     private final UniversityPaidNarrativeService narratives;
     private final UniversityDetailedReportAssembler assembler;
     private final UniversityDetailedReportStore store;
@@ -64,7 +64,7 @@ public final class UniversityDetailedReportService implements UniversityDetailed
 
     public UniversityDetailedReportService(UniversityPurchaseStore purchases, UniversityAssessmentStore assessments,
             UniversityModuleAnalysisService moduleAnalyses, UniversityModuleAnalysisStore moduleSnapshots,
-            UniversityGuidancePolicyV1 guidancePolicy, UniversityPaidNarrativeService narratives,
+            UniversityGuidancePolicyV2 guidancePolicy, UniversityPaidNarrativeService narratives,
             UniversityDetailedReportAssembler assembler, UniversityDetailedReportStore store, Clock clock,
             AssessmentTrace trace) {
         this.purchases = Objects.requireNonNull(purchases);

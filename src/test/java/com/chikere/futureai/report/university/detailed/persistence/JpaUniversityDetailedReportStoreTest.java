@@ -8,7 +8,7 @@ import com.chikere.futureai.coursemodule.university.analysis.UniversityModuleAna
 import com.chikere.futureai.coursemodule.university.analysis.UniversityModuleClassifier;
 import com.chikere.futureai.coursemodule.university.application.UniversityModuleJudgmentProvider;
 import com.chikere.futureai.coursemodule.university.application.UniversityModuleJudgmentSource;
-import com.chikere.futureai.coursemodule.university.guidance.UniversityGuidancePolicyV1;
+import com.chikere.futureai.coursemodule.university.guidance.UniversityGuidancePolicyV2;
 import com.chikere.futureai.coursemodule.university.policy.UniversityModulePolicyV1;
 import com.chikere.futureai.narrative.university.paid.ScriptedPaidNarrativeGenerator;
 import com.chikere.futureai.narrative.university.paid.UniversityPaidNarrativeService;
@@ -92,7 +92,7 @@ class JpaUniversityDetailedReportStoreTest {
         assertThat(row).containsEntry("decision_policy_version", "university-decision-v2")
                 .containsEntry("module_schema_version", "university-module-v1")
                 .containsEntry("module_policy_version", "university-module-policy-v1")
-                .containsEntry("guidance_policy_version", "university-guidance-policy-v1")
+                .containsEntry("guidance_policy_version", "university-guidance-policy-v2")
                 .containsEntry("paid_narrative_version", "university-paid-narrative-v2")
                 .containsEntry("paid_narrative_status", "AVAILABLE")
                 .containsEntry("report_version", "university-report-v3")
@@ -147,6 +147,7 @@ class JpaUniversityDetailedReportStoreTest {
         assertThat(stored.reportVersion()).isEqualTo("university-report-v2");
         assertThat(stored.pdfVersion()).isEqualTo("university-report-pdf-v2");
         assertThat(stored.paidNarrativeVersion()).isEqualTo("university-paid-narrative-v1");
+        assertThat(stored.guidancePolicyVersion()).isEqualTo("university-guidance-policy-v1");
         // The stored v1 narrative's perspectives read back as written; the v3 additions are simply absent.
         assertThat(stored.report()).isEqualTo(new ObjectMapper().findAndRegisterModules().readValue(document,
                 UniversityDetailedReport.class));
@@ -162,6 +163,8 @@ class JpaUniversityDetailedReportStoreTest {
                 String.class, id)).isEqualTo(before);
         assertThat(jdbc.queryForObject("select report_version from university_detailed_report where assessment_id = ?",
                 String.class, id)).isEqualTo("university-report-v2");
+        assertThat(jdbc.queryForObject("select guidance_policy_version from university_detailed_report where "
+                + "assessment_id = ?", String.class, id)).isEqualTo("university-guidance-policy-v1");
         // Only new, current-version documents are ever written.
         assertThatThrownBy(() -> store.saveIfAbsent(stored)).hasMessageContaining("university-report-v3");
     }
@@ -202,7 +205,7 @@ class JpaUniversityDetailedReportStoreTest {
         var narratives = new UniversityPaidNarrativeService(() -> Optional.of(narrative),
                 new UniversityPaidNarrativeValidator(), AssessmentTrace.disabled());
         return new UniversityDetailedReportService(purchases, assessments, moduleAnalyses, moduleStore,
-                new UniversityGuidancePolicyV1(), narratives, new UniversityDetailedReportAssembler(), store, CLOCK,
+                new UniversityGuidancePolicyV2(), narratives, new UniversityDetailedReportAssembler(), store, CLOCK,
                 AssessmentTrace.disabled());
     }
 }

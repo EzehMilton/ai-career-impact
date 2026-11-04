@@ -40,7 +40,7 @@ class UniversityDetailedReportServiceTest {
         assertThat(stored.decisionPolicyVersion()).isEqualTo("university-decision-v2");
         assertThat(stored.moduleSchemaVersion()).isEqualTo("university-module-v1");
         assertThat(stored.modulePolicyVersion()).isEqualTo("university-module-policy-v1");
-        assertThat(stored.guidancePolicyVersion()).isEqualTo("university-guidance-policy-v1");
+        assertThat(stored.guidancePolicyVersion()).isEqualTo("university-guidance-policy-v2");
         assertThat(stored.paidNarrativeVersion()).isEqualTo("university-paid-narrative-v2");
         assertThat(stored.paidNarrativeStatus()).isEqualTo(UniversityPaidNarrativeStatus.AVAILABLE);
         assertThat(stored.moduleAnalysisId()).isEqualTo(ports.moduleSnapshots.get(id).snapshotId());
@@ -48,7 +48,7 @@ class UniversityDetailedReportServiceTest {
         assertThat(stored.report().perspectives().modelWritten()).isTrue();
         var context = new UniversityDetailedReportAssembler().narrativeContext(ports.assessments.get(id),
                 ports.moduleSnapshots.get(id), new com.chikere.futureai.coursemodule.university.guidance
-                        .UniversityGuidancePolicyV1().decide(ports.moduleSnapshots.get(id)));
+                        .UniversityGuidancePolicyV2().decide(ports.moduleSnapshots.get(id)));
         var narrative = ScriptedPaidNarrativeGenerator.cleanNarrative().apply(context);
         assertThat(stored.report().perspectives().overall()).isEqualTo(narrative.executiveSummary());
         assertThat(stored.report().practical().studyStrategy().personalised()).isTrue();

@@ -10,7 +10,7 @@ import com.chikere.futureai.coursemodule.university.application.UniversityModule
 import com.chikere.futureai.coursemodule.university.application.UniversityModuleJudgmentResult;
 import com.chikere.futureai.coursemodule.university.application.UniversityModuleJudgmentSet;
 import com.chikere.futureai.coursemodule.university.guidance.UniversityGuidance;
-import com.chikere.futureai.coursemodule.university.guidance.UniversityGuidancePolicyV1;
+import com.chikere.futureai.coursemodule.university.guidance.UniversityGuidancePolicyV2;
 import com.chikere.futureai.coursemodule.university.policy.ModuleProbeFixtures;
 import com.chikere.futureai.coursemodule.university.policy.UniversityModulePolicyV1;
 import com.chikere.futureai.decision.university.UniversityDecisionPolicyV2;
@@ -40,9 +40,8 @@ import java.util.UUID;
  * course (the capture has no "Machine Learning" or "Foundations of Nursing Practice"), so classification, guidance and
  * course profile run through the real frozen policies with no Jev call.
  *
- * <p>Computer Science keeps its captured group project, so the course has the team work a BSc usually includes. (With
- * an independent project but no judgement-led or interpersonal module, guidance policy v1's M4 action names an empty
- * module list and throws: a frozen-policy defect, reported separately and not worked around in production.)</p>
+ * <p>Computer Science keeps its captured group project, so the course has the team work a BSc usually includes. Guidance
+ * is the current {@code university-guidance-policy-v2}.</p>
  */
 public final class UniversityCalibrationChains {
 
@@ -120,7 +119,7 @@ public final class UniversityCalibrationChains {
                     result.providerRequestId(), result.inputTokens(), result.outputTokens(), state.courseTitle(),
                     state.courseDescription(), skills, items, Instant.parse("2026-11-04T09:00:01Z"),
                     Instant.parse("2026-11-04T09:00:02Z"));
-            var guidance = new UniversityGuidancePolicyV1().decide(snapshot);
+            var guidance = new UniversityGuidancePolicyV2().decide(snapshot);
             var context = new UniversityDetailedReportAssembler().narrativeContext(assessment, snapshot, guidance);
             return new Chain(assessment, snapshot, guidance, context);
         }

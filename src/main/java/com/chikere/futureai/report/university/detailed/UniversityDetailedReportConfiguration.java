@@ -3,7 +3,7 @@ package com.chikere.futureai.report.university.detailed;
 import com.chikere.futureai.assessment.university.application.UniversityAssessmentStore;
 import com.chikere.futureai.coursemodule.university.analysis.UniversityModuleAnalysisService;
 import com.chikere.futureai.coursemodule.university.analysis.UniversityModuleAnalysisStore;
-import com.chikere.futureai.coursemodule.university.guidance.UniversityGuidancePolicyV1;
+import com.chikere.futureai.coursemodule.university.guidance.UniversityGuidancePolicyV2;
 import com.chikere.futureai.narrative.university.paid.UniversityPaidNarrativeGenerator;
 import com.chikere.futureai.narrative.university.paid.UniversityPaidNarrativeService;
 import com.chikere.futureai.narrative.university.paid.UniversityPaidNarrativeValidator;
@@ -37,7 +37,7 @@ public class UniversityDetailedReportConfiguration {
             UniversityModuleAnalysisStore moduleSnapshots, UniversityPaidNarrativeService narratives,
             UniversityDetailedReportStore store, ObjectProvider<AssessmentTrace> trace) {
         return new UniversityDetailedReportService(purchases, assessments, moduleAnalyses, moduleSnapshots,
-                new UniversityGuidancePolicyV1(), narratives, new UniversityDetailedReportAssembler(), store,
+                new UniversityGuidancePolicyV2(), narratives, new UniversityDetailedReportAssembler(), store,
                 Clock.systemUTC(), trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
