@@ -37,6 +37,9 @@ public record UniversityPaidNarrativeContext(
         boolean professionalStandardsRelevant,
         boolean programmingVocabularySupported) {
 
+    /** The provider-view name of a fixed guidance sentence the narrative must never repeat or paraphrase. */
+    public static final String GENERIC_FALLBACK_COPY = "genericFallbackCopyDoNotRepeatOrParaphrase";
+
     /** The longest course description passed to the model; it is the student's own text. */
     static final int MAXIMUM_COURSE_DESCRIPTION = 1200;
 
@@ -164,6 +167,24 @@ public record UniversityPaidNarrativeContext(
         return String.join(" \n ", texts).toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * A guidance module as the provider sees it. The fixed guidance sentence is generic copy the narrative exists to
+     * improve on, so an AI-learning module's is withheld: it anchored the model on the very wording it must not
+     * repeat. An own-capability module's sentence is shown to the student directly above the narrative, so it is
+     * passed under a name that says what it is.
+     */
+    private static Map<String, Object> view(GuidanceModule module, boolean shownAbove) {
+        Map<String, Object> view = new LinkedHashMap<>();
+        view.put("id", module.id());
+        view.put("module", module.module());
+        view.put("classification", module.classification());
+        view.put("signals", module.signals());
+        if (shownAbove) {
+            view.put(GENERIC_FALLBACK_COPY, module.currentGuidance());
+        }
+        return view;
+    }
+
     /** The compact provider view, serialised as JSON data in the user message. */
     public Map<String, Object> prompt() {
         Map<String, Object> prompt = new LinkedHashMap<>();
@@ -172,8 +193,8 @@ public record UniversityPaidNarrativeContext(
         prompt.put("skillsYouListed", skillsYouListed);
         prompt.put("courseProfile", measures);
         prompt.put("analysedModules", modules);
-        prompt.put("aiLearningModules", aiLearningModules);
-        prompt.put("ownCapabilityModules", ownCapabilityModules);
+        prompt.put("aiLearningModules", aiLearningModules.stream().map(module -> view(module, false)).toList());
+        prompt.put("ownCapabilityModules", ownCapabilityModules.stream().map(module -> view(module, true)).toList());
         prompt.put("technicalFoundations", technicalFoundations);
         prompt.put("skillPriorities", skillPriorities);
         prompt.put("safeguards", safeguards);

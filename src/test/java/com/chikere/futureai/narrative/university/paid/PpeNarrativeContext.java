@@ -28,6 +28,25 @@ public final class PpeNarrativeContext {
     }
 
     public static UniversityPaidNarrativeContext context() {
+        return context(List.of(learning("module-7", "Quantitative Methods for Economics", TECHNICAL),
+                learning("module-3", "Political Theory", JUDGEMENT),
+                learning("module-1", "Introduction to Philosophy", JUDGEMENT),
+                learning("module-5", "Microeconomics", TECHNICAL)));
+    }
+
+    /**
+     * The same course with both economics modules among the AI-learning modules, to show two modules of one family
+     * must differ: module-5 Microeconomics, module-4 Macroeconomics, module-1 Introduction to Philosophy and module-3
+     * Political Theory.
+     */
+    public static UniversityPaidNarrativeContext withMacroeconomics() {
+        return context(List.of(learning("module-5", "Microeconomics", TECHNICAL),
+                learning("module-4", "Macroeconomics", TECHNICAL),
+                learning("module-1", "Introduction to Philosophy", JUDGEMENT),
+                learning("module-3", "Political Theory", JUDGEMENT)));
+    }
+
+    private static UniversityPaidNarrativeContext context(List<GuidanceModule> aiLearning) {
         List<String> signals = List.of("human judgement");
         return new UniversityPaidNarrativeContext(UUID.nameUUIDFromBytes("ppe".getBytes()),
                 UUID.nameUUIDFromBytes("ppe-modules".getBytes()), "Philosophy, Politics and Economics",
@@ -45,14 +64,11 @@ public final class PpeNarrativeContext {
                         new Module("Comparative Politics", "Human judgement remains central", signals),
                         new Module("Quantitative Methods for Economics", "Strong technical or quantitative core",
                                 List.of("technical depth"))),
-                List.of(guidance("module-7", "Quantitative Methods for Economics", "Strong technical or quantitative core"),
-                        guidance("module-3", "Political Theory", "Human judgement remains central"),
-                        guidance("module-1", "Introduction to Philosophy", "Human judgement remains central"),
-                        guidance("module-5", "Microeconomics", "Strong technical or quantitative core")),
-                List.of(guidance("module-2", "Ethics and Public Policy", "Human judgement remains central"),
-                        guidance("module-3", "Political Theory", "Human judgement remains central"),
-                        guidance("module-1", "Introduction to Philosophy", "Human judgement remains central"),
-                        guidance("module-5", "Microeconomics", "Strong technical or quantitative core")),
+                aiLearning,
+                List.of(own("module-2", "Ethics and Public Policy", JUDGEMENT),
+                        own("module-3", "Political Theory", JUDGEMENT),
+                        own("module-1", "Introduction to Philosophy", JUDGEMENT),
+                        own("module-5", "Microeconomics", TECHNICAL)),
                 List.of("Quantitative Methods for Economics", "Microeconomics"),
                 List.of(new Skill("skill-critical-evaluation", "Critical evaluation",
                                 "Several modules centre on interpretation and judgement.",
@@ -82,9 +98,24 @@ public final class PpeNarrativeContext {
                 false, false);
     }
 
-    private static GuidanceModule guidance(String id, String title, String classification) {
-        return new GuidanceModule(id, title, classification, List.of(),
-                "Fixed guidance for " + title + ".");
+    private static final String TECHNICAL = "Strong technical or quantitative core";
+    private static final String JUDGEMENT = "Human judgement remains central";
+
+    /** With the real guidance-policy fallback sentence for the module's kind, as the live prompt carried it. */
+    private static GuidanceModule learning(String id, String title, String classification) {
+        return new GuidanceModule(id, title, classification, List.of(), classification.equals(TECHNICAL)
+                ? "AI tools could support your learning in " + title + " by explaining concepts, generating practice "
+                        + "problems and helping you check your own working."
+                : "AI tools could help you prepare for " + title + " by summarising reading, exploring different "
+                        + "interpretations and testing your arguments, while the judgement stays yours.");
+    }
+
+    private static GuidanceModule own(String id, String title, String classification) {
+        return new GuidanceModule(id, title, classification, List.of(), classification.equals(TECHNICAL)
+                ? title + " strongly depends on you demonstrating your own capability. Treat it as a place to build, "
+                        + "and show, your own work."
+                : "Your own judgement is especially important in " + title + ": interpreting, framing problems and "
+                        + "reaching conclusions you can explain and defend.");
     }
 
     /** The same draft with its module-learning entries relabelled, text unchanged. */

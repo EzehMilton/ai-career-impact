@@ -151,6 +151,26 @@ public final class UniversityPaidNarrativeValidator {
             "brainstorm research and plan",
             "support preparation and revision");
 
+    /**
+     * Generic study vocabulary plus function words. A use or explanation whose every content word (beyond its module's
+     * own title) is one of these names no reasoning, material or task of the module: it is the template with the
+     * title inserted, whichever module it is written for.
+     */
+    private static final Set<String> GENERIC_STUDY_WORDS = Set.of(
+            "explain", "explains", "explaining", "explanation", "explanations", "concept", "concepts", "idea", "ideas",
+            "generate", "generates", "generating", "practice", "practise", "practising", "problem", "problems",
+            "question", "questions", "check", "checks", "checking", "working", "work", "summarise", "summarises",
+            "summarising", "summary", "summaries", "reading", "readings", "read", "explore", "explores", "exploring",
+            "different", "interpretation", "interpretations", "test", "tests", "testing", "argument", "arguments",
+            "revise", "revising", "revision", "material", "materials", "compare", "comparing", "perspective",
+            "perspectives", "topic", "topics", "help", "helps", "helping", "support", "supports", "supporting",
+            "using", "request", "requesting", "tool", "tools", "learning", "learn", "understand", "understanding",
+            "discussion", "discuss", "notes", "content", "quiz", "quizzes", "quizzing", "answer", "answers", "core",
+            "main", "important", "difficult", "complex", "course", "module", "modules", "subject", "theme", "themes",
+            "your", "with", "that", "this", "these", "those", "from", "into", "them", "they", "their", "then", "could",
+            "would", "should", "might", "will", "also", "more", "most", "other", "about", "when", "where", "what",
+            "which", "while", "through", "ways", "well", "better", "issues");
+
     private final AssessmentTrace trace;
 
     public UniversityPaidNarrativeValidator() {
@@ -210,10 +230,11 @@ public final class UniversityPaidNarrativeValidator {
         checks.check(VOCABULARY, vocabulary.isPresent(), vocabulary::orElseThrow,
                 "programming vocabulary such as code, debugging or SQL does not fit a course that involves no "
                         + "programming");
-        Optional<String> generic = genericOrRestated(narrative, context);
-        checks.check(GENERIC, generic.isPresent(), generic::orElseThrow,
-                "content must be specific to each module and add to the fixed guidance: no repeated or near-identical "
-                        + "items, no generic template copy and no note that only restates its action");
+        Optional<GenericFinding> generic = genericOrRestated(narrative, context);
+        checks.check(GENERIC, generic.isPresent(), () -> generic.orElseThrow().rejected(),
+                generic.map(GenericFinding::reason).orElse("content must be specific to each module and add to the "
+                        + "fixed guidance: no repeated or near-identical items, no generic template copy and no note "
+                        + "that only restates its action"));
         checks.accepted();
         return narrative;
     }
@@ -501,26 +522,50 @@ public final class UniversityPaidNarrativeValidator {
     }
 
     /**
-     * Copy that reads the same for every module, or that only repeats what the report already says: an item repeated
-     * word for word across modules, two modules whose learning uses are nearly the same, the old category template
-     * offered as a use, an explanation that restates its module's fixed guidance, or a plan note that restates its
-     * action.
+     * Where generic content was found, for the trace and the one repair: the field ({@code
+     * moduleLearningInsights[module-5].explanation}), what is wrong with it, the rejected text and, when there is one,
+     * the text it was compared against.
      */
-    private static Optional<String> genericOrRestated(UniversityPaidNarrative narrative,
+    record GenericFinding(String location, String problem, String rejected, String comparedWith) {
+
+        String reason() {
+            return location + " " + problem + (comparedWith == null ? "" : ". Compared with: \"" + comparedWith.strip()
+                    + "\"");
+        }
+    }
+
+    /** One narrative text and the field it came from. */
+    private record Located(String location, String text) {
+    }
+
+    /**
+     * Copy that reads the same for every module, or that only repeats what the report already says: an item repeated
+     * word for word across modules, two modules whose learning uses are nearly the same, the old category template or
+     * only generic study words offered as a use or explanation, an explanation that restates its module's fixed
+     * guidance, or a plan note that restates its action.
+     */
+    private static Optional<GenericFinding> genericOrRestated(UniversityPaidNarrative narrative,
             UniversityPaidNarrativeContext context) {
         List<ModuleLearningInsight> learning = narrative.moduleLearningInsights();
-        Optional<String> repeated = Stream.of(
-                        repeated(learning.stream().flatMap(item -> item.aiLearningUses().stream()).toList()),
-                        repeated(learning.stream().flatMap(item -> item.independentCapability().stream()).toList()),
-                        repeated(learning.stream().map(ModuleLearningInsight::studyExperiment).toList()),
-                        repeated(learning.stream().map(ModuleLearningInsight::explanation).toList()),
-                        repeated(narrative.humanCapabilityInsights().stream().map(HumanCapabilityInsight::explanation)
-                                .toList()),
-                        repeated(narrative.humanCapabilityInsights().stream()
-                                .map(HumanCapabilityInsight::independentPractice).toList()),
-                        repeated(narrative.skillInsights().stream().flatMap(item -> item.inThisCourseThisMeans().stream())
-                                .toList()),
-                        repeated(narrative.actionPlanNotes().stream().map(ActionPlanNote::explanation).toList()))
+        String ml = "moduleLearningInsights";
+        String hc = "humanCapabilityInsights";
+        Optional<GenericFinding> repeated = Stream.of(
+                        repeated(each(learning, ml, ModuleLearningInsight::moduleId, "aiLearningUses",
+                                ModuleLearningInsight::aiLearningUses)),
+                        repeated(each(learning, ml, ModuleLearningInsight::moduleId, "independentCapability",
+                                ModuleLearningInsight::independentCapability)),
+                        repeated(one(learning, ml, ModuleLearningInsight::moduleId, "studyExperiment",
+                                ModuleLearningInsight::studyExperiment)),
+                        repeated(one(learning, ml, ModuleLearningInsight::moduleId, "explanation",
+                                ModuleLearningInsight::explanation)),
+                        repeated(one(narrative.humanCapabilityInsights(), hc, HumanCapabilityInsight::moduleId,
+                                "explanation", HumanCapabilityInsight::explanation)),
+                        repeated(one(narrative.humanCapabilityInsights(), hc, HumanCapabilityInsight::moduleId,
+                                "independentPractice", HumanCapabilityInsight::independentPractice)),
+                        repeated(each(narrative.skillInsights(), "skillInsights", SkillInsight::skillId,
+                                "inThisCourseThisMeans", SkillInsight::inThisCourseThisMeans)),
+                        repeated(one(narrative.actionPlanNotes(), "actionPlanNotes", ActionPlanNote::actionId,
+                                "explanation", ActionPlanNote::explanation)))
                 .flatMap(Optional::stream).findFirst();
         if (repeated.isPresent()) {
             return repeated;
@@ -534,17 +579,11 @@ public final class UniversityPaidNarrativeValidator {
                 Set<String> b = words(String.join(" ", learning.get(second).aiLearningUses()),
                         titles.get(learning.get(second).moduleId().strip()));
                 if (overlap(a, b) >= MAX_USE_OVERLAP) {
-                    return Optional.of(String.join("; ", learning.get(second).aiLearningUses()));
-                }
-            }
-        }
-        for (ModuleLearningInsight item : learning) {
-            List<String> examples = new ArrayList<>(item.aiLearningUses());
-            examples.add(item.studyExperiment());
-            for (String example : examples) {
-                String flat = normalised(example);
-                if (GENERIC_GUIDANCE_COPY.stream().anyMatch(flat::contains)) {
-                    return Optional.of(example.strip());
+                    return Optional.of(new GenericFinding(field(ml, learning.get(second).moduleId(), "aiLearningUses"),
+                            "is too similar to " + field(ml, learning.get(first).moduleId(), "aiLearningUses")
+                                    + ": the two modules' uses would still read sensibly with their names swapped",
+                            String.join("; ", learning.get(second).aiLearningUses()),
+                            String.join("; ", learning.get(first).aiLearningUses())));
                 }
             }
         }
@@ -553,7 +592,35 @@ public final class UniversityPaidNarrativeValidator {
             var module = learningModules.get(item.moduleId().strip());
             if (module != null && PlanNoteRestatement.restates(item.explanation(), module.currentGuidance(),
                     module.classification(), module.module())) {
-                return Optional.of(item.explanation().strip());
+                return Optional.of(new GenericFinding(field(ml, item.moduleId(), "explanation"),
+                        "restates the generic fallback guidance for this module", item.explanation().strip(),
+                        module.currentGuidance()));
+            }
+        }
+        for (ModuleLearningInsight item : learning) {
+            String title = titles.get(item.moduleId().strip());
+            List<Located> examples = new ArrayList<>();
+            for (int index = 0; index < item.aiLearningUses().size(); index++) {
+                examples.add(new Located(field(ml, item.moduleId(), "aiLearningUses[" + index + "]"),
+                        item.aiLearningUses().get(index)));
+            }
+            examples.add(new Located(field(ml, item.moduleId(), "studyExperiment"), item.studyExperiment()));
+            for (Located example : examples) {
+                String flat = normalised(example.text());
+                Optional<String> template = GENERIC_GUIDANCE_COPY.stream().filter(flat::contains).findFirst();
+                if (template.isPresent()) {
+                    return Optional.of(new GenericFinding(example.location(), "repeats the generic fallback template",
+                            example.text().strip(), template.get()));
+                }
+            }
+            List<Located> phrased = new ArrayList<>(examples.subList(0, item.aiLearningUses().size()));
+            phrased.add(new Located(field(ml, item.moduleId(), "explanation"), item.explanation()));
+            for (Located text : phrased) {
+                if (onlyGenericWords(text.text(), title, context)) {
+                    return Optional.of(new GenericFinding(text.location(), "uses only generic study wording with the "
+                            + "module name inserted; it names no reasoning, material or task of this module",
+                            text.text().strip(), null));
+                }
             }
         }
         Map<String, UniversityPaidNarrativeContext.GuidanceModule> ownModules = byId(context.ownCapabilityModules());
@@ -561,17 +628,53 @@ public final class UniversityPaidNarrativeValidator {
             var module = ownModules.get(item.moduleId().strip());
             if (module != null && PlanNoteRestatement.restates(item.explanation(), module.currentGuidance(),
                     module.classification(), module.module())) {
-                return Optional.of(item.explanation().strip());
+                return Optional.of(new GenericFinding(field(hc, item.moduleId(), "explanation"),
+                        "restates the fixed guidance shown above it", item.explanation().strip(),
+                        module.currentGuidance()));
             }
         }
         var actions = context.actionsById();
         for (ActionPlanNote note : narrative.actionPlanNotes()) {
             var action = actions.get(note.actionId().strip());
             if (action != null && PlanNoteRestatement.restates(note.explanation(), action.action())) {
-                return Optional.of(note.explanation().strip());
+                return Optional.of(new GenericFinding(field("actionPlanNotes", note.actionId(), "explanation"),
+                        "restates its action, which is shown directly above it", note.explanation().strip(),
+                        action.action()));
             }
         }
         return Optional.empty();
+    }
+
+    private static String field(String section, String id, String field) {
+        return section + "[" + id.strip() + "]." + field;
+    }
+
+    private static <T> List<Located> one(List<T> items, String section, Function<T, String> id, String field,
+            Function<T, String> text) {
+        return items.stream().map(item -> new Located(field(section, id.apply(item), field), text.apply(item))).toList();
+    }
+
+    private static <T> List<Located> each(List<T> items, String section, Function<T, String> id, String field,
+            Function<T, List<String>> texts) {
+        List<Located> located = new ArrayList<>();
+        for (T item : items) {
+            List<String> values = texts.apply(item);
+            for (int index = 0; index < values.size(); index++) {
+                located.add(new Located(field(section, id.apply(item), field + "[" + index + "]"), values.get(index)));
+            }
+        }
+        return located;
+    }
+
+    /** Whether every content word, beyond the module's and the course's own titles, is generic study vocabulary. */
+    private static boolean onlyGenericWords(String text, String title, UniversityPaidNarrativeContext context) {
+        Set<String> own = new HashSet<>();
+        for (String name : List.of(title == null ? "" : title, context.courseTitle())) {
+            own.addAll(List.of(normalised(name).split(" ")));
+        }
+        List<String> content = Stream.of(normalised(text).split(" "))
+                .filter(word -> word.length() > 3 && !own.contains(word)).toList();
+        return !content.isEmpty() && GENERIC_STUDY_WORDS.containsAll(content);
     }
 
     private static Map<String, UniversityPaidNarrativeContext.GuidanceModule> byId(
@@ -580,11 +683,13 @@ public final class UniversityPaidNarrativeValidator {
                 Function.identity(), (a, b) -> a, LinkedHashMap::new));
     }
 
-    private static Optional<String> repeated(List<String> values) {
-        Set<String> seen = new HashSet<>();
-        for (String value : values) {
-            if (!seen.add(normalised(value))) {
-                return Optional.of(value.strip());
+    private static Optional<GenericFinding> repeated(List<Located> values) {
+        Map<String, Located> seen = new LinkedHashMap<>();
+        for (Located value : values) {
+            Located earlier = seen.putIfAbsent(normalised(value.text()), value);
+            if (earlier != null) {
+                return Optional.of(new GenericFinding(value.location(), "repeats " + earlier.location() + " word for word",
+                        value.text().strip(), earlier.text()));
             }
         }
         return Optional.empty();
