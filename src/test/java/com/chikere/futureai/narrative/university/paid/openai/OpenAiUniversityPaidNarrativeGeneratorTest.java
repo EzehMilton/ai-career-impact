@@ -119,7 +119,7 @@ class OpenAiUniversityPaidNarrativeGeneratorTest {
         var ppe = PpeNarrativeContext.context();
         var wrong = PpeNarrativeContext.withLearningIds(UniversityNarratives.valid(ppe),
                 "module-1", "module-2", "module-3", "module-4");
-        String repair = OpenAiUniversityPaidNarrativeGenerator.repairMessage(ppe, new RepairFeedback(
+        String repair = generator().repairMessage(ppe, new RepairFeedback(
                 UniversityPaidNarrativeValidator.IDS, "ids", "moduleLearningInsights: unknown id module-2",
                 Optional.of(wrong)));
         assertThat(repair).contains("Rule: IDS_MATCH_DETERMINISTIC_ORDER", "THE IDS WERE WRONG",
@@ -132,9 +132,57 @@ class OpenAiUniversityPaidNarrativeGeneratorTest {
         assertThat(repair).doesNotContain("Expected humanCapabilityInsights", "Expected skillInsights",
                 "Expected actionPlanNotes");
         // Any other rule gets the ordinary repair, without an id block.
-        assertThat(OpenAiUniversityPaidNarrativeGenerator.repairMessage(ppe, new RepairFeedback(
+        assertThat(generator().repairMessage(ppe, new RepairFeedback(
                 UniversityPaidNarrativeValidator.NUMERIC, "numbers", "6.2", Optional.of(wrong))))
                 .doesNotContain("THE IDS WERE WRONG", "Expected moduleLearningInsights");
+    }
+
+    @Test
+    void theGenericFallbackSentenceIsNeverOfferedAsSomethingToBuildOn() {
+        var ppe = PpeNarrativeContext.context();
+        String message = generator().userMessage(ppe);
+        // An AI-learning module's fallback sentence is withheld; an own-capability one is labelled as copy not to repeat.
+        assertThat(message).doesNotContain("currentGuidance",
+                "AI tools could support your learning in Microeconomics by explaining concepts",
+                "AI tools could help you prepare for Political Theory by summarising reading");
+        assertThat(message).contains("\"genericFallbackCopyDoNotRepeatOrParaphrase\":\"Your own judgement is "
+                + "especially important in Political Theory");
+        assertThat(SYSTEM).doesNotContain("the fixed guidance sentence").contains(
+                "GENERIC FALLBACK COPY, DO NOT REPEAT OR PARAPHRASE THIS TEXT",
+                "Your job is to add materially more specific value; never reuse or lightly paraphrase it.");
+    }
+
+    @Test
+    void moduleSpecificIsDefinedAndModulesMustNotBeInterchangeable() {
+        assertThat(SYSTEM).contains("A module-specific insight refers to the kind of reasoning, material, task or "
+                        + "learning activity implied by that module",
+                "Simply inserting the module title into phrases such as \"explain concepts\", \"generate practice "
+                        + "problems\", \"summarise readings\", \"explore interpretations\" or \"check your work\" is "
+                        + "not module-specific enough.",
+                "Different modules must result in materially different learning uses",
+                "two economics modules must not read alike", "calibration only, not content to copy",
+                "reconstruct an argument", "compare competing normative positions",
+                "Never name a specific topic, theory, author or text as part of a module unless the student supplied it.",
+                "if two modules could swap names and the text would still make sense, rewrite them");
+    }
+
+    @Test
+    void aGenericRepairNamesTheFieldTheFallbackAndCarriesThePreviousAnswer() {
+        var ppe = PpeNarrativeContext.context();
+        var draft = UniversityNarratives.valid(ppe);
+        String reason = "moduleLearningInsights[module-5].explanation restates the generic fallback guidance for this "
+                + "module. Compared with: \"AI tools could support your learning in Microeconomics by explaining "
+                + "concepts, generating practice problems and helping you check your own working.\"";
+        String repair = generator().repairMessage(ppe, new RepairFeedback(UniversityPaidNarrativeValidator.GENERIC,
+                reason, "AI tools could support your learning in Microeconomics by explaining concepts.",
+                Optional.of(draft)));
+        assertThat(repair.replaceAll("\\s+", " ")).contains("Rule: NO_GENERIC_REPEATED_OR_RESTATED_CONTENT",
+                "Why: moduleLearningInsights[module-5].explanation restates the generic fallback guidance",
+                "Compared with: \"AI tools could support your learning in Microeconomics",
+                "THE CONTENT WAS GENERIC", "inserting the module title into a generic phrase is not enough",
+                "\"explaining concepts\", \"generating practice problems\",", "Keep every id unchanged",
+                "YOUR PREVIOUS ANSWER", "\"moduleId\" : \"module-5\"")
+                .doesNotContain("THE IDS WERE WRONG");
     }
 
     @Test

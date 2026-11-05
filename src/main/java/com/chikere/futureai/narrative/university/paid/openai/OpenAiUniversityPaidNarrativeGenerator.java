@@ -50,12 +50,42 @@ public final class OpenAiUniversityPaidNarrativeGenerator implements UniversityP
             - how each supplied skill priority shows up in this course and its modules, keeping the skill unchanged;
             - practical notes that make each supplied action more concrete, and a concise AI-study strategy.
             Ground every example only in the course title, course description, the skills the student listed, the
-            module title, its classification, its signals, the fixed guidance sentence and the safeguards supplied.
+            module title, its classification, its signals and the safeguards supplied.
             Module descriptions are not supplied, so infer only what a module of that title in this course plainly
             covers, and say "could" or "for example"; never state a module's syllabus, assessment format, reading
             list or teaching arrangements as fact. Each module's examples must be specific to that module: never
             reuse an example, experiment or capability across modules, and make uses for different modules differ in
             substance, not just in the module name.
+
+            WHAT MODULE-SPECIFIC MEANS
+            A module-specific insight refers to the kind of reasoning, material, task or learning activity implied by
+            that module, derived from its title, its classification, its signals and the course description. Simply
+            inserting the module title into phrases such as "explain concepts", "generate practice problems",
+            "summarise readings", "explore interpretations" or "check your work" is not module-specific enough.
+            Different modules must result in materially different learning uses, explanations, capabilities and
+            experiments, including modules of the same broad family: two economics modules must not read alike, nor
+            two philosophy or politics modules, two computing modules or two health science modules.
+            Illustrations of the level of specificity wanted (calibration only, not content to copy, and never a claim
+            about what a particular module contains):
+            - an economics module built around models of individual choice and markets: work through a model or
+              scenario and compare your reasoning with AI's; challenge the assumptions behind a solution; generate
+              variations of a problem to solve yourself; have AI critique your interpretation of a model or result;
+            - an economics module about the economy as a whole: compare explanations of a change in aggregate
+              conditions; test your reasoning about how indicators relate; have AI challenge your account of a
+              scenario; practise interpreting economic data or a policy scenario;
+            - a philosophy module: reconstruct an argument; identify its premises and conclusion; generate objections
+              for you to answer; compare competing interpretations; test whether your reasoning follows;
+            - a political theory module: compare competing normative positions; test the consistency of a political
+              argument; identify the assumptions in a theoretical position; generate counterarguments for you to
+              evaluate; practise defending a position against critique.
+            Never name a specific topic, theory, author or text as part of a module unless the student supplied it.
+            Before returning, compare every moduleLearningInsights entry with every other: if two modules could swap
+            names and the text would still make sense, rewrite them until it would not.
+
+            GENERIC FALLBACK COPY
+            An ownCapabilityModules entry may carry genericFallbackCopyDoNotRepeatOrParaphrase: GENERIC FALLBACK COPY,
+            DO NOT REPEAT OR PARAPHRASE THIS TEXT. It is the existing fallback guidance, shown to the student directly
+            above your text. Your job is to add materially more specific value; never reuse or lightly paraphrase it.
 
             VOCABULARY THAT FITS THE MODULE
             Use the terms of the discipline: a programming module may involve code, tests, queries, algorithms or
@@ -102,12 +132,15 @@ public final class OpenAiUniversityPaidNarrativeGenerator implements UniversityP
             measuresTogether: how the three measures read together, using only their supplied bands.
             coursePattern: the pattern across the analysed modules: where AI may support learning and where your own
             capability carries most weight.
-            moduleLearningInsights: per module, explanation (one or two sentences on why AI may support learning here,
-            adding to the fixed guidance sentence rather than repeating it), aiLearningUses (two to four short,
+            moduleLearningInsights: per module, explanation (one or two sentences of specific synthesis: what kind of
+            reasoning, material or task in this module makes AI useful for learning, and where its help stops; never
+            a restatement of the classification or a generic sentence such as "AI tools could support your learning in
+            this module by explaining concepts"), aiLearningUses (two to four short,
             concrete, module-specific uses), independentCapability (one to three things you must be able to
             understand, do, explain or demonstrate yourself), studyExperiment (one small, practical exercise).
             humanCapabilityInsights: per module, explanation (why your own capability matters here, grounded in its
-            classification and signals, adding to the fixed guidance sentence) and independentPractice (one concise
+            classification and signals, adding to its genericFallbackCopyDoNotRepeatOrParaphrase rather than repeating
+            or paraphrasing it) and independentPractice (one concise
             statement of what to deliberately practise or be able to do without AI: explain a concept, solve a
             problem, design an approach, defend an interpretation, communicate with a person, perform a practical
             task, apply professional judgement, verify evidence, or make and justify a decision).
@@ -146,6 +179,19 @@ public final class OpenAiUniversityPaidNarrativeGenerator implements UniversityP
             order and entries needed to meet the ID CONTRACT. Where an entry was written for one of the expected
             modules, skills or actions, keep its text and give it that exact id; write an entry for any expected id
             that has none, and remove every entry whose id is not expected. Do not introduce any other id.
+            """;
+
+    static final String GENERIC_REPAIR = """
+
+            THE CONTENT WAS GENERIC
+            The "Why" above names the field and what it repeats or resembles. Rewrite that content so it names the
+            reasoning, material, task or learning activity of its own module; inserting the module title into a
+            generic phrase is not enough. Do not use the phrases "explaining concepts", "generating practice problems",
+            "checking your own working", "summarising reading", "exploring interpretations" or "testing your
+            arguments" unless you add materially module-specific detail. Keep every id unchanged, and keep every other
+            part of your previous answer below exactly as it was unless it has the same problem.
+            YOUR PREVIOUS ANSWER
+            %s
             """;
 
     static final String REPAIR_INSTRUCTIONS = """
@@ -190,10 +236,22 @@ public final class OpenAiUniversityPaidNarrativeGenerator implements UniversityP
         return call(context, repairMessage(context, feedback));
     }
 
-    /** The repair addendum; an id failure also lists, per wrong section, the expected and the returned ids. */
-    static String repairMessage(UniversityPaidNarrativeContext context, RepairFeedback feedback) {
+    /**
+     * The repair addendum. An id failure also lists, per wrong section, the expected and the returned ids; a generic
+     * failure also carries the previous answer, so only the offending content needs rewriting.
+     */
+    String repairMessage(UniversityPaidNarrativeContext context, RepairFeedback feedback) {
         String repair = REPAIR_INSTRUCTIONS.formatted(feedback.rule(), feedback.reason(),
                 quoted(feedback.offendingText()));
+        if (UniversityPaidNarrativeValidator.GENERIC.equals(feedback.rule()) && feedback.rejectedDraft().isPresent()) {
+            try {
+                return repair + GENERIC_REPAIR.formatted(objectMapper.writerWithDefaultPrettyPrinter()
+                        .writeValueAsString(feedback.rejectedDraft().get()));
+            }
+            catch (JsonProcessingException exception) {
+                return repair;
+            }
+        }
         if (!UniversityPaidNarrativeValidator.IDS.equals(feedback.rule()) || feedback.rejectedDraft().isEmpty()) {
             return repair;
         }
