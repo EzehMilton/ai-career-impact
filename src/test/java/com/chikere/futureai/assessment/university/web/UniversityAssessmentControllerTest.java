@@ -163,6 +163,16 @@ class UniversityAssessmentControllerTest {
                 "Working Alongside AI", "Human and Practical Capability", "Transferable Capability",
                 "Explore your course in more detail", "Development mode");
         assertThat(html.split("university-measure-card\"", -1)).hasSize(4);
+        // Each measure is named once, by its heading; the result line shows only the score and the band word.
+        var profile = new com.chikere.futureai.report.university.application.UniversityCourseProfileComposer()
+                .compose(v2.result().profile());
+        for (var measure : profile.measures()) {
+            String band = measure.band().charAt(0) + measure.band().substring(1).toLowerCase();
+            assertThat(html).doesNotContain(measure.bandLabel()).containsPattern("<h3>" + measure.name()
+                    + "</h3>\\s*<p class=\"university-measure-result\"><span class=\"university-measure-score\">"
+                    + "<strong>" + java.util.regex.Pattern.quote(measure.score()) + "</strong> / 10</span> "
+                    + "<span class=\"university-measure-band-word\">" + band + "</span></p>");
+        }
         assertThat(html).doesNotContain("Future Readiness", "AI Complementarity", "Human Differentiation",
                 "Skill Transferability", "Career Adaptability", "Overall score", "strongest measure");
         verify(reportService, never()).assemble(any(), any());

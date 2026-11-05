@@ -887,6 +887,20 @@ dd { margin: 0; font-weight: 700; text-align: right; }
   color: var(--ink-strong);
   margin: .2rem 0 .85rem;
 }
+/* The measure name is the card heading, so the result line shows only the score and the band word. */
+.university-results-refined .university-measure-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-4);
+  margin: .2rem 0 .85rem;
+}
+.university-results-refined .university-measure-band-word {
+  font-size: clamp(1.55rem, 2.7vw, 2rem);
+  line-height: 1.2;
+  font-weight: 750;
+  color: var(--ink-strong);
+}
 .university-results-refined .university-measure-explanation {
   color: var(--ink-muted);
   margin-bottom: 1rem;
