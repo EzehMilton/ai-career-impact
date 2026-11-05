@@ -227,9 +227,14 @@ class UniversityPaidNarrativeValidatorTest {
                 first.independentCapability(), first.studyExperiment()));
         assertRule(learning(learning), UniversityPaidNarrativeValidator.GENERIC);
 
+        // One experiment word for word in two modules. It names neither module: an experiment naming another module
+        // is rejected earlier, as content bound to the wrong module.
         learning = new ArrayList<>(base.moduleLearningInsights());
+        String shared = "Answer three recall questions from memory before asking AI to mark your answers.";
+        learning.set(0, new ModuleLearningInsight(first.moduleId(), first.explanation(), first.aiLearningUses(),
+                first.independentCapability(), shared));
         learning.set(1, new ModuleLearningInsight(second.moduleId(), second.explanation(), second.aiLearningUses(),
-                second.independentCapability(), first.studyExperiment()));
+                second.independentCapability(), shared));
         assertRule(learning(learning), UniversityPaidNarrativeValidator.GENERIC);
     }
 

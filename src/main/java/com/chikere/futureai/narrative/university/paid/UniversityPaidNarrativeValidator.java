@@ -44,6 +44,8 @@ public final class UniversityPaidNarrativeValidator {
     public static final String PRESENT = "NARRATIVE_FIELDS_PRESENT";
     public static final String WELL_FORMED = "WELL_FORMED_STRUCTURED_OUTPUT";
     public static final String IDS = "IDS_MATCH_DETERMINISTIC_ORDER";
+    /** A module entry describes the module its id is paired with, not another supplied module. */
+    public static final String BINDING = "ENTRY_DESCRIBES_ITS_PAIRED_MODULE";
     public static final String LENGTH = "LIST_SIZES_AND_LENGTHS";
     public static final String NUMERIC = "NO_NUMBERS_OR_SCORES";
     public static final String SALARY = "NO_SALARY_OR_PAY";
@@ -60,7 +62,7 @@ public final class UniversityPaidNarrativeValidator {
     public static final String VOCABULARY = "VOCABULARY_FITS_THE_COURSE";
     public static final String GENERIC = "NO_GENERIC_REPEATED_OR_RESTATED_CONTENT";
 
-    public static final List<String> RULES = List.of(PRESENT, WELL_FORMED, IDS, LENGTH, NUMERIC, SALARY, EMPLOYMENT,
+    public static final List<String> RULES = List.of(PRESENT, WELL_FORMED, IDS, BINDING, LENGTH, NUMERIC, SALARY, EMPLOYMENT,
             AI_CERTAINTY, AI_PERMISSION, INSTITUTION_RULES, MEASURE_NAMES, BANDS, OVERALL, REGULATION,
             RECLASSIFICATION, VENDORS, VOCABULARY, GENERIC);
     /** Every rule except a missing narrative: rejected prose gets its one repair. */
@@ -103,6 +105,9 @@ public final class UniversityPaidNarrativeValidator {
             + "|irreplaceab\\w*|(?:jobs?|roles?|professions?|occupations?|careers?)\\s+(?:will|may|could|are\\s+going\\s+to)"
             + "\\s+(?:disappear|vanish|be\\s+replaced|be\\s+automated)"
             + "|replace[sd]?\\s+(?:you|graduates|students|workers|people|professionals)"
+            // "AI cannot replace human judgement": a replacement claim even when negated.
+            + "|(?:cannot|can\\s*not|can't|will\\s+not|won't)\\s+(?:fully\\s+|ever\\s+)?replace\\b"
+            + "|(?:cannot|can\\s*not|can't|will\\s+not|won't)\\s+be\\s+replaced\\b"
             + "|(?:take|taking|took)\\s+(?:your|their)\\s+jobs?|in\\s+demand\\s+by\\s+employers)");
     private static final Pattern AI_CERTAINTY_CLAIM = Pattern.compile("(?i)\\b(?:ai|machines?|computers?)\\s+"
             + "(?:cannot|can\\s*not|can't|will\\s+never|could\\s+never)\\b|\\bai[-\\s]?proof\\b|\\bfuture[-\\s]?proof\\b"
@@ -169,7 +174,8 @@ public final class UniversityPaidNarrativeValidator {
             "main", "important", "difficult", "complex", "course", "module", "modules", "subject", "theme", "themes",
             "your", "with", "that", "this", "these", "those", "from", "into", "them", "they", "their", "then", "could",
             "would", "should", "might", "will", "also", "more", "most", "other", "about", "when", "where", "what",
-            "which", "while", "through", "ways", "well", "better", "issues");
+            "which", "while", "through", "ways", "well", "better", "issues", "clarify", "clarifies", "clarifying",
+            "clarification");
 
     private final AssessmentTrace trace;
 
@@ -193,6 +199,10 @@ public final class UniversityPaidNarrativeValidator {
         checks.check(IDS, ids.isPresent(), ids::orElseThrow,
                 "every module, skill and action id must appear exactly once, in the deterministic order, and nothing "
                         + "else");
+        Optional<Located> misbound = misbound(narrative, context);
+        checks.check(BINDING, misbound.isPresent(), () -> misbound.orElseThrow().text(),
+                misbound.map(Located::location).orElse("each module entry must describe the module its id is paired "
+                        + "with, not another supplied module"));
         Optional<String> sizes = sizeOrLength(narrative);
         checks.check(LENGTH, sizes.isPresent(), sizes::orElseThrow,
                 "each list must have the stated number of items and every text a concise, specific length");
@@ -640,6 +650,60 @@ public final class UniversityPaidNarrativeValidator {
                 return Optional.of(new GenericFinding(field("actionPlanNotes", note.actionId(), "explanation"),
                         "restates its action, which is shown directly above it", note.explanation().strip(),
                         action.action()));
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * A module entry that explicitly names another supplied module: content written for one module under another's
+     * id. Only the fields that describe one module are read, and only exact module titles count, never a guess at
+     * what prose is about. The paired title is removed first, so a title inside it (Ethics in Ethics and Public
+     * Policy) is never another module.
+     */
+    private static Optional<Located> misbound(UniversityPaidNarrative narrative, UniversityPaidNarrativeContext context) {
+        List<String> titles = context.modules().stream().map(UniversityPaidNarrativeContext.Module::title).distinct()
+                .sorted((a, b) -> Integer.compare(b.length(), a.length())).toList();
+        Map<String, UniversityPaidNarrativeContext.GuidanceModule> learning = byId(context.aiLearningModules());
+        for (ModuleLearningInsight item : narrative.moduleLearningInsights()) {
+            List<String> texts = new ArrayList<>(List.of(item.explanation(), item.studyExperiment()));
+            texts.addAll(item.aiLearningUses());
+            texts.addAll(item.independentCapability());
+            Optional<Located> found = namesAnother("moduleLearningInsights", learning.get(item.moduleId().strip()),
+                    texts, titles);
+            if (found.isPresent()) {
+                return found;
+            }
+        }
+        Map<String, UniversityPaidNarrativeContext.GuidanceModule> own = byId(context.ownCapabilityModules());
+        for (HumanCapabilityInsight item : narrative.humanCapabilityInsights()) {
+            Optional<Located> found = namesAnother("humanCapabilityInsights", own.get(item.moduleId().strip()),
+                    List.of(item.explanation(), item.independentPractice()), titles);
+            if (found.isPresent()) {
+                return found;
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<Located> namesAnother(String section, UniversityPaidNarrativeContext.GuidanceModule module,
+            List<String> texts, List<String> titles) {
+        if (module == null) {
+            return Optional.empty();
+        }
+        String paired = module.module();
+        for (String text : texts) {
+            String rest = text.replaceAll("(?i)" + Pattern.quote(paired), " ");
+            for (String title : titles) {
+                if (title.equalsIgnoreCase(paired) || paired.toLowerCase(Locale.ROOT).contains(
+                        title.toLowerCase(Locale.ROOT))) {
+                    continue;
+                }
+                // Case-sensitive: a module is named by its title as written, so "ethics" in prose is never "Ethics".
+                if (Pattern.compile("\\b" + Pattern.quote(title) + "\\b").matcher(rest).find()) {
+                    return Optional.of(new Located(section + "[" + module.id() + "] is bound to \"" + paired
+                            + "\" but explicitly describes \"" + title + "\"", text.strip()));
+                }
             }
         }
         return Optional.empty();
