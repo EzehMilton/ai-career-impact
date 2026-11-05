@@ -1,6 +1,9 @@
 package com.chikere.futureai.narrative.university.paid.openai;
 
+import com.chikere.futureai.narrative.university.paid.PpeNarrativeContext;
+import com.chikere.futureai.narrative.university.paid.UniversityNarratives;
 import com.chikere.futureai.narrative.university.paid.UniversityPaidNarrativeGenerator.RepairFeedback;
+import com.chikere.futureai.narrative.university.paid.UniversityPaidNarrativeValidator;
 import com.chikere.futureai.report.university.detailed.UniversityCalibrationChains;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -65,6 +68,73 @@ class OpenAiUniversityPaidNarrativeGeneratorTest {
         var computing = UniversityCalibrationChains.chain(UniversityCalibrationChains.COMPUTER_SCIENCE).context();
         assertThat(generator().userMessage(computing)).contains("\"programmingVocabularySupported\":true",
                 "\"professionalStandardsRelevant\":false");
+    }
+
+    @Test
+    void idsAreOpaqueAndNeverInferredFromAPosition() {
+        assertThat(SYSTEM).contains("Every moduleId, skillId and actionId is an opaque identifier supplied by the "
+                        + "application. Never derive, renumber, normalise, reorder or invent an id, and never work one "
+                        + "out from a module's position in any list",
+                "Copy each required id exactly as supplied.", "in exactly the supplied order and nothing else",
+                "The ID CONTRACT at the end of the user message lists the exact ids each section must contain.");
+    }
+
+    @Test
+    void thePpeUserMessageListsTheExactIdsOfEverySectionInOrder() {
+        String message = generator().userMessage(PpeNarrativeContext.context());
+        assertThat(message.replaceAll("\\s+", " ")).contains("Never derive, renumber, normalise, reorder or invent ids.",
+                "The output must contain exactly these ids, in exactly this order, in each section.");
+        assertThat(message).contains("""
+                moduleLearningInsights MUST contain exactly these 4 moduleId values, in this order:
+                1. module-7 (Quantitative Methods for Economics)
+                2. module-3 (Political Theory)
+                3. module-1 (Introduction to Philosophy)
+                4. module-5 (Microeconomics)
+                """, """
+                humanCapabilityInsights MUST contain exactly these 4 moduleId values, in this order:
+                1. module-2 (Ethics and Public Policy)
+                2. module-3 (Political Theory)
+                3. module-1 (Introduction to Philosophy)
+                4. module-5 (Microeconomics)
+                """, """
+                skillInsights MUST contain exactly these 3 skillId values, in this order:
+                1. skill-critical-evaluation (Critical evaluation)
+                2. skill-technical-foundations (Technical foundations)
+                3. skill-ai-literacy (AI literacy)
+                """, """
+                actionPlanNotes MUST contain exactly these 6 actionId values, in this order:
+                1. next_30_days-d3s
+                2. next_30_days-d4
+                3. this_term-t3
+                4. this_term-t4
+                5. next_6_to_12_months-m4
+                6. next_6_to_12_months-m3
+                """);
+        // The contract follows the JSON data, so it is the last thing the model reads.
+        assertThat(message.indexOf("ID CONTRACT")).isGreaterThan(message.indexOf("\"actionPlan\""));
+    }
+
+    @Test
+    void anIdRepairShowsTheExpectedAndReturnedIdsOfEachWrongSectionOnly() {
+        var ppe = PpeNarrativeContext.context();
+        var wrong = PpeNarrativeContext.withLearningIds(UniversityNarratives.valid(ppe),
+                "module-1", "module-2", "module-3", "module-4");
+        String repair = OpenAiUniversityPaidNarrativeGenerator.repairMessage(ppe, new RepairFeedback(
+                UniversityPaidNarrativeValidator.IDS, "ids", "moduleLearningInsights: unknown id module-2",
+                Optional.of(wrong)));
+        assertThat(repair).contains("Rule: IDS_MATCH_DETERMINISTIC_ORDER", "THE IDS WERE WRONG",
+                "same narrative text wherever possible", "Do not introduce any other id.", """
+                Expected moduleLearningInsights:
+                [module-7, module-3, module-1, module-5]
+                Returned:
+                [module-1, module-2, module-3, module-4]
+                Return exactly the expected ids in exactly that order.""");
+        assertThat(repair).doesNotContain("Expected humanCapabilityInsights", "Expected skillInsights",
+                "Expected actionPlanNotes");
+        // Any other rule gets the ordinary repair, without an id block.
+        assertThat(OpenAiUniversityPaidNarrativeGenerator.repairMessage(ppe, new RepairFeedback(
+                UniversityPaidNarrativeValidator.NUMERIC, "numbers", "6.2", Optional.of(wrong))))
+                .doesNotContain("THE IDS WERE WRONG", "Expected moduleLearningInsights");
     }
 
     @Test

@@ -24,7 +24,19 @@ public interface UniversityPaidNarrativeGenerator {
         }
     }
 
-    /** Why the first draft was rejected, for the one repair. */
-    record RepairFeedback(String rule, String reason, String offendingText) {
+    /**
+     * Why the first draft was rejected, for the one repair. The rejected draft is passed only so an id failure can show
+     * the ids it returned; it is never stored.
+     */
+    record RepairFeedback(String rule, String reason, String offendingText,
+            Optional<UniversityPaidNarrative> rejectedDraft) {
+
+        public RepairFeedback {
+            Objects.requireNonNull(rejectedDraft);
+        }
+
+        public RepairFeedback(String rule, String reason, String offendingText) {
+            this(rule, reason, offendingText, Optional.empty());
+        }
     }
 }

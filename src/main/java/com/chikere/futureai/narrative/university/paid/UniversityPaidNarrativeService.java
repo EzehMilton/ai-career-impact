@@ -64,7 +64,7 @@ public final class UniversityPaidNarrativeService {
                 return retryable(context, active.providerIdentifier(), model(active, first), "EMPTY_PROVIDER_RESPONSE", 1);
             }
             var feedback = new UniversityPaidNarrativeGenerator.RepairFeedback(violation.rule(), violation.reason(),
-                    violation.triggeringText());
+                    violation.triggeringText(), Optional.ofNullable(first.narrative()));
             trace.event(JourneyType.UNIVERSITY, TraceStage.PAID_NARRATIVE_REPAIR, () -> Map.of(
                     "attempt", 2, "failedRule", violation.rule(), "rejectedDraftStored", false));
             UniversityPaidNarrativeGenerator.GeneratedNarrative second;
