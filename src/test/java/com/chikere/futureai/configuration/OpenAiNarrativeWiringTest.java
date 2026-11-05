@@ -8,6 +8,8 @@ import com.chikere.futureai.narrative.professional.paid.openai.OpenAiProfessiona
 import com.chikere.futureai.narrative.professional.paid.openai.OpenAiProfessionalPaidNarrativeGenerator;
 import com.chikere.futureai.narrative.university.openai.OpenAiUniversityNarrativeConfiguration;
 import com.chikere.futureai.narrative.university.openai.OpenAiUniversityNarrativeGenerator;
+import com.chikere.futureai.narrative.university.paid.openai.OpenAiUniversityPaidNarrativeConfiguration;
+import com.chikere.futureai.narrative.university.paid.openai.OpenAiUniversityPaidNarrativeGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
@@ -16,7 +18,11 @@ import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -72,6 +78,36 @@ class OpenAiNarrativeWiringTest {
                             .temperature()).contains(0.2);
                     assertThat(context.getBean(OpenAiProfessionalPaidNarrativeGenerator.class).requestOptions()
                             .temperature()).contains(0.2);
+                });
+    }
+
+    @Test
+    void theUniversityPaidNarrativeUsesTheSharedOpenAiModelWithNoUniversityOverride() throws IOException {
+        // One shared model for every OpenAI narrative: OPENAI_MODEL, defaulting to gpt-4o-mini.
+        Properties properties = new Properties();
+        try (InputStream in = java.nio.file.Files.newInputStream(java.nio.file.Path.of("src/main/resources/application.properties"))) {
+            properties.load(in);
+        }
+        assertThat(properties.getProperty("spring.ai.openai.chat.model")).isEqualTo("${OPENAI_MODEL:gpt-4o-mini}");
+        assertThat(properties.stringPropertyNames()).noneMatch(name -> name.startsWith("app.university.paid-narrative"));
+
+        var paid = runner.withUserConfiguration(OpenAiUniversityPaidNarrativeConfiguration.class);
+        paid.withPropertyValues("spring.ai.model.chat=openai", "spring.ai.openai.chat.model=gpt-4o-mini")
+                .withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles("prod"))
+                .run(context -> {
+                    var university = context.getBean(OpenAiUniversityPaidNarrativeGenerator.class);
+                    assertThat(university.modelIdentifier()).contains("gpt-4o-mini")
+                            .isEqualTo(context.getBean(OpenAiProfessionalPaidNarrativeGenerator.class).modelIdentifier());
+                    assertThat(university.requestOptions().temperature()).contains(0.2);
+                    assertThat(university.requestOptions().reasoningEffort()).isEmpty();
+                });
+        paid.withPropertyValues("spring.ai.model.chat=openai", "spring.ai.openai.chat.model=gpt-6-luna")
+                .withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles("prod"))
+                .run(context -> {
+                    var university = context.getBean(OpenAiUniversityPaidNarrativeGenerator.class);
+                    assertThat(university.modelIdentifier()).isEqualTo(Optional.of("gpt-6-luna"));
+                    assertThat(university.requestOptions().reasoningEffort()).contains("none");
+                    assertThat(university.requestOptions().temperature()).isEmpty();
                 });
     }
 
