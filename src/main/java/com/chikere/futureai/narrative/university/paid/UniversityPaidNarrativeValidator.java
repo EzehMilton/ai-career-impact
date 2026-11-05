@@ -87,11 +87,16 @@ public final class UniversityPaidNarrativeValidator {
     static final double MAX_USE_OVERLAP = 0.6;
 
     private static final Pattern DIGIT = Pattern.compile("\\d");
+    // Income and wages only as the student's or graduates' own pay: in economics they are subject matter.
     private static final Pattern CURRENCY = Pattern.compile(
-            "(?i)[£$€]|\\b(?:salary|salaries|pay\\s+(?:of|rise|level)|earn(?:s|ing)?\\b|income|wage)");
+            "(?i)[£$€]|\\b(?:salary|salaries|pay\\s+(?:of|rise|level)|earn(?:s|ing)?\\b"
+            + "|(?:your|graduates?(?:'|’)?|graduate|starting|future)\\s+(?:incomes?|wages?))");
     private static final Pattern EMPLOYMENT_CLAIM = Pattern.compile("(?i)\\b(?:guarantee\\w*|will\\s+(?:get|find|secure"
             + "|land)\\s+(?:you\\s+)?(?:a\\s+)?(?:job|work|employment|role)|employab(?:le|ility)\\s+(?:is|will)"
-            + "|job\\s+(?:security|prospects|loss|losses)|unemploy\\w*|obsolete|indispensab\\w*"
+            + "|job\\s+(?:security|prospects|loss|losses)|obsolete|indispensab\\w*"
+            // Unemployment only as a prediction about the student: in economics it is subject matter.
+            + "|(?:you|graduates?|students?)\\s+(?:will|may|could|might|would)\\s+(?:\\w+\\s+){0,2}(?:be|become|face)"
+            + "\\s+unemploy\\w*|(?:be|become|end\\s+up)\\s+unemployed|risk(?:s|ing)?\\s+unemployment"
             // Employment redundancy only: "data redundancy" is ordinary database vocabulary.
             + "|(?:made|be|being|been|become)\\s+redundant|(?:job|staff|workforce|compulsory)\\s+redundanc\\w*"
             + "|redundanc(?:y|ies)\\s+(?:risk|threat|programme)"
@@ -120,7 +125,11 @@ public final class UniversityPaidNarrativeValidator {
     private static final Pattern OVERALL_CLAIM = Pattern.compile("(?i)\\b(?:overall\\s+(?:score|rating|grade|result)"
             + "|strongest\\s+measure|weakest\\s+measure|ranks?\\s+(?:among|above|below)|ranked\\b|league\\s+table"
             + "|out\\s+of\\s+ten|(?:most|least)\\s+important\\s+module|more\\s+important\\s+than)");
-    private static final Pattern REGULATION_CLAIM = Pattern.compile("(?i)\\bregulat(?:ed|ion|ory)\\b");
+    /** Calling the course or its profession regulated; market or public-policy regulation is subject matter. */
+    private static final Pattern REGULATION_CLAIM = Pattern.compile("(?i)\\bregulated\\s+(?:course|degree|programme"
+            + "|profession|occupation|field)s?\\b|\\b(?:this|the|your)\\s+(?:course|degree|programme|profession|field)"
+            + "\\s+is\\s+(?:a\\s+)?regulated\\b|\\b(?:professional|statutory)\\s+regulat(?:ion|or|ors)\\b"
+            + "|\\bregulatory\\s+(?:body|bodies|registration)\\b");
     private static final Pattern VENDOR = Pattern.compile("(?i)\\b(?:ChatGPT|GPT-?\\d\\w*|OpenAI|Copilot|Gemini|Bard"
             + "|Claude|Anthropic|Llama|Mistral|Perplexity|Grammarly|Quizlet|Anki|Chegg|Wolfram|Notion|Otter|Jasper"
             + "|Microsoft|Google|Amazon|AWS|Azure|Turnitin)\\b");

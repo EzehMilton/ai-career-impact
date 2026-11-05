@@ -86,6 +86,18 @@ class OpenHtmlUniversityDetailedReportPdfRendererTest {
         assertThat(new String(renderer.render(report), 0, 5, StandardCharsets.ISO_8859_1)).isEqualTo("%PDF-");
     }
 
+    @Test
+    void eachV3MeasureNamesItselfOnceAndShowsItsScoreAndBandWord() {
+        var report = UniversityCalibrationChains.report(UniversityCalibrationChains.NURSING);
+        String html = renderer.html(report);
+        for (var measure : report.profile().measures()) {
+            String band = measure.band().charAt(0) + measure.band().substring(1).toLowerCase();
+            assertThat(html).doesNotContain(measure.bandLabel()).contains("<h3>" + measure.name() + "</h3><p><span "
+                    + "class=\"score\">" + measure.score() + "</span> / 10 &#160; <span class=\"band\">" + band
+                    + "</span></p>");
+        }
+    }
+
     private static String historical(String name) throws Exception {
         return Files.readString(Path.of("src/test/resources/historical/university", name));
     }

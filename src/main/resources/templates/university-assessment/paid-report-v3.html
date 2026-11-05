@@ -36,8 +36,7 @@
     <div class="measure-grid paid-measure-grid">
       <article class="panel measure-card paid-measure-card" th:each="measure : ${r.profile.measures}">
         <h3 th:text="${measure.name}">Measure</h3>
-        <p class="paid-measure-band" th:text="${measure.bandLabel}">Moderate</p>
-        <dl class="measure-details"><div><dt>Score</dt><dd><span th:text="${measure.score}">0.00</span> / 10</dd></div></dl>
+        <p class="detailed-measure-result"><span class="detailed-measure-score"><span th:text="${measure.score}">0.00</span> / 10</span> <span class="detailed-measure-band" th:text="${#strings.capitalize(#strings.toLowerCase(measure.band))}">Moderate</span></p>
         <p class="paid-measure-explanation" th:text="${measure.explanation}">Explanation</p>
         <th:block th:if="${!measure.strengthenedBy.isEmpty()}">
           <h4>What strengthens this measure</h4>

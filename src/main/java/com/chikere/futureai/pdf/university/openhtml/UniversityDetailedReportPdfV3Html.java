@@ -5,6 +5,7 @@ import com.chikere.futureai.report.university.detailed.UniversityDetailedReport;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * {@code university-report-pdf-v3}: the university-report-v3 layout. Same palette and type as v2, with the practical
@@ -62,7 +63,7 @@ final class UniversityDetailedReportPdfV3Html {
         for (UniversityCourseProfile.Measure measure : report.profile().measures()) {
             out.append("<div class=\"card\"><h3>").append(escape(measure.name())).append("</h3><p><span class=\"score\">")
                     .append(escape(measure.score())).append("</span> / 10 &#160; <span class=\"band\">")
-                    .append(escape(measure.bandLabel())).append("</span></p><p>").append(escape(measure.explanation()))
+                    .append(escape(band(measure.band()))).append("</span></p><p>").append(escape(measure.explanation()))
                     .append("</p>");
             inline(out, "What strengthens this measure", measure.strengthenedBy());
             inline(out, "What holds it back", measure.heldBackBy());
@@ -236,6 +237,11 @@ final class UniversityDetailedReportPdfV3Html {
         for (String paragraph : text.split("\\n\\s*\\n")) {
             out.append("<p>").append(escape(paragraph.strip())).append("</p>");
         }
+    }
+
+    /** The band word alone ("Moderate"): the measure name is already the card heading. */
+    private static String band(String band) {
+        return band.charAt(0) + band.substring(1).toLowerCase(Locale.ROOT);
     }
 
     private static String escape(String value) {

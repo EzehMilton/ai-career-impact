@@ -128,6 +128,34 @@ class UniversityPaidNarrativeValidatorTest {
                 UniversityPaidNarrativeValidator.EMPLOYMENT);
     }
 
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "Macroeconomics asks how unemployment, inflation and national income interact.",
+            "You will model how unemployment responds to a change in interest rates.",
+            "Microeconomics examines how wages and household income respond to taxes.",
+            "Ethics and Public Policy weighs the case for financial regulation and a minimum wage.",
+            "Regulatory design in markets is a recurring policy question."})
+    void economicsAndPolicyVocabularyIsCourseContentNotAPayEmploymentOrRegulationClaim(String sentence) {
+        // A course without professional standards, so any regulation claim would be rejected.
+        assertThat(COMPUTER_SCIENCE.professionalStandardsRelevant()).isFalse();
+        var narrative = Narratives.summary(UniversityNarratives.valid(COMPUTER_SCIENCE), sentence);
+        assertThat(validator.validate(narrative, COMPUTER_SCIENCE)).isEqualTo(narrative);
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "Graduates of this course could become unemployed.|NO_EMPLOYMENT_OR_REPLACEMENT_PREDICTION",
+            "Students who skip placements risk unemployment.|NO_EMPLOYMENT_OR_REPLACEMENT_PREDICTION",
+            "Your starting income after this degree is good.|NO_SALARY_OR_PAY",
+            "Graduate wages in this field are strong.|NO_SALARY_OR_PAY",
+            "This course is regulated.|NO_UNSUPPORTED_REGULATION_CLAIM",
+            "Computing is a regulated profession.|NO_UNSUPPORTED_REGULATION_CLAIM"})
+    void personalPayEmploymentAndRegulatedCourseClaimsAreStillRejected(String sentence, String rule) {
+        assertThatThrownBy(() -> validator.validate(Narratives.summary(UniversityNarratives.valid(COMPUTER_SCIENCE),
+                sentence), COMPUTER_SCIENCE)).isInstanceOfSatisfying(NarrativeRuleViolation.class, violation ->
+                assertThat(violation.rule()).isEqualTo(rule));
+    }
+
     @Test
     void aBandIsOnlyEverTheStoredOne() {
         String band = NURSING.measures().stream().filter(measure -> measure.name().equals("Transferable Capability"))
