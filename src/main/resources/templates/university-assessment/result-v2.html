@@ -31,8 +31,7 @@
     <div class="measure-grid university-measure-grid">
       <article class="panel measure-card university-measure-card" th:each="measure : ${profile.measures}">
         <h3 th:text="${measure.name}">Measure</h3>
-        <p class="university-measure-score"><strong th:text="${measure.score}">0.00</strong> / 10</p>
-        <p class="university-measure-band" th:text="${measure.bandLabel}">Moderate measure</p>
+        <p class="university-measure-result"><span class="university-measure-score"><strong th:text="${measure.score}">0.00</strong> / 10</span> <span class="university-measure-band-word" th:text="${#strings.capitalize(#strings.toLowerCase(measure.band))}">Moderate</span></p>
         <p class="university-measure-explanation" th:text="${measure.explanation}">Explanation</p>
         <p class="helper" th:if="${!measure.confidenceNote.isEmpty()}" th:text="${measure.confidenceNote}">Lower confidence</p>
       </article>
