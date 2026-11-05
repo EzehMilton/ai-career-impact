@@ -194,6 +194,24 @@ class UniversityPaidReportControllerTest {
         verify(detailedReports, never()).prepare(any(), any());
     }
 
+    @Test
+    void eachV3MeasureNamesItselfOnceAndShowsItsScoreAndBandWord() throws Exception {
+        v2Purchase();
+        var stored = UniversityCalibrationChains.stored(UniversityCalibrationChains.NURSING, ID);
+        when(detailedReports.find(ID)).thenReturn(Optional.of(stored));
+
+        String html = mvc.perform(get("/university-assessment/" + ID + "/report")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        for (var measure : stored.report().profile().measures()) {
+            String band = measure.band().charAt(0) + measure.band().substring(1).toLowerCase();
+            assertThat(html).doesNotContain(measure.bandLabel()).containsPattern("<h3>" + measure.name()
+                    + "</h3>\\s*<p class=\"detailed-measure-result\"><span class=\"detailed-measure-score\"><span>"
+                    + java.util.regex.Pattern.quote(measure.score()) + "</span> / 10</span> "
+                    + "<span class=\"detailed-measure-band\">" + band + "</span></p>");
+        }
+    }
+
     private static String historical(String name) throws java.io.IOException {
         return java.nio.file.Files.readString(java.nio.file.Path.of("src/test/resources/historical/university", name));
     }

@@ -1975,6 +1975,10 @@ dd { margin: 0; font-weight: 700; text-align: right; }
 .detailed-applies { font-size: 0.9rem; color: var(--ink-subtle); margin-top: var(--space-3); }
 .detailed-strengthen { border-top: 1px solid var(--rule); margin-top: var(--space-3); padding-top: var(--space-2); }
 .detailed-step-note { display: block; margin-top: 0.25rem; color: var(--ink-muted); font-size: 0.95rem; }
+/* University v3 measures: the name is the heading, so the result line shows only the score and the band word. */
+.detailed-measure-result { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-4); margin: .3rem 0 .7rem; }
+.detailed-measure-score { color: var(--ink-strong); font-size: clamp(1.6rem, 2.5vw, 2.1rem); font-weight: 750; line-height: 1.2; }
+.detailed-measure-band { color: var(--ink-strong); font-weight: 700; text-transform: none; }
 .detailed-strategy-grid { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); }
 .detailed-strategy-grid h3 { margin-top: 0; }
 .detailed-strategy-grid ul { margin: 0.25rem 0 0; padding-left: 1.2rem; }
