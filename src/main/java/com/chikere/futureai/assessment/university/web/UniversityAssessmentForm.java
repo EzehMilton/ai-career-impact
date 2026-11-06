@@ -18,7 +18,8 @@ public class UniversityAssessmentForm {
 
     @NotBlank(message = "Add at least one module or topic.")
     @Size(max = 4000, message = "Keep modules under 4,000 characters.")
-    @BoundedTextList(maxItems = 40, maxItemLength = 200)
+    // Each module is analysed as its own entry in the paid report, so a repeated module could never be prepared.
+    @BoundedTextList(maxItems = 40, maxItemLength = 200, distinct = true)
     private String keyModules = "";
 
     @NotBlank(message = "Add at least one skill you expect to develop.")

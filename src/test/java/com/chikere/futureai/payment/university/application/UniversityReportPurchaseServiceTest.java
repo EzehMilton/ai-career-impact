@@ -9,6 +9,7 @@ import com.chikere.futureai.decision.university.UniversityDecisionPolicyV1;
 import com.chikere.futureai.evidence.university.application.UniversityEvidenceStore;
 import com.chikere.futureai.judgment.fixture.university.LocalFixtureUniversityJudgmentProvider;
 import com.chikere.futureai.narrative.university.application.UniversityNarrativeStore;
+import com.chikere.futureai.payment.complimentary.ComplimentaryRedemptionResult;
 import com.chikere.futureai.report.university.application.UniversityReport;
 import com.chikere.futureai.report.university.application.UniversityReportAssembler;
 import com.chikere.futureai.report.university.application.UniversityReportService;
@@ -175,6 +176,33 @@ class UniversityReportPurchaseServiceTest {
         when(purchaseStore.findSnapshotByAssessmentId(ASSESSMENT)).thenReturn(Optional.of(frozen.getValue()));
         assertThat(service(Optional.of(gateway)).activePurchaseVersion(ASSESSMENT)).contains("university-report-v1");
         assertThat(service(Optional.of(gateway)).findPurchasedReport(ASSESSMENT)).contains(frozen.getValue().report());
+    }
+
+    @Test
+    void aV2CourseListingAModuleTwiceIsNeverSoldBecauseItsDetailedReportCouldNeverBePrepared() {
+        var gateway = mock(UniversityPaymentGateway.class);
+        when(purchaseStore.findEntitlementByAssessmentId(ASSESSMENT)).thenReturn(Optional.empty());
+        when(assessmentStore.findById(ASSESSMENT)).thenReturn(Optional.of(
+                com.chikere.futureai.coursemodule.university.analysis.ModuleAnalysisTestData.courseProfileAssessment(
+                        ASSESSMENT, List.of("Statistics", "Microeconomics", "Statistics"))));
+
+        assertThatThrownBy(() -> service(Optional.of(gateway)).startCheckout(ASSESSMENT))
+                .isInstanceOf(PaymentUnavailableException.class);
+        assertThat(service(Optional.of(gateway)).grantComplimentaryAccess(ASSESSMENT))
+                .isEqualTo(ComplimentaryRedemptionResult.NOT_ELIGIBLE);
+        verify(gateway, never()).createCheckoutSession(any());
+        verify(purchaseStore, never()).savePending(any());
+        verify(purchaseStore, never()).saveComplimentary(any(), any());
+
+        // The same course with each module once is sold as before.
+        when(assessmentStore.findById(ASSESSMENT)).thenReturn(Optional.of(
+                com.chikere.futureai.coursemodule.university.analysis.ModuleAnalysisTestData.courseProfileAssessment(
+                        ASSESSMENT, List.of("Statistics", "Microeconomics", "Econometrics"))));
+        when(gateway.provider()).thenReturn(UniversityPaymentProvider.STRIPE);
+        when(gateway.priceConfigurationKey()).thenReturn("price_configured");
+        doReturn(new UniversityCheckoutSession("cs_test", URI.create("https://checkout.stripe.test/x"),
+                UniversityPaymentProvider.STRIPE, Optional.empty())).when(gateway).createCheckoutSession(any());
+        assertThat(service(Optional.of(gateway)).startCheckout(ASSESSMENT).checkoutSessionId()).isEqualTo("cs_test");
     }
 
     @Test

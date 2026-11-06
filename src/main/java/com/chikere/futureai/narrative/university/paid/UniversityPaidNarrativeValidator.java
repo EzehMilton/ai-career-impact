@@ -52,6 +52,8 @@ public final class UniversityPaidNarrativeValidator {
     public static final String EMPLOYMENT = "NO_EMPLOYMENT_OR_REPLACEMENT_PREDICTION";
     public static final String AI_CERTAINTY = "NO_CLAIM_ABOUT_WHAT_AI_CANNOT_DO";
     public static final String AI_PERMISSION = "NO_AI_PERMISSION_CLAIM";
+    /** AI never described diagnosing, prescribing, triaging, deciding treatment or setting doses for real use. */
+    public static final String CLINICAL = "NO_AI_CLINICAL_AUTHORITY";
     public static final String INSTITUTION_RULES = "NO_INVENTED_INSTITUTIONAL_RULES";
     public static final String MEASURE_NAMES = "ONLY_THE_THREE_COURSE_PROFILE_MEASURES";
     public static final String BANDS = "BANDS_MATCH_THE_COURSE_PROFILE";
@@ -63,7 +65,7 @@ public final class UniversityPaidNarrativeValidator {
     public static final String GENERIC = "NO_GENERIC_REPEATED_OR_RESTATED_CONTENT";
 
     public static final List<String> RULES = List.of(PRESENT, WELL_FORMED, IDS, BINDING, LENGTH, NUMERIC, SALARY, EMPLOYMENT,
-            AI_CERTAINTY, AI_PERMISSION, INSTITUTION_RULES, MEASURE_NAMES, BANDS, OVERALL, REGULATION,
+            AI_CERTAINTY, AI_PERMISSION, CLINICAL, INSTITUTION_RULES, MEASURE_NAMES, BANDS, OVERALL, REGULATION,
             RECLASSIFICATION, VENDORS, VOCABULARY, GENERIC);
     /** Every rule except a missing narrative: rejected prose gets its one repair. */
     public static final Set<String> REPAIRABLE = Set.copyOf(RULES.stream().filter(rule -> !rule.equals(PRESENT))
@@ -118,6 +120,25 @@ public final class UniversityPaidNarrativeValidator {
             + "acceptable)\\b|\\b(?:submit|hand\\s+in)\\s+(?:ai[-\\s]generated|ai[-\\s]written)\\b"
             + "|\\b(?:let|have)\\s+ai\\s+(?:write|complete|do)\\s+(?:your|the)\\s+(?:assessed|assessment|coursework"
             + "|essay|dissertation|project)");
+    /**
+     * AI doing clinical work rather than supporting study: diagnosing, prescribing or triaging, deciding treatment, or
+     * setting a dose outside a study frame. Practising drug calculations, or AI explaining or quizzing you on
+     * diagnostic criteria, is study and passes; "use AI to calculate the dose for your patient" does not.
+     */
+    private static final Pattern AI_CLINICAL_AUTHORITY_CLAIM = Pattern.compile("(?i)"
+            + "\\bAI(?:\\s+tools?)?\\s+(?:should|can|could|will|may|might|would)\\s+(?:help\\s+(?:you\\s+)?)?"
+            + "(?:diagnos(?:e|es|ing)|prescrib(?:e|es|ing)|triag(?:e|es|ing))\\b"
+            + "|\\b(?:let(?:s|ting)?|allow(?:s|ing)?|ha(?:ve|s|ving)|ask(?:s|ing)?|us(?:e|es|ing)|get(?:s|ting)?)"
+            + "\\s+(?:the\\s+)?AI(?:\\s+tools?)?\\s+(?:to\\s+)?"
+            + "(?:diagnos(?:e|es|ing)|prescrib(?:e|es|ing)|triag(?:e|es|ing)|decide\\s+(?:on\\s+)?(?:a\\s+|the\\s+)?"
+            + "treatment)\\b"
+            + "|\\bAI(?:\\s+tools?)?\\s+(?:to\\s+|can\\s+|could\\s+|will\\s+|should\\s+)?(?:calculate|work\\s+out"
+            + "|determine|set|choose|decide)\\s+(?:the\\s+|a\\s+|your\\s+)?(?:patient'?s?\\s+|correct\\s+|right\\s+)?"
+            + "(?:doses?|dosages?)\\b(?![^.]*\\b(?:practice|practise|revision|exercises?|questions?|scenarios?"
+            + "|simulat\\w*|worked\\s+examples?|hypothetical)\\b)"
+            + "|\\b(?:follow(?:s|ing)?|trust(?:s|ing)?|act(?:s|ing)?\\s+on|rel(?:y|ies|ying)\\s+on)\\s+(?:the\\s+)?AI"
+            + "(?:'s|’s)?\\s+(?:\\w+\\s+)?(?:clinical\\s+)?"
+            + "(?:advice|recommendations?|diagnos\\w*|doses?|dosages?|treatment\\w*|clinical\\s+decisions?)\\b");
     /** What an institution allows, bans or detects: never supplied, so never stated. */
     private static final Pattern INSTITUTION_RULE_CLAIM = Pattern.compile("(?i)\\b(?:your|the)\\s+(?:university|"
             + "institution|department|faculty|school)(?:'s|’s)?\\s+(?:(?:AI|assessment|academic)\\s+)?(?:policy\\s+|rules\\s+)?"
@@ -217,6 +238,9 @@ public final class UniversityPaidNarrativeValidator {
                 "the narrative must not claim what AI cannot do or that any work is safe from AI");
         claim(checks, AI_PERMISSION, AI_PERMISSION_CLAIM, prose,
                 "the narrative must not suggest AI use is permitted in assessed work");
+        claim(checks, CLINICAL, AI_CLINICAL_AUTHORITY_CLAIM, prose,
+                "AI is study support only: never describe it diagnosing, prescribing, triaging, deciding treatment or "
+                        + "setting doses for real people, and never as clinical guidance to follow");
         claim(checks, INSTITUTION_RULES, INSTITUTION_RULE_CLAIM, prose,
                 "the narrative must not state what an institution allows, bans or detects");
         claim(checks, MEASURE_NAMES, SUPERSEDED_MEASURES, prose,

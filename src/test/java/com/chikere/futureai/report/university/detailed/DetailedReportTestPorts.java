@@ -56,6 +56,9 @@ final class DetailedReportTestPorts {
     final Map<UUID, UniversityDetailedReportSnapshot> reports = new HashMap<>();
     final List<UniversityModuleAnalysisRequest> jevRequests = new ArrayList<>();
     ScriptedPaidNarrativeGenerator narrative = new ScriptedPaidNarrativeGenerator();
+    /** What the fake Jev answers: by default the frozen Nursing probe judgments, re-keyed in order. */
+    java.util.function.Function<UniversityModuleAnalysisRequest, UniversityModuleJudgmentResult> judgments =
+            request -> ModuleAnalysisTestData.fixtureJudgments("nursing", request);
     boolean narrativeConfigured = true;
     int reportSaves;
 
@@ -109,7 +112,7 @@ final class DetailedReportTestPorts {
         @Override
         public UniversityModuleJudgmentResult judge(UniversityModuleAnalysisRequest request) {
             jevRequests.add(request);
-            return ModuleAnalysisTestData.fixtureJudgments("nursing", request);
+            return judgments.apply(request);
         }
 
         @Override
