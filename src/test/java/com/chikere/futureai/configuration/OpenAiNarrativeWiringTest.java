@@ -2,6 +2,8 @@ package com.chikere.futureai.configuration;
 
 import com.chikere.futureai.narrative.alevel.openai.OpenAiALevelNarrativeConfiguration;
 import com.chikere.futureai.narrative.alevel.openai.OpenAiALevelNarrativeGenerator;
+import com.chikere.futureai.narrative.alevel.paid.openai.OpenAiALevelPaidNarrativeConfiguration;
+import com.chikere.futureai.narrative.alevel.paid.openai.OpenAiALevelPaidNarrativeGenerator;
 import com.chikere.futureai.narrative.professional.openai.OpenAiProfessionalNarrativeConfiguration;
 import com.chikere.futureai.narrative.professional.openai.OpenAiProfessionalNarrativeGenerator;
 import com.chikere.futureai.narrative.professional.paid.openai.OpenAiProfessionalPaidNarrativeConfiguration;
@@ -50,18 +52,19 @@ class OpenAiNarrativeWiringTest {
     }
 
     @Test
-    void bothProfessionalNarrativesChooseRequestSettingsFromTheConfiguredModelAndReasoningEffort() {
-        runner.withPropertyValues("spring.ai.model.chat=openai", "spring.ai.openai.chat.model=gpt-6-luna")
+    void bothProfessionalNarrativesUseTheProfessionalModelAndKeepTheirReasoningEffortSettings() {
+        runner.withPropertyValues("spring.ai.model.chat=openai", "spring.ai.openai.chat.model=gpt-4o-mini")
                 .withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles("prod"))
                 .run(context -> {
                     for (var options : List.of(
                             context.getBean(OpenAiProfessionalNarrativeGenerator.class).requestOptions(),
                             context.getBean(OpenAiProfessionalPaidNarrativeGenerator.class).requestOptions())) {
+                        assertThat(options.model()).contains("gpt-6.1-sol");
                         assertThat(options.reasoningEffort()).contains("none");
                         assertThat(options.temperature()).isEmpty();
                     }
                 });
-        runner.withPropertyValues("spring.ai.model.chat=openai", "spring.ai.openai.chat.model=gpt-6-luna",
+        runner.withPropertyValues("spring.ai.model.chat=openai",
                         "app.professional.narrative.openai.reasoning-effort=low",
                         "app.professional.paid-narrative.openai.reasoning-effort=minimal")
                 .withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles("prod"))
@@ -71,43 +74,43 @@ class OpenAiNarrativeWiringTest {
                     assertThat(context.getBean(OpenAiProfessionalPaidNarrativeGenerator.class).requestOptions()
                             .reasoningEffort()).contains("minimal");
                 });
-        runner.withPropertyValues("spring.ai.model.chat=openai", "spring.ai.openai.chat.model=gpt-4o-mini")
-                .withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles("prod"))
-                .run(context -> {
-                    assertThat(context.getBean(OpenAiProfessionalNarrativeGenerator.class).requestOptions()
-                            .temperature()).contains(0.2);
-                    assertThat(context.getBean(OpenAiProfessionalPaidNarrativeGenerator.class).requestOptions()
-                            .temperature()).contains(0.2);
-                });
     }
 
     @Test
-    void theUniversityPaidNarrativeUsesTheSharedOpenAiModelWithNoUniversityOverride() throws IOException {
-        // One shared model for every OpenAI narrative: OPENAI_MODEL, defaulting to gpt-4o-mini.
+    void everyJourneyNarrativeUsesItsOwnModelAndNeverTheGlobalChatModel() throws IOException {
         Properties properties = new Properties();
-        try (InputStream in = java.nio.file.Files.newInputStream(java.nio.file.Path.of("src/main/resources/application.properties"))) {
+        try (InputStream in = java.nio.file.Files.newInputStream(
+                java.nio.file.Path.of("src/main/resources/application.properties"))) {
             properties.load(in);
         }
-        assertThat(properties.getProperty("spring.ai.openai.chat.model")).isEqualTo("${OPENAI_MODEL:gpt-4o-mini}");
-        assertThat(properties.stringPropertyNames()).noneMatch(name -> name.startsWith("app.university.paid-narrative"));
+        // The global model is only Spring AI's infrastructure default; each journey has its own setting.
+        assertThat(properties.getProperty("spring.ai.openai.chat.model")).isEqualTo("${OPENAI_MODEL:gpt-6-luna}");
+        assertThat(properties.getProperty("app.narrative.university.model"))
+                .isEqualTo("${UNIVERSITY_NARRATIVE_MODEL:gpt-6-luna}");
+        assertThat(properties.getProperty("app.narrative.a-level.model")).isEqualTo("${A_LEVEL_NARRATIVE_MODEL:gpt-6-luna}");
+        assertThat(properties.getProperty("app.narrative.professional.model"))
+                .isEqualTo("${PROFESSIONAL_NARRATIVE_MODEL:gpt-6.1-sol}");
 
-        var paid = runner.withUserConfiguration(OpenAiUniversityPaidNarrativeConfiguration.class);
-        paid.withPropertyValues("spring.ai.model.chat=openai", "spring.ai.openai.chat.model=gpt-4o-mini")
+        runner.withUserConfiguration(OpenAiUniversityPaidNarrativeConfiguration.class,
+                        OpenAiALevelPaidNarrativeConfiguration.class)
+                .withPropertyValues("spring.ai.model.chat=openai", "spring.ai.openai.chat.model=gpt-4o-mini")
                 .withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles("prod"))
                 .run(context -> {
-                    var university = context.getBean(OpenAiUniversityPaidNarrativeGenerator.class);
-                    assertThat(university.modelIdentifier()).contains("gpt-4o-mini")
-                            .isEqualTo(context.getBean(OpenAiProfessionalPaidNarrativeGenerator.class).modelIdentifier());
-                    assertThat(university.requestOptions().temperature()).contains(0.2);
-                    assertThat(university.requestOptions().reasoningEffort()).isEmpty();
-                });
-        paid.withPropertyValues("spring.ai.model.chat=openai", "spring.ai.openai.chat.model=gpt-6-luna")
-                .withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles("prod"))
-                .run(context -> {
-                    var university = context.getBean(OpenAiUniversityPaidNarrativeGenerator.class);
-                    assertThat(university.modelIdentifier()).isEqualTo(Optional.of("gpt-6-luna"));
-                    assertThat(university.requestOptions().reasoningEffort()).contains("none");
-                    assertThat(university.requestOptions().temperature()).isEmpty();
+                    var university = List.of(
+                            context.getBean(OpenAiUniversityNarrativeGenerator.class).requestOptions(),
+                            context.getBean(OpenAiUniversityPaidNarrativeGenerator.class).requestOptions());
+                    var aLevel = List.of(context.getBean(OpenAiALevelNarrativeGenerator.class).requestOptions(),
+                            context.getBean(OpenAiALevelPaidNarrativeGenerator.class).requestOptions());
+                    assertThat(university).allSatisfy(options -> assertThat(options.model()).contains("gpt-6-luna"));
+                    assertThat(aLevel).allSatisfy(options -> assertThat(options.model()).contains("gpt-6-luna"));
+                    assertThat(context.getBean(OpenAiUniversityPaidNarrativeGenerator.class).modelIdentifier())
+                            .isEqualTo(Optional.of("gpt-6-luna"));
+                    assertThat(context.getBean(OpenAiProfessionalPaidNarrativeGenerator.class).modelIdentifier())
+                            .isEqualTo(Optional.of("gpt-6.1-sol"));
+                    for (var options : List.of(university.get(0), university.get(1), aLevel.get(0), aLevel.get(1))) {
+                        assertThat(options.reasoningEffort()).contains("none");
+                        assertThat(options.temperature()).isEmpty();
+                    }
                 });
     }
 

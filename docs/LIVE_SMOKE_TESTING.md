@@ -38,7 +38,9 @@ idempotent: reopening a result never creates a second entitlement.
 | `APP_LIVE_SMOKE_ENABLED=true` | Explicit switch. Without it the profile refuses to start |
 | `TYPESAFE_API_KEY` | Real Jev / TypeSafe calls |
 | `OPENAI_API_KEY` | Real OpenAI narratives |
-| `OPENAI_MODEL` (optional) | Defaults to `gpt-4o-mini` |
+| `UNIVERSITY_NARRATIVE_MODEL` (optional) | University narratives, free and paid; defaults to `gpt-6-luna` |
+| `A_LEVEL_NARRATIVE_MODEL` (optional) | A-level narratives, free and paid; defaults to `gpt-6-luna` |
+| `PROFESSIONAL_NARRATIVE_MODEL` (optional) | Professional narratives, free and paid; defaults to `gpt-6.1-sol` |
 | `ASSESSMENT_TRACE_ENABLED` (optional) | Defaults to `true` here; set `false` to turn tracing off |
 | `APP_LIVE_SMOKE_TRACE_DIRECTORY` (optional) | Trace file directory; defaults to `.live-smoke/traces` |
 
@@ -151,8 +153,8 @@ OPENAI_API_KEY=... ./mvnw -Plive-paid-narrative verify -Dtest=NoSuchTest -Dsuref
 
 Results (per-role status, repair, failed rules, call and preparation timings, PDFs and the narrative text) are written
 to `.live-smoke/paid-narrative/<timestamp>/`. Add `-Dopenai.paid.narrative.live.dry-run=true` to check the wiring
-without any call. `OPENAI_MODEL` selects the model (default `gpt-4o-mini`); a GPT-6 model such as `gpt-6-luna` is
-sent reasoning effort `none` and no temperature. The four non-Stage-2 roles use placeholder role-level measures; their narratives explain those
+without any call. `PROFESSIONAL_NARRATIVE_MODEL` selects the model (default `gpt-6.1-sol`), under the same
+allowlist as the application; a GPT-6 model is sent reasoning effort `none` and no temperature. The four non-Stage-2 roles use placeholder role-level measures; their narratives explain those
 placeholder scores, so review them for their responsibility-level content.
 
 ## University baseline capture

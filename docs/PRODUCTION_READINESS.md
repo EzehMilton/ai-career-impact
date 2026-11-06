@@ -260,7 +260,7 @@ Estimated provider cost operation=assessment journey=professional assessmentId=�
 ```
 
 - **Tokens are the providers' own counts.** Jev's come from `SystemOneResponse.usage()`. OpenAI's come from the chat response metadata, read by `OpenAiUsageAdvisor`, which is added to Spring AI's shared `ChatClient.Builder` and so covers all three narrative generators.
-- **Cost is tokens × configured list price.** It is an estimate to plan with, not an invoice. Rates are per million tokens and are set with `COST_OPENAI_INPUT_PER_MILLION_TOKENS`, `COST_OPENAI_OUTPUT_PER_MILLION_TOKENS`, `COST_JEV_INPUT_PER_MILLION_TOKENS`, `COST_JEV_OUTPUT_PER_MILLION_TOKENS` and `COST_CURRENCY`. The defaults are `gpt-4o-mini` standard pricing (0.15 / 0.60 USD) and the Jev early-access figure reported by third-party trackers (0.042 / 0 USD), because TypeSafe publishes no pricing page. Confirm both against your own terms, and change the OpenAI rates whenever `OPENAI_MODEL` changes.
+- **Cost is tokens × configured list price.** It is an estimate to plan with, not an invoice. Rates are per million tokens. Each OpenAI call is priced at the rate of the model that served it (`app.cost.openai-models[<model>]`, overridable per model, e.g. `COST_GPT_6_1_SOL_INPUT_PER_MILLION_TOKENS`), because journeys use different models; the defaults are OpenAI's standard prices for every allowed narrative model as published on 6 November 2026 (`gpt-6-luna` 0.10 / 0.50, `gpt-6.1-terra` 1.00 / 5.00, `gpt-6.1-sol` 2.00 / 10.00, `gpt-6-astra` 10.00 / 50.00 USD). `COST_OPENAI_INPUT_PER_MILLION_TOKENS` / `COST_OPENAI_OUTPUT_PER_MILLION_TOKENS` price any other model and are zero by default. Jev uses `COST_JEV_INPUT_PER_MILLION_TOKENS` and `COST_JEV_OUTPUT_PER_MILLION_TOKENS` (default: the early-access figure reported by third-party trackers, 0.042 / 0 USD, because TypeSafe publishes no pricing page), and `COST_CURRENCY` sets the currency. Confirm them against your own terms.
 - **Failures are still reported.** If a submission fails after Jev has answered, for example on save, the line reads `outcome=failed assessmentId=none` and still shows what was spent.
 - **What is not counted:** provider-side retries of failed attempts (the SDKs do not expose them), Nomis evidence (free), and Stripe fees (charged only on purchase). A call whose response carried no usage is shown as `…CallsWithoutUsage=1` and priced at zero rather than guessed.
 - **Nothing is logged without a billable call**, so `local-fixture` runs stay quiet. The line carries no submitted content.
@@ -326,7 +326,14 @@ Under `prod` the console log is structured JSON in Elastic Common Schema (`loggi
 | Setting | Purpose | Required when | Secret | Example shape |
 | --- | --- | --- | --- | --- |
 | `OPENAI_API_KEY` | Narrative generation | any profile other than `local-fixture` | **yes** | — |
-| `OPENAI_MODEL` | Chat model | optional | no | `gpt-4o-mini` |
+| `UNIVERSITY_NARRATIVE_MODEL` | University narrative model, free and paid | optional | no | `gpt-6-luna` (default and minimum; also `gpt-6.1-terra`, `gpt-6.1-sol`, `gpt-6-astra`) |
+| `A_LEVEL_NARRATIVE_MODEL` | A-level narrative model, free and paid | optional | no | `gpt-6-luna` (default and minimum; also `gpt-6.1-terra`, `gpt-6.1-sol`, `gpt-6-astra`) |
+| `PROFESSIONAL_NARRATIVE_MODEL` | Professional narrative model, free and paid | optional | no | `gpt-6.1-sol` (default and minimum; also `gpt-6-astra`) |
+| `OPENAI_MODEL` | Spring AI's infrastructure default chat model; no journey narrative uses it | optional | no | `gpt-6-luna` |
+
+A narrative model outside its journey's allowlist refuses startup under `prod`, `dev-no-jev` and `live-smoke`
+(`OpenAiNarrativeModelPolicy`). It is never replaced by the default, and a model that fails at runtime is never
+retried on a weaker one: the narrative takes its existing deterministic fallback.
 
 ### Stripe
 

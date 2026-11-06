@@ -25,6 +25,7 @@ import com.chikere.futureai.narrative.alevel.application.ALevelNarrativeValidato
 import com.chikere.futureai.narrative.alevel.application.ALevelNarrativeVersions;
 import com.chikere.futureai.narrative.alevel.application.StoredALevelNarrative;
 import com.chikere.futureai.narrative.alevel.openai.OpenAiALevelNarrativeGenerator;
+import com.chikere.futureai.narrative.openai.OpenAiNarrativeModelPolicy.Journey;
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeService;
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrative;
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeContext;
@@ -81,7 +82,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.autoconfigure.exclude=",
         "spring.ai.model.chat=openai",
         "spring.ai.openai.api-key=${OPENAI_API_KEY}",
-        "spring.ai.openai.chat.model=${OPENAI_MODEL:gpt-4o-mini}",
+        "spring.ai.openai.chat.model=${OPENAI_MODEL:gpt-6-luna}",
         "spring.ai.typesafe.api-key=${TYPESAFE_API_KEY}",
         "spring.ai.typesafe.model=jev-latest"})
 @EnabledIfEnvironmentVariable(named = "OPENAI_API_KEY", matches = ".+")
@@ -342,7 +343,7 @@ class LiveOpenAiNarrativeIT {
         Path path = REPORT_DIRECTORY.resolve(name + (calibration ? "-calibration" : "") + "-report.md");
         String body = "# Live OpenAI narrative: " + name + "\n\n"
                 + "- Assessment ID: `" + id + "`\n"
-                + "- Configured model: `" + System.getenv().getOrDefault("OPENAI_MODEL", "gpt-4o-mini") + "`\n"
+                + "- Configured model: `" + journeyModel(name) + "`\n"
                 + "- Elapsed: " + elapsed + " ms\n"
                 + "- Completed stage: " + stage + "\n"
                 + "- Failure: " + failure + "\n"
@@ -424,5 +425,14 @@ class LiveOpenAiNarrativeIT {
                 }
             };
         }
+    }
+
+    /** The narrative model the case's journey uses: its journey setting, or that journey's default. */
+    private static String journeyModel(String name) {
+        Journey journey = name.startsWith("university") ? Journey.UNIVERSITY
+                : name.startsWith("a-level") ? Journey.A_LEVEL : Journey.PROFESSIONAL;
+        String variable = Map.of(Journey.UNIVERSITY, "UNIVERSITY_NARRATIVE_MODEL", Journey.A_LEVEL,
+                "A_LEVEL_NARRATIVE_MODEL", Journey.PROFESSIONAL, "PROFESSIONAL_NARRATIVE_MODEL").get(journey);
+        return System.getenv().getOrDefault(variable, journey.defaultModel());
     }
 }

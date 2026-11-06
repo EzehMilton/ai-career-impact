@@ -4,6 +4,7 @@ import com.chikere.futureai.narrative.alevel.application.ALevelNarrative;
 import com.chikere.futureai.narrative.alevel.application.ALevelNarrativeContext;
 import com.chikere.futureai.narrative.alevel.application.ALevelNarrativeGenerator;
 import com.chikere.futureai.narrative.alevel.application.NarrativeSource;
+import com.chikere.futureai.narrative.professional.openai.OpenAiNarrativeRequestOptions;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.chat.client.ChatClient;
@@ -68,6 +69,7 @@ public final class OpenAiALevelNarrativeGenerator implements ALevelNarrativeGene
     private final ChatClient chatClient;
     private final ObjectMapper objectMapper;
     private final Optional<String> modelIdentifier;
+    private final OpenAiNarrativeRequestOptions requestOptions;
 
     public OpenAiALevelNarrativeGenerator(ChatClient chatClient, ObjectMapper objectMapper,
             String configuredModelIdentifier) {
@@ -75,6 +77,12 @@ public final class OpenAiALevelNarrativeGenerator implements ALevelNarrativeGene
         this.objectMapper = objectMapper;
         this.modelIdentifier = configuredModelIdentifier == null || configuredModelIdentifier.isBlank()
                 ? Optional.empty() : Optional.of(configuredModelIdentifier.strip());
+        // Every request names the journey's model; a GPT-6 model gets the shared reasoning setting, no temperature.
+        this.requestOptions = OpenAiNarrativeRequestOptions.forModel(modelIdentifier, Optional.empty());
+    }
+
+    public OpenAiNarrativeRequestOptions requestOptions() {
+        return requestOptions;
     }
 
     @Override
@@ -87,6 +95,7 @@ public final class OpenAiALevelNarrativeGenerator implements ALevelNarrativeGene
             throw new IllegalArgumentException("Narrative context could not be serialised", exception);
         }
         ALevelNarrative narrative = chatClient.prompt()
+                .options(requestOptions.toChatOptions())
                 .system(SYSTEM_INSTRUCTIONS)
                 .user("Explain this saved A-level assessment context:\n" + contextJson)
                 .call()

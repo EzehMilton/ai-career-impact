@@ -15,6 +15,8 @@ import com.chikere.futureai.narrative.professional.application.ProfessionalNarra
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeValidator;
 import com.chikere.futureai.narrative.professional.openai.OpenAiProfessionalNarrativeGenerator;
 import com.chikere.futureai.cost.ProviderCostTracker;
+import com.chikere.futureai.narrative.university.paid.openai.OpenAiUniversityPaidNarrativeGenerator;
+import com.chikere.futureai.report.university.detailed.UniversityCalibrationChains;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
@@ -38,6 +40,7 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
 
@@ -154,6 +157,35 @@ class ProviderTraceTest {
         assertThat(response.at("/result/model").asText()).isEqualTo("gpt-4o-mini-2024-07-18");
         assertThat(response.at("/result/promptTokens").asInt()).isEqualTo(1_200);
         assertThat(response.at("/result/outputs/0/rawText").asText()).isEqualTo(json);
+    }
+
+    @Test
+    void theTraceShowsTheJourneysRequestedModelAndTheModelTheProviderReturned() {
+        ChatModel model = mock(ChatModel.class);
+        // Spring AI's global default is a different model: the trace must show the journey's, as requested.
+        when(model.getOptions()).thenReturn(OpenAiChatOptions.builder().model("gpt-4o-mini").build());
+        when(model.call(any(Prompt.class))).thenReturn(new ChatResponse(
+                List.of(new Generation(new AssistantMessage("{}"))),
+                ChatResponseMetadata.builder().model("gpt-6-luna-2026-10-01").usage(new DefaultUsage(900, 400))
+                        .build()));
+        ChatClient.Builder builder = ChatClient.builder(model);
+        new AssessmentTraceConfiguration().assessmentTraceChatClientCustomizer(trace).customize(builder);
+        var generator = new OpenAiUniversityPaidNarrativeGenerator(
+                builder.build(), new ObjectMapper(), "gpt-6-luna", Optional.empty());
+        var context = UniversityCalibrationChains.chain(UniversityCalibrationChains.NURSING).context();
+
+        trace.assessment(JourneyType.UNIVERSITY, () -> {
+            generator.generate(context);
+            return UUID.randomUUID();
+        });
+
+        JsonNode request = log.only(TraceStage.NARRATIVE_PROVIDER_REQUEST);
+        assertThat(request.get("journey").asText()).isEqualTo("UNIVERSITY");
+        assertThat(request.at("/payload/model").asText()).isEqualTo("gpt-6-luna");
+        assertThat(request.at("/payload/reasoningEffort").asText()).isEqualTo("none");
+        assertThat(request.at("/payload/temperature").isNull()).isTrue();
+        JsonNode response = log.only(TraceStage.NARRATIVE_PROVIDER_RESPONSE).get("payload");
+        assertThat(response.at("/result/model").asText()).isEqualTo("gpt-6-luna-2026-10-01");
     }
 
     @Test

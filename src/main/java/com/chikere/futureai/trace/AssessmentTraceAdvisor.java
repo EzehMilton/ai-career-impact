@@ -12,6 +12,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.model.tool.StructuredOutputChatOptions;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.core.Ordered;
 
 import java.util.LinkedHashMap;
@@ -51,6 +52,9 @@ final class AssessmentTraceAdvisor implements CallAdvisor {
         if (options != null) {
             payload.put("model", options.getModel());
             payload.put("temperature", options.getTemperature());
+            if (options instanceof OpenAiChatOptions openAi) {
+                payload.put("reasoningEffort", openAi.getReasoningEffort());
+            }
             payload.put("maxTokens", options.getMaxTokens());
             if (options instanceof StructuredOutputChatOptions structured && structured.getOutputSchema() != null) {
                 payload.put("outputSchema", structured.getOutputSchema());

@@ -1,5 +1,7 @@
 package com.chikere.futureai.configuration;
 
+import com.chikere.futureai.narrative.openai.OpenAiNarrativeModelPolicy;
+import com.chikere.futureai.narrative.openai.OpenAiNarrativeModelPolicy.Journey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -7,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static com.chikere.futureai.configuration.ApplicationProfiles.DEV;
@@ -28,9 +31,14 @@ import static com.chikere.futureai.configuration.ApplicationProfiles.PROD;
  *       needs all of them and is refused if any are absent. {@code live-smoke} also needs the
  *       explicit {@code APP_LIVE_SMOKE_ENABLED=true} switch, so the profile alone never bypasses
  *       payment.</li>
+ *   <li><strong>A narrative model the journey does not allow.</strong> Wherever real OpenAI narratives run
+ *       ({@code prod}, {@code dev-no-jev}, {@code live-smoke}), each journey's configured model must be on that
+ *       journey's allowlist ({@link OpenAiNarrativeModelPolicy}); it is never silently replaced by the default.
+ *       {@code dev} calls no model and is not checked.</li>
  * </ul>
  *
- * <p>No message ever contains a configuration value. Startup failures are pasted into tickets.</p>
+ * <p>No message ever contains a credential or other secret value. Startup failures are pasted into tickets. The
+ * one value quoted is a refused narrative model name, which is not a secret and is what the operator must fix.</p>
  */
 @Component
 public class StartupConfigurationValidator {
@@ -109,6 +117,26 @@ public class StartupConfigurationValidator {
         }
         if (active.contains(LIVE_SMOKE)) {
             problems.addAll(liveSmokeSettings(environment));
+        }
+        problems.addAll(narrativeModelSettings(active, environment));
+        return problems;
+    }
+
+    /**
+     * The journeys' narrative models, in every profile that runs real OpenAI narratives and while the OpenAI chat
+     * model is enabled (its generators exist only then). Never in {@code dev}, which calls no model.
+     */
+    private static List<String> narrativeModelSettings(Set<String> active, Environment environment) {
+        boolean realNarratives = active.contains(PROD) || active.contains(DEV_NO_JEV) || active.contains(LIVE_SMOKE);
+        if (!realNarratives || active.contains(DEV)
+                || !"openai".equals(environment.getProperty("spring.ai.model.chat", "openai"))) {
+            return List.of();
+        }
+        List<String> problems = new ArrayList<>();
+        for (Journey journey : Journey.values()) {
+            String configured = environment.getProperty(journey.property(), journey.defaultModel());
+            Optional<String> problem = OpenAiNarrativeModelPolicy.problem(journey, configured);
+            problem.ifPresent(problems::add);
         }
         return problems;
     }
