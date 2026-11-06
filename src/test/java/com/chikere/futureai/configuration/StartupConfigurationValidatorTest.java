@@ -260,6 +260,78 @@ class StartupConfigurationValidatorTest {
 
     // ── helpers ──────────────────────────────────────────────────────────────────────────────────
 
+    // ── narrative models ─────────────────────────────────────────────────────────────────────────
+
+    @Test
+    void theDefaultJourneyModelsAreAcceptedEverywhereRealNarrativesRun() {
+        assertThatCode(() -> StartupConfigurationValidator.validate(
+                prodEnvironment().withProperty("app.public-base-url", "https://example.com")))
+                .doesNotThrowAnyException();
+        assertThatCode(() -> StartupConfigurationValidator.validate(devNoJevEnvironment())).doesNotThrowAnyException();
+        assertThatCode(() -> StartupConfigurationValidator.validate(liveSmokeEnvironment())).doesNotThrowAnyException();
+    }
+
+    @Test
+    void prodRefusesAProfessionalModelBelowItsTierAndNamesIt() {
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(prodEnvironment()
+                .withProperty("app.public-base-url", "https://example.com")
+                .withProperty("app.narrative.professional.model", "gpt-6-luna")))
+                .isInstanceOf(ConfigurationProblemException.class)
+                .hasMessageContaining("Professional narrative model 'gpt-6-luna' is below the application's allowed "
+                        + "Professional model tier.")
+                .hasMessageNotContaining("test-only");
+    }
+
+    @Test
+    void devNoJevValidatesTheNarrativeModelsButStillNeedsNoTypeSafeKey() {
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(devNoJevEnvironment()
+                .withProperty("app.narrative.university.model", "gpt-4o-mini")))
+                .isInstanceOf(ConfigurationProblemException.class)
+                .hasMessageContaining("University narrative model 'gpt-4o-mini' is below")
+                .hasMessageNotContaining("TYPESAFE_API_KEY");
+        assertThatCode(() -> StartupConfigurationValidator.validate(devNoJevEnvironment()
+                .withProperty("app.narrative.university.model", "gpt-6.1-sol")))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void liveSmokeValidatesTheNarrativeModelsAndStillNeedsBothProviderKeys() {
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(liveSmokeEnvironment()
+                .withProperty("app.narrative.a-level.model", "gpt-7-imaginary")))
+                .isInstanceOf(ConfigurationProblemException.class)
+                .hasMessageContaining("A-Level narrative model 'gpt-7-imaginary' is not an allowed A-Level narrative "
+                        + "model.");
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment("live-smoke")
+                .withProperty("app.live-smoke.enabled", "true")))
+                .hasMessageContaining("TYPESAFE_API_KEY").hasMessageContaining("OPENAI_API_KEY");
+    }
+
+    @Test
+    void devCallsNoModelSoItsNarrativeModelSettingsAreNotChecked() {
+        assertThatCode(() -> StartupConfigurationValidator.validate(environment("dev")
+                .withProperty("app.narrative.professional.model", "gpt-4o-mini")))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void anEmptyModelIsRefusedRatherThanReplacedByTheDefault() {
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(devNoJevEnvironment()
+                .withProperty("app.narrative.professional.model", " ")))
+                .hasMessageContaining("Professional narrative model (app.narrative.professional.model) is set but "
+                        + "empty");
+    }
+
+    private MockEnvironment devNoJevEnvironment() {
+        MockEnvironment env = environment("dev-no-jev").withProperty("OPENAI_API_KEY", "test-only-key");
+        for (String s : STRIPE) env.withProperty(s, "configured");
+        return env;
+    }
+
+    private MockEnvironment liveSmokeEnvironment() {
+        return environment("live-smoke").withProperty("app.live-smoke.enabled", "true")
+                .withProperty("TYPESAFE_API_KEY", "test-only-key").withProperty("OPENAI_API_KEY", "test-only-key");
+    }
+
     private MockEnvironment environment(String... profiles) {
         MockEnvironment environment = new MockEnvironment();
         environment.setActiveProfiles(profiles);

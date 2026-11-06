@@ -1,5 +1,7 @@
 package com.chikere.futureai.narrative.university.paid.openai;
 
+import com.chikere.futureai.narrative.openai.OpenAiNarrativeModelPolicy;
+import com.chikere.futureai.narrative.openai.OpenAiNarrativeModelPolicy.Journey;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,13 +17,18 @@ import java.util.Optional;
 @Profile({"prod", "dev-no-jev", "live-smoke"})
 public class OpenAiUniversityPaidNarrativeConfiguration {
 
+    /** The journey's narrative model; absent, its default. Never Spring AI's global chat model. */
+    private static final String MODEL = "${" + OpenAiNarrativeModelPolicy.UNIVERSITY_PROPERTY + ":"
+            + OpenAiNarrativeModelPolicy.UNIVERSITY_DEFAULT + "}";
+
     @Bean
     @ConditionalOnProperty(prefix = "spring.ai.model", name = "chat", havingValue = "openai")
     OpenAiUniversityPaidNarrativeGenerator openAiUniversityPaidNarrativeGenerator(
             ChatClient.Builder chatClientBuilder, ObjectMapper objectMapper,
-            @Value("${spring.ai.openai.chat.model:}") String configuredModelIdentifier,
+            @Value(MODEL) String configuredModelIdentifier,
             @Value("${app.university.paid-narrative.openai.reasoning-effort:}") String configuredReasoningEffort) {
-        return new OpenAiUniversityPaidNarrativeGenerator(chatClientBuilder.build(), objectMapper,
-                configuredModelIdentifier, Optional.ofNullable(configuredReasoningEffort));
+        String model = OpenAiNarrativeModelPolicy.require(Journey.UNIVERSITY, configuredModelIdentifier);
+        return new OpenAiUniversityPaidNarrativeGenerator(chatClientBuilder.build(), objectMapper, model,
+                Optional.ofNullable(configuredReasoningEffort));
     }
 }

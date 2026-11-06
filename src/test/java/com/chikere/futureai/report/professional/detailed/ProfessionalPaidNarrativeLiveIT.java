@@ -1,5 +1,7 @@
 package com.chikere.futureai.report.professional.detailed;
 
+import com.chikere.futureai.narrative.openai.OpenAiNarrativeModelPolicy;
+import com.chikere.futureai.narrative.openai.OpenAiNarrativeModelPolicy.Journey;
 import com.chikere.futureai.narrative.professional.application.NarrativeRepairFeedback;
 import com.chikere.futureai.narrative.professional.paid.PaidNarrativeStatus;
 import com.chikere.futureai.narrative.professional.paid.ProfessionalPaidNarrativeContext;
@@ -58,7 +60,10 @@ class ProfessionalPaidNarrativeLiveIT {
     @Test
     void sevenRolesAgainstRealOpenAi() throws Exception {
         boolean dryRun = Boolean.getBoolean("openai.paid.narrative.live.dry-run");
-        String model = Optional.ofNullable(System.getenv("OPENAI_MODEL")).filter(v -> !v.isBlank()).orElse("gpt-4o-mini");
+        // The Professional journey's model, through the same policy the application enforces at startup.
+        String model = OpenAiNarrativeModelPolicy.require(Journey.PROFESSIONAL,
+                Optional.ofNullable(System.getenv("PROFESSIONAL_NARRATIVE_MODEL")).filter(v -> !v.isBlank())
+                        .orElse(OpenAiNarrativeModelPolicy.PROFESSIONAL_DEFAULT));
         new ApplicationContextRunner()
                 .withConfiguration(AutoConfigurations.of(
                         org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration.class,

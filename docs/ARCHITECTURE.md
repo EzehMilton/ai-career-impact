@@ -216,7 +216,7 @@ Keeping narrative lifecycle in a separate table lets the assessment snapshot rem
 
 Result GETs are read-only. They load a saved narrative when one exists and never invoke `ProfessionalNarrativeGenerator`, Jev or `ProfessionalDecisionPolicyV1`. `generateFor` also returns any existing lifecycle row without replacing it, including older prompt versions and failed attempts. Consequently an `AVAILABLE` historical narrative remains exactly the narrative originally saved: there is no implicit regeneration or upgrade from one prompt/schema version to another. A future regeneration feature would need to be an explicit operation with its own audit semantics.
 
-The configured OpenAI model identifier (`spring.ai.openai.chat.model`, configurable through `OPENAI_MODEL`) is persisted. It may be a provider alias rather than an immutable underlying model revision, so it is audit metadata with that limitation rather than a claim that the exact provider-side build is known. The prompt/schema version remains the authoritative identifier for this application's narrative contract.
+The model identifier is persisted: the model the provider reported, or else the journey's configured narrative model (`app.narrative.professional.model`, configurable through `PROFESSIONAL_NARRATIVE_MODEL`). It may be a provider alias rather than an immutable underlying model revision, so it is audit metadata with that limitation rather than a claim that the exact provider-side build is known. The prompt/schema version remains the authoritative identifier for this application's narrative contract.
 
 The weights and thresholds in `professional-decision-v1` are transparent V1 product policy. They are not claimed to be scientifically validated universal truths. Changing them requires a new policy version so an existing version never silently changes meaning.
 
@@ -442,10 +442,21 @@ purchased professional-report-v2 snapshot (frozen at payment: scores, bands, fac
 - **Concurrency.** As in 4D/4E, unique assessment constraints keep one canonical narrative and report; truly
   simultaneous first requests may duplicate provider calls. Accepted for v1.
 
+#### OpenAI narrative models per journey
+
+Each journey has one OpenAI narrative model, used by its free and paid narratives alike and sent explicitly on every
+request, initial and repair: `app.narrative.university.model` and `app.narrative.a-level.model` (default and minimum
+`gpt-6-luna`) and `app.narrative.professional.model` (default and minimum `gpt-6.1-sol`). `OpenAiNarrativeModelPolicy`
+holds one explicit allowlist per journey; a model outside it refuses startup and refuses to create the generator.
+Spring AI's global `spring.ai.openai.chat.model` remains only as its infrastructure default. There is no fallback
+model: a failure takes the journey's existing deterministic fallback. Stored narratives keep the model they were
+written with; changing a journey's model never regenerates them.
+
 #### OpenAI request settings for the Professional narratives
 
 Both Professional OpenAI generators, role-level `professional-narrative-v7` and `professional-paid-narrative-v1`,
 take their sampling settings from one shared `OpenAiNarrativeRequestOptions`, so the model rule lives in one place.
+The University and A-level generators, free and paid, use the same helper, which also carries each request's model.
 A setting that is absent is left out of the request entirely, never filled with a default:
 
 - a GPT-6 model (for example `gpt-6-luna`) sends reasoning effort `none` and no temperature, because these models

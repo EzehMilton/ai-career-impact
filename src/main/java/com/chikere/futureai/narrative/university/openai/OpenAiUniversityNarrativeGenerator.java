@@ -1,5 +1,6 @@
 package com.chikere.futureai.narrative.university.openai;
 
+import com.chikere.futureai.narrative.professional.openai.OpenAiNarrativeRequestOptions;
 import com.chikere.futureai.narrative.university.application.NarrativeSource;
 import com.chikere.futureai.narrative.university.application.UniversityNarrative;
 import com.chikere.futureai.narrative.university.application.UniversityNarrativeContext;
@@ -62,6 +63,7 @@ public final class OpenAiUniversityNarrativeGenerator implements UniversityNarra
     private final ChatClient chatClient;
     private final ObjectMapper objectMapper;
     private final Optional<String> modelIdentifier;
+    private final OpenAiNarrativeRequestOptions requestOptions;
 
     public OpenAiUniversityNarrativeGenerator(ChatClient chatClient, ObjectMapper objectMapper,
             String configuredModelIdentifier) {
@@ -69,6 +71,12 @@ public final class OpenAiUniversityNarrativeGenerator implements UniversityNarra
         this.objectMapper = objectMapper;
         this.modelIdentifier = configuredModelIdentifier == null || configuredModelIdentifier.isBlank()
                 ? Optional.empty() : Optional.of(configuredModelIdentifier.strip());
+        // Every request names the journey's model; a GPT-6 model gets the shared reasoning setting, no temperature.
+        this.requestOptions = OpenAiNarrativeRequestOptions.forModel(modelIdentifier, Optional.empty());
+    }
+
+    public OpenAiNarrativeRequestOptions requestOptions() {
+        return requestOptions;
     }
 
     @Override
@@ -81,6 +89,7 @@ public final class OpenAiUniversityNarrativeGenerator implements UniversityNarra
             throw new IllegalArgumentException("Narrative context could not be serialised", exception);
         }
         UniversityNarrative narrative = chatClient.prompt()
+                .options(requestOptions.toChatOptions())
                 .system(SYSTEM_INSTRUCTIONS)
                 .user("Explain this saved university assessment context:\n" + contextJson)
                 .call()

@@ -57,7 +57,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.autoconfigure.exclude=",
         "spring.ai.model.chat=openai",
         "spring.ai.openai.api-key=${OPENAI_API_KEY}",
-        "spring.ai.openai.chat.model=${OPENAI_MODEL:gpt-4o-mini}",
+        "spring.ai.openai.chat.model=${OPENAI_MODEL:gpt-6-luna}",
         "spring.ai.typesafe.api-key=${TYPESAFE_API_KEY}",
         "spring.ai.typesafe.model=jev-latest",
         "app.professional.evidence.classified-profession=Software Developer",

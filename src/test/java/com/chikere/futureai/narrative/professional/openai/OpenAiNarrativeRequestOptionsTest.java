@@ -82,6 +82,22 @@ class OpenAiNarrativeRequestOptionsTest {
     }
 
     @Test
+    void theModelIsCarriedAndSentOnEveryRequestAndAGeneratorWithoutATemperatureSendsNone() {
+        var options = OpenAiNarrativeRequestOptions.forModel(Optional.of(" gpt-6-luna "), Optional.empty(), 0.2);
+        assertThat(options.model()).contains("gpt-6-luna");
+        assertThat(options.toChatOptions().build().getModel()).isEqualTo("gpt-6-luna");
+        // The free University and A-level narratives have no custom temperature: a GPT-6 model gets the shared
+        // reasoning effort, and any other model is sent no sampling setting at all, as before.
+        var gpt6 = OpenAiNarrativeRequestOptions.forModel(Optional.of("gpt-6-luna"), Optional.empty());
+        assertThat(gpt6.reasoningEffort()).contains("none");
+        assertThat(gpt6.temperature()).isEmpty();
+        var legacy = OpenAiNarrativeRequestOptions.forModel(Optional.of("gpt-4o-mini"), Optional.empty());
+        assertThat(legacy.temperature()).isEmpty();
+        assertThat(legacy.reasoningEffort()).isEmpty();
+        assertThat(OpenAiNarrativeRequestOptions.forModel(Optional.empty(), Optional.empty()).model()).isEmpty();
+    }
+
+    @Test
     void otherModelsKeepTheCustomTemperatureAndAnExplicitEffortAlwaysOmitsIt() {
         var legacy = OpenAiNarrativeRequestOptions.forModel(Optional.of("gpt-4o-mini"), Optional.empty(), 0.2);
         assertThat(legacy.temperature()).contains(0.2);

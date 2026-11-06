@@ -41,7 +41,11 @@ public record ProviderCostEstimate(List<ProviderTotal> providers, BigDecimal tot
             long input = calls.stream().mapToLong(ProviderUsage::inputTokens).sum();
             long output = calls.stream().mapToLong(ProviderUsage::outputTokens).sum();
             int withoutUsage = (int) calls.stream().filter(usage -> !usage.reported()).count();
-            BigDecimal cost = rates.ratesFor(entry.getKey()).costOf(input, output);
+            // Per call, so each OpenAI call is priced at the rate of the model that served it.
+            BigDecimal cost = calls.stream()
+                    .map(usage -> rates.ratesFor(usage.provider(), usage.model())
+                            .costOf(usage.inputTokens(), usage.outputTokens()))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
             totals.add(new ProviderTotal(entry.getKey(), calls.size(), withoutUsage, input, output,
                     cost.setScale(SCALE, RoundingMode.HALF_UP)));
             total = total.add(cost);
