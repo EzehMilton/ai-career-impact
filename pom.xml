@@ -325,6 +325,34 @@
 			</build>
 		</profile>
 		<profile>
+			<!-- A-level v2 release-gate calibration: seven real Jev calls. Full-provider machine only. -->
+			<id>live-a-level-calibration</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<configuration>
+							<systemPropertyVariables>
+								<a-level.live.calibration.enabled>true</a-level.live.calibration.enabled>
+							</systemPropertyVariables>
+							<includes>
+								<include>**/ALevelV2LiveCalibrationIT.java</include>
+							</includes>
+						</configuration>
+						<executions>
+							<execution>
+								<goals>
+									<goal>integration-test</goal>
+									<goal>verify</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
 			<id>live-university-module-probe</id>
 			<build>
 				<plugins>
