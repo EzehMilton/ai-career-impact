@@ -186,6 +186,54 @@ class OpenAiUniversityPaidNarrativeGeneratorTest {
     }
 
     @Test
+    void replacementWordingIsForbiddenAndResponsibilityIsStatedPositively() {
+        assertThat(SYSTEM).contains("Never write \"AI cannot replace your judgement\", \"AI cannot replace human "
+                        + "judgement\", \"AI cannot replace your reasoning\", \"AI will not replace\", \"cannot be "
+                        + "replaced by AI\"",
+                "State the student's responsibility positively instead, for example \"You are responsible for forming "
+                        + "and defending the conclusion yourself.\"");
+    }
+
+    @Test
+    void everyAiLearningUseMustNameTheModulesOwnWorkAndPassAStudyGuideCheck() {
+        assertThat(SYSTEM).contains("Every aiLearningUses item must make at least one concrete reference to the kind "
+                        + "of reasoning, material, comparison, analysis or task of its module",
+                "\"Explore different perspectives on public policy\" is not enough",
+                "\"Ask AI to challenge the assumptions behind a policy argument you have already constructed, then "
+                        + "decide which objections materially weaken your position\"",
+                "say what you do with the problem and what it exercises",
+                "if two modules could swap names and the text would still make sense, rewrite them",
+                "if this sentence could appear in a generic study-skills guide after replacing the module name, "
+                        + "rewrite it.");
+    }
+
+    @Test
+    void eachModuleEntryIsBoundToItsPairedModule() {
+        assertThat(SYSTEM).contains("Every narrative field of that entry must describe that paired module and no "
+                + "other. Never infer a module from an id, never write content for another supplied module under an id");
+        String message = generator().userMessage(PpeNarrativeContext.secondLiveRun());
+        assertThat(message).contains("In moduleLearningInsights, module-2 is paired with \"Logic and Critical "
+                        + "Reasoning\" for this response. The moduleId must remain exactly module-2, and every narrative "
+                        + "field in that entry must describe Logic and Critical Reasoning. Do not write content for "
+                        + "another module under this id.",
+                "In humanCapabilityInsights, module-8 is paired with \"International Relations\"");
+    }
+
+    @Test
+    void everyRepairAsksForAFullRecheckAndCarriesThePreviousAnswer() {
+        var ppe = PpeNarrativeContext.secondLiveRun();
+        var draft = UniversityNarratives.valid(ppe);
+        String repair = generator().repairMessage(ppe, new RepairFeedback(UniversityPaidNarrativeValidator.EMPLOYMENT,
+                "no replacement claims", "AI can assist but cannot replace your judgement.", Optional.of(draft)))
+                .replaceAll("\\s+", " ");
+        assertThat(repair).contains("Fix the identified failure, preserve valid content where possible, and re-check "
+                        + "the entire response against every original requirement before returning it",
+                "The repaired response will be validated from scratch.", "Keep every id exactly as supplied",
+                "YOUR PREVIOUS ANSWER", "\"moduleId\" : \"module-2\"")
+                .doesNotContain("THE CONTENT WAS GENERIC", "THE IDS WERE WRONG");
+    }
+
+    @Test
     void theRepairQuotesTheRuleAndKeepsTheIdsContract() {
         String repair = OpenAiUniversityPaidNarrativeGenerator.REPAIR_INSTRUCTIONS.formatted("RULE", "why", "text");
         assertThat(repair.replaceAll("\\s+", " ")).contains("Rule: RULE", "Rejected text: \"text\"",

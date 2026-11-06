@@ -46,16 +46,35 @@ public final class PpeNarrativeContext {
                 learning("module-3", "Political Theory", JUDGEMENT)));
     }
 
+    /**
+     * The second live run's shape: module-2 is Logic and Critical Reasoning, and a public-policy module (module-9) and
+     * International Relations (module-8) are analysed. Titles and ids beyond those in the live trace are
+     * illustrative.
+     */
+    public static UniversityPaidNarrativeContext secondLiveRun() {
+        List<String> signals = List.of("human judgement");
+        return context(List.of(learning("module-2", "Logic and Critical Reasoning", JUDGEMENT),
+                        learning("module-9", "Public Policy", JUDGEMENT),
+                        learning("module-5", "Microeconomics", TECHNICAL),
+                        learning("module-8", "International Relations", JUDGEMENT)),
+                List.of(new Module("Introduction to Philosophy", JUDGEMENT, signals),
+                        new Module("Logic and Critical Reasoning", JUDGEMENT, signals),
+                        new Module("Political Theory", JUDGEMENT, signals),
+                        new Module("Macroeconomics", TECHNICAL, List.of("technical depth")),
+                        new Module("Microeconomics", TECHNICAL, List.of("technical depth")),
+                        new Module("Comparative Politics", JUDGEMENT, signals),
+                        new Module("Quantitative Methods for Economics", TECHNICAL, List.of("technical depth")),
+                        new Module("International Relations", JUDGEMENT, signals),
+                        new Module("Public Policy", JUDGEMENT, signals)),
+                List.of(own("module-2", "Logic and Critical Reasoning", JUDGEMENT),
+                        own("module-3", "Political Theory", JUDGEMENT),
+                        own("module-1", "Introduction to Philosophy", JUDGEMENT),
+                        own("module-8", "International Relations", JUDGEMENT)));
+    }
+
     private static UniversityPaidNarrativeContext context(List<GuidanceModule> aiLearning) {
         List<String> signals = List.of("human judgement");
-        return new UniversityPaidNarrativeContext(UUID.nameUUIDFromBytes("ppe".getBytes()),
-                UUID.nameUUIDFromBytes("ppe-modules".getBytes()), "Philosophy, Politics and Economics",
-                "An interdisciplinary degree combining philosophy, political theory and economics, with quantitative "
-                        + "methods, political institutions and public policy.",
-                List.of("Argument and analysis", "Economic reasoning"),
-                List.of(new Measure("Working Alongside AI", "HIGH", List.of(), List.of()),
-                        new Measure("Human and Practical Capability", "MODERATE", List.of(), List.of()),
-                        new Measure("Transferable Capability", "HIGH", List.of(), List.of())),
+        return context(aiLearning,
                 List.of(new Module("Introduction to Philosophy", "Human judgement remains central", signals),
                         new Module("Ethics and Public Policy", "Human judgement remains central", signals),
                         new Module("Political Theory", "Human judgement remains central", signals),
@@ -64,11 +83,25 @@ public final class PpeNarrativeContext {
                         new Module("Comparative Politics", "Human judgement remains central", signals),
                         new Module("Quantitative Methods for Economics", "Strong technical or quantitative core",
                                 List.of("technical depth"))),
-                aiLearning,
                 List.of(own("module-2", "Ethics and Public Policy", JUDGEMENT),
                         own("module-3", "Political Theory", JUDGEMENT),
                         own("module-1", "Introduction to Philosophy", JUDGEMENT),
-                        own("module-5", "Microeconomics", TECHNICAL)),
+                        own("module-5", "Microeconomics", TECHNICAL)));
+    }
+
+    private static UniversityPaidNarrativeContext context(List<GuidanceModule> aiLearning, List<Module> modules,
+            List<GuidanceModule> ownCapability) {
+        return new UniversityPaidNarrativeContext(UUID.nameUUIDFromBytes("ppe".getBytes()),
+                UUID.nameUUIDFromBytes("ppe-modules".getBytes()), "Philosophy, Politics and Economics",
+                "An interdisciplinary degree combining philosophy, political theory and economics, with quantitative "
+                        + "methods, political institutions and public policy.",
+                List.of("Argument and analysis", "Economic reasoning"),
+                List.of(new Measure("Working Alongside AI", "HIGH", List.of(), List.of()),
+                        new Measure("Human and Practical Capability", "MODERATE", List.of(), List.of()),
+                        new Measure("Transferable Capability", "HIGH", List.of(), List.of())),
+                modules,
+                aiLearning,
+                ownCapability,
                 List.of("Quantitative Methods for Economics", "Microeconomics"),
                 List.of(new Skill("skill-critical-evaluation", "Critical evaluation",
                                 "Several modules centre on interpretation and judgement.",
