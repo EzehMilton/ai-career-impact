@@ -40,6 +40,12 @@ public @interface BoundedTextList {
     /** Greatest length allowed for any single entry, after trimming. */
     int maxItemLength();
 
+    /**
+     * Whether each entry must be different from every other, ignoring case. Off by default; on where a repeated
+     * entry could not be processed later (University modules, which are analysed one per entry).
+     */
+    boolean distinct() default false;
+
     /** What the matching form mapper splits on. */
     Separator separator() default Separator.NEW_LINE;
 

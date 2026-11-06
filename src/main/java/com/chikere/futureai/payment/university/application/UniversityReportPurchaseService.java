@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -326,9 +327,14 @@ public final class UniversityReportPurchaseService implements UniversityReportPu
 
     /** A v2 course profile is eligible unless more information was required; a v1 report needs all five measures. */
     private boolean eligible(UUID assessmentId) {
-        var result = reportService.stored(assessmentId).map(stored -> stored.result());
+        var stored = reportService.stored(assessmentId);
+        var result = stored.map(value -> value.result());
         if (result.filter(UniversityAssessmentResult::usesCourseProfile).isPresent()) {
-            return result.get().headline().status() != AssessmentStatus.MORE_INFORMATION_REQUIRED;
+            // The detailed report analyses each listed module once; a saved course listing a module twice can
+            // never be prepared, so it is never sold.
+            List<String> modules = stored.orElseThrow().state().keyModules();
+            return result.get().headline().status() != AssessmentStatus.MORE_INFORMATION_REQUIRED
+                    && modules.stream().map(String::strip).distinct().count() == modules.size();
         }
         UniversityReport paidReport = reportService.assemble(assessmentId, UniversityReportTier.PAID)
                 .orElseThrow(() -> new IllegalArgumentException("assessment does not exist"));

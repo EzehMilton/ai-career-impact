@@ -5,6 +5,7 @@ import jakarta.validation.ConstraintValidatorContext;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Counts entries exactly as the form mappers do — split, trim, drop blanks — so a field that passes
@@ -15,6 +16,7 @@ public final class BoundedTextListValidator implements ConstraintValidator<Bound
     private int maxItems;
     private int maxItemLength;
     private String separator;
+    private boolean distinct;
 
     public BoundedTextListValidator() {
         // Instantiated reflectively by the validation provider.
@@ -25,6 +27,7 @@ public final class BoundedTextListValidator implements ConstraintValidator<Bound
         this.maxItems = constraint.maxItems();
         this.maxItemLength = constraint.maxItemLength();
         this.separator = constraint.separator().pattern();
+        this.distinct = constraint.distinct();
     }
 
     @Override
@@ -42,6 +45,10 @@ public final class BoundedTextListValidator implements ConstraintValidator<Bound
         }
         if (entries.stream().anyMatch(entry -> entry.length() > maxItemLength)) {
             return fail(context, "Keep each entry under " + maxItemLength + " characters.");
+        }
+        if (distinct && entries.stream().map(entry -> entry.toLowerCase(Locale.ROOT)).distinct().count()
+                != entries.size()) {
+            return fail(context, "Enter each entry only once.");
         }
         return true;
     }

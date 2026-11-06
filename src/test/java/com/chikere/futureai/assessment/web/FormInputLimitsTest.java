@@ -98,6 +98,19 @@ class FormInputLimitsTest {
     }
 
     @Test
+    void aUniversityModuleListedTwiceIsRejectedBecauseItsDetailedReportCouldNeverBePrepared() {
+        var repeated = validUniversity();
+        repeated.setKeyModules("Statistics\nMicroeconomics\n  statistics  ");
+        var violations = validator.validate(repeated);
+        assertThat(propertiesOf(violations)).containsExactly("keyModules");
+        assertThat(violations).extracting(ConstraintViolation::getMessage).containsExactly("Enter each entry only once.");
+        // Skills and career areas may still repeat: nothing downstream analyses them one per entry.
+        var skills = validUniversity();
+        skills.setSkillsDeveloped("Analysis\nAnalysis");
+        assertThat(validator.validate(skills)).isEmpty();
+    }
+
+    @Test
     void aLevelCollectionsAreBoundedInBothCountAndEntryLength() {
         var tooMany = validALevel();
         tooMany.setPreferredDegreeAreas(entries("Economics", 21));
