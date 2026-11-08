@@ -84,6 +84,9 @@ class UniversityAssessmentControllerTest {
                 "not your ability or your chances of getting a job");
         assertThat(html).doesNotContain("Years of experience", "job title", "your work",
                 "AI Exposure", "future-proof");
+        // A long-running submission: the form is wired to the assessment loading panel, hidden until submitted.
+        assertThat(html).contains("data-long-running", "data-loading-panel hidden",
+                "We’re analysing your information", "/js/long-running-submit.js");
         verifyNoInteractions(workflow, reportService);
     }
 

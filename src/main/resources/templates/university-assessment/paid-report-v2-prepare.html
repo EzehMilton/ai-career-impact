@@ -12,14 +12,14 @@
     <p class="eyebrow">Your detailed course report</p>
     <h1>Prepare your detailed course report</h1>
   </div>
-  <section class="panel detailed-preparation" id="prepare" aria-labelledby="prepare-heading">
+  <section class="panel detailed-preparation" id="prepare" aria-labelledby="prepare-heading" data-loading-replace>
     <p class="notice" role="status" th:if="${preparationStatus == 'selection-required' or preparationStatus == 'invalid-selection'}" th:text="'Choose between one and ' + ${preparation.maximum} + ' modules from the list to continue.'">Choose between one and eight modules.</p>
     <p class="notice" role="status" th:if="${preparationStatus == 'unavailable'}">The module analysis is not available for this assessment right now. Your purchase is unaffected.</p>
     <p class="notice" role="status" th:if="${preparationStatus == 'failed'}">We could not prepare your detailed report just now. Your purchase is unaffected, and you can try again shortly.</p>
     <th:block th:if="${preparation.selectionRequired}">
       <h2 id="prepare-heading" th:text="'Choose up to ' + ${preparation.maximum} + ' modules for your detailed report'">Choose up to 8 modules</h2>
       <p>Your course lists more modules than the detailed analysis covers, so each one gets proper attention. Choose the modules that matter most to you. Your choice is kept once the report has been prepared.</p>
-      <form method="post" th:action="@{/university-assessment/{id}/report/prepare(id=${assessmentId})}">
+      <form method="post" th:action="@{/university-assessment/{id}/report/prepare(id=${assessmentId})}" data-long-running>
         <input type="hidden" name="selectionForm" value="true">
         <fieldset class="detailed-selection">
           <legend>Your modules</legend>
@@ -34,13 +34,14 @@
     <th:block th:unless="${preparation.selectionRequired}">
       <h2 id="prepare-heading">Prepare your detailed report</h2>
       <p>Your detailed report looks at your course profile, your modules, where AI may help your learning, where your own capability matters most, the skills to strengthen and a three-stage action plan. Preparing it can take up to a minute, and it is prepared only once.</p>
-      <form method="post" th:action="@{/university-assessment/{id}/report/prepare(id=${assessmentId})}">
+      <form method="post" th:action="@{/university-assessment/{id}/report/prepare(id=${assessmentId})}" data-long-running>
         <button type="submit" class="button-link">Prepare my detailed report</button>
       </form>
     </th:block>
+    <th:block th:replace="~{fragments/loading :: panel('report')}"></th:block>
   </section>
 
-  <nav class="page-action university-bottom-actions" aria-label="Report navigation">
+  <nav class="page-action university-bottom-actions" aria-label="Report navigation" data-loading-hide>
     <a class="button-link button-secondary" th:href="@{/university-assessment/{id}(id=${assessmentId})}">Back to your course profile</a>
   </nav>
 </main>

@@ -111,6 +111,10 @@ class RequestHardeningTest {
         // ever opened. The words "onerror" and "alert" survive inside that text, which is harmless
         // and is why the assertion looks for unopened tags rather than for scary-looking strings.
         assertThat(response.body()).contains("&lt;script&gt;alert(1)&lt;/script&gt;");
-        assertThat(response.body()).doesNotContain("<script", "<img");
+        assertThat(response.body()).doesNotContain("<img");
+        // The only script tags are the application's own same-origin files (the form's loading state); the
+        // submitted payload never opens one.
+        assertThat(java.util.Arrays.stream(response.body().split("<script", -1)).skip(1))
+                .allSatisfy(tag -> assertThat(tag).startsWith(" src=\"/js/"));
     }
 }
