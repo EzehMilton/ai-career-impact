@@ -24,7 +24,7 @@
   </div>
 
   <section class="panel detailed-preparation" id="prepare" th:if="${preparation != null and !preparation.reportReady}"
-           aria-labelledby="prepare-heading" data-loading-replace>
+           aria-labelledby="prepare-heading">
     <p class="eyebrow">Your detailed report</p>
     <p class="notice" role="status" th:if="${preparationStatus == 'selection-required' or preparationStatus == 'invalid-selection'}">Choose between one and eight responsibilities from the list to continue.</p>
     <p class="notice" role="status" th:if="${preparationStatus == 'unavailable'}">The responsibility-by-responsibility analysis is not available for this assessment right now. Your report below is complete and unaffected.</p>

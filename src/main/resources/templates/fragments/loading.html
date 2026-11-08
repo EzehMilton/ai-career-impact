@@ -1,40 +1,44 @@
 <!doctype html>
 <!--/*
   The waiting state for a long-running synchronous form post: a free assessment ('assessment') or preparing a
-  detailed report ('report'). Include it once on the page, and mark each form whose submission should show it
-  with data-long-running, and whatever it replaces with data-loading-hide (without any, the form itself is hidden).
+  detailed report ('report'). Include it once on the page and mark each form whose submission should show it with
+  data-long-running. It is a full-viewport overlay: the page stays in view behind it, dimmed, blurred and inert.
 
-  /js/long-running-submit.js shows the panel only once the browser accepts a valid submission, blocks a second
-  submission and rotates the messages below. Every word here is static template text: no user input is shown,
+  /js/long-running-submit.js moves the overlay to the end of <body>, shows it only once the browser accepts a valid
+  submission, blocks a second submission and rotates the messages below. Every word here is static template text: no user input is shown,
   and nothing claims progress the browser cannot know. The script tag lives here, so a page without the panel
   loads no script at all.
 */-->
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <body>
 <th:block th:fragment="panel(kind)">
-<section class="loading-panel" data-loading-panel hidden aria-labelledby="loading-heading"
+<section class="loading-overlay" data-loading-panel hidden aria-labelledby="loading-heading"
          th:attr="data-loading-label=${kind == 'report'} ? 'Preparing…' : 'Analysing…'">
-  <h2 id="loading-heading" class="loading-heading" data-loading-heading tabindex="-1"
-      th:text="${kind == 'report'} ? 'Preparing your detailed report' : 'We’re analysing your information'">We’re analysing your information</h2>
-  <div class="loading-progress" aria-hidden="true"><span class="loading-progress-bar"></span></div>
-  <p class="loading-message" data-loading-message role="status" aria-live="polite"
-     th:text="${kind == 'report'} ? 'Reviewing your assessment…' : 'Reviewing your information…'">Reviewing your information…</p>
-  <p class="loading-description" th:if="${kind == 'report'}">We’re building your personalised report. This can take up to a minute. Please keep this page open.</p>
-  <p class="loading-description" th:unless="${kind == 'report'}">We’re assessing your answers and preparing your results. This can take a little while. Please keep this page open.</p>
-  <ol class="loading-messages" data-loading-messages hidden th:if="${kind == 'report'}">
-    <li>Reviewing your assessment…</li>
-    <li>Preparing your detailed analysis…</li>
-    <li>Writing your personalised guidance…</li>
-    <li>Checking your report…</li>
-    <li>Almost there…</li>
-  </ol>
-  <ol class="loading-messages" data-loading-messages hidden th:unless="${kind == 'report'}">
-    <li>Reviewing your information…</li>
-    <li>Building your assessment…</li>
-    <li>Preparing your personalised guidance…</li>
-    <li>Checking the results…</li>
-    <li>Almost there…</li>
-  </ol>
+  <div class="loading-content">
+    <span class="loading-spinner" aria-hidden="true"></span>
+    <h2 id="loading-heading" class="loading-heading" data-loading-heading tabindex="-1"
+        th:text="${kind == 'report'} ? 'Preparing your detailed report' : 'We’re analysing your information'">We’re analysing your information</h2>
+    <p class="loading-message" data-loading-message role="status" aria-live="polite"
+       th:text="${kind == 'report'} ? 'Reviewing your assessment…' : 'Reviewing your information…'">Reviewing your information…</p>
+    <!--/* Indeterminate: it states no value, because the browser cannot know how far the server has got. */-->
+    <div class="loading-progress" role="progressbar" aria-labelledby="loading-heading"><span class="loading-progress-bar"></span></div>
+    <p class="loading-description" th:if="${kind == 'report'}">We’re building your personalised report. This can take up to a minute. Please keep this page open.</p>
+    <p class="loading-description" th:unless="${kind == 'report'}">We’re preparing your results. This can take a little while. Please keep this page open.</p>
+    <ol class="loading-messages" data-loading-messages hidden th:if="${kind == 'report'}">
+      <li>Reviewing your assessment…</li>
+      <li>Preparing your detailed analysis…</li>
+      <li>Writing your personalised guidance…</li>
+      <li>Checking your report…</li>
+      <li>Almost there…</li>
+    </ol>
+    <ol class="loading-messages" data-loading-messages hidden th:unless="${kind == 'report'}">
+      <li>Reviewing your information…</li>
+      <li>Building your assessment…</li>
+      <li>Preparing your personalised guidance…</li>
+      <li>Checking the results…</li>
+      <li>Almost there…</li>
+    </ol>
+  </div>
 </section>
 <script th:src="@{/js/long-running-submit.js}" src="/js/long-running-submit.js" defer></script>
 </th:block>

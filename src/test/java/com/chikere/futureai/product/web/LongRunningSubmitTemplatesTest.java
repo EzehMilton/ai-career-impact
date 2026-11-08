@@ -77,12 +77,13 @@ class LongRunningSubmitTemplatesTest {
     void thePanelCarriesOnlyStaticTextItsScriptAndTheAccessibilityHooks() {
         String panel = read("fragments/loading.html");
         assertThat(panel).contains("data-loading-panel hidden", "role=\"status\" aria-live=\"polite\"",
-                "data-loading-heading tabindex=\"-1\"", "aria-hidden=\"true\"",
+                "data-loading-heading tabindex=\"-1\"", "class=\"loading-spinner\" aria-hidden=\"true\"",
+                "role=\"progressbar\" aria-labelledby=\"loading-heading\"",
                 "th:src=\"@{/js/long-running-submit.js}\"", "We’re analysing your information",
                 "Preparing your detailed report", "This can take up to a minute. Please keep this page open.",
                 "Reviewing your information…", "Writing your personalised guidance…", "Almost there…");
         // Nothing the visitor typed can reach the panel, and nothing claims a percentage.
-        assertThat(panel).doesNotContain("${form", "${report", "${assessment", "%", "style=\"");
+        assertThat(panel).doesNotContain("${form", "${report", "${assessment", "%", "style=\"", "aria-valuenow");
     }
 
     private static List<String> forms(String source) {

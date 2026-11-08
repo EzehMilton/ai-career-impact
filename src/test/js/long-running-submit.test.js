@@ -13,7 +13,7 @@ const REPORT_MESSAGES = ['Reviewing your assessment…', 'Preparing your detaile
   'Writing your personalised guidance…', 'Checking your report…', 'Almost there…'];
 const BUTTONS = 'button[type="submit"], button:not([type]), input[type="submit"]';
 
-/** A minimal element: attributes, hidden, text, children, and querySelectorAll answers given per selector. */
+/** A minimal element: attributes, classes, hidden, text, children, and querySelectorAll answers per selector. */
 function element(tagName, options = {}) {
   const el = {
     tagName,
@@ -26,6 +26,11 @@ function element(tagName, options = {}) {
     selectors: options.selectors || {},
     listeners: {},
     focused: false,
+    classes: new Set(),
+    get classList() {
+      const classes = this.classes;
+      return { add(name) { classes.add(name); }, remove(name) { classes.delete(name); }, contains: (name) => classes.has(name) };
+    },
     setAttribute(name, value) { this.attrs[name] = String(value); },
     getAttribute(name) { return Object.prototype.hasOwnProperty.call(this.attrs, name) ? this.attrs[name] : null; },
     removeAttribute(name) { delete this.attrs[name]; },
@@ -33,6 +38,12 @@ function element(tagName, options = {}) {
     querySelectorAll(selector) { return this.selectors[selector] || []; },
     querySelector(selector) { return (this.selectors[selector] || [])[0] || null; },
     addEventListener(type, fn) { this.listeners[type] = fn; },
+    appendChild(child) {
+      if (child.parentNode) child.parentNode.children = child.parentNode.children.filter((other) => other !== child);
+      this.children.push(child);
+      child.parentNode = this;
+      return child;
+    },
     focus() { this.focused = true; }
   };
   if (options.checkValidity) el.checkValidity = options.checkValidity;
@@ -61,7 +72,7 @@ function clock() {
   };
 }
 
-/** A page: an intro and a form card to hide, a form with one submit button, and the report panel. */
+/** A page: a header and a main holding a form with one submit button, and the overlay at the end of the body. */
 function page(options = {}) {
   const line = element('P', { text: REPORT_MESSAGES[0] });
   const heading = element('H2');
@@ -77,30 +88,38 @@ function page(options = {}) {
     selectors: { [BUTTONS]: [button] },
     checkValidity: options.checkValidity || (() => true)
   });
-  const intro = element('SECTION');
-  const card = element('SECTION', { children: [form] });
-  const docSelectors = { '[data-loading-hide]': options.noHide ? [] : [intro, card], '[data-loading-replace]': [] };
-  const doc = element('#document', { selectors: docSelectors });
+  const header = element('HEADER', { attrs: options.headerAttrs });
+  const main = element('MAIN', { children: [element('SECTION', { children: [form] })] });
+  const body = element('BODY', { children: [header, main, panel] });
+  const doc = element('#document');
+  doc.body = body;
+  doc.documentElement = element('HTML');
   const time = clock();
   const controller = createLongRunningSubmit(form, {
     doc, panel, setTimer: time.setTimer, clearTimer: time.clearTimer, rotateMs: ROTATE_MS
   });
-  return { doc, panel, line, heading, button, form, intro, card, time, controller };
+  return { doc, panel, line, heading, button, form, header, main, time, controller };
 }
 
 function submitEvent(defaultPrevented = false) {
   return { defaultPrevented, prevented: false, preventDefault() { this.prevented = true; } };
 }
 
-test('a valid submission shows the panel, hides the form area and blocks the button without changing the request', () => {
+test('a valid submission shows the overlay over an inert page and blocks the button without changing the request', () => {
   const p = page();
   const event = submitEvent();
   p.controller.onSubmit(event);
 
   assert.equal(event.prevented, false, 'the first submission is never cancelled');
   assert.equal(p.panel.hidden, false);
-  assert.equal(p.intro.hidden, true);
-  assert.equal(p.card.hidden, true);
+  assert.equal(p.panel.getAttribute('inert'), null, 'the overlay itself stays usable');
+  assert.equal(p.header.getAttribute('inert'), '');
+  assert.equal(p.main.getAttribute('inert'), '');
+  // The page stays in view behind the overlay: nothing on it is hidden, so nothing moves.
+  assert.equal(p.header.hidden, false);
+  assert.equal(p.main.hidden, false);
+  assert.equal(p.form.hidden, false);
+  assert.equal(p.doc.documentElement.classList.contains('loading-active'), true);
   assert.equal(p.form.getAttribute('aria-busy'), 'true');
   assert.equal(p.button.getAttribute('aria-disabled'), 'true');
   assert.equal(p.button.textContent, 'Preparing…');
@@ -119,7 +138,8 @@ test('a form the browser considers invalid keeps its normal state', () => {
 
   assert.equal(event.prevented, false, 'the browser keeps handling its own validation');
   assert.equal(p.panel.hidden, true);
-  assert.equal(p.card.hidden, false);
+  assert.equal(p.main.getAttribute('inert'), null);
+  assert.equal(p.doc.documentElement.classList.contains('loading-active'), false);
   assert.equal(p.button.getAttribute('aria-disabled'), null);
   assert.equal(p.controller.isSubmitting(), false);
 });
@@ -128,6 +148,7 @@ test('a submission another script already cancelled does not show the panel', ()
   const p = page();
   p.controller.onSubmit(submitEvent(true));
   assert.equal(p.panel.hidden, true);
+  assert.equal(p.main.getAttribute('inert'), null);
   assert.equal(p.controller.isSubmitting(), false);
 });
 
@@ -165,8 +186,9 @@ test('reset restores the page exactly, so a page restored from the back/forward 
   p.controller.reset();
 
   assert.equal(p.panel.hidden, true);
-  assert.equal(p.intro.hidden, false);
-  assert.equal(p.card.hidden, false);
+  assert.equal(p.header.getAttribute('inert'), null);
+  assert.equal(p.main.getAttribute('inert'), null);
+  assert.equal(p.doc.documentElement.classList.contains('loading-active'), false);
   assert.equal(p.form.getAttribute('aria-busy'), null);
   assert.equal(p.button.disabled, false);
   assert.equal(p.button.getAttribute('aria-disabled'), null);
@@ -180,47 +202,49 @@ test('reset restores the page exactly, so a page restored from the back/forward 
   assert.equal(p.panel.hidden, false);
 });
 
-test('a replace container hides its other children and keeps the panel and whatever holds it', () => {
-  const p = page({ noHide: true });
-  const heading = element('H2');
-  const notice = element('P');
-  const wrapper = element('DIV', { children: [p.panel] });
-  const container = element('SECTION', { children: [heading, notice, p.form, wrapper] });
-  p.doc.selectors['[data-loading-replace]'] = [container];
+test('reset leaves an element that was already inert as it was', () => {
+  const p = page({ headerAttrs: { inert: '' } });
   p.controller.onSubmit(submitEvent());
-
-  assert.equal(heading.hidden, true);
-  assert.equal(notice.hidden, true);
-  assert.equal(p.form.hidden, true);
-  assert.equal(wrapper.hidden, false);
-  assert.equal(p.panel.hidden, false);
+  p.controller.reset();
+  assert.equal(p.header.getAttribute('inert'), '');
+  assert.equal(p.main.getAttribute('inert'), null);
 });
 
-test('without any marked area the submitted form itself is hidden', () => {
-  const p = page({ noHide: true });
+test('whatever holds the overlay is never made inert', () => {
+  const p = page();
+  const wrapper = element('DIV', { children: [p.panel] });
+  p.doc.body.children = [p.header, p.main, wrapper];
   p.controller.onSubmit(submitEvent());
-  assert.equal(p.form.hidden, true);
-  assert.equal(p.card.hidden, false);
+  assert.equal(wrapper.getAttribute('inert'), null);
+  assert.equal(p.main.getAttribute('inert'), '');
 });
 
 test('init wires only marked forms, resets on a restored page and does nothing without a panel', () => {
   const marked = element('FORM', { checkValidity: () => true });
   const panel = element('SECTION', { hidden: true });
+  const main = element('MAIN', { children: [marked, panel] });
+  panel.parentNode = main;
   const doc = element('#document', {
     selectors: { '[data-loading-panel]': [panel], 'form[data-long-running]': [marked] }
   });
+  doc.body = element('BODY', { children: [main] });
+  doc.documentElement = element('HTML');
   const win = { listeners: {}, setTimeout: () => 0, clearTimeout: () => {},
     addEventListener(type, fn) { this.listeners[type] = fn; } };
   const controllers = init(doc, win);
 
   assert.equal(controllers.length, 1);
+  assert.equal(panel.parentNode, doc.body, 'the overlay is moved to the end of the body, out of its card');
+  assert.equal(doc.body.children.at(-1), panel);
   assert.equal(typeof marked.listeners.submit, 'function');
   marked.listeners.submit(submitEvent());
   assert.equal(panel.hidden, false);
+  assert.equal(main.getAttribute('inert'), '');
   win.listeners.pageshow({ persisted: false });
   assert.equal(panel.hidden, false, 'an ordinary page load does not reset a submission under way');
   win.listeners.pageshow({ persisted: true });
   assert.equal(panel.hidden, true);
+  assert.equal(main.getAttribute('inert'), null);
   assert.equal(controllers[0].isSubmitting(), false);
 
   const bare = element('#document', { selectors: { 'form[data-long-running]': [element('FORM')] } });

@@ -9,7 +9,7 @@
 <main class="page-shell paid-report paid-report-refined detailed-report alevel-detailed-report" id="main" th:with="r=${report}">
   <meta name="robots" content="noindex,nofollow">
 
-  <section class="panel detailed-preparation" th:if="${provisional}" aria-labelledby="ar-retry" data-loading-replace>
+  <section class="panel detailed-preparation" th:if="${provisional}" aria-labelledby="ar-retry">
     <h2 id="ar-retry">Your detailed report is ready</h2>
     <p>Everything in this report is complete. The personalised explanation that goes alongside it could not be added just now. You can try again; nothing else in your report will change.</p>
     <form method="post" th:action="@{/a-level-assessment/{id}/report/prepare(id=${assessmentId})}" data-long-running>

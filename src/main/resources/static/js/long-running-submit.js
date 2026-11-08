@@ -1,16 +1,14 @@
 /*
  * The waiting state for a form whose request takes a while: a free assessment, or preparing a detailed report.
  * The request itself is the ordinary synchronous form post; this script never sends, cancels or inspects it. Once
- * the browser accepts a valid submission it swaps the form for the page's loading panel, blocks a second
- * submission and rotates reassurance messages. The messages are static text from the template, not progress: the
- * browser cannot know what the server is doing.
+ * the browser accepts a valid submission it lays the loading overlay over the page, makes the page underneath
+ * inert, blocks a second submission and rotates reassurance messages. The messages are static text from the
+ * template, not progress: the browser cannot know what the server is doing.
  *
  * Markup (fragments/loading.html):
- *   form[data-long-running]        a form whose submission shows the panel
- *   [data-loading-panel]           the panel, hidden until a submission starts
- *   [data-loading-hide]            what the panel replaces on the page
- *   [data-loading-replace]         a container holding the panel: every other child is hidden instead
- *                                  (without either marker, the submitted form itself is hidden)
+ *   form[data-long-running]        a form whose submission shows the overlay
+ *   [data-loading-panel]           the overlay, hidden until a submission starts; moved to the end of <body> so it
+ *                                  covers the viewport and everything else on the page can be made inert
  *   [data-loading-message]         the line the messages rotate through
  *   [data-loading-messages] > li   the messages, in order; the last one stays
  *
@@ -20,6 +18,7 @@
   'use strict';
 
   var ROTATE_MS = 4000;
+  var ACTIVE_CLASS = 'loading-active';
 
   function each(list, fn) {
     for (var i = 0; i < list.length; i += 1) fn(list[i], i);
@@ -27,7 +26,7 @@
 
   /**
    * One form's submission guard and loading state, with its timers passed in so it can be tested without a browser.
-   * deps: doc (querySelectorAll), panel, setTimer(fn, ms), clearTimer(id), rotateMs.
+   * deps: doc (body, documentElement), panel, setTimer(fn, ms), clearTimer(id), rotateMs.
    */
   function createLongRunningSubmit(form, deps) {
     var submitting = false;
@@ -59,23 +58,25 @@
       }
     }
 
-    /** What the panel replaces: marked elements, the other children of a replace container, else the form. */
-    function targets() {
+    /** Everything on the page except the overlay: it stays in view, blurred, but can no longer be used or read. */
+    function background() {
       var list = [];
-      each(deps.doc.querySelectorAll('[data-loading-hide]'), function (element) { list.push(element); });
-      each(deps.doc.querySelectorAll('[data-loading-replace]'), function (container) {
-        each(container.children, function (child) {
-          if (child !== deps.panel && !(child.contains && child.contains(deps.panel))) list.push(child);
-        });
+      var body = deps.doc.body;
+      if (!body) return list;
+      each(body.children, function (child) {
+        if (child !== deps.panel && !(child.contains && child.contains(deps.panel))) list.push(child);
       });
-      return list.length ? list : [form];
+      return list;
     }
 
     function activate() {
-      each(targets(), function (target) {
-        restore.push({ element: target, hidden: target.hidden });
-        target.hidden = true;
+      // Not focusable, clickable or announced. The form being sent is unaffected: inert controls stay in its data.
+      each(background(), function (element) {
+        restore.push({ element: element, inert: element.getAttribute('inert') });
+        element.setAttribute('inert', '');
       });
+      var root = deps.doc.documentElement;
+      if (root && root.classList) root.classList.add(ACTIVE_CLASS);
       form.setAttribute('aria-busy', 'true');
       var label = deps.panel.getAttribute('data-loading-label');
       each(buttons(), function (button) {
@@ -94,6 +95,7 @@
       deps.panel.hidden = false;
       var list = messages();
       if (list.length) rotate(list, 0);
+      // Focus moves once, out of the now inert page; the rotating line is announced without moving it again.
       var heading = deps.panel.querySelector('[data-loading-heading]');
       if (heading && typeof heading.focus === 'function') heading.focus();
     }
@@ -116,7 +118,10 @@
       each(timers, function (id) { deps.clearTimer(id); });
       timers = [];
       each(restore, function (entry) {
-        if (entry.element) entry.element.hidden = entry.hidden;
+        if (entry.element) {
+          if (entry.inert === null) entry.element.removeAttribute('inert');
+          else entry.element.setAttribute('inert', entry.inert);
+        }
         if (entry.button) {
           entry.button.disabled = false;
           if (entry.button.tagName === 'INPUT') entry.button.value = entry.value;
@@ -126,6 +131,8 @@
         }
       });
       restore = [];
+      var root = deps.doc.documentElement;
+      if (root && root.classList) root.classList.remove(ACTIVE_CLASS);
       form.removeAttribute('aria-busy');
       deps.panel.hidden = true;
       var list = messages();
@@ -143,6 +150,8 @@
   function init(doc, win) {
     var panel = doc.querySelector('[data-loading-panel]');
     if (!panel) return [];
+    // A direct child of <body>: fixed to the viewport whatever card it was written in, and outside what turns inert.
+    if (doc.body && panel.parentNode !== doc.body) doc.body.appendChild(panel);
     var controllers = [];
     each(doc.querySelectorAll('form[data-long-running]'), function (form) {
       var controller = createLongRunningSubmit(form, {

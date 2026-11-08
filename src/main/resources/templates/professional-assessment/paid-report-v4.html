@@ -18,7 +18,7 @@
     <span th:text="${detailed.reportVersion} + ' · ' + ${detailed.pdfVersion} + ' · paid narrative ' + ${r.narrativeStatus}">versions</span>
   </aside>
 
-  <section class="panel detailed-preparation" th:if="${detailed.provisional}" aria-labelledby="dr-retry" data-loading-replace>
+  <section class="panel detailed-preparation" th:if="${detailed.provisional}" aria-labelledby="dr-retry">
     <h2 id="dr-retry">Your detailed report is ready</h2>
     <p>Everything in this report is complete. The personalised explanation that goes alongside it could not be added just now. You can try again; nothing else in your report will change.</p>
     <p class="notice" role="status" th:if="${preparationStatus == 'failed'}">We still could not add the personalised explanation. Please try again a little later.</p>

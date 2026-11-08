@@ -12,7 +12,7 @@
     <p class="eyebrow">Your detailed course report</p>
     <h1>Prepare your detailed course report</h1>
   </div>
-  <section class="panel detailed-preparation" id="prepare" aria-labelledby="prepare-heading" data-loading-replace>
+  <section class="panel detailed-preparation" id="prepare" aria-labelledby="prepare-heading">
     <p class="notice" role="status" th:if="${preparationStatus == 'selection-required' or preparationStatus == 'invalid-selection'}" th:text="'Choose between one and ' + ${preparation.maximum} + ' modules from the list to continue.'">Choose between one and eight modules.</p>
     <p class="notice" role="status" th:if="${preparationStatus == 'unavailable'}">The module analysis is not available for this assessment right now. Your purchase is unaffected.</p>
     <p class="notice" role="status" th:if="${preparationStatus == 'failed'}">We could not prepare your detailed report just now. Your purchase is unaffected, and you can try again shortly.</p>
@@ -41,7 +41,7 @@
     <th:block th:replace="~{fragments/loading :: panel('report')}"></th:block>
   </section>
 
-  <nav class="page-action university-bottom-actions" aria-label="Report navigation" data-loading-hide>
+  <nav class="page-action university-bottom-actions" aria-label="Report navigation">
     <a class="button-link button-secondary" th:href="@{/university-assessment/{id}(id=${assessmentId})}">Back to your course profile</a>
   </nav>
 </main>

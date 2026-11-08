@@ -13,13 +13,13 @@
         <p class="intro">Two people with the same job title can be affected by AI very differently. Tell us what you actually do, and we’ll show how AI could affect your work and where your skills stay valuable.</p>
     </div>
 
-    <section class="alert alert-info professional-before" aria-labelledby="who-heading" data-loading-hide>
+    <section class="alert alert-info professional-before" aria-labelledby="who-heading">
         <h2 id="who-heading">Tips for a useful result</h2>
         <p>Be specific. “I review contracts and advise clients on risk” tells us far more than “legal work”. Your result is based only on what you write here.</p>
         <p>The more specific you can be about what you actually do, the more useful your assessment can be. Please don’t include names of colleagues, clients or your employer. We don’t need them.</p>
     </section>
 
-    <section class="panel work-form" aria-labelledby="form-heading" data-loading-hide>
+    <section class="panel work-form" aria-labelledby="form-heading">
         <h2 id="form-heading">Tell us about your work</h2>
         <p class="professional-example-link">
             <a class="text-link" th:href="@{/professional-assessment/example}" href="/professional-assessment/example">
@@ -70,7 +70,7 @@
 
     <th:block th:replace="~{fragments/loading :: panel('assessment')}"></th:block>
 
-    <p class="page-action professional-return-link" data-loading-hide>
+    <p class="page-action professional-return-link">
         <a class="button-link button-secondary" th:href="@{/}" href="/">&#8592; Back to home</a>
     </p>
 </main>
