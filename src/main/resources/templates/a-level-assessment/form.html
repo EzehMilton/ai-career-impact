@@ -13,14 +13,14 @@
     <p class="intro">See which university courses, careers and lasting skills your subjects could lead to as AI develops. You don’t need your future planned out to start.</p>
   </div>
 
-  <section class="alert alert-info a-level-before" aria-labelledby="who-heading">
+  <section class="alert alert-info a-level-before" aria-labelledby="who-heading" data-loading-hide>
     <h2 id="who-heading">Before you begin</h2>
     <p>For students choosing or reviewing their A-level subjects, on their own or with a parent or adviser.</p>
     <p><strong>All you need is your subject list. Everything else is optional. Deciding between subjects? Check each combination separately, then compare the results.</p>
     <p class="helper">This looks at your subjects, not your abilities, and can’t guarantee a place on a course. Always check a university’s entry requirements before deciding. Please don’t include your name or school.</p>
   </section>
 
-  <section class="panel work-form a-level-form-panel" aria-labelledby="form-heading">
+  <section class="panel work-form a-level-form-panel" aria-labelledby="form-heading" data-loading-hide>
     <h2 id="form-heading">Tell us about your A-level choices</h2>
     <p class="a-level-example-link">
       <a class="text-link" th:href="@{/a-level-assessment/example}" href="/a-level-assessment/example">
@@ -28,7 +28,7 @@
       </a>
     </p>
 
-    <form th:action="@{/a-level-assessment}" th:object="${form}" method="post" novalidate>
+    <form th:action="@{/a-level-assessment}" th:object="${form}" method="post" novalidate data-long-running>
       <div class="field">
         <label for="selectedSubjects">Your A-level subjects <span class="required">Required</span></label>
         <p id="selectedSubjects-help" class="helper">One subject per line, or separated by commas. Haven’t started yet? Enter the subjects you’re seriously considering.</p>
@@ -98,7 +98,9 @@
     </form>
   </section>
 
-  <p class="a-level-back-link">
+  <th:block th:replace="~{fragments/loading :: panel('assessment')}"></th:block>
+
+  <p class="a-level-back-link" data-loading-hide>
     <a th:href="@{/}" href="/">&#8592; Back to home</a>
   </p>
 </main>

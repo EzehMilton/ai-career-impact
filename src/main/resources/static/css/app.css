@@ -2005,3 +2005,52 @@ dd { margin: 0; font-weight: 700; text-align: right; }
   .detailed-report .detailed-card, .detailed-report .detailed-item, .detailed-report .detailed-phase, .detailed-report .detailed-strategy-grid .panel { break-inside: avoid; }
   .detailed-report .paid-report-header-actions, .detailed-report .paid-report-bottom-actions, .live-smoke-panel { display: none; }
 }
+
+/* Long-running form posts (fragments/loading.html): a calm, indeterminate waiting state, never a percentage. */
+.loading-panel {
+  max-width: 36rem;
+  margin: var(--space-5) auto;
+  padding: var(--space-5) var(--space-4);
+  text-align: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+.loading-panel[hidden] { display: none; }
+/* What the panel replaces stays hidden even where a component sets its own display (a flex .page-action). */
+[data-loading-hide][hidden], [data-loading-replace] > [hidden], form[data-long-running][hidden] { display: none !important; }
+.loading-heading { margin: 0 0 var(--space-4); color: var(--ink-strong); }
+.loading-heading:focus { outline: none; }
+.loading-heading:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; border-radius: var(--radius-sm); }
+.loading-progress {
+  position: relative;
+  height: .4rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+}
+.loading-progress-bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 35%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--brand), var(--brand-accent));
+  animation: loading-progress 1.8s ease-in-out infinite;
+}
+@keyframes loading-progress {
+  0% { left: -35%; }
+  100% { left: 100%; }
+}
+.loading-message { margin: var(--space-4) 0 var(--space-2); font-weight: 600; color: var(--ink-strong); min-height: 1.5em; }
+.loading-description { margin: 0 auto; max-width: 30rem; color: var(--ink-muted); }
+@media (max-width: 40rem) {
+  .loading-panel { margin: var(--space-4) 0; padding: var(--space-4) var(--space-3); }
+}
+/* Reduced motion: a still, full-width bar. The heading and messages say what is happening without movement. */
+@media (prefers-reduced-motion: reduce) {
+  .loading-progress-bar { animation: none; left: 0; width: 100%; opacity: .55; }
+}
+/* Inside a preparation card the panel replaces the card's content, so it drops its own card styling. */
+.detailed-preparation .loading-panel { margin: 0 auto; padding: var(--space-3) 0; background: none; border: 0; box-shadow: none; }

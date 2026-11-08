@@ -47,7 +47,11 @@ class ProfessionalAssessmentControllerTest {
     @Test
     void formIsPublicAndValidationOrCsrfFailureNeverCallsWorkflow() throws Exception {
         mvc.perform(get("/professional-assessment")).andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("what you actually do")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("what you actually do")))
+                .andExpect(content().string(org.hamcrest.Matchers.allOf(
+                        org.hamcrest.Matchers.containsString("data-long-running"),
+                        org.hamcrest.Matchers.containsString("We’re analysing your information"),
+                        org.hamcrest.Matchers.containsString("/js/long-running-submit.js"))));
         mvc.perform(validPost()).andExpect(status().isForbidden());
         mvc.perform(post("/professional-assessment").with(csrf()).param("profession", " "))
                 .andExpect(status().isOk()).andExpect(view().name("professional-assessment/form"));

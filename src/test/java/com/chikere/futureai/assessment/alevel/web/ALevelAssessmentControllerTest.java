@@ -85,6 +85,9 @@ class ALevelAssessmentControllerTest {
         // "no good or bad subjects here" is deliberate reassurance, so only verdict phrasing is banned.
         assertThat(html).doesNotContain("AI Exposure", "Future Readiness", "future-proof",
                 "wrong subjects", "will limit your future", "you won't get");
+        // A long-running submission: the form is wired to the assessment loading panel, hidden until submitted.
+        assertThat(html).contains("data-long-running", "data-loading-panel hidden",
+                "We’re analysing your information", "/js/long-running-submit.js");
         verifyNoInteractions(workflow, reportService);
     }
 

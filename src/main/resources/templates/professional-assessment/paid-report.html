@@ -24,7 +24,7 @@
   </div>
 
   <section class="panel detailed-preparation" id="prepare" th:if="${preparation != null and !preparation.reportReady}"
-           aria-labelledby="prepare-heading">
+           aria-labelledby="prepare-heading" data-loading-replace>
     <p class="eyebrow">Your detailed report</p>
     <p class="notice" role="status" th:if="${preparationStatus == 'selection-required' or preparationStatus == 'invalid-selection'}">Choose between one and eight responsibilities from the list to continue.</p>
     <p class="notice" role="status" th:if="${preparationStatus == 'unavailable'}">The responsibility-by-responsibility analysis is not available for this assessment right now. Your report below is complete and unaffected.</p>
@@ -32,7 +32,7 @@
     <th:block th:if="${preparation.selectionRequired}">
       <h2 id="prepare-heading">Choose up to 8 responsibilities for detailed analysis</h2>
       <p>The detailed analysis looks at up to eight responsibilities, so each one gets proper attention. Choose the ones that matter most in your work. Your choice is kept once the analysis has been prepared.</p>
-      <form method="post" th:action="@{/professional-assessment/{id}/report/prepare(id=${assessmentId})}">
+      <form method="post" th:action="@{/professional-assessment/{id}/report/prepare(id=${assessmentId})}" data-long-running>
         <input type="hidden" name="selectionForm" value="true">
         <fieldset class="detailed-selection">
           <legend>Your responsibilities</legend>
@@ -47,10 +47,11 @@
     <th:block th:unless="${preparation.selectionRequired}">
       <h2 id="prepare-heading">Prepare your detailed report</h2>
       <p>Your detailed report looks at each responsibility you listed, where AI may assist most, where your own contribution matters most, the skills to strengthen and a 90-day plan. Preparing it can take up to a minute, and it is prepared only once.</p>
-      <form method="post" th:action="@{/professional-assessment/{id}/report/prepare(id=${assessmentId})}">
+      <form method="post" th:action="@{/professional-assessment/{id}/report/prepare(id=${assessmentId})}" data-long-running>
         <button type="submit" class="button-link">Prepare my detailed report</button>
       </form>
     </th:block>
+    <th:block th:replace="~{fragments/loading :: panel('report')}"></th:block>
   </section>
 
   <section class="panel paid-overview" aria-labelledby="paid-overview-heading">

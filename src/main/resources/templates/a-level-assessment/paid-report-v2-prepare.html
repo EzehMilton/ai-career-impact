@@ -12,16 +12,17 @@
     <p class="eyebrow">Your detailed A-level report</p>
     <h1>Prepare your detailed A-level report</h1>
   </div>
-  <section class="panel detailed-preparation" id="prepare" aria-labelledby="prepare-heading">
+  <section class="panel detailed-preparation" id="prepare" aria-labelledby="prepare-heading" data-loading-replace>
     <p class="notice" role="status" th:if="${preparationStatus == 'failed'}">We could not prepare your detailed report just now. Your purchase is unaffected, and you can try again shortly.</p>
     <h2 id="prepare-heading">Prepare your detailed report</h2>
     <p>Your detailed report builds on your subject profile: what your combination gives you, strengths to develop and areas to strengthen, how to read your options before applying, how to use AI to support your learning, skill priorities and a three-stage action plan. It does not re-run your assessment, and it is prepared only once.</p>
-    <form method="post" th:action="@{/a-level-assessment/{id}/report/prepare(id=${assessmentId})}">
+    <form method="post" th:action="@{/a-level-assessment/{id}/report/prepare(id=${assessmentId})}" data-long-running>
       <button type="submit" class="button-link">Prepare my detailed report</button>
     </form>
+    <th:block th:replace="~{fragments/loading :: panel('report')}"></th:block>
   </section>
 
-  <nav class="page-action alevel-bottom-actions" aria-label="Report navigation">
+  <nav class="page-action alevel-bottom-actions" aria-label="Report navigation" data-loading-hide>
     <a class="button-link button-secondary" th:href="@{/a-level-assessment/{id}(id=${assessmentId})}">Back to your subject profile</a>
   </nav>
 </main>

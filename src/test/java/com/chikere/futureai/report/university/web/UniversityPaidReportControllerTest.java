@@ -246,6 +246,9 @@ class UniversityPaidReportControllerTest {
                 .andReturn().getResponse().getContentAsString();
 
         assertThat(html).contains("Prepare your detailed report").doesNotContain("type=\"checkbox\"");
+        // Preparing takes up to a minute: the form shows the report loading panel, never a percentage.
+        assertThat(html).contains("data-long-running", "data-loading-replace", "Preparing your detailed report",
+                "This can take up to a minute. Please keep this page open.", "/js/long-running-submit.js");
     }
 
     @Test
