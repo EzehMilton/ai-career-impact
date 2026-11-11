@@ -3,7 +3,7 @@
 An opt-in diagnostic log that follows one assessment from the submitted form to the report a visitor sees:
 what the form sent, what the decision model was asked and returned, how Java calculated every score and
 chose every factor, what the narrative model was given and wrote, which guardrails it passed, what evidence
-was found, and how long each step took.
+was found, how a paid detailed report was prepared, and how long each step took.
 
 > **Assessment tracing may include user-entered assessment data and complete AI prompts/responses. It is
 > intended for controlled development and diagnostic use and should not be enabled routinely in production.**
@@ -27,9 +27,10 @@ unset ASSESSMENT_TRACE_ENABLED
 export ASSESSMENT_TRACE_ENABLED=false
 ```
 
-The flag alone controls it. It is not tied to a profile, so it works the same under `dev` (fixture
-decision and narrative models), `dev-no-jev` (fixture decision model, OpenAI narrative) and `prod` (Jev and
-OpenAI). Startup logs a `WARN` when it is on.
+The flag alone controls it, under every profile: `dev` (fixture decision and narrative models), `dev-no-jev`
+(fixture decision model, OpenAI narratives) and `prod` (Jev and OpenAI). The only profile that changes the default
+is the local `live-smoke` profile, where it is on and every event is labelled `"executionMode": "LIVE_SMOKE"` (see
+[LIVE_SMOKE_TESTING.md](LIVE_SMOKE_TESTING.md)). Startup logs a `WARN` when it is on.
 
 When it is off, every trace call returns immediately: no payload is built, nothing is serialised, nothing is
 logged, and the narrative trace advisor is not even registered.
@@ -70,24 +71,38 @@ A submission emits, in order:
 | `START` | form mapper or workflow | trace opened; request id |
 | `FORM_INPUT` | `*AssessmentFormMapper` | the form exactly as submitted |
 | `DOMAIN_INPUT` | `*AssessmentFormMapper` | the domain state after trimming, splitting and mapping, and `formToDomainMs` |
+| `FORM_MAPPING_FAILED` | `AssessmentTrace` | the form could not be mapped to a domain state, and why |
 | `DECISION_MODEL_REQUEST` | `*AssessmentService` | provider (`JEV` or `LOCAL_FIXTURE`), model, fixture id, the state sent |
-| `DECISION_MODEL_PROVIDER_REQUEST` | `*JevJudgmentService` (Jev only) | the exact System One call: wire state, every question with its instructions and level criteria, model, timeout, retry policy |
-| `DECISION_MODEL_PROVIDER_RESPONSE` | `*JevJudgmentService` (Jev only) | raw answers before mapping (value, nearest level and label, confidence, probabilities), model, request id, tokens, timing and outcome |
+| `DECISION_MODEL_PROVIDER_REQUEST` | `*JevJudgmentService`, `ALevelV2JevJudgmentService` (Jev only) | the exact System One call: wire state, every question with its instructions and level criteria, model, timeout, retry policy |
+| `DECISION_MODEL_PROVIDER_RESPONSE` | `*JevJudgmentService`, `ALevelV2JevJudgmentService` (Jev only) | raw answers before mapping (value, nearest level and label, confidence, probabilities), model, request id, tokens, timing and outcome |
 | `DECISION_MODEL_RESPONSE` | `*AssessmentService` | every judgment as the policy receives it, timing and `SUCCEEDED` / `FAILED` / `TIMED_OUT` |
-| `INFORMATION_SUFFICIENCY` | `*DecisionPolicyV1` | value, thresholds, resulting status and confidence, whether scores were produced or suppressed |
-| `ASSESSMENT_CONFIDENCE` | `*DecisionPolicyV1` | mean and minimum judgment confidence against the HIGH / MODERATE thresholds |
-| `SCORE_CALCULATION` | `*DecisionPolicyV1` | one per measure: each input's raw score, transformation, weight and contribution, the weighted total, unrounded score, band and thresholds, measure confidence |
-| `FACTOR_SELECTION` | `*DecisionPolicyV1` | every candidate's signed effect, sign, eligibility, rank, and why it was or was not displayed |
+| `INFORMATION_SUFFICIENCY` | the decision policy | value, thresholds, resulting status and confidence, whether scores were produced or suppressed |
+| `ASSESSMENT_CONFIDENCE` | the decision policy | mean and minimum judgment confidence against the thresholds (per measure under the v2 student policies) |
+| `SCORE_CALCULATION` | the decision policy | one per measure: each input's raw score, transformation, weight and contribution, the weighted total, unrounded score, band and thresholds, measure confidence |
+| `FACTOR_SELECTION` | the decision policy | every candidate's signed effect, sign, materiality, eligibility, rank, and why it was or was not displayed |
 | `DETERMINISTIC_ASSESSMENT` | `*AssessmentService` | the complete result Java decided, with provenance: the boundary before any narrative AI |
 | `PERSISTENCE` | `*AssessmentService` | saved assessment id and save time |
-| `NARRATIVE_REQUEST` | `*NarrativeService` | purpose, provider, model, prompt/schema version and the full context given to the model |
+| `NARRATIVE_REQUEST` | `*NarrativeService` (Professional, and v1 student assessments) | purpose, provider, model, prompt/schema version and the full context given to the model |
 | `NARRATIVE_PROVIDER_REQUEST` | `AssessmentTraceAdvisor` (OpenAI only) | the exact system and user messages, model, output JSON schema |
 | `NARRATIVE_PROVIDER_RESPONSE` | `AssessmentTraceAdvisor` (OpenAI only) | raw response text before mapping, model, tokens, timing |
 | `NARRATIVE_RESPONSE` | `*NarrativeService` | the typed narrative as returned, timing and outcome |
 | `NARRATIVE_VALIDATION` | `*NarrativeValidator` | each guardrail: passed, failed (with reason and triggering text) or not evaluated |
+| `NARRATIVE_REPAIR_REQUEST` / `NARRATIVE_OUTCOME` | `ProfessionalNarrativeService` | the one repair request after a failed draft, and the final outcome |
 | `OCCUPATION_CLASSIFICATION` | Professional only | classifier, request and SOC result, or why it was skipped |
 | `EVIDENCE_REQUEST` / `EVIDENCE_RESPONSE` | `*EvidenceService` | provider, request (including SOC code), the returned bundle and timing, or why it was skipped |
 | `SUMMARY` | `*AssessmentWorkflow` | outcome and every measured timing |
+
+A University or A-level `decision-v2` submission has no free narrative, so it emits no `NARRATIVE_*` stages.
+
+Preparing a detailed report (`POST /{journey}/{id}/report/prepare`) emits, under its own trace joined by
+`assessmentId`:
+
+| Stage | What it shows |
+| --- | --- |
+| `RESPONSIBILITY_ANALYSIS_REQUEST`, `RESPONSIBILITY_MODEL_PROVIDER_REQUEST` / `_RESPONSE`, `RESPONSIBILITY_ANALYSIS_RESULT`, `RESPONSIBILITY_CLASSIFICATION`, `RESPONSIBILITY_ANALYSIS_PERSISTED` / `_REUSED` / `_FAILED` | Professional: the selected responsibilities, the Jev call, the validated judgments, the deterministic classification and the stored, reused or failed snapshot |
+| `RESPONSIBILITY_GUIDANCE` | Professional: guidance generated, reused or returned from a concurrent request, with rule ids |
+| `UNIVERSITY_MODULE_ANALYSIS_REQUEST` / `_DENIED` / `_REUSED` / `_PERSISTED` / `_FAILED` | University: the selected module ids, a refusal before any provider call and why, or the reused, stored or failed snapshot |
+| `PAID_NARRATIVE_REQUEST`, `PAID_NARRATIVE_RESPONSE`, `PAID_NARRATIVE_VALIDATION`, `PAID_NARRATIVE_REPAIR`, `PAID_NARRATIVE_FALLBACK`, `PAID_NARRATIVE_REUSED` | All journeys: the compact provider view of the frozen findings, each response (attempt 1, or 2 for the repair), every validation rule's outcome, the repair request, a fallback and why, or a stored narrative returned without a call |
 
 Report views emit, each under its own trace joined by `assessmentId`:
 
@@ -152,14 +167,15 @@ them appears anywhere in a full trace.
 - **Malformed narrative output** fails when Spring AI maps it onto the narrative record (missing fields, or
   practical actions outside 3–5). It appears as `NARRATIVE_RESPONSE` with `status=FAILED` and the error,
   not as a `NARRATIVE_VALIDATION` rule.
-- **There is no separate detailed-report AI call.** One narrative call per assessment feeds both the free
-  result and the detailed report.
+- **The detailed report has its own AI call.** The paid narrative is a separate OpenAI call made when the customer
+  prepares the detailed report, traced with the `PAID_NARRATIVE_*` stages above, not as part of the submission.
 - **Report views have their own trace id.** The free result, the detailed report, the purchase snapshot and
   the PDF are each assembled on a later request, so they are joined to the submission by `assessmentId`.
   The submission's trace id is not persisted, because that would need a schema change.
 - **Display rounding is not traced.** Scores are logged unrounded, as stored. Pages and the PDF round them
   in the view layer.
-- **University and A-level evidence** comes only from the local fixture providers. Where no provider is
-  configured, as under `prod`, `EVIDENCE_RESPONSE` says `SKIPPED` rather than implying evidence exists.
+- **University and A-level evidence** comes only from the local fixture providers (`dev`, `dev-no-jev`). Where no
+  provider is configured, as under `prod` and `live-smoke`, `EVIDENCE_RESPONSE` says `SKIPPED` rather than implying
+  evidence exists.
 - **Bean Validation failures** stop at the controller before the form mapper runs, so a rejected form leaves
   no trace.

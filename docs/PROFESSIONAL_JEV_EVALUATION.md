@@ -1,6 +1,6 @@
 # Professional Jev live evaluation
 
-This harness runs fictional professional profiles through the real `professional-v1` Jev judgment schema and the deterministic `professional-decision-v1` Java policy. It exists to help reviewers inspect atomic judgments, confidence, decision measures, and whether detailed responsibilities affect results beyond a job title.
+This harness runs fictional professional profiles through the real `professional-v1` Jev judgment schema and the deterministic `professional-decision-v1` Java policy. New assessments in the application use `professional-decision-v2`, whose scores, weights and bands are identical; it only stops presenting factors below a materiality threshold, so the measures in this report are the ones a customer would see. It exists to help reviewers inspect atomic judgments, confidence, decision measures, and whether detailed responsibilities affect results beyond a job title.
 
 The harness is not a scientific validation study. The cases do not have independently validated ground-truth labels, so the report uses descriptive statistics and warnings rather than an accuracy percentage. Exact model outputs can vary and should not become brittle unit-test assertions.
 
@@ -14,7 +14,7 @@ Run after changes. This runs the normal unit and integration suite, including da
 ./mvnw clean verify
 ```
 
-Live evaluation requires both the explicit `live-jev-evaluation` Maven profile and a non-empty `TYPESAFE_API_KEY` environment variable. The live test also checks a system property supplied only by that profile. Merely exporting the key does not enable live tests. A live run incurs TypeSafe/Jev API usage; each selected case makes one System One request containing all nine professional-v1 questions. The harness does not call OpenAI and does not add retries around the client.
+Live evaluation requires both the explicit `live-jev-evaluation` Maven profile and a non-empty `TYPESAFE_API_KEY` environment variable. The live test also checks a system property supplied only by that profile. Merely exporting the key does not enable live tests. A live run incurs TypeSafe/Jev API usage; each selected case makes one System One request containing all nine professional-v1 questions. The harness does not call OpenAI and does not add retries around the client. Other opt-in harnesses are listed in [LIVE_SMOKE_TESTING.md](LIVE_SMOKE_TESTING.md#opt-in-live-harnesses).
 
 ### Fast live Jev case
 
@@ -41,15 +41,18 @@ The full dataset currently makes 16 System One requests. The normal suite may st
 
 ### Capturing what the running application sends to Jev
 
-The harness above uses fictional cases. To see what a real assessment in the running application
-sent to Jev and what came back, start the application with the
-development-only `jev-capture` profile added to the profiles you already use:
+The harness above uses fictional cases. To see what an assessment in the running application
+sent to its judgment provider and what came back, set `app.dev.capture-jev=true` under the `dev` or
+`dev-no-jev` profile:
 
 ```shell
-SPRING_PROFILES_ACTIVE=jev-capture TYPESAFE_API_KEY=<key> OPENAI_API_KEY=<key> ./mvnw spring-boot:run
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev -Dspring-boot.run.arguments=--app.dev.capture-jev=true
 ```
 
-`jev-capture` wraps whichever professional judgment provider is active. After each successful
+Capture is available only under those two development profiles, which both use the fixture
+judgment provider, so the files record the state and questions Jev would be given alongside the
+fixture's answers. It cannot be switched on under `prod` or `live-smoke`. The capture wraps whichever
+professional judgment provider is active. After each successful
 judgment it writes one pretty-printed JSON file to `target/jev-capture/`, named
 `{yyyyMMdd'T'HHmmss.SSS'Z'}-{8 hex characters}.json`. Set
 `app.professional.jev-capture.directory` to write elsewhere; `./mvnw clean` deletes the default
@@ -68,13 +71,11 @@ the raw HTTP exchange. The client also adds the configured model name (`spring.a
 to the request body, and the bearer key and JSON content headers to the request.
 
 Capture never changes a result. A failed judgment writes nothing; a failed write is ignored apart
-from one WARN log line naming only the exception type, never the path or content. With `local-fixture` the fixture provider is
-wrapped, so the files show the state and questions Jev would have been given alongside the fixture's
-answers.
+from one WARN log line naming only the exception type, never the path or content.
 
 The files contain the assessment input, which can include personal details. Treat them as
 personal data: keep them local, do not commit them (`target/` is ignored), and delete them when done.
-The startup validator refuses to run `jev-capture` together with `prod`.
+Capture is wired only under `dev` and `dev-no-jev`, so it can never run in production.
 
 ## What the first live comparison showed
 

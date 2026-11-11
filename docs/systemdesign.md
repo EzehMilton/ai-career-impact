@@ -1,6 +1,6 @@
 # AI Career Impact — system design
 
-This document reviews the application as it stands on `main` (Flyway V18, Spring Boot 4.0.8, Java 21) and works through six questions:
+This document reviews the application as it stands on `main` (Flyway V25, Spring Boot 4.0.8, Java 21; reviewed 8 November 2026) and works through six questions:
 
 1. [What traffic, storage and processing does it need?](#1-traffic-storage-and-processing-requirements)
 2. [What are its endpoints, data structures and relationships?](#2-endpoints-data-structures-and-relationships)
@@ -22,24 +22,29 @@ form POST ─► Jev atomic judgments ─► Java decision policy ─► persist
                                                                 │
           ┌─────────────────────────────────────────────────────┘
           ▼
-   OpenAI narrative ─► (occupation classification) ─► evidence (Nomis/ONS) ─► persist
+   Professional only: OpenAI narrative ─► occupation classification ─► evidence (Nomis/ONS)
+   University, A-level: evidence (fixture or none); no model call
           │
           ▼
-   redirect ─► GET free report (read-only, recomposed from saved rows)
+   redirect ─► GET free result (read-only, recomposed from saved rows)
           │
           ▼
-   Stripe Checkout ─► signed webhook ─► ACTIVE entitlement + frozen paid snapshot
+   Stripe Checkout (or complimentary code) ─► signed webhook ─► ACTIVE entitlement
+          │                                    (+ frozen role-level snapshot for Professional)
+          ▼
+   POST report/prepare ─► paid Jev analysis (Professional, University) ─► Java guidance
+                       ─► OpenAI paid narrative ─► immutable detailed report snapshot
           │
           ▼
-   GET paid report / GET PDF (rendered once, stored immutably)
+   GET paid report / GET PDF (read from the snapshot)
 ```
 
 Properties that drive almost every design conclusion below:
 
-- **The write path is slow and expensive; the read path is cheap.** One submission makes up to four outbound network calls in series. Every subsequent page view is a primary-key lookup with no outbound call.
-- **Saved records are immutable history.** Assessments, narratives, evidence, purchased snapshots and PDFs are never recalculated or regenerated.
+- **The write paths are slow and expensive; the read path is cheap.** A Professional submission makes up to four outbound network calls in series; a University or A-level submission makes one (Jev). Preparing a detailed report makes up to three more (paid Jev analysis, then the paid narrative and, if needed, one repair). Every page view is a primary-key lookup with no outbound call.
+- **Saved records are immutable history.** Assessments, narratives, evidence, analyses, purchased snapshots, detailed reports and PDFs are never recalculated or regenerated.
 - **No accounts.** The assessment UUID is the access token. There is no list endpoint.
-- **No JavaScript.** The CSP forbids scripts (`script-src 'none'`), which constrains how asynchronous work can be shown to a user.
+- **Minimal JavaScript.** Pages are server-rendered and work without scripts. Two first-party scripts (`script-src 'self'`, nothing inline) add a payment-confirmation poller and a loading overlay for slow form posts.
 - **No infrastructure beyond PostgreSQL.** No cache, queue, object store or shared session store.
 
 ---
@@ -66,13 +71,15 @@ From [LIVE_AI_VERIFICATION.md](LIVE_AI_VERIFICATION.md) and [LIVE_EVIDENCE_VERIF
 
 | Call | Measured | Configured bound |
 | --- | --- | --- |
-| Jev judgments (TypeSafe SDK 0.2.0) | 1.2 s – 5.5 s | SDK defaults: 10 s read timeout, up to 2 retries, 30 s retry budget (checked only between attempts) |
-| OpenAI narrative (`gpt-4o-mini`) | 6.1 s – 18.5 s (six live runs) | **Not set by the application**; Spring AI / client defaults apply and are unverified |
+| Jev judgments (TypeSafe SDK 0.2.0) | 1.2 s – 5.5 s | 60 s timeout (`TYPESAFE_TIMEOUT`), **no retries** (`TYPESAFE_MAX_RETRIES=0`) |
+| Paid Jev analysis (responsibilities or modules, up to 8 items) | Not summarised here; see the live harness outputs | Same client settings |
+| OpenAI free narrative (Professional only) | 6.1 s – 18.5 s (six live runs on `gpt-4o-mini`; journey models have since changed) | **Not set by the application**; Spring AI / client defaults apply |
+| OpenAI paid narrative (one call, at most one repair) | Not summarised here | Same as above |
 | Nomis evidence (two HTTP requests) | Not measured separately | 5 s connect, 10 s read, per request |
 | Stripe Checkout Session creation | Not measured | Stripe SDK defaults |
 | Java decision policy, persistence, rendering | Milliseconds | — |
 
-Because the calls run in series inside the request, a **typical submission takes ~10–25 s** and a **bad-but-successful submission can take 60 s or more** (Jev retry plus a slow narrative plus slow Nomis).
+Because the calls run in series inside the request, a **typical Professional submission takes ~10–25 s**, a University or A-level submission a few seconds, and **preparing a detailed report up to about a minute** (the page says so). Narrative models are per journey: `gpt-6-luna` for University and A-level, `gpt-6.1-sol` for Professional.
 
 ### 1.3 Traffic
 
@@ -101,14 +108,17 @@ Rough token sizing per call (prompt instructions plus the bounded user input, pl
 
 | Call | Input tokens | Output tokens |
 | --- | ---: | ---: |
-| Narrative | ~3,000 | ~800 |
+| Free narrative (Professional) | ~3,000 | ~800 |
+
+With the 50/25/25 journey mix, only half of submissions make an OpenAI call; every paid report adds one paid Jev analysis (Professional and University) and one or two paid-narrative calls. The figures below assume the free narrative only.
 
 | | 1k/day | 10k/day | 100k/day | 100k/day spike |
 | --- | ---: | ---: | ---: | ---: |
-| Jev requests per day | 1,000 | 10,000 | 100,000 | — |
-| OpenAI requests per day (narrative) | 1,000 | 10,000 | 100,000 | — |
-| OpenAI tokens per minute, peak hour | ~9.5k | ~95k | ~950k | **~9.5M** |
-| Nomis requests per day (`live-evidence` only, 2 per professional assessment) | 1,000 | 10,000 | 100,000 | — |
+| Jev requests per day (submissions) | 1,000 | 10,000 | 100,000 | — |
+| OpenAI requests per day (free narrative) | 500 | 5,000 | 50,000 | — |
+| OpenAI tokens per minute, peak hour | ~4.8k | ~48k | ~480k | **~4.8M** |
+| Paid reports per day (each: ≤ 1 Jev + 1–2 OpenAI) | 50 | 500 | 5,000 | — |
+| Nomis requests per day (`prod`, 2 per Professional assessment) | 1,000 | 10,000 | 100,000 | — |
 
 The tokens-per-minute figure, not CPU, is the first hard ceiling: it has to fit within the OpenAI account's rate-limit tier, and the Jev equivalent has to fit TypeSafe's limits. Nomis is an anonymous public API, and fetching its full SOC codelist on every report becomes an etiquette and latency problem well before it becomes a cost one.
 
@@ -117,11 +127,11 @@ The tokens-per-minute figure, not CPU, is the first hard ceiling: it has to fit 
 | Item | Per unit | Notes |
 | --- | --- | --- |
 | Report price | £4.99 Professional, £2.99 University, £1.99 A-level | `home.html` display text; the Stripe Price is authoritative |
-| OpenAI narrative | ≈ $0.001 | At `gpt-4o-mini` list pricing; re-check current pricing |
-| Jev judgment | **unknown** | The largest unknown in the cost model; obtain from TypeSafe |
+| OpenAI narrative | ≈ $0.002–$0.02 per call | `gpt-6-luna` at $0.10/$0.50 and `gpt-6.1-sol` at $2.00/$10.00 per million input/output tokens (configured defaults, published 6 November 2026) |
+| Jev judgment | ≈ $0.0001 per call (estimate) | Configured at 0.042 USD per million input tokens, an early-access figure from third-party trackers; TypeSafe publishes no price. Still the largest unknown |
 | Stripe fee | ≈ 1.5% + 20p (UK cards) | About 11–12% of a £1.99 sale; re-check current pricing |
 
-Every assessment incurs Jev and OpenAI cost; only ~5% earn revenue. The break-even condition is roughly:
+Every assessment incurs Jev cost and Professional assessments also OpenAI cost; only ~5% earn revenue. `ProviderCostTracker` logs an estimated cost line per assessment (see [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md#estimated-provider-cost)). The break-even condition is roughly:
 
 ```text
 conversion × average net price  >  Jev cost + OpenAI cost + infrastructure cost per assessment
@@ -143,7 +153,9 @@ Estimated row sizes, from the Flyway schemas (typical / worst case, including in
 | **Per assessment** | **~13 KB** | **~40 KB** | |
 | Entitlement + processed payment event | ~1 KB | ~2 KB | Per checkout |
 | Purchased snapshot (JSONB) | ~25 KB | ~60 KB | Per purchase |
-| Purchased PDF (`BYTEA`) | ~100 KB | 5 MB (cap) | Per downloaded purchase; text-only, built-in fonts |
+| Paid analysis (responsibilities or modules) | ~10 KB | ~30 KB | Professional and University paid reports; judgments with distributions |
+| Detailed report snapshot (JSONB) | ~30 KB | ~80 KB | Per prepared paid report |
+| Purchased PDF (`BYTEA`) | ~100 KB | 5 MB (cap) | Professional purchases and v1 student purchases; University and A-level detailed-report PDFs are rendered on demand and not stored |
 
 | | 1k/day | 10k/day | 100k/day |
 | --- | ---: | ---: | ---: |
@@ -187,6 +199,7 @@ All routes are server-rendered HTML unless stated. Every browser POST is CSRF-pr
 | GET | `/methodology` | How assessments work | |
 | GET | `/privacy` | Data handling | |
 | GET | `/css/app.css` | The single stylesheet | `max-age=300, public` |
+| GET | `/js/payment-confirmation.js`, `/js/long-running-submit.js` | The two first-party scripts | |
 | — | `/error` | Shared error views (403, 404, 429, 5xx) | |
 | GET | `/actuator/health[/liveness\|/readiness]`, `/actuator/info` | Probes | All other `/actuator/**` denied |
 
@@ -195,16 +208,20 @@ All routes are server-rendered HTML unless stated. Every browser POST is CSRF-pr
 | Method | Path | Purpose | Outbound calls | Rate-limit group |
 | --- | --- | --- | --- | --- |
 | GET | `/{journey}` | Form | — | — |
-| POST | `/{journey}` | Validate, assess, enrich, redirect (PRG) | Jev, OpenAI, Nomis* | `assessment-submission` (10/min) |
+| GET | `/{journey}/example` | Worked example of a completed form | — | — |
+| POST | `/{journey}` | Validate, assess, enrich, redirect (PRG) | Jev; Professional also OpenAI and Nomis* | `assessment-submission` (10/min) |
 | GET | `/{journey}/{uuid}` | Free result | — | — |
 | POST | `/{journey}/{uuid}/checkout` | Create Stripe Checkout Session | Stripe | `checkout-start` (10/min) |
-| GET | `/{journey}/{uuid}/report` | Frozen paid report, `ACTIVE` only (else 403) | — | — |
-| GET | `/{journey}/{uuid}/report.pdf` | Immutable PDF, `ACTIVE` only (else 403) | — (renders once locally) | — |
-| GET/POST | `/{journey}/{uuid}/checkout/local[/confirm]` | Simulated payment | — | `local-fixture` profile only |
+| POST | `/{journey}/{uuid}/complimentary-access` | Redeem the complimentary code (404 while disabled) | — | — |
+| GET | `/{journey}/{uuid}/payment-status` | Saved entitlement status as JSON, for the poller | — | — |
+| GET | `/{journey}/{uuid}/report` | Paid report, `ACTIVE` only (else 403): stored detailed report, preparation step or frozen v1 report | — | — |
+| POST | `/{journey}/{uuid}/report/prepare` | Prepare the detailed report once | Paid Jev analysis (Professional, University), OpenAI | — |
+| GET | `/{journey}/{uuid}/report.pdf` | PDF of the stored report, `ACTIVE` only (else 403) | — (renders locally) | — |
+| GET/POST | `/{journey}/{uuid}/checkout/local[/confirm]` | Simulated payment | — | `dev` profile only |
 
-\* Nomis only under `live-evidence`, and only for the Professional journey.
+\* Nomis only under `prod`, and only for the Professional journey. `/dev/live-smoke/**` exists only under the local `live-smoke` profile.
 
-**Payment webhooks** (`live-payment` only; signature-authenticated, CSRF-exempt, never rate-limited)
+**Payment webhooks** (`prod` and `dev-no-jev`; signature-authenticated, CSRF-exempt, never rate-limited)
 
 | Method | Path | Accepts |
 | --- | --- | --- |
@@ -220,20 +237,22 @@ Domain and application types are immutable Java records with no JPA annotations;
 | --- | --- | --- |
 | `ProfessionalAssessmentState` / `UniversityAssessmentState` / `ALevelAssessmentState` | Domain input | The journey's validated, trimmed user input |
 | `AssessmentJudgmentSet` → `DimensionJudgment` | Shared judgment model | Per dimension: numeric or categorical value, confidence, probability distribution |
-| `ProfessionalMeasure` / `UniversityMeasure` / `ALevelMeasure` | Separate enums | 4 / 5 / 6 measures; deliberately not unified |
+| `ProfessionalMeasure` / `UniversityProfileMeasure` / `ALevelProfileMeasure` | Separate enums | 4 / 3 / 4 measures for new assessments (historical v1 student assessments: `UniversityMeasure` 5, `ALevelMeasure` 6); deliberately not unified |
 | `*DecisionResult`, `*MeasureResult`, `*DecisionFactor` | Policy output | Scores 0–10, bands, confidence, status, signed explanation factors |
 | `AssessmentDecision`, `AssessmentStatus`, `AssessmentConfidence` | Shared result shape | `READY`, `READY_WITH_CAUTION`, `MORE_INFORMATION_REQUIRED`; `LOW`/`MODERATE`/`HIGH` |
-| `*Narrative` | OpenAI structured output | HTML-free prose sections and 3–5 actions |
+| `*Narrative`, `*PaidNarrative` | OpenAI structured output | Free: HTML-free prose sections and 3–5 actions (Professional, and v1 student assessments). Paid: fields keyed to deterministic ids |
+| Responsibility / module analysis, `*Guidance` | Paid analysis and Java guidance | Per-item judgments and classifications; deterministic guidance with rule ids |
 | `*EvidenceBundle` → `*EvidenceItem` | Evidence | Category, summary, source, publisher, safe URL, dates, optional metric triplet, quality |
 | `*Report` | Composed view | Delivery-neutral `FREE` or `PAID` report |
 | `*ReportEntitlement` | Payment state | `PENDING` → `ACTIVE` (also `FAILED`, `REFUNDED`, `REVOKED`) |
-| `Purchased*ReportSnapshot` | Frozen JSONB | The exact paid report bought, versioned (`professional-report-v1`) |
+| `Purchased*ReportSnapshot` | Frozen JSONB | What a purchase froze: the role-level paid report (Professional), the v1 student report, or a marker for a v2 student purchase |
+| `*DetailedReportSnapshot` | Immutable JSONB | The prepared detailed report with every source version as a column |
 
-Every saved record carries the versions that produced it: judgment schema (`professional-v1`), decision policy (`professional-decision-v1`), prompt (`professional-narrative-v1`), evidence (`professional-evidence-v1`), report (`professional-report-v1`), PDF layout (`professional-report-pdf-v1`), and, for historical CV-sourced assessments only, the CV parser and extractor.
+Every saved record carries the versions that produced it. For a new Professional assessment and report these are the judgment schema (`professional-v1`), decision policy (`professional-decision-v2`), free prompt (`professional-narrative-v7`), evidence (`professional-evidence-v1`), purchased report (`professional-report-v2`), responsibility schema and policy, guidance policy, paid narrative (`professional-paid-narrative-v2`), detailed report (`professional-report-v4`) and PDF layout (`professional-report-pdf-v6`). University uses `university-v1` / `university-decision-v2` / `university-module-v1` / `university-guidance-policy-v2` / `university-paid-narrative-v2` / `university-report-v3`, and A-level `a-level-v2` / `a-level-decision-v2` / `a-level-guidance-policy-v1` / `a-level-paid-narrative-v1` / `a-level-report-v2`. Historical CV-sourced Professional assessments also carry the CV parser and extractor versions.
 
 ### 2.3 Relationships
 
-Each journey owns a parallel, fully separate set of tables; no foreign key crosses journeys. The professional set is shown; university (V8–V12) and A-level (V13–V17) mirror it without the classification table.
+Each journey owns a parallel, fully separate set of tables; no foreign key crosses journeys. The professional purchase set is shown; university (V8–V12) and A-level (V13–V17) mirror it without the classification table. Later migrations add the paid layers: Professional responsibility analysis, guidance and detailed report (V19–V21), University module analysis (V22) and course profile plus detailed report (V23), and A-level subject profile (V24) and detailed report (V25). Each is keyed one-to-one by assessment and inserted once.
 
 ```mermaid
 erDiagram
@@ -296,7 +315,7 @@ Relationship rules enforced in the schema:
 
 ```mermaid
 flowchart LR
-    Browser((Browser<br/>no JavaScript))
+    Browser((Browser<br/>server-rendered,<br/>two small scripts))
     Proxy[Reverse proxy / LB<br/>TLS, X-Forwarded-*]
 
     subgraph App["Spring Boot modular monolith (one JVM)"]
@@ -304,8 +323,8 @@ flowchart LR
         Filters["Filters: RequestCorrelation → Spring Security<br/>(CSRF, CSP, headers) → RateLimit"]
         Web["Web: thin controllers + form mappers<br/>(assessment, report, payment, pdf, product)"]
         Workflow["Application: *AssessmentWorkflow<br/>*AssessmentService, *NarrativeService,<br/>*EvidenceService, *ReportPurchaseService, *ReportPdfService"]
-        Policy["decision: *DecisionPolicyV1<br/>(pure Java)"]
-        Assembler["report: *ReportAssembler<br/>(pure Java)"]
+        Policy["decision: *DecisionPolicyV2, guidance policies<br/>(pure Java)"]
+        Assembler["report: *ReportAssembler, *DetailedReportAssembler<br/>(pure Java)"]
         Ports["Ports: JudgmentProvider, NarrativeGenerator,<br/>EvidenceProvider, PaymentGateway,<br/>Store, PdfRenderer"]
         Adapters["Adapters: typesafe, openai, nomis, stripe,<br/>jpa, openhtml, local fixture"]
         Session[(In-memory HTTP session<br/>CSRF token)]
@@ -313,7 +332,7 @@ flowchart LR
         Metrics[(Micrometer registry<br/>in memory, not exported)]
     end
 
-    DB[(PostgreSQL<br/>Flyway V18)]
+    DB[(PostgreSQL<br/>Flyway V25)]
     Jev[TypeSafe / Jev]
     OpenAI[OpenAI]
     Nomis[Nomis / ONS API]
@@ -338,7 +357,7 @@ flowchart LR
 
 | From → To | Style | Notes |
 | --- | --- | --- |
-| Browser → app | Synchronous HTTP; HTML forms with Post/Redirect/Get | No client scripts; refresh repeats only the GET |
+| Browser → app | Synchronous HTTP; HTML forms with Post/Redirect/Get | A refresh repeats only the GET. A loading overlay blocks a second submit while a slow POST runs, and after Stripe a script polls the read-only payment-status route |
 | Browser ↔ Stripe | Browser redirect to hosted Checkout and back | The return redirect is navigation, not proof of payment |
 | Stripe → app | Asynchronous, at-least-once signed webhook | Stripe retries on non-2xx; idempotent on event ID |
 | Controllers → application services | In-process method calls through use-case interfaces | Controllers hold no business rules |
@@ -346,7 +365,7 @@ flowchart LR
 | Application → PostgreSQL | JDBC through Hikari (10 connections), short transactions | Outbound calls happen **outside** transactions, so a slow provider never holds a connection |
 | Modules → metrics | In-process Micrometer meters, never load-bearing | Not exported anywhere yet |
 
-There is **no messaging, no background worker and no scheduler**. All enrichment (narrative, classification, evidence) runs synchronously on the submitting request's thread, after the assessment's own transaction has committed.
+There is **no messaging, no background worker and no scheduler**. All enrichment (narrative, classification, evidence) runs synchronously on the submitting request's thread, after the assessment's own transaction has committed, and detailed-report preparation runs synchronously on its own POST.
 
 ### 3.3 Submission sequence
 
@@ -365,7 +384,7 @@ sequenceDiagram
     C->>W: submit(state)
     W->>J: one System One request (all judgments)
     J-->>W: AssessmentJudgmentSet
-    W->>W: ProfessionalDecisionPolicyV1 (pure Java)
+    W->>W: ProfessionalDecisionPolicyV2 (pure Java)
     W->>DB: tx: insert assessment + judgments + measures + factors
     W->>DB: insert narrative PENDING
     W->>O: structured narrative request
@@ -373,7 +392,7 @@ sequenceDiagram
     W->>DB: update narrative AVAILABLE / FAILED
     W->>DB: insert occupation classification
     W->>DB: insert evidence PENDING
-    W->>N: codelist + observation (live-evidence only)
+    W->>N: codelist + observation (prod only)
     N-->>W: employment estimate
     W->>DB: update evidence AVAILABLE / PARTIAL / FAILED
     W-->>C: assessment UUID
@@ -386,9 +405,12 @@ Steps 3–5 are all-or-nothing: if Jev or the save fails, the user gets a 503 an
 ### 3.4 Payment sequence
 
 1. `POST /{journey}/{uuid}/checkout` verifies that a complete PAID report can be composed, calls Stripe **outside** a transaction, then persists a `PENDING` entitlement in a short transaction and redirects to Stripe.
-2. The user pays on Stripe-hosted Checkout and is redirected back to the free result, which still shows the purchase as pending.
-3. Stripe delivers `checkout.session.completed`. The webhook controller verifies the signature, payment status and metadata, then in **one transaction** locks the entitlement row, assembles and freezes the paid report as JSONB, flips `PENDING → ACTIVE` and records the event ID.
-4. The paid report and PDF become available. The first PDF request renders and stores the PDF with `ON CONFLICT DO NOTHING`; every later request streams the stored bytes.
+2. The user pays on Stripe-hosted Checkout and is redirected back to the free result, which shows "Confirming your payment" and polls `GET /{journey}/{uuid}/payment-status` for up to 30 seconds.
+3. Stripe delivers `checkout.session.completed`. The webhook controller verifies the signature, payment status and metadata, then in **one transaction** locks the entitlement row, freezes what the purchase covers (the role-level Professional report, a v1 student report, or a marker for a v2 student purchase), flips `PENDING → ACTIVE` and records the event ID. The poller then moves the page to the paid report.
+4. The paid report page offers "Prepare your detailed report". That POST runs the paid analysis, guidance and paid narrative once and stores the detailed report; if the narrative is only retryable, the deterministic report is shown provisionally and nothing is stored.
+5. PDFs: Professional PDFs are rendered once and stored with `ON CONFLICT DO NOTHING`, then streamed; University and A-level detailed-report PDFs are rendered on demand from the stored snapshot.
+
+A complimentary access code, when enabled, replaces steps 1–3 with one POST that creates the same `ACTIVE` entitlement without Stripe.
 
 ---
 
@@ -398,16 +420,16 @@ Ranked by likelihood × impact.
 
 ### 4.1 The synchronous submission request — highest risk
 
-One POST holds a request thread for the full Jev → OpenAI → Nomis chain: typically 10–25 s, and a minute or more in the tail.
+A Professional submission holds a request thread for the full Jev → OpenAI → Nomis chain, typically 10–25 s; a detailed-report preparation holds one for up to about a minute.
 
 - **Proxy and load-balancer idle timeouts.** Many default to 30–60 s. When the proxy gives up first, the server still finishes and commits the assessment, but the browser never receives the redirect. **The UUID is the only way back to a result and there is no listing, so that assessment, and the Jev and OpenAI spend behind it, is lost to the user.** This is the most likely real-world failure.
-- **Double submission.** A user who waits 20 s with no feedback often clicks again or refreshes the POST. Each extra POST is a separate, fully paid Jev and OpenAI chain. The rate limiter permits 10 per minute, and nothing deduplicates them.
+- **Double submission.** The loading overlay now blocks a second click or Enter in the browser and tells the user to keep the page open, but nothing deduplicates on the server: a refresh of the POST, a second tab or a script still makes a separate, fully paid chain. The rate limiter permits 10 per minute. A repeated detailed-report preparation is safe, because the stored analysis and report are reused.
 - **Thread exhaustion under spikes.** At ~850 concurrent submissions (section 1.3), Tomcat's 200 platform threads saturate, and cheap GETs for results and paid reports queue behind them.
-- **Unbounded narrative duration.** The application sets no OpenAI timeout. A hung connection pins a thread for as long as the client default allows.
+- **Unbounded narrative duration.** The application sets no OpenAI timeout. A hung connection pins a thread for as long as the client default allows. (Jev is bounded at 60 s.)
 
 ### 4.2 Jev as a hard dependency
 
-There is deliberately no fallback (no fixture and no cached judgment). A TypeSafe outage, rate limit or credential problem means **no journey can complete an assessment**: a total outage of the product's core function. The SDK's retries also mean a single user action can bill up to three upstream attempts. The live verification notes this needs review against real billing behaviour.
+There is deliberately no fallback (no fixture and no cached judgment). A TypeSafe outage, rate limit or credential problem means **no journey can complete an assessment** and no Professional or University detailed report can be prepared: a total outage of the product's core function. SDK retries are switched off (`TYPESAFE_MAX_RETRIES=0`), so one user action bills at most one Jev request.
 
 ### 4.3 Lifecycle rows stuck in `PENDING`
 
@@ -441,10 +463,10 @@ Metrics are recorded but not exported, so they are lost on restart and visible t
 
 | # | Risk | Likelihood | Impact | Existing recovery / mitigation | Recommended addition |
 | --- | --- | --- | --- | --- | --- |
-| R1 | Proxy timeout loses a completed assessment's UUID | High once deployed | Paid upstream spend wasted; user has no result | None | Set the proxy timeout ≥ 120 s now; move to async submission (6.2) |
-| R2 | Duplicate POSTs double the upstream cost | High | Cost | Per-IP rate limit | Idempotency token in the form, stored with a unique constraint |
-| R3 | Jev outage or quota | Medium | All new assessments fail | Clean 503, `judgment.failures`, no partial data stored | Alerting; explicit SDK timeouts and retries; a provider bulkhead; user-facing "try again later" copy |
-| R4 | OpenAI outage or slowness | Medium | Narrative missing; slower submissions | Assessment still saved; `FAILED` narrative; free report still useful | Explicit timeout (~30 s); an explicit, audited "retry narrative" operation |
+| R1 | Proxy timeout loses a completed assessment's UUID | High once deployed | Paid upstream spend wasted; user has no result | None for submissions; a timed-out preparation can be retried, reusing stored work | Set the proxy timeout ≥ 120 s now; move to async submission (6.2) |
+| R2 | Duplicate POSTs double the upstream cost | Medium | Cost | Per-IP rate limit; the loading overlay blocks repeat clicks in the browser; preparation reuses stored artefacts | Idempotency token in the form, stored with a unique constraint |
+| R3 | Jev outage or quota | Medium | All new assessments and paid analyses fail | Clean 503, `judgment.failures`, no partial data stored; 60 s timeout, no retries | Alerting; a provider bulkhead; user-facing "try again later" copy |
+| R4 | OpenAI outage or slowness | Medium | Professional narrative missing; detailed report provisional | Assessment still saved; `FAILED` free narrative; paid narrative `RETRYABLE_FALLBACK` shows the deterministic report and offers an explicit retry | Explicit timeout (~30 s)
 | R5 | Stuck `PENDING` rows after a crash or deploy | High with rolling deploys | Permanent "unavailable" sections | None | A sweeper marking `PENDING` older than N minutes as `FAILED`; graceful shutdown that drains in-flight requests |
 | R6 | Webhook fails after the customer paid | Low–medium | Paid but no report; support load | Transaction rollback plus Stripe retries for days; idempotent re-delivery | Counter and alert on webhook failures; a manual re-drive runbook using the Stripe dashboard |
 | R7 | Refund or chargeback leaves access `ACTIVE` | Medium | Revenue leakage; dispute risk | Status values exist | Consume `charge.refunded` and `charge.dispute.created` and set `REFUNDED`/`REVOKED` |
@@ -481,7 +503,7 @@ The codebase is careful about failure. These properties already hold and should 
 | **In-memory rate limiter** | No Redis | Per-instance allowance; shared-IP false positives | Fine for 1–3 instances; a shared limit can use PostgreSQL before anything else is added |
 | **In-memory sessions** | No session store | Lost on restart; sticky sessions needed for more than one instance | Use Spring Session JDBC on the existing database |
 | **UUID-as-capability, no accounts** | Zero signup friction | Leaked URL means leaked report; lost URL means lost report | Acceptable pre-launch; the main product-level gap before scale |
-| **No JavaScript** | Tiny attack surface; strict CSP; accessible | Progress feedback for slow work must use `<meta http-equiv="refresh">` | Workable; see 6.2 |
+| **Minimal first-party JavaScript** | Small attack surface; strict CSP (`script-src 'self'`); pages work without it | Two scripts to test and maintain (Node built-in test runner, no npm) | Right; asynchronous submission (6.2) can reuse the polling pattern |
 | **Per-journey duplication** (tables, payments, PDFs) | Journeys release independently; semantics stay legible | More code; changes repeated three times | Deliberate and documented; keep it |
 
 ---
@@ -508,9 +530,9 @@ Each stage adds only what the previous one can no longer handle, in keeping with
 One instance (2 vCPU, 2–4 GB heap) behind a TLS proxy, with managed PostgreSQL.
 
 - Set the **proxy/LB request timeout to at least 120 s** (mitigates R1).
-- Set **explicit timeouts** on the Jev SDK and the OpenAI client (for example 15 s and 30 s), and decide deliberately whether Jev retries are wanted given billing.
+- Set an **explicit timeout** on the OpenAI client (for example 30 s). Jev already has a 60 s timeout and no retries.
 - Add a **stale-`PENDING` sweeper** (R5) and enable graceful shutdown (`server.shutdown=graceful`) with a drain period longer than the slowest submission.
-- Add a **submission idempotency token** (R2): a hidden form field with a unique constraint, so a second POST redirects to the first result.
+- Add a **submission idempotency token** (R2): a hidden form field with a unique constraint, so a second POST redirects to the first result. The browser-side guard already stops accidental double clicks.
 - **Export metrics** (one Micrometer registry) and alert on `judgment.failures`, checkout failures and webhook failures.
 - Enable **managed backups with point-in-time recovery**, and test one restore.
 
@@ -518,7 +540,7 @@ One instance (2 vCPU, 2–4 GB heap) behind a TLS proxy, with managed PostgreSQL
 
 Two or three instances for availability and zero-downtime deploys.
 
-- **Asynchronous submission without a broker.** The POST validates, inserts a `submission` row (`RECEIVED`) and immediately redirects to `/{journey}/{uuid}`. That page renders a "preparing your assessment" view with `<meta http-equiv="refresh" content="3">`, which works with the existing no-JavaScript CSP. An in-process worker pool claims work with `SELECT … FOR UPDATE SKIP LOCKED` on PostgreSQL and runs the existing workflow unchanged. This removes R1 (the UUID reaches the user in milliseconds), bounds upstream concurrency to the pool size, and makes crash recovery a matter of re-claiming unfinished rows. No new infrastructure is needed. The trade-off is a status page, and an accepted assessment that later fails needs a terminal "could not be completed" state.
+- **Asynchronous submission without a broker.** The POST validates, inserts a `submission` row (`RECEIVED`) and immediately redirects to `/{journey}/{uuid}`. That page renders a "preparing your assessment" view that polls a read-only status route, as the payment-confirmation script already does (or `<meta http-equiv="refresh">` without JavaScript). An in-process worker pool claims work with `SELECT … FOR UPDATE SKIP LOCKED` on PostgreSQL and runs the existing workflow unchanged. This removes R1 (the UUID reaches the user in milliseconds), bounds upstream concurrency to the pool size, and makes crash recovery a matter of re-claiming unfinished rows. No new infrastructure is needed. The trade-off is a status page, and an accepted assessment that later fails needs a terminal "could not be completed" state.
 - **Virtual threads** (`spring.threads.virtual.enabled=true`, Java 21). Whatever stays blocking (checkout creation) no longer consumes scarce platform threads. Check the PostgreSQL driver version for pinning-free locking.
 - **Bulkheads.** Use semaphores on Jev, OpenAI and PDF rendering concurrency, so a provider slowdown or a render burst cannot consume the whole instance.
 - **Shared sessions.** Enable Spring Session JDBC on the existing database, or use sticky sessions as an interim measure.

@@ -1,5 +1,23 @@
 # Release candidate engineering review — 2026-10-03
 
+> **Historical record.** This review describes the code as it stood on 3 October 2026 and is kept unchanged below
+> as evidence. Since then:
+>
+> - The profile model was replaced. `local-fixture`, `live-payment` and `live-evidence` no longer exist; the
+>   application now understands exactly one of `dev`, `dev-no-jev`, `live-smoke` and `prod`, where `prod` turns on
+>   every real provider, including Stripe and Professional Nomis evidence. See
+>   [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md#profiles).
+> - CV upload was removed (blocker 1 closed, as noted below). Professional input is manual only.
+> - `checkout.failures` and `pdf.generation.failures` are now wired into the checkout and PDF controllers.
+> - The schema is at Flyway V25 and the offline suite has 1,560 tests. The paid layer was added for every journey:
+>   responsibility, module and subject-profile analysis, deterministic guidance, a validated paid narrative and an
+>   immutable detailed report. University and A-level now use `decision-v2` course and subject profiles. See
+>   [ARCHITECTURE.md](ARCHITECTURE.md).
+> - Complimentary access, a payment-confirmation poller and a loading overlay were added. The content security
+>   policy is now `script-src 'self'` for the two first-party scripts.
+>
+> Blockers 2 to 6 below have not been re-assessed in a dated review since.
+
 ## Scope and evidence
 
 This review covers the Professional, University and A-level journeys in the Java 21 modular monolith. The baseline `mvn clean verify` passed: 572 tests, zero failures, zero errors, zero skipped. After hardening, `mvn clean verify` passed: 582 tests, zero failures, zero errors, zero skipped. PostgreSQL ran through Testcontainers and Flyway applied schema V17. Normal verification used fixtures or mocks for external providers; no live Stripe, Jev, OpenAI or Nomis calls were made for this review.
