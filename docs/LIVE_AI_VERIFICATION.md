@@ -1,5 +1,11 @@
 # Prompt 18A live AI verification
 
+> **Historical record of 2–3 October 2026.** Results, latencies and wording findings below are what was observed
+> then, on `gpt-4o-mini` and the v1/v2 prompts. The current profile and provider contract is summarised in
+> [Profile and provider contract](#profile-and-provider-contract). The University and A-level journeys have since
+> moved to `decision-v2` profiles, whose free results make no OpenAI call. Their OpenAI use is now the paid narrative
+> ([ARCHITECTURE.md](ARCHITECTURE.md)). The Failsafe commands below still work.
+
 ## Status on this development machine
 
 The clean baseline completed with 549 tests, zero failures, zero errors and zero skipped. It used PostgreSQL via Testcontainers and Flyway V17. No live AI call was made by the normal build.
@@ -28,11 +34,13 @@ The Professional case used the one real Jev request required for the end-to-end 
 
 ## Profile and provider contract
 
-`prod` alone activates the real Jev and OpenAI adapters through `!local-fixture`. It requires `TYPESAFE_API_KEY` and `OPENAI_API_KEY`. Missing keys are named by the startup validator, without printing their values. `local-fixture` selects deterministic adapters and cannot be combined with `prod`. There is no provider to fixture fallback. `live-payment` and `live-evidence` are separate opt-in capabilities and are outside 18A.
+*Updated 8 November 2026; the rest of this section records what was found in October.*
 
-The configured TypeSafe model alias is `jev-latest`; the configured OpenAI chat model defaults to `gpt-4o-mini` and may be set with `OPENAI_MODEL`. These are configured names, not verified provider-side model revisions.
+Real Jev and OpenAI adapters are active under `prod` and the local `live-smoke` profile; `dev-no-jev` uses real OpenAI with fixture Jev, and `dev` uses fixtures for both. `prod` requires `TYPESAFE_API_KEY`, `OPENAI_API_KEY` and the Stripe and evidence settings; missing settings are named by the startup validator without printing their values. The application accepts exactly one of the four profiles. There is no provider to fixture fallback. (At the time of this verification the profiles were `local-fixture`, `prod`, `live-payment` and `live-evidence`.)
 
-The installed TypeSafe Java SDK 0.2.0 uses a 10-second request read timeout and a retry policy with up to two retries and a 30-second total timeout by default. It retries 408, 429, server errors and connection errors. The application does not currently override these defaults. Whether retries are appropriate for charged System One requests needs review with real-provider behaviour before release. No application-level retry or fixture fallback was found. OpenAI timeout and retry behaviour has not yet been verified against a real call.
+The configured TypeSafe model alias is `jev-latest`. OpenAI narratives no longer use one shared model: each journey has its own, sent explicitly on every request — `gpt-6-luna` for University and A-level and `gpt-6.1-sol` for Professional by default, each restricted to an allowlist (`OpenAiNarrativeModelPolicy`). `OPENAI_MODEL` is only Spring AI's infrastructure default. The runs recorded in this document used `gpt-4o-mini`. These are configured names, not verified provider-side model revisions.
+
+The application now configures the TypeSafe client explicitly: a 60-second timeout (`TYPESAFE_TIMEOUT`) and no retries (`TYPESAFE_MAX_RETRIES=0`), so one user action bills at most one System One request. At the time of this verification, the installed TypeSafe Java SDK 0.2.0 used its defaults: a 10-second request read timeout and a retry policy with up to two retries and a 30-second total timeout. It retried 408, 429, server errors and connection errors. Whether retries are appropriate for charged System One requests needs review with real-provider behaviour before release. No application-level retry or fixture fallback was found. OpenAI timeout and retry behaviour has not yet been verified against a real call.
 
 The 62.43-second Failsafe duration is not evidence that a retry occurred. The saved Failsafe XML and report contain no retry/timeout event. Inspection of SDK bytecode shows that the 30-second budget is checked only after a failed attempt, before sleeping and starting another; it is not a hard deadline around a successful request or the whole test. The read timeout applies to the SDK's JDK request factory, but the available log does not isolate connection, response, mapping or test setup time. Attempt count and provider billing for that run remain unknown. No extra paid call was made to investigate it.
 
@@ -67,7 +75,7 @@ The live narrative harness is gated by `-Plive-openai-evaluation`, a non-empty `
 
 Each invocation creates a fresh PostgreSQL Testcontainer. The Professional selector makes a new Jev and OpenAI call; do not rerun it merely to improve wording or recheck the corrected page assertion. The three requested live narrative calls and the real-AI Professional flow are complete. The remaining wording findings are review findings, not permission to silently change authoritative decisions or weaken validators.
 
-Prompt 18B's live Nomis verification and student source decisions are recorded separately in [LIVE_EVIDENCE_VERIFICATION.md](LIVE_EVIDENCE_VERIFICATION.md). Prompt 18C covers Stripe integration. Prompt 18D retains release work and any remaining operational checks; none are part of this AI verification record.
+The later opt-in harnesses (paid narrative, responsibility and module probes, University baseline and A-level v2 calibration) are listed in [LIVE_SMOKE_TESTING.md](LIVE_SMOKE_TESTING.md#opt-in-live-harnesses). Prompt 18B's live Nomis verification and student source decisions are recorded separately in [LIVE_EVIDENCE_VERIFICATION.md](LIVE_EVIDENCE_VERIFICATION.md). Prompt 18C covers Stripe integration. Prompt 18D retains release work and any remaining operational checks; none are part of this AI verification record.
 
 The offline review also found that narrative provider failures were persisted as `FAILED` but did not increment `narrative.failures`; the metric previously covered only thrown lifecycle persistence errors. Each journey workflow now counts a returned `FAILED` state. Focused offline tests cover the three paths.
 

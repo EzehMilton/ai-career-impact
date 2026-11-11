@@ -1,12 +1,16 @@
 # Prompt 18B live evidence verification
 
+> **Historical record of 3 October 2026**, with the profile names updated on 8 November 2026. The evidence boundary,
+> source and student-source decisions below are unchanged. Prompt 18C's Stripe verification is summarised in
+> [RELEASE_CANDIDATE_REVIEW.md](RELEASE_CANDIDATE_REVIEW.md).
+
 Verified 3 October 2026. Prompt 18A's Jev/OpenAI verification is in [LIVE_AI_VERIFICATION.md](LIVE_AI_VERIFICATION.md). This phase made no Jev calls and did not change scoring, bands, narrative prompts or Stripe.
 
 ## Boundary and normal build
 
 Jev supplies structured judgments; Java owns decisions; OpenAI explains the saved assessment. Factual employment, salary, course and admissions claims belong to evidence providers. Evidence is gathered downstream of the assessment and narrative, is saved with source metadata, and cannot change a Java measure. The OpenAI narrative receives no evidence item and therefore cannot rewrite a Nomis observation as a growth forecast. The paid report displays sourced items separately. The free report says that verified context appears where available; missing paid evidence says unavailable rather than implying completeness. A Professional paid item now displays source quality alongside source, geography, date, category and metric.
 
-`live-evidence` is explicit and mutually exclusive with `local-fixture`. Its exact Professional title-to-SOC mapping must be configured. No provider or fixture fallback exists for the student journeys. The standard `mvn clean verify` does not select the live Failsafe profile, makes zero live evidence, Jev or OpenAI calls, and keeps historical evidence frozen. Saved result GET and paid report assembly only load existing evidence; they never refetch it. HTTP(S) evidence URLs are validated, escaped as links, and never fetched by the PDF renderer.
+Live evidence is active under `prod` (at the time of this verification it was the separate `live-evidence` profile, mutually exclusive with `local-fixture`). Its exact Professional title-to-SOC mapping (`PROFESSIONAL_EVIDENCE_PROFESSION`, `PROFESSIONAL_EVIDENCE_CANONICAL_OCCUPATION`, `PROFESSIONAL_EVIDENCE_SOC2020_CODE`) must be configured, and `prod` refuses to start without it. Under `dev` and `dev-no-jev` the fixture provider is used; under `live-smoke` there is no evidence provider. No provider or fixture fallback exists for the student journeys. The standard `mvn clean verify` does not select the live Failsafe profile, makes zero live evidence, Jev or OpenAI calls, and keeps historical evidence frozen. Saved result GET and paid report assembly only load existing evidence; they never refetch it. HTTP(S) evidence URLs are validated, escaped as links, and never fetched by the PDF renderer.
 
 ## Professional source and interpretation
 

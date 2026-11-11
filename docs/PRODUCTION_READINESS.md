@@ -1,12 +1,12 @@
 # Production readiness
 
-What the application bounds, throttles, refuses and requires before it will start. This covers the hardening done in phases 17A, 17B and 17C. What remains is live integration, which is deliberately out of scope here and listed at the end.
+What the application bounds, throttles, refuses and requires before it will start. This began as the record of hardening phases 17A, 17B and 17C and is kept current; it was last checked against the code on 8 November 2026 (Flyway V25, 1,560 offline tests). What remains is listed at the end.
 
 No credential appears in this document, and none should ever be added to it.
 
 ## Security model in one paragraph
 
-There are no accounts. Nothing is protected by authentication, and nothing should be added on the assumption that it is. Access to a paid report or its PDF is granted by an **ACTIVE entitlement** checked in the application layer; access to a past free result is granted by **knowing its opaque UUID**. Stripe webhooks authenticate themselves with a signature. The security filter chain publishes routes and enforces CSRF; it is not what keeps paid content private.
+There are no accounts. Nothing is protected by authentication, and nothing should be added on the assumption that it is. Access to a paid report or its PDF is granted by an **ACTIVE entitlement** checked in the application layer, created by a verified Stripe webhook, the `dev` checkout simulator, or a complimentary access code; access to a past free result is granted by **knowing its opaque UUID**. Stripe webhooks authenticate themselves with a signature. The security filter chain publishes routes and enforces CSRF; it is not what keeps paid content private.
 
 ## Request and input limits
 
@@ -51,7 +51,7 @@ A character limit alone does not bound the *shape* of a submission: 4,000 charac
 | A-level | Preferred degree areas | 20 | 120 |
 | A-level | Preferred career areas | 20 | 120 |
 
-A-level subjects keep their existing domain rule of **2 to 5** distinct subjects.
+University key modules must also be distinct (ignoring case): a course listing a module twice could never have its module analysis prepared, so the form refuses it, and a saved assessment that lists one twice is not offered checkout or complimentary access. A-level subjects keep their existing domain rule of **2 to 5** distinct subjects.
 
 ### Request sizes
 
@@ -68,9 +68,11 @@ In-process, fixed window, no Redis.
 | `assessment-submission` | POST on the three assessment start routes | 10 | 1 minute |
 | `checkout-start` | POST on the three checkout routes | 10 | 1 minute |
 
+Groups match by path suffix: `-assessment` for submissions and `/checkout` for checkout starts. The local checkout confirmation, complimentary-access and report-preparation POSTs are not in either group; preparation reuses stored work and cannot repeat a completed provider call.
+
 Configurable through `app.rate-limit.enabled`, `app.rate-limit.window`, and `app.rate-limit.<group>.permits`.
 
-Never limited: reading any page, a past result, a report, a PDF, or the stylesheet. Stripe webhooks are never limited — they are signature-verified and Stripe retries, so throttling them would only delay a confirmed payment.
+Never limited: reading any page, a past result, a report, a PDF, the payment-status route, the stylesheet or the scripts. Stripe webhooks are never limited — they are signature-verified and Stripe retries, so throttling them would only delay a confirmed payment.
 
 **Keying** is the client address as the container reports it. Forwarded headers are deliberately *not* consulted: nothing configures a trusted proxy yet, so `X-Forwarded-For` is attacker-controlled and would let one client present itself as thousands. Behind an unconfigured proxy this makes the limit coarse rather than wrong.
 
@@ -105,7 +107,7 @@ No page exposes an exception class, a stack trace, SQL, a provider name, a confi
 | Response | Cache-Control |
 | --- | --- |
 | Stylesheet | `max-age=300, public` |
-| Everything else | `no-cache, no-store, max-age=0, must-revalidate` |
+| Everything else, including the two scripts | `no-cache, no-store, max-age=0, must-revalidate` |
 
 Almost every page can show someone their own assessment, so no-store is the right default. The stylesheet is the single exception: shared by every visitor, containing nothing personal. Spring Security's cache-control writer is scoped to exclude `/css/**` rather than switched off, so the secure default still applies everywhere it matters.
 
@@ -115,13 +117,13 @@ Five minutes is short enough that a deployed change is picked up quickly without
 
 No template uses `th:utext` or any unescaped expression, and a test fails the build if one appears. Submitted HTML is reflected back as text: `<script>alert(1)</script>` renders as `&lt;script&gt;alert(1)&lt;/script&gt;`.
 
-The Content-Security-Policy from 17A forbids scripts outright (`script-src 'none'`), which the application can afford because it serves no JavaScript at all.
+The Content-Security-Policy allows scripts and styles from this origin only (`default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://checkout.stripe.com`), with no inline script, `eval` or inline style. The application serves two first-party scripts, `/js/payment-confirmation.js` and `/js/long-running-submit.js`; neither puts user-controlled text into the page, and `RequestHardeningTest` asserts that a submitted `<script>` is shown back as text while the only `<script` tags on a page are this site's `/js/` files.
 
 ## URL and SSRF review
 
 Evidence source links are the only externally supplied URLs the product displays. They are validated at construction, in all three journeys, to be absolute `http` or `https`. `javascript:`, `data:`, `file:`, `ftp:`, `jar:`, `classpath:` and relative references are refused.
 
-**There is no SSRF surface.** The only server-side HTTP client in the application is the Nomis evidence adapter, and its base URL is a hard-coded constant. No user-supplied URL is ever fetched by the server: evidence links are rendered as anchors and nothing more. The PDF renderer is given a null base URI and emits no `img`, stylesheet or font reference, so it resolves no external resource either.
+**There is no SSRF surface.** The only server-side HTTP client the application builds itself is the Nomis evidence adapter, and its base URL is a hard-coded constant; the Jev, OpenAI and Stripe SDKs call their own fixed endpoints. No user-supplied URL is ever fetched by the server: evidence links are rendered as anchors and nothing more. The PDF renderer is given a null base URI and emits no `img`, stylesheet or font reference, so it resolves no external resource either.
 
 ## Redirects
 
@@ -129,47 +131,51 @@ There is no open-redirect surface. Every `redirect:` target in the application i
 
 ## PDF safety
 
-Unchanged in this phase and re-confirmed: an ACTIVE entitlement is required; the filename is derived and sanitised; `Content-Disposition: attachment`; `X-Content-Type-Options: nosniff`; `Cache-Control: private, no-store` on both the download and the refusal; output size is validated; the stored artifact is immutable; all text is escaped before HTML-to-PDF; no remote resource is fetched.
+An ACTIVE entitlement is required; the filename is derived and sanitised; `Content-Disposition: attachment`; `X-Content-Type-Options: nosniff`; `Cache-Control: private, no-store` on both the download and the refusal; output size is validated; all text is escaped before HTML-to-PDF; no remote resource is fetched. Professional PDFs and v1 student PDFs are stored once and immutable. University and A-level detailed-report PDFs are rendered on demand from their immutable stored snapshot by a renderer of the PDF version the snapshot records, so the same snapshot always produces the same content; a provisional report has no PDF.
 
 ## Logging safety
 
-Audited line by line. With the opt-in assessment trace off, which is the default, no log statement records form content, assessment descriptions, contact details, API keys, webhook secrets or Stripe payloads. What is logged is an assessment UUID, an exception class name, a rate-limit group name, or a fixture-mode warning. Stack traces are written for genuinely unexpected failures only, and no exception message in the codebase interpolates user-submitted text — every interpolated value is a configuration key, question id, dimension id or report version.
+Audited line by line. With the opt-in assessment trace off, which is the default, no log statement records form content, assessment descriptions, contact details, API keys, webhook secrets or Stripe payloads. What is logged is an assessment UUID, an exception class name, a rate-limit group name, a fixture-mode warning, or the estimated provider cost line below (token counts and amounts only). The complimentary access code is never logged. Stack traces are written for genuinely unexpected failures only, and no exception message in the codebase interpolates user-submitted text — every interpolated value is a configuration key, question id, dimension id or report version.
 
 The one deliberate exception is the [assessment trace](ASSESSMENT_TRACE.md) (`ASSESSMENT_TRACE_ENABLED`, default `false`). When enabled it logs user-entered assessment data and complete AI prompts and responses, but never credentials, payment data, cookies, headers or PDF bytes. It is for controlled development and diagnosis and should not be enabled routinely in production.
 
 ## Profiles
 
+The application understands exactly four profiles. Choose one; combining any two is refused at startup.
+
 | Profile | What it turns on |
 | --- | --- |
-| *(none)* | Ordinary development against real AI adapters. Requires AI credentials. |
-| `local-fixture` | Every external provider replaced by a deterministic fixture. Requires no secret of any kind. |
-| `prod` | Production defaults: secure cookies, proxy awareness, constrained Actuator, quiet logging, fail-fast configuration. |
-| `live-payment` | Real Stripe hosted checkout and webhooks. |
-| `live-evidence` | Real external evidence providers. |
+| `dev` | Full local development. Fixture Jev judgments, fixture free narratives, fixture evidence and classification, the simulated local checkout, and the development banner. No paid Jev analysis and no paid narrative, so detailed reports cannot be fully prepared. Requires no secret of any kind. |
+| `dev-no-jev` | Hybrid development for a machine that cannot reach Jev. Fixture Jev judgments and fixture evidence, but **real OpenAI narratives and real Stripe** (test-mode keys are expected). No paid Jev analysis. |
+| `live-smoke` | Local live regression testing: real Jev and OpenAI, payment bypassed through complimentary access, tracing on. Requires `APP_LIVE_SMOKE_ENABLED=true`. **Never a deployment profile.** See [LIVE_SMOKE_TESTING.md](LIVE_SMOKE_TESTING.md). |
+| `prod` | Production: every real provider (Jev, OpenAI, Stripe, Professional Nomis evidence and occupation mapping), secure cookies, proxy awareness, constrained Actuator, structured logging, fail-fast configuration. |
 
-`StartupConfigurationValidator` refuses these combinations rather than silently picking a winner:
+Adapters are chosen by profile, never by exception handling: there is no fallback from a real provider to a fixture, and no profile serves a fixture result under `prod`.
 
-| Combination | Why it is refused |
-| --- | --- |
-| `prod` + `local-fixture` | Production must never serve a fixture result. |
-| `local-fixture` + `live-payment` | The simulator overrides Stripe, so no real payment would be taken. |
-| `local-fixture` + `live-evidence` | The fixture provider overrides the live one, so no real evidence would be used. |
+| Capability | `dev` | `dev-no-jev` | `live-smoke` | `prod` |
+| --- | --- | --- | --- | --- |
+| Jev judgments | fixture | fixture | real | real |
+| Paid Jev analysis (Professional responsibilities, University modules) | none | none | real | real |
+| OpenAI narratives (free and paid) | fixture free only | real | real | real |
+| Professional evidence and occupation classification | fixture | fixture | none | real (Nomis, exact mapping) |
+| University and A-level evidence | fixture | fixture | none | none |
+| Payment | simulated local checkout | Stripe | complimentary bypass | Stripe |
+| Development banner | yes | no | live-smoke banner | no |
 
-Valid combinations include `prod`, `prod,live-payment`, `prod,live-payment,live-evidence` and `local-fixture` on its own.
+`StartupConfigurationValidator` refuses every pair of these profiles. In particular, `live-smoke` with `prod` is refused because live smoke testing bypasses payment, and `dev` with `prod` because production must never serve a fixture result.
 
-**Note:** the judgment and narrative adapters are selected by `!local-fixture`, so any profile other than `local-fixture` uses the real Jev and OpenAI adapters and needs their credentials. There is deliberately no fallback from a real provider to a fixture.
-
-`prod` alone therefore requires both `TYPESAFE_API_KEY` and `OPENAI_API_KEY`. The startup validator checks their presence and lists either missing variable by name. The live verification runbook records what has and has not been exercised against real providers: [LIVE_AI_VERIFICATION.md](LIVE_AI_VERIFICATION.md).
+`dev` and `dev-no-jev` also accept `app.dev.capture-jev=true`, which writes each Professional judgment the running application received to `target/jev-capture/` (see [PROFESSIONAL_JEV_EVALUATION.md](PROFESSIONAL_JEV_EVALUATION.md)).
 
 ## Fail-fast configuration
 
-Startup stops, with every problem listed at once, when a capability is enabled but not configured. Messages name the setting and never its value, because startup failures get pasted into tickets.
+Startup stops, with every problem listed at once, when a profile is active but not configured. Messages name the setting and never its value, because startup failures get pasted into tickets.
 
+- **`prod`** requires `TYPESAFE_API_KEY`, `OPENAI_API_KEY`, the Stripe secret, all three webhook secrets, all three price ids and the three Professional occupation-mapping settings.
 - **`prod`** requires `app.public-base-url`, and requires it to be `https` unless `app.public-base-url-allow-http=true` is set deliberately.
-- **`prod`** requires `TYPESAFE_API_KEY` and `OPENAI_API_KEY` because it activates real AI adapters.
-- **`live-payment`** requires the Stripe secret, all three webhook secrets and all three price ids.
-- **`live-evidence`** requires the professional occupation mapping.
-- **`local-fixture`** requires none of the above. Keeping local development free of production secrets is a property worth protecting, and a test asserts it.
+- **`dev-no-jev`** requires `OPENAI_API_KEY` and every Stripe setting.
+- **`live-smoke`** requires `APP_LIVE_SMOKE_ENABLED=true`, `TYPESAFE_API_KEY` and `OPENAI_API_KEY`.
+- **Wherever real narratives run** (`prod`, `dev-no-jev`, `live-smoke`), each journey's narrative model must be on that journey's allowlist (`OpenAiNarrativeModelPolicy`). The refused model name is the one value a message quotes; it is not a secret.
+- **`dev`** requires none of the above. Keeping local development free of production secrets is a property worth protecting, and a test asserts it.
 
 The datasource is deliberately not checked here: Spring Boot already refuses to start without one and says so more clearly than a custom check could.
 
@@ -263,7 +269,7 @@ Estimated provider cost operation=assessment journey=professional assessmentId=�
 - **Cost is tokens × configured list price.** It is an estimate to plan with, not an invoice. Rates are per million tokens. Each OpenAI call is priced at the rate of the model that served it (`app.cost.openai-models[<model>]`, overridable per model, e.g. `COST_GPT_6_1_SOL_INPUT_PER_MILLION_TOKENS`), because journeys use different models; the defaults are OpenAI's standard prices for every allowed narrative model as published on 6 November 2026 (`gpt-6-luna` 0.10 / 0.50, `gpt-6.1-terra` 1.00 / 5.00, `gpt-6.1-sol` 2.00 / 10.00, `gpt-6-astra` 10.00 / 50.00 USD). `COST_OPENAI_INPUT_PER_MILLION_TOKENS` / `COST_OPENAI_OUTPUT_PER_MILLION_TOKENS` price any other model and are zero by default. Jev uses `COST_JEV_INPUT_PER_MILLION_TOKENS` and `COST_JEV_OUTPUT_PER_MILLION_TOKENS` (default: the early-access figure reported by third-party trackers, 0.042 / 0 USD, because TypeSafe publishes no pricing page), and `COST_CURRENCY` sets the currency. Confirm them against your own terms.
 - **Failures are still reported.** If a submission fails after Jev has answered, for example on save, the line reads `outcome=failed assessmentId=none` and still shows what was spent.
 - **What is not counted:** provider-side retries of failed attempts (the SDKs do not expose them), Nomis evidence (free), and Stripe fees (charged only on purchase). A call whose response carried no usage is shown as `…CallsWithoutUsage=1` and priced at zero rather than guessed.
-- **Nothing is logged without a billable call**, so `local-fixture` runs stay quiet. The line carries no submitted content.
+- **Nothing is logged without a billable call**, so `dev` runs stay quiet. The line carries no submitted content.
 
 Under `prod` the line is an ECS JSON object whose `message` holds these fields. To get an average cost per assessment, sum `totalCost` over the period and divide by the number of `operation=assessment outcome=completed` lines.
 
@@ -283,7 +289,7 @@ Spring Boot defaults, with hooks so an operator can change them without a rebuil
 | `spring.datasource.hikari.minimum-idle` | 10 | `DB_POOL_MIN_IDLE` |
 | `spring.datasource.hikari.connection-timeout` | 30000 ms | `DB_CONNECTION_TIMEOUT_MS` |
 
-Flyway runs on startup, validates what is already applied, and `clean` is disabled: a deployment must never be able to reset a production database. The schema is at **V17** and this phase added no migration. PostgreSQL only — there is no H2 anywhere, including in tests, which use Testcontainers.
+Flyway runs on startup, validates what is already applied, and `clean` is disabled: a deployment must never be able to reset a production database. The schema is at **V25**. PostgreSQL only — there is no H2 anywhere, including in tests, which use Testcontainers.
 
 ## Logging
 
@@ -303,7 +309,11 @@ Under `prod` the console log is structured JSON in Elastic Common Schema (`loggi
 | `app.public-base-url-allow-http` | Deliberate escape hatch when TLS terminates elsewhere | optional | no | `true` |
 | `app.<journey>.report.base-url` | Per-journey override of the above | optional | no | `https://example.com` |
 | `app.<journey>.report.display-price` | Price shown on the result page | optional; no price is shown if unset | no | `£12.00` |
-| `app.assessment-trace.enabled` / `ASSESSMENT_TRACE_ENABLED` | Opt-in diagnostic trace of each assessment; logs assessment data and AI prompts | optional; default `false` | no, but its output is sensitive | `true` |
+| `app.assessment-trace.enabled` / `ASSESSMENT_TRACE_ENABLED` | Opt-in diagnostic trace of each assessment; logs assessment data and AI prompts | optional; default `false` (`true` under `live-smoke`) | no, but its output is sensitive | `true` |
+| `app.complimentary-report.enabled` / `COMPLIMENTARY_REPORT_ENABLED` | Shows the access-code form and enables its route, under every profile | optional; default `false` | no | `true` |
+| `app.complimentary-report.code` / `COMPLIMENTARY_REPORT_CODE` | The one shared access code | when the flag is on | **yes** | — |
+| `STATIC_RESOURCE_CACHE_SECONDS` | Stylesheet cache lifetime | optional; default `300` | no | `300` |
+| `APP_LIVE_SMOKE_ENABLED`, `APP_LIVE_SMOKE_TRACE_DIRECTORY` | Live smoke switch and trace directory | `live-smoke` only | no | `true` |
 
 ### Database
 
@@ -318,14 +328,16 @@ Under `prod` the console log is structured JSON in Elastic Common Schema (`loggi
 
 | Setting | Purpose | Required when | Secret | Example shape |
 | --- | --- | --- | --- | --- |
-| `TYPESAFE_API_KEY` | Structured judgments | any profile other than `local-fixture` | **yes** | — |
+| `TYPESAFE_API_KEY` | Structured judgments | `prod`, `live-smoke` | **yes** | — |
 | `spring.ai.typesafe.model` | Model name | optional | no | `jev-latest` |
+| `TYPESAFE_TIMEOUT` | Client timeout per request | optional | no | `60s` (default) |
+| `TYPESAFE_MAX_RETRIES` | Client retries; zero so one action bills at most one request | optional | no | `0` (default) |
 
 ### OpenAI
 
 | Setting | Purpose | Required when | Secret | Example shape |
 | --- | --- | --- | --- | --- |
-| `OPENAI_API_KEY` | Narrative generation | any profile other than `local-fixture` | **yes** | — |
+| `OPENAI_API_KEY` | Narrative generation | `prod`, `dev-no-jev`, `live-smoke` | **yes** | — |
 | `UNIVERSITY_NARRATIVE_MODEL` | University narrative model, free and paid | optional | no | `gpt-6-luna` (default and minimum; also `gpt-6.1-terra`, `gpt-6.1-sol`, `gpt-6-astra`) |
 | `A_LEVEL_NARRATIVE_MODEL` | A-level narrative model, free and paid | optional | no | `gpt-6-luna` (default and minimum; also `gpt-6.1-terra`, `gpt-6.1-sol`, `gpt-6-astra`) |
 | `PROFESSIONAL_NARRATIVE_MODEL` | Professional narrative model, free and paid | optional | no | `gpt-6.1-sol` (default and minimum; also `gpt-6-astra`) |
@@ -337,7 +349,7 @@ retried on a weaker one: the narrative takes its existing deterministic fallback
 
 ### Stripe
 
-All required when `live-payment` is active, and checked at startup.
+All required under `prod` and `dev-no-jev`, and checked at startup. Use Stripe test-mode keys under `dev-no-jev`.
 
 | Setting | Purpose | Secret |
 | --- | --- | --- |
@@ -355,16 +367,17 @@ Webhook paths: `/payments/stripe/webhook`, `/payments/stripe/university-webhook`
 
 | Setting | Purpose | Required when | Secret |
 | --- | --- | --- | --- |
-| `PROFESSIONAL_EVIDENCE_PROFESSION` | Occupation mapping | `live-evidence` | no |
-| `PROFESSIONAL_EVIDENCE_CANONICAL_OCCUPATION` | Occupation mapping | `live-evidence` | no |
-| `PROFESSIONAL_EVIDENCE_SOC2020_CODE` | Occupation mapping | `live-evidence` | no |
+| `PROFESSIONAL_EVIDENCE_PROFESSION` | Occupation mapping | `prod` | no |
+| `PROFESSIONAL_EVIDENCE_CANONICAL_OCCUPATION` | Occupation mapping | `prod` | no |
+| `PROFESSIONAL_EVIDENCE_SOC2020_CODE` | Occupation mapping | `prod` | no |
 | `PROFESSIONAL_EVIDENCE_GEOGRAPHY`, `UNIVERSITY_EVIDENCE_GEOGRAPHY`, `A_LEVEL_EVIDENCE_GEOGRAPHY` | Default geography | optional | no |
 
 ### Development only
 
 | Setting | Purpose |
 | --- | --- |
-| `PROFESSIONAL_FIXTURE_ID`, `UNIVERSITY_FIXTURE_ID`, `A_LEVEL_FIXTURE_ID` | Which fixture each journey serves under `local-fixture` |
+| `PROFESSIONAL_FIXTURE_ID`, `UNIVERSITY_FIXTURE_ID`, `A_LEVEL_FIXTURE_ID` | Which fixture each journey serves under `dev` and `dev-no-jev`; default `senior_software_architect`, `computer_science`, `maths_economics_geography` |
+| `app.dev.capture-jev`, `app.professional.jev-capture.directory` | Capture Professional judgments to JSON files under `dev` and `dev-no-jev` |
 
 Rate-limit and PDF settings are listed in their own sections above; all are optional and all have working defaults.
 
@@ -375,19 +388,17 @@ Rate-limit and PDF settings are listed in their own sections above; all are opti
 No secret of any kind is needed:
 
 ```
-mvn spring-boot:run \
-  -Dspring-boot.run.profiles=local-fixture \
-  -Dspring-boot.run.arguments="--app.professional.fixture-id=senior_software_architect --app.university.fixture-id=computer_science --app.a-level.fixture-id=maths_economics_geography"
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-Docker must be running; `spring-boot-docker-compose` starts PostgreSQL from `compose.yaml`.
+Docker must be running; `spring-boot-docker-compose` starts PostgreSQL from `compose.yaml`. On a machine that cannot reach Jev but should exercise real OpenAI narratives and Stripe test mode, use `dev-no-jev` with `OPENAI_API_KEY` and the Stripe test settings exported.
 
 ### Production
 
-Not every live capability has to be enabled at once — `prod` on its own is a valid deployment that takes no payments.
+`prod` enables every live capability at once, so every setting below is required.
 
 ```
-export SPRING_PROFILES_ACTIVE=prod,live-payment
+export SPRING_PROFILES_ACTIVE=prod
 export APP_PUBLIC_BASE_URL=https://example.com
 
 export SPRING_DATASOURCE_URL=jdbc:postgresql://db.internal:5432/aicareerimpact
@@ -405,10 +416,14 @@ export PROFESSIONAL_REPORT_STRIPE_PRICE_ID=price_...
 export UNIVERSITY_REPORT_STRIPE_PRICE_ID=price_...
 export A_LEVEL_REPORT_STRIPE_PRICE_ID=price_...
 
+export PROFESSIONAL_EVIDENCE_PROFESSION=...
+export PROFESSIONAL_EVIDENCE_CANONICAL_OCCUPATION=...
+export PROFESSIONAL_EVIDENCE_SOC2020_CODE=...
+
 java -jar target/ai-career-impact-0.0.1-SNAPSHOT.jar
 ```
 
-If anything required is missing, the application names it and refuses to start. The `live-evidence` profile currently supplies only Professional UK Nomis data for an exactly configured occupation; it does not activate University or A-level live evidence. Those report sections must be read as unavailable where no sourced item exists. The profile cannot be combined with `local-fixture`. See [LIVE_EVIDENCE_VERIFICATION.md](LIVE_EVIDENCE_VERIFICATION.md) for the tested source path and limits.
+If anything required is missing, the application names it and refuses to start. Live evidence under `prod` is only Professional UK Nomis data for an exactly configured occupation; there is no University or A-level live evidence. Those report sections must be read as unavailable where no sourced item exists. See [LIVE_EVIDENCE_VERIFICATION.md](LIVE_EVIDENCE_VERIFICATION.md) for the tested source path and limits.
 
 ## Build-time analysis
 
@@ -418,12 +433,14 @@ No static-analysis or dependency-scanning plugin is configured — no SpotBugs, 
 
 ## Reserved for live integration
 
-The remaining external-provider work is:
+The remaining external-provider and operational work is:
 
-- a real Stripe checkout, a real signed webhook, and the full purchase-to-entitlement path against Stripe's test mode;
+- the full purchase-to-entitlement path for University and A-level against Stripe's test mode (Professional was verified earlier; see [RELEASE_CANDIDATE_REVIEW.md](RELEASE_CANDIDATE_REVIEW.md));
+- promoting the 6 November 2026 A-level `a-level-v2` live calibration capture into the repository fixture;
+- an explicit OpenAI client timeout;
 - broader official occupation mapping and additional Professional evidence categories beyond the verified UK Nomis employment snapshot;
 - University and A-level live evidence adapters only after exact course/provider identifiers and defensible source ingestion are available;
-- wiring `checkout.failures` and `pdf.generation.failures` into their controllers;
+- consuming Stripe refund and dispute events, which today leave an entitlement `ACTIVE`;
 - deciding whether a Prometheus registry is wanted, once there is somewhere to scrape it from.
 
-Real Jev and OpenAI verification is recorded in [LIVE_AI_VERIFICATION.md](LIVE_AI_VERIFICATION.md). Prompt 18B's independent Nomis request and saved-report flow are recorded in [LIVE_EVIDENCE_VERIFICATION.md](LIVE_EVIDENCE_VERIFICATION.md). Normal `mvn clean verify` runs neither live suite.
+Real Jev and OpenAI verification history is in [LIVE_AI_VERIFICATION.md](LIVE_AI_VERIFICATION.md), the independent Nomis request and saved-report flow in [LIVE_EVIDENCE_VERIFICATION.md](LIVE_EVIDENCE_VERIFICATION.md), and the opt-in live harnesses in [LIVE_SMOKE_TESTING.md](LIVE_SMOKE_TESTING.md). Normal `./mvnw clean verify` runs none of them.
