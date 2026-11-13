@@ -1,21 +1,35 @@
 package com.chikere.futureai.report.alevel.application;
 
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.Objects;
 
 /**
  * Selects only the dynamically composed free-report wording. The immutable cutover uses the assessment's stored
- * creation time, so revisiting an assessment cannot change its presentation after a deployment or configuration
- * change. It is independent of judgment provider, schema and decision-policy versions.
+ * creation time and a deliberately fixed release boundary, so revisiting an assessment remains stable across the
+ * deployment. It is independent of judgment provider, schema and decision-policy versions.
  */
 public final class ALevelReportPresentationVersions {
 
-    public static final Instant V3_CUTOVER = Instant.parse("2026-11-13T00:00:00Z");
+    private final Instant v3Cutover;
 
-    private ALevelReportPresentationVersions() { }
+    public ALevelReportPresentationVersions(String configuredV3Cutover) {
+        Objects.requireNonNull(configuredV3Cutover, "configuredV3Cutover must not be null");
+        try {
+            this.v3Cutover = Instant.parse(configuredV3Cutover);
+        }
+        catch (DateTimeParseException invalidCutover) {
+            throw new IllegalArgumentException("app.a-level.presentation-v3-cutover must be a UTC ISO-8601 instant",
+                    invalidCutover);
+        }
+    }
 
-    public static String forAssessmentCreatedAt(Instant createdAt) {
-        return Objects.requireNonNull(createdAt, "createdAt must not be null").isBefore(V3_CUTOVER)
+    public String forAssessmentCreatedAt(Instant createdAt) {
+        return Objects.requireNonNull(createdAt, "createdAt must not be null").isBefore(v3Cutover)
                 ? ALevelReportVersions.V2 : ALevelReportVersions.V3;
+    }
+
+    public Instant v3Cutover() {
+        return v3Cutover;
     }
 }

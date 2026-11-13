@@ -15,6 +15,7 @@ import com.chikere.futureai.payment.alevel.application.ALevelPaymentGateway;
 import com.chikere.futureai.payment.alevel.application.ALevelPurchaseStore;
 import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseService;
 import com.chikere.futureai.report.alevel.application.ALevelReportAssembler;
+import com.chikere.futureai.report.alevel.application.ALevelReportPresentationVersions;
 import com.chikere.futureai.report.alevel.application.ALevelReportService;
 import org.springframework.beans.factory.annotation.Value;
 import com.chikere.futureai.configuration.JourneyMetrics;
@@ -85,11 +86,18 @@ public class ALevelAssessmentConfiguration {
     }
 
     @Bean
+    ALevelReportPresentationVersions aLevelReportPresentationVersions(
+            @Value("${app.a-level.presentation-v3-cutover:9999-12-31T23:59:59Z}") String configuredCutover) {
+        return new ALevelReportPresentationVersions(configuredCutover);
+    }
+
+    @Bean
     ALevelReportService aLevelReportService(ALevelAssessmentStore assessmentStore,
             ALevelNarrativeStore narrativeStore, ALevelEvidenceStore evidenceStore,
+            ALevelReportPresentationVersions presentationVersions,
             ObjectProvider<AssessmentTrace> trace) {
         return new ALevelReportService(assessmentStore, narrativeStore, evidenceStore,
-                new ALevelReportAssembler(),
+                new ALevelReportAssembler(), presentationVersions,
                 trace.getIfAvailable(AssessmentTrace::disabled));
     }
 

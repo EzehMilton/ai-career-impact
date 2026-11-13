@@ -18,23 +18,27 @@ public final class ALevelReportService implements ALevelReportQuery {
     private final ALevelEvidenceStore evidenceStore;
     private final ALevelReportAssembler assembler;
     private final AssessmentTrace trace;
+    private final ALevelReportPresentationVersions presentationVersions;
     private final ALevelSubjectProfileComposer v2Profiles = new ALevelSubjectProfileComposer();
     private final ALevelSubjectProfileComposerV3 v3Profiles = new ALevelSubjectProfileComposerV3();
 
     public ALevelReportService(ALevelAssessmentStore assessmentStore,
             ALevelNarrativeStore narrativeStore, ALevelEvidenceStore evidenceStore,
-            ALevelReportAssembler assembler) {
-        this(assessmentStore, narrativeStore, evidenceStore, assembler, AssessmentTrace.disabled());
+            ALevelReportAssembler assembler, ALevelReportPresentationVersions presentationVersions) {
+        this(assessmentStore, narrativeStore, evidenceStore, assembler, presentationVersions,
+                AssessmentTrace.disabled());
     }
 
     public ALevelReportService(ALevelAssessmentStore assessmentStore,
             ALevelNarrativeStore narrativeStore, ALevelEvidenceStore evidenceStore,
-            ALevelReportAssembler assembler, AssessmentTrace trace) {
+            ALevelReportAssembler assembler, ALevelReportPresentationVersions presentationVersions,
+            AssessmentTrace trace) {
         this.trace = Objects.requireNonNull(trace, "trace must not be null");
         this.assessmentStore = Objects.requireNonNull(assessmentStore);
         this.narrativeStore = Objects.requireNonNull(narrativeStore);
         this.evidenceStore = Objects.requireNonNull(evidenceStore);
         this.assembler = Objects.requireNonNull(assembler);
+        this.presentationVersions = Objects.requireNonNull(presentationVersions);
     }
 
     @Override
@@ -57,7 +61,7 @@ public final class ALevelReportService implements ALevelReportQuery {
                 () -> assessmentStore.findById(assessmentId)
                         .filter(assessment -> assessment.result().usesSubjectProfile())
                         .map(assessment -> ALevelReportVersions.V3.equals(
-                                ALevelReportPresentationVersions.forAssessmentCreatedAt(assessment.createdAt()))
+                                presentationVersions.forAssessmentCreatedAt(assessment.createdAt()))
                                 ? v3Profiles.compose(assessment.result().profile())
                                 : v2Profiles.compose(assessment.result().profile())));
     }

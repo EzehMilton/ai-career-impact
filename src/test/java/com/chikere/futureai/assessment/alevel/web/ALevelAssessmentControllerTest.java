@@ -22,6 +22,7 @@ import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseUseCa
 import com.chikere.futureai.report.alevel.application.ALevelReport;
 import com.chikere.futureai.report.alevel.application.ALevelReportAssembler;
 import com.chikere.futureai.report.alevel.application.ALevelReportQuery;
+import com.chikere.futureai.report.alevel.application.ALevelReportPresentationVersions;
 import com.chikere.futureai.report.alevel.application.ALevelReportSource;
 import com.chikere.futureai.report.alevel.application.ALevelReportTier;
 import com.chikere.futureai.report.alevel.web.ALevelReportViewMapper;
@@ -31,6 +32,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -57,7 +60,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 @WebMvcTest(ALevelAssessmentController.class)
-@Import({WebSecurityConfiguration.class, ALevelAssessmentFormMapper.class, ALevelReportViewMapper.class})
+@Import({WebSecurityConfiguration.class, ALevelAssessmentFormMapper.class, ALevelReportViewMapper.class,
+        ALevelAssessmentControllerTest.PresentationVersionTestConfiguration.class})
 class ALevelAssessmentControllerTest {
 
     private static final UUID ID = UUID.fromString("5c6d7e8f-9a0b-4c1d-8e2f-3a4b5c6d7e8f");
@@ -327,7 +331,7 @@ class ALevelAssessmentControllerTest {
         var base = com.chikere.futureai.assessment.alevel.application.ALevelTestAssessments.subjectProfile(ID,
                 "english_history_politics", AssessmentSource.OPENAI);
         var assessment = new StoredALevelAssessment(base.id(),
-                com.chikere.futureai.report.alevel.application.ALevelReportPresentationVersions.V3_CUTOVER,
+                Instant.parse("2026-11-20T09:30:00Z"),
                 base.state(), base.judgments(), base.result(), base.modelIdentifier());
         when(reportService.stored(ID)).thenReturn(Optional.of(assessment));
         when(reportService.subjectProfile(ID)).thenReturn(Optional.of(
@@ -342,6 +346,15 @@ class ALevelAssessmentControllerTest {
                         "Writing, ideas and the wider world", "How AI can help you learn")
                 .doesNotContain("Options Kept Open", "Capability Profile", "Analytical &amp; Quantitative",
                         "Communication, Interpretation &amp; Context", "Learning Alongside AI");
+    }
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class PresentationVersionTestConfiguration {
+
+        @Bean
+        ALevelReportPresentationVersions aLevelReportPresentationVersions() {
+            return new ALevelReportPresentationVersions("2026-11-20T09:30:00Z");
+        }
     }
 
     @Test

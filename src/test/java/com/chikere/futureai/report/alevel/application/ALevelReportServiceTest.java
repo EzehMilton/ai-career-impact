@@ -25,6 +25,9 @@ import static org.mockito.Mockito.when;
 class ALevelReportServiceTest {
 
     private static final UUID ID = UUID.fromString("6d7e8f9a-0b1c-4d2e-8f3a-4b5c6d7e8f9a");
+    private static final Instant CUTOVER = Instant.parse("2026-11-20T09:30:00Z");
+    private static final ALevelReportPresentationVersions PRESENTATION_VERSIONS =
+            new ALevelReportPresentationVersions(CUTOVER.toString());
 
     @Test
     void readsOnlyPersistencePortsAndReturnsEmptyForAnUnknownAssessment() {
@@ -35,7 +38,7 @@ class ALevelReportServiceTest {
         when(narrativeStore.findByAssessmentId(ID)).thenReturn(Optional.empty());
         when(evidenceStore.findByAssessmentId(ID)).thenReturn(Optional.empty());
         var service = new ALevelReportService(assessmentStore, narrativeStore, evidenceStore,
-                new ALevelReportAssembler());
+                new ALevelReportAssembler(), PRESENTATION_VERSIONS);
 
         assertThat(service.assemble(ID, ALevelReportTier.FREE)).get()
                 .extracting(ALevelReport::selectedSubjects)
@@ -50,19 +53,30 @@ class ALevelReportServiceTest {
     void freeReportPresentationUsesTheStoredCreationTimeCutover() {
         var assessmentStore = mock(ALevelAssessmentStore.class);
         var service = new ALevelReportService(assessmentStore, mock(ALevelNarrativeStore.class),
-                mock(ALevelEvidenceStore.class), new ALevelReportAssembler());
+                mock(ALevelEvidenceStore.class), new ALevelReportAssembler(), PRESENTATION_VERSIONS);
         var base = ALevelTestAssessments.subjectProfile(ID, "maths_economics_geography", AssessmentSource.JEV);
         var historical = new StoredALevelAssessment(base.id(),
-                ALevelReportPresentationVersions.V3_CUTOVER.minusSeconds(1), base.state(), base.judgments(),
+                CUTOVER.minusNanos(1), base.state(), base.judgments(),
                 base.result(), base.modelIdentifier());
         when(assessmentStore.findById(ID)).thenReturn(Optional.of(historical));
 
         assertThat(service.subjectProfile(ID).orElseThrow().optionsKeptOpen().name())
                 .isEqualTo("Options Kept Open");
 
-        var newAssessment = new StoredALevelAssessment(base.id(), ALevelReportPresentationVersions.V3_CUTOVER,
+        // Revisiting the same persisted pre-cutover assessment cannot move it to v3.
+        assertThat(service.subjectProfile(ID).orElseThrow().optionsKeptOpen().name())
+                .isEqualTo("Options Kept Open");
+
+        var newAssessment = new StoredALevelAssessment(base.id(), CUTOVER,
                 base.state(), base.judgments(), base.result(), base.modelIdentifier());
         when(assessmentStore.findById(ID)).thenReturn(Optional.of(newAssessment));
+
+        assertThat(service.subjectProfile(ID).orElseThrow().optionsKeptOpen().name())
+                .isEqualTo("Future study options");
+
+        var afterCutover = new StoredALevelAssessment(base.id(), CUTOVER.plusNanos(1),
+                base.state(), base.judgments(), base.result(), base.modelIdentifier());
+        when(assessmentStore.findById(ID)).thenReturn(Optional.of(afterCutover));
 
         assertThat(service.subjectProfile(ID).orElseThrow().optionsKeptOpen().name())
                 .isEqualTo("Future study options");
@@ -74,10 +88,15 @@ class ALevelReportServiceTest {
         var jev = ALevelTestAssessments.subjectProfile(UUID.randomUUID(), "maths_economics_geography",
                 AssessmentSource.JEV);
 
-        assertThat(ALevelReportPresentationVersions.forAssessmentCreatedAt(openAi.createdAt()))
-                .isEqualTo(ALevelReportVersions.V2);
-        assertThat(ALevelReportPresentationVersions.forAssessmentCreatedAt(jev.createdAt()))
-                .isEqualTo(ALevelReportVersions.V2);
+        var openAiAtCutover = new StoredALevelAssessment(openAi.id(), CUTOVER, openAi.state(), openAi.judgments(),
+                openAi.result(), openAi.modelIdentifier());
+        var jevAtCutover = new StoredALevelAssessment(jev.id(), CUTOVER, jev.state(), jev.judgments(), jev.result(),
+                jev.modelIdentifier());
+
+        assertThat(PRESENTATION_VERSIONS.forAssessmentCreatedAt(openAiAtCutover.createdAt()))
+                .isEqualTo(ALevelReportVersions.V3);
+        assertThat(PRESENTATION_VERSIONS.forAssessmentCreatedAt(jevAtCutover.createdAt()))
+                .isEqualTo(ALevelReportVersions.V3);
     }
 
     private StoredALevelAssessment snapshot() {

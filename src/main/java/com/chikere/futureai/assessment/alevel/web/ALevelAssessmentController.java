@@ -38,15 +38,18 @@ public final class ALevelAssessmentController {
     private final ALevelAssessmentFormMapper formMapper;
     private final ALevelReportViewMapper reportViewMapper;
     private final ALevelReportPurchaseUseCase purchaseService;
+    private final ALevelReportPresentationVersions presentationVersions;
 
     public ALevelAssessmentController(ALevelAssessmentUseCase workflow,
             ALevelReportQuery reportService, ALevelAssessmentFormMapper formMapper,
-            ALevelReportViewMapper reportViewMapper, ALevelReportPurchaseUseCase purchaseService) {
+            ALevelReportViewMapper reportViewMapper, ALevelReportPurchaseUseCase purchaseService,
+            ALevelReportPresentationVersions presentationVersions) {
         this.workflow = workflow;
         this.reportService = reportService;
         this.formMapper = formMapper;
         this.reportViewMapper = reportViewMapper;
         this.purchaseService = purchaseService;
+        this.presentationVersions = presentationVersions;
     }
 
     @GetMapping("/a-level-assessment")
@@ -144,7 +147,7 @@ public final class ALevelAssessmentController {
         model.addAttribute("subjects", assessment.state().selectedSubjects());
         model.addAttribute("developmentFixture", assessment.result().source() == AssessmentSource.LOCAL_FIXTURE);
         model.addAttribute("v3Presentation", ALevelReportVersions.V3.equals(
-                ALevelReportPresentationVersions.forAssessmentCreatedAt(assessment.createdAt())));
+                presentationVersions.forAssessmentCreatedAt(assessment.createdAt())));
         model.addAttribute("profile", reportService.subjectProfile(assessment.id()).orElseThrow());
         return "a-level-assessment/result-v2";
     }

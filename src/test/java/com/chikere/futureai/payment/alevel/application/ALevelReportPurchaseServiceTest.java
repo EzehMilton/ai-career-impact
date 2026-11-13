@@ -11,6 +11,7 @@ import com.chikere.futureai.judgment.fixture.alevel.LocalFixtureALevelJudgmentPr
 import com.chikere.futureai.narrative.alevel.application.ALevelNarrativeStore;
 import com.chikere.futureai.report.alevel.application.ALevelReport;
 import com.chikere.futureai.report.alevel.application.ALevelReportAssembler;
+import com.chikere.futureai.report.alevel.application.ALevelReportPresentationVersions;
 import com.chikere.futureai.report.alevel.application.ALevelReportService;
 import com.chikere.futureai.report.alevel.application.ALevelReportSource;
 import com.chikere.futureai.report.alevel.application.ALevelReportTier;
@@ -49,7 +50,8 @@ class ALevelReportPurchaseServiceTest {
     private final ALevelEvidenceStore evidenceStore = mock(ALevelEvidenceStore.class);
     private final ALevelPurchaseStore purchaseStore = mock(ALevelPurchaseStore.class);
     private final ALevelReportService reportService = new ALevelReportService(assessmentStore,
-            narrativeStore, evidenceStore, new ALevelReportAssembler());
+            narrativeStore, evidenceStore, new ALevelReportAssembler(),
+            new ALevelReportPresentationVersions("9999-12-31T23:59:59Z"));
 
     @Test
     void withoutAConfiguredGatewayCheckoutIsUnavailableAndNothingIsPersisted() {

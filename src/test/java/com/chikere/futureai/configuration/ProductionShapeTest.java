@@ -50,6 +50,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "app.professional.report.stripe-price-id=price_not_called",
         "app.university.report.stripe-price-id=price_not_called",
         "app.a-level.report.stripe-price-id=price_not_called",
+        "app.a-level.presentation-v3-cutover=2026-11-20T09:30:00Z",
         "app.professional.evidence.classified-profession=Software Developer",
         "app.professional.evidence.canonical-occupation=Programmers and software development professionals",
         "app.professional.evidence.soc2020-code=2134"})

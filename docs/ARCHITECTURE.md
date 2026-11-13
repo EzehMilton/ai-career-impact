@@ -1042,10 +1042,14 @@ otherwise
 `a-level-report-v3` is a presentation-only successor for newly generated detailed subject-profile reports. It keeps
 the `a-level-decision-v2` scores, bands and factors and the `a-level-guidance-policy-v1` outputs, while mapping the
 internal measures to plainer customer labels and shorter explanations. Stored v1/v2 reports remain immutable and are
-rendered from their saved JSON. Free subject profiles use the assessment's persisted creation time and the fixed
-`2026-11-13T00:00:00Z` cutover: earlier assessments retain v2 wording and assessments at or after the cutover use v3.
-This presentation choice is independent of OpenAI/Jev provenance. V3 PDFs use `a-level-report-pdf-v3`; their layout
-is intentionally the v2 layout, while the versioned stored report supplies the wording.
+rendered from their saved JSON. Free subject profiles compare the assessment's persisted creation time with the
+release-controlled `app.a-level.presentation-v3-cutover` UTC instant. Production enables the cutover by setting
+`A_LEVEL_V3_PRESENTATION_CUTOVER` to the actual v3 deployment boundary. Earlier assessments retain
+v2 wording and assessments at or after the boundary use v3. For a rolling deployment, the boundary must be no earlier
+than the point when every v2 instance has stopped accepting submissions. The non-production default is the end of 9999, keeping
+v3 disabled until deliberately configured, including in production. This presentation choice is independent of OpenAI/Jev provenance. V3
+PDFs use `a-level-report-pdf-v3`; their layout is intentionally the v2 layout, while the versioned stored report
+supplies the wording.
 
 Practical guidance uses `KEEP_DEVELOPING`, `WORTH_STRENGTHENING` and `CONSIDER_SUPPLEMENTING`. Every item is something a student can do alongside their existing subjects — building coding or data literacy, strengthening written argument, researching course requirements early — and `ALevelReportAssemblerTest` asserts across all six fixtures that no guidance ever suggests dropping, swapping or retaking a subject. Every combination is told to check real published course requirements rather than trust a guess.
 

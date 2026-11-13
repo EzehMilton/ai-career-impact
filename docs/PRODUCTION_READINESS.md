@@ -347,6 +347,18 @@ A narrative model outside its journey's allowlist refuses startup under `prod`, 
 (`OpenAiNarrativeModelPolicy`). It is never replaced by the default, and a model that fails at runtime is never
 retried on a weaker one: the narrative takes its existing deterministic fallback.
 
+### A-Level report presentation
+
+| Setting | Purpose | Required when | Secret | Example shape |
+| --- | --- | --- | --- | --- |
+| `A_LEVEL_V3_PRESENTATION_CUTOVER` | UTC instant when newly created assessments begin using free-report v3 wording | v3 release | no | `2026-11-20T09:30:00Z` |
+
+Set this no earlier than the point when every v2 instance has stopped accepting new assessments. For a rolling
+deployment, use a planned instant after the old instances have drained. Assessments created before it retain v2
+wording whenever revisited; assessments created at or after it use v3. The application parses it as an `Instant` at
+startup and refuses a malformed value. If omitted, the safe `9999-12-31T23:59:59Z` default keeps v3 disabled in every
+profile, including production, until a release timestamp is deliberately supplied.
+
 ### Stripe
 
 All required under `prod` and `dev-no-jev`, and checked at startup. Use Stripe test-mode keys under `dev-no-jev`.
