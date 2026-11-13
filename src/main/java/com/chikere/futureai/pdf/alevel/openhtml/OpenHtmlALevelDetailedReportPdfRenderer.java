@@ -26,9 +26,17 @@ public final class OpenHtmlALevelDetailedReportPdfRenderer implements ALevelDeta
 
     @Override
     public byte[] render(ALevelDetailedReport report) {
+        return render(report, false);
+    }
+
+    byte[] renderV3(ALevelDetailedReport report) {
+        return render(report, true);
+    }
+
+    private byte[] render(ALevelDetailedReport report, boolean protectSectionLeads) {
         try (var output = new ByteArrayOutputStream()) {
             var builder = new PdfRendererBuilder();
-            builder.withHtmlContent(html(report), null);
+            builder.withHtmlContent(html(report, protectSectionLeads), null);
             builder.toStream(output);
             builder.run();
             return output.toByteArray();
@@ -39,6 +47,14 @@ public final class OpenHtmlALevelDetailedReportPdfRenderer implements ALevelDeta
     }
 
     String html(ALevelDetailedReport report) {
+        return html(report, false);
+    }
+
+    String htmlV3(ALevelDetailedReport report) {
+        return html(report, true);
+    }
+
+    private String html(ALevelDetailedReport report, boolean protectSectionLeads) {
         StringBuilder out = new StringBuilder(40_000);
         out.append("""
                 <html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta charset="UTF-8" />
@@ -64,8 +80,10 @@ public final class OpenHtmlALevelDetailedReportPdfRenderer implements ALevelDeta
                 .append(escape(report.limitations().getFirst())).append("</p></div></section>");
 
         var profile = report.profile();
+        sectionLeadStart(out, protectSectionLeads);
         out.append("<h2>Your A-level subject profile</h2><p>").append(escape(report.perspectives().profile()))
                 .append("</p>");
+        sectionLeadEnd(out, protectSectionLeads);
         measure(out, profile.optionsKeptOpen());
         out.append("<h3>").append(ALevelReportVersions.V3.equals(report.reportVersion())
                         ? "Skills your subjects develop" : "Capability Profile")
@@ -75,20 +93,20 @@ public final class OpenHtmlALevelDetailedReportPdfRenderer implements ALevelDeta
         out.append("<p>").append(escape(report.perspectives().capability())).append("</p>");
         measure(out, profile.learningAlongsideAi());
 
-        out.append("<h2>What this combination gives you</h2>");
-        entries(out, report.combinationShape());
+        sectionWithEntries(out, "What this combination gives you", report.combinationShape(), protectSectionLeads);
 
-        out.append("<h2>Strengths to develop further</h2>");
-        entries(out, report.strengths());
+        sectionWithEntries(out, "Strengths to develop further", report.strengths(), protectSectionLeads);
 
         if (!report.areasToStrengthen().isEmpty()) {
-            out.append("<h2>Areas to strengthen</h2>");
-            entries(out, report.areasToStrengthen());
+            sectionWithEntries(out, "Areas to strengthen", report.areasToStrengthen(), protectSectionLeads);
         }
 
         var options = report.options();
+        sectionLeadStart(out, protectSectionLeads);
         out.append("<h2>Options and applications</h2><p>").append(escape(report.perspectives().options()))
-                .append("</p><div class=\"card\"><h3>What this assessment can say</h3>");
+                .append("</p>");
+        sectionLeadEnd(out, protectSectionLeads);
+        out.append("<div class=\"card\"><h3>What this assessment can say</h3>");
         list(out, options.canSay());
         out.append("<h3>What it cannot say</h3>");
         list(out, options.cannotSay());
@@ -98,26 +116,30 @@ public final class OpenHtmlALevelDetailedReportPdfRenderer implements ALevelDeta
             out.append("<div class=\"notice\"><p>").append(escape(options.gradesNote())).append("</p></div>");
         }
 
+        sectionLeadStart(out, protectSectionLeads);
         out.append("<h2>Using AI to support your learning</h2><div class=\"caution\"><p>")
-                .append(escape(report.aiStudy().caution())).append("</p></div><p>")
-                .append(escape(report.perspectives().aiLearning())).append("</p>");
+                .append(escape(report.aiStudy().caution())).append("</p></div>");
+        sectionLeadEnd(out, protectSectionLeads);
+        out.append("<p>").append(escape(report.perspectives().aiLearning())).append("</p>");
         entries(out, report.aiStudy().uses());
 
-        out.append("<h2>Skill priorities</h2>");
-        entries(out, report.skillPriorities());
+        sectionWithEntries(out, "Skill priorities", report.skillPriorities(), protectSectionLeads);
 
+        sectionLeadStart(out, protectSectionLeads);
         out.append("<h2>Your action plan</h2><p>").append(escape(report.perspectives().actionPlanIntroduction()))
                 .append("</p>");
+        sectionLeadEnd(out, protectSectionLeads);
         phase(out, "Now", report.actionPlan().now());
         phase(out, "During Year 13 and the rest of sixth form", report.actionPlan().sixthForm());
         phase(out, "Applications and next-step decisions", report.actionPlan().applications());
 
-        out.append("<h2>Safeguards</h2>");
-        entries(out, report.safeguards());
+        sectionWithEntries(out, "Safeguards", report.safeguards(), protectSectionLeads);
 
         if (!report.evidence().isEmpty()) {
+            sectionLeadStart(out, protectSectionLeads);
             out.append("<h2>Course information from published sources</h2><p class=\"small\">These are factual notes "
                     + "with their own sources. They are separate from your assessment and do not change it.</p>");
+            sectionLeadEnd(out, protectSectionLeads);
             for (var item : report.evidence()) {
                 out.append("<div class=\"card\"><h3>").append(escape(item.title())).append("</h3><p>")
                         .append(escape(item.summary())).append("</p><p class=\"small\">Source: ")
@@ -125,9 +147,12 @@ public final class OpenHtmlALevelDetailedReportPdfRenderer implements ALevelDeta
             }
         }
 
+        sectionLeadStart(out, protectSectionLeads);
         out.append("<h2>Perspective and limitations</h2><ul>");
         report.limitations().forEach(item -> out.append("<li>").append(escape(item)).append("</li>"));
-        out.append("</ul></body></html>");
+        out.append("</ul>");
+        sectionLeadEnd(out, protectSectionLeads);
+        out.append("</body></html>");
         return out.toString();
     }
 
@@ -162,6 +187,34 @@ public final class OpenHtmlALevelDetailedReportPdfRenderer implements ALevelDeta
         for (var entry : entries) {
             out.append("<div class=\"card\"><h3>").append(escape(entry.title())).append("</h3><p>")
                     .append(escape(entry.text())).append("</p></div>");
+        }
+    }
+
+    private void sectionWithEntries(StringBuilder out, String heading, List<ALevelDetailedReport.Entry> entries,
+                                    boolean protectSectionLead) {
+        sectionLeadStart(out, protectSectionLead);
+        out.append("<h2>").append(escape(heading)).append("</h2>");
+        if (!entries.isEmpty()) {
+            entry(out, entries.getFirst());
+        }
+        sectionLeadEnd(out, protectSectionLead);
+        entries.stream().skip(1).forEach(entry -> entry(out, entry));
+    }
+
+    private void entry(StringBuilder out, ALevelDetailedReport.Entry entry) {
+        out.append("<div class=\"card\"><h3>").append(escape(entry.title())).append("</h3><p>")
+                .append(escape(entry.text())).append("</p></div>");
+    }
+
+    private void sectionLeadStart(StringBuilder out, boolean protectSectionLead) {
+        if (protectSectionLead) {
+            out.append("<div class=\"section-lead\" style=\"page-break-inside:avoid;\">");
+        }
+    }
+
+    private void sectionLeadEnd(StringBuilder out, boolean protectSectionLead) {
+        if (protectSectionLead) {
+            out.append("</div>");
         }
     }
 

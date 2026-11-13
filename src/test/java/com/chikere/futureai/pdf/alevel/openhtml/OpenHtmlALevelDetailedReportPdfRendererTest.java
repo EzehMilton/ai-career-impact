@@ -74,6 +74,7 @@ class OpenHtmlALevelDetailedReportPdfRendererTest {
 
         assertThat(html).contains("Options Kept Open", "Analytical &amp; Quantitative",
                         "Communication, Interpretation &amp; Context", "Learning Alongside AI")
+                .doesNotContain("section-lead")
                 .doesNotContain("Future study options", "Maths and problem-solving",
                         "Writing, ideas and the wider world", "How AI can help you learn");
     }

@@ -30,13 +30,13 @@ public final class OpenHtmlALevelDetailedReportPdfRendererV3 implements ALevelDe
         if (!ALevelReportVersions.V3.equals(report.reportVersion())) {
             throw new IllegalArgumentException("v3 PDF renderer requires a-level-report-v3");
         }
-        return layout.render(report);
+        return layout.renderV3(report);
     }
 
     String html(ALevelDetailedReport report) {
         if (!ALevelReportVersions.V3.equals(report.reportVersion())) {
             throw new IllegalArgumentException("v3 PDF renderer requires a-level-report-v3");
         }
-        return layout.html(report);
+        return layout.htmlV3(report);
     }
 }
