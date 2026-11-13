@@ -59,6 +59,7 @@ class LiveSmokeProviderWiringTest {
     private final ApplicationContextRunner runner = new ApplicationContextRunner()
             .withInitializer(context -> context.getEnvironment().setActiveProfiles("live-smoke"))
             .withPropertyValues("spring.ai.model.chat=openai", "spring.ai.openai.chat.model=gpt-test",
+                    "app.judgment.provider=jev",
                     "app.professional.fixture-id=senior_software_architect", "app.university.fixture-id=computer_science",
                     "app.a-level.fixture-id=maths_economics_geography")
             .withConfiguration(AutoConfigurations.of(ProfessionalJevAutoConfiguration.class,

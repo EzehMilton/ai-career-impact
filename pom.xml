@@ -28,7 +28,7 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
-		<spring-ai.version>2.0.1</spring-ai.version>
+		<spring-ai.version>2.1.0-RC2</spring-ai.version>
 		<stripe-java.version>33.4.2</stripe-java.version>
 		<openhtmltopdf.version>1.1.87</openhtmltopdf.version>
 		<pdfbox.version>3.0.8</pdfbox.version>
@@ -239,6 +239,59 @@
 								<include>**/LiveOpenAiNarrativeIT.java</include>
 							</includes>
 						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<!-- Phase 1 only: one real OpenAI Decisions call, never selected by normal verify. -->
+			<id>live-openai-decision-poc</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<configuration>
+							<systemPropertyVariables>
+								<openai.decision.poc.live.enabled>true</openai.decision.poc.live.enabled>
+							</systemPropertyVariables>
+							<includes>
+								<include>**/OpenAiDecisionProofOfConceptLiveIT.java</include>
+							</includes>
+						</configuration>
+						<executions>
+							<execution>
+								<goals>
+									<goal>integration-test</goal>
+									<goal>verify</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<!-- Phase 2 release gate: side-by-side live Jev/OpenAI professional calibration. -->
+			<id>live-professional-decision-calibration</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<configuration>
+							<systemPropertyVariables>
+								<professional.decision.calibration.live.enabled>true</professional.decision.calibration.live.enabled>
+							</systemPropertyVariables>
+							<includes>
+								<include>**/ProfessionalDecisionProviderCalibrationLiveIT.java</include>
+							</includes>
+						</configuration>
+						<executions>
+							<execution>
+								<goals><goal>integration-test</goal><goal>verify</goal></goals>
+							</execution>
+						</executions>
 					</plugin>
 				</plugins>
 			</build>

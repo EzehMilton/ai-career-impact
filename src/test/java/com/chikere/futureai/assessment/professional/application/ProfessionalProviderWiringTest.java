@@ -6,6 +6,8 @@ import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfession
 import com.chikere.futureai.judgment.fixture.professional.LocalFixtureProfessionalJudgmentProvider;
 import com.chikere.futureai.judgment.typesafe.professional.ProfessionalJevAutoConfiguration;
 import com.chikere.futureai.judgment.typesafe.professional.ProfessionalJevJudgmentService;
+import com.chikere.futureai.judgment.openai.professional.ProfessionalOpenAiAutoConfiguration;
+import com.chikere.futureai.judgment.openai.professional.ProfessionalOpenAiJudgmentService;
 import com.chikere.futureai.narrative.professional.application.NarrativeSource;
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeGenerator;
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeStore;
@@ -32,6 +34,7 @@ import com.chikere.futureai.payment.professional.fixture.*;
 import com.chikere.futureai.payment.professional.stripe.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.decision.DecisionModel;
 import org.springframework.web.client.RestClient;
 import org.springaicommunity.typesafe.TypeSafeClient;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -48,7 +51,8 @@ class ProfessionalProviderWiringTest {
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
             .withPropertyValues("spring.ai.model.chat=openai", "spring.ai.openai.chat.model=gpt-test",
                     "app.professional.report.base-url=http://localhost:8080")
-            .withConfiguration(AutoConfigurations.of(ProfessionalJevAutoConfiguration.class))
+            .withConfiguration(AutoConfigurations.of(ProfessionalJevAutoConfiguration.class,
+                    ProfessionalOpenAiAutoConfiguration.class))
             .withUserConfiguration(
                     ProfessionalAssessmentConfiguration.class,
                     LocalFixtureProfessionalConfiguration.class,
@@ -62,6 +66,7 @@ class ProfessionalProviderWiringTest {
                     StripeProfessionalPaymentConfiguration.class,
                     OpenAiProfessionalNarrativeConfiguration.class)
             .withBean(TypeSafeClient.class, () -> mock(TypeSafeClient.class))
+            .withBean(DecisionModel.class, () -> mock(DecisionModel.class))
             .withBean(ProfessionalAssessmentStore.class, () -> mock(ProfessionalAssessmentStore.class))
             .withBean(ProfessionalNarrativeStore.class, () -> mock(ProfessionalNarrativeStore.class))
             .withBean(ProfessionalEvidenceStore.class, () -> mock(ProfessionalEvidenceStore.class))
@@ -157,7 +162,7 @@ class ProfessionalProviderWiringTest {
     }
 
     @Test
-    void prodProfileSelectsAllRealServicesAndNoFixtures() {
+    void prodProfileSelectsOpenAiByDefaultAndNoFixtures() {
         contextRunner.withPropertyValues(
                         "app.stripe.secret-key=sk_test_not_called",
                         "app.stripe.webhook-secret=whsec_not_called",
@@ -169,9 +174,9 @@ class ProfessionalProviderWiringTest {
                 .run(context -> {
                     assertThat(context).hasNotFailed();
                     assertThat(context.getBean(ProfessionalJudgmentProvider.class))
-                            .isInstanceOf(ProfessionalJevJudgmentService.class);
+                            .isInstanceOf(ProfessionalOpenAiJudgmentService.class);
                     assertThat(context.getBean(ProfessionalJudgmentProvider.class).source())
-                            .isEqualTo(AssessmentSource.JEV);
+                            .isEqualTo(AssessmentSource.OPENAI);
                     assertThat(context).doesNotHaveBean(LocalFixtureProfessionalJudgmentProvider.class);
                     assertThat(context.getBean(ProfessionalNarrativeGenerator.class))
                             .isInstanceOf(OpenAiProfessionalNarrativeGenerator.class);
@@ -187,6 +192,28 @@ class ProfessionalProviderWiringTest {
                     assertThat(context.getBean(ProfessionalPaymentGateway.class))
                             .isInstanceOf(StripeProfessionalPaymentGateway.class);
                     assertThat(context).doesNotHaveBean(LocalFixtureProfessionalPaymentGateway.class);
+                });
+    }
+
+    @Test
+    void prodCanSelectJevExplicitlyWithoutAutomaticFailover() {
+        contextRunner.withPropertyValues(
+                        "app.judgment.provider=jev",
+                        "spring.ai.openai.decision.model=gpt-6-luna",
+                        "app.stripe.secret-key=sk_test_not_called",
+                        "app.stripe.webhook-secret=whsec_not_called",
+                        "app.professional.report.stripe-price-id=price_not_called",
+                        "app.professional.evidence.classified-profession=Software Architect",
+                        "app.professional.evidence.canonical-occupation=IT architects",
+                        "app.professional.evidence.soc2020-code=2133")
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("prod"))
+                .run(context -> {
+                    assertThat(context).hasNotFailed();
+                    assertThat(context.getBean(ProfessionalJudgmentProvider.class))
+                            .isInstanceOf(ProfessionalJevJudgmentService.class);
+                    assertThat(context.getBean(ProfessionalJudgmentProvider.class).source())
+                            .isEqualTo(AssessmentSource.JEV);
+                    assertThat(context).doesNotHaveBean(ProfessionalOpenAiJudgmentService.class);
                 });
     }
 

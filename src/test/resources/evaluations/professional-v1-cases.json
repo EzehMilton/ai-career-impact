@@ -216,5 +216,45 @@
     "responsibilities": [],
     "skills": [],
     "rationale": "Deliberately provides almost only a title to probe information_sufficient behaviour."
+  },
+  {
+    "id": "ambiguous_hybrid_operations_role",
+    "profession": "Operations Specialist",
+    "workDescription": "Handles varied operational issues using digital systems and coordinates with colleagues when exceptions arise.",
+    "responsibilities": [
+      "Process routine requests",
+      "Investigate unusual cases",
+      "Coordinate resolutions with internal teams"
+    ],
+    "skills": ["Operations", "Problem solving", "Communication"],
+    "yearsExperience": 4,
+    "rationale": "Ambiguous case with an intentionally mixed routine/exception profile and limited consequence detail."
+  },
+  {
+    "id": "contradictory_evidence_electrician",
+    "profession": "Electrician",
+    "workDescription": "Works entirely from home entering invoice data into standard software and follows fixed validation rules.",
+    "responsibilities": [
+      "Install and repair live electrical systems on customer sites",
+      "Diagnose changing physical faults",
+      "Take responsibility for electrical safety"
+    ],
+    "skills": ["Bookkeeping software", "Electrical installation", "Safety inspection"],
+    "yearsExperience": 6,
+    "rationale": "Contradictory answers test whether conflict lowers confidence or produces unstable classifications."
+  },
+  {
+    "id": "classification_boundary_digital_adviser",
+    "profession": "Digital Service Adviser",
+    "workDescription": "Uses standard digital workflows while adapting advice for customers whose circumstances vary.",
+    "responsibilities": [
+      "Process standard online service requests",
+      "Explain options to customers",
+      "Escalate unusual or consequential cases",
+      "Record decisions in digital systems"
+    ],
+    "skills": ["Customer advice", "Digital workflows", "Case assessment"],
+    "yearsExperience": 3,
+    "rationale": "Boundary-focused case mixing exposure and human-value signals; any band change is customer-facing material."
   }
 ]

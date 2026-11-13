@@ -23,6 +23,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
         "app.public-base-url=https://ai-career-impact.example",
         "TYPESAFE_API_KEY=test-only-jev-key",
         "OPENAI_API_KEY=test-only-openai-key",
+        "spring.ai.openai.decision.api-key=test-only-openai-key",
         "spring.ai.model.chat=none",
         "app.stripe.secret-key=sk_test_not_called",
         "app.stripe.webhook-secret=whsec_not_called",

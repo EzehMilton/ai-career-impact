@@ -100,7 +100,8 @@ class ProfileMatrixTest {
 
     @Test
     void jevRealIsActiveOnlyUnderProd() {
-        runner.withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles("prod"))
+        runner.withPropertyValues("app.judgment.provider=jev")
+                .withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles("prod"))
                 .run(ctx -> assertThat(ctx.getBeansOfType(ProfessionalJevJudgmentService.class))
                         .isNotEmpty());
     }

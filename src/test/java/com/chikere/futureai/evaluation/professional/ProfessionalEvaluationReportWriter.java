@@ -59,7 +59,7 @@ final class ProfessionalEvaluationReportWriter {
                 .append("> Live evaluation output. These observations are descriptive, not accuracy claims.\n\n")
                 .append("- Cases evaluated: ").append(results.size()).append("\n")
                 .append("- Judgment schema: `professional-v1`\n")
-                .append("- Decision policy: `professional-decision-v1`\n")
+                .append("- Decision policy: `professional-decision-v2`\n")
                 .append("- Jev provenance: resolved model, request ID, and usage are not exposed by the current ")
                 .append("vendor-neutral judgment adapter.\n\n");
 

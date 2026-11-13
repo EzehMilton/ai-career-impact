@@ -13,7 +13,7 @@ class ProfessionalEvaluationDatasetTest {
     void loadsAllFictionalProfessionalV1CasesAndComparisonPairs() {
         List<ProfessionalEvaluationCase> cases = ProfessionalEvaluationDataset.load();
 
-        assertThat(cases).hasSize(16);
+        assertThat(cases).hasSize(19);
         assertThat(cases).extracting(ProfessionalEvaluationCase::id).contains(
                 "data_entry_clerk",
                 "routine_software_developer",
@@ -22,7 +22,10 @@ class ProfessionalEvaluationDatasetTest {
                 "advisory_management_accountant",
                 "graphic_production_designer",
                 "creative_director",
-                "insufficient_information");
+                "insufficient_information",
+                "ambiguous_hybrid_operations_role",
+                "contradictory_evidence_electrician",
+                "classification_boundary_digital_adviser");
         assertThat(ProfessionalEvaluationDataset.COMPARISON_PAIRS).hasSize(3);
 
         ProfessionalEvaluationCase insufficient = cases.stream()
@@ -44,6 +47,6 @@ class ProfessionalEvaluationDatasetTest {
                 .isEqualTo("routine_software_developer");
         assertThatThrownBy(() -> ProfessionalEvaluationDataset.select(cases, "not_a_case"))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Unknown jev.eval.case", "routine_software_developer");
+                .hasMessageContaining("Unknown professional evaluation case", "routine_software_developer");
     }
 }
