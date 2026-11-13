@@ -24,6 +24,10 @@ class ALevelDetailedReportVersionCompatibilityTest {
         assertThat(reloaded).isEqualTo(historical);
         assertThat(reloaded.reportVersion()).isEqualTo("a-level-report-v2");
         assertThat(reloaded.profile().optionsKeptOpen().name()).isEqualTo("Options Kept Open");
+        assertThat(reloaded.profile().summary()).isEqualTo(
+                "Your subjects keep a broad range of options open. They place strong emphasis on analytical and "
+                        + "quantitative work and strong emphasis on communication, interpretation and context. AI "
+                        + "tools may offer a high level of support for learning in these subjects.");
     }
 
     @Test
@@ -43,6 +47,9 @@ class ALevelDetailedReportVersionCompatibilityTest {
         assertThat(v3.safeguards()).isEqualTo(v2.safeguards());
         assertThat(v3.limitations()).isEqualTo(v2.limitations());
         assertThat(v3.actionPlan()).isEqualTo(v2.actionPlan());
+        assertThat(v3.profile().summary())
+                .doesNotContain("Future study options measure", "How AI can help you learn", "profile combines",
+                        " band", " measure");
     }
 
     private static List<ALevelSubjectProfile.Measure> measures(ALevelSubjectProfile profile) {

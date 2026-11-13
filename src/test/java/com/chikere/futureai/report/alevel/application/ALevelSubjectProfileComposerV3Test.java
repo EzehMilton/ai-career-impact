@@ -65,8 +65,19 @@ class ALevelSubjectProfileComposerV3Test {
                 ALevelProfileBand.HIGH)).isEqualTo("strong emphasis");
         assertThat(ALevelSubjectProfileComposerV3.bandLabel(ALevelProfileMeasure.LEARNING_ALONGSIDE_AI,
                 ALevelProfileBand.MODERATE)).isEqualTo("moderate");
-        assertThat(profile.summary()).contains("maths, analysis and problem-solving",
-                "writing, interpretation and understanding the wider world")
-                .doesNotContain("Analytical & Quantitative", "Communication, Interpretation & Context");
+        assertThat(profile.summary()).contains("keep a broad range of future study options open",
+                "maths, analysis and problem-solving", "writing, interpretation and understanding the wider world",
+                "scope to use AI to support your learning")
+                .doesNotContain("Analytical & Quantitative", "Communication, Interpretation & Context",
+                        "Future study options measure", "How AI can help you learn", " band", "measure");
+    }
+
+    @Test
+    void everyV3BandCombinationUsesNaturalProseRatherThanInterpolatedHeadings() {
+        for (String fixture : LocalFixtureALevelV2JudgmentProvider.supportedFixtureIds()) {
+            assertThat(profile(fixture).summary()).as(fixture)
+                    .doesNotContain("Future study options measure", "How AI can help you learn", "profile combines",
+                            " band", " measure");
+        }
     }
 }

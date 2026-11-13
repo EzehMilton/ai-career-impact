@@ -18,12 +18,12 @@ class ALevelPaidNarrativeValidatorTest {
 
     static ALevelPaidNarrativeContext context() {
         return new ALevelPaidNarrativeContext(UUID.randomUUID(), List.of("Mathematics", "Economics", "Geography"),
-                List.of(new ALevelPaidNarrativeContext.Measure("Options Kept Open", "Broad", List.of(), List.of()),
-                        new ALevelPaidNarrativeContext.Measure("Analytical & Quantitative", "Strong emphasis",
+                List.of(new ALevelPaidNarrativeContext.Measure("Future study options", "broad", List.of(), List.of()),
+                        new ALevelPaidNarrativeContext.Measure("Maths and problem-solving", "strong emphasis",
                                 List.of(), List.of()),
-                        new ALevelPaidNarrativeContext.Measure("Communication, Interpretation & Context",
-                                "Moderate emphasis", List.of(), List.of()),
-                        new ALevelPaidNarrativeContext.Measure("Learning Alongside AI", "High", List.of(), List.of())),
+                        new ALevelPaidNarrativeContext.Measure("Writing, ideas and the wider world",
+                                "moderate emphasis", List.of(), List.of()),
+                        new ALevelPaidNarrativeContext.Measure("How AI can help you learn", "high", List.of(), List.of())),
                 List.of("Mathematical and statistical reasoning"), List.of(), List.of("Working without AI first"),
                 List.of("Set one AI study habit"), List.of("Entry requirements vary"), List.of("Economics"),
                 List.of("Finance"));
@@ -31,9 +31,10 @@ class ALevelPaidNarrativeValidatorTest {
 
     static ALevelPaidNarrative clean() {
         return new ALevelPaidNarrative(
-                "Your subjects keep a broad Options Kept Open profile across Mathematics, Economics and Geography.",
-                "You have strong emphasis on Analytical & Quantitative and moderate emphasis on Communication, "
-                        + "Interpretation & Context; neither side is better.",
+                "Your subjects keep a broad range of future study options open across Mathematics, Economics and "
+                        + "Geography.",
+                "They place a strong emphasis on maths and problem-solving. They also develop writing, interpretation "
+                        + "and an understanding of the wider world; neither area is better.",
                 "You mentioned Economics and Finance. Check the published entry requirements of each course in Year 13 "
                         + "before you apply, including post-18 routes.",
                 "AI may help you practise and check your understanding, but your own work comes first.",
@@ -73,10 +74,13 @@ class ALevelPaidNarrativeValidatorTest {
             "You are allowed to use AI in your coursework.|NO_AI_PERMISSION_CLAIM",
             "Your Future Optionality is broad.|NO_SUPERSEDED_V1_TERMINOLOGY",
             "Your AI-Era Adaptability is strong.|NO_SUPERSEDED_V1_TERMINOLOGY",
+            "Your Future study options measure is in the broad band.|NO_MECHANICAL_MEASURE_LANGUAGE",
+            "It also shows broad Future study options and high potential for How AI can help you learn.|NO_MECHANICAL_MEASURE_LANGUAGE",
+            "Your profile combines several useful measures.|NO_MECHANICAL_MEASURE_LANGUAGE",
             "This is the best combination for most students.|NO_OVERALL_SCORE_OR_RANKING",
             "Your overall score is excellent.|NO_OVERALL_SCORE_OR_RANKING",
-            "You have a focused Options Kept Open profile.|BANDS_MATCH_THE_SUBJECT_PROFILE",
-            "You have lighter emphasis on Analytical & Quantitative.|BANDS_MATCH_THE_SUBJECT_PROFILE"})
+            "You have focused Future study options.|BANDS_MATCH_THE_SUBJECT_PROFILE",
+            "You have lighter emphasis on Maths and problem-solving.|BANDS_MATCH_THE_SUBJECT_PROFILE"})
     void rejectsEachForbiddenClaim(String options, String rule) {
         assertRule(withOptions(options), rule);
     }

@@ -37,10 +37,11 @@ public final class ALevelPaidNarrativeValidator {
     public static final String AI_PERMISSION = "NO_AI_PERMISSION_CLAIM";
     public static final String LEGACY_TERMS = "NO_SUPERSEDED_V1_TERMINOLOGY";
     public static final String BANDS = "BANDS_MATCH_THE_SUBJECT_PROFILE";
+    public static final String NATURAL_COPY = "NO_MECHANICAL_MEASURE_LANGUAGE";
     public static final String RANKING = "NO_OVERALL_SCORE_OR_RANKING";
 
     public static final List<String> RULES = List.of(PRESENT, LENGTH, NUMERIC, ADMISSION, REQUIREMENTS, SALARY,
-            EMPLOYMENT, AI_CERTAINTY, AI_PERMISSION, LEGACY_TERMS, BANDS, RANKING);
+            EMPLOYMENT, AI_CERTAINTY, AI_PERMISSION, LEGACY_TERMS, BANDS, NATURAL_COPY, RANKING);
     /** Every rule except a missing narrative: rejected prose gets its one repair. */
     public static final Set<String> REPAIRABLE = Set.copyOf(RULES.stream().filter(rule -> !rule.equals(PRESENT))
             .toList());
@@ -78,6 +79,12 @@ public final class ALevelPaidNarrativeValidator {
     private static final Pattern LEGACY_TERM = Pattern.compile("(?i)\\b(?:future\\s+optionality|ai[-\\s]era\\s+"
             + "adaptability|ai\\s+career\\s+impact|future\\s+readiness|degree\\s+pathway\\s+breadth|human\\s+and\\s+"
             + "creative\\s+strength)\\b");
+    private static final Pattern MECHANICAL_COPY = Pattern.compile(
+            "(?i:\\b(?:measures?|bands?)\\b|\\bprofile\\s+combines\\b)"
+            + "|(?i:\\b(?:focused|balanced|broad|lighter|moderate|strong|low|high)"
+            + "(?:\\s+emphasis\\s+on)?\\s+)(?:Future study options|Maths and problem-solving|Writing, ideas and "
+            + "the wider world|How AI can help you learn)\\b"
+            + "|(?i:\\b(?:potential|scope|support)\\s+for\\s+)How AI can help you learn\\b");
     private static final Pattern RANKING_CLAIM = Pattern.compile("(?i)\\b(?:overall\\s+(?:score|rating|grade|result)"
             + "|(?:best|strongest|weakest|worst|top)\\s+(?:subject\\s+)?(?:combination|subjects|choice|measure|side)"
             + "|better\\s+than\\s+(?:other|most|many)|ranks?\\s+(?:among|above|below)|ranked\\b|league\\s+table"
@@ -129,6 +136,8 @@ public final class ALevelPaidNarrativeValidator {
         claim(checks, LEGACY_TERMS, LEGACY_TERM, prose, "the narrative must not use superseded v1 terminology");
         String mismatch = bandMismatch(prose, context);
         checks.check(BANDS, mismatch != null, () -> mismatch, "every band mentioned must match the subject profile");
+        claim(checks, NATURAL_COPY, MECHANICAL_COPY, prose,
+                "the narrative must explain results naturally rather than expose measure or band language");
         claim(checks, RANKING, RANKING_CLAIM, prose,
                 "the narrative must not create an overall score or rank subjects or combinations");
         checks.accepted();

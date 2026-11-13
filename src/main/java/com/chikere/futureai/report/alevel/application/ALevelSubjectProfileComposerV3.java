@@ -86,19 +86,37 @@ public final class ALevelSubjectProfileComposerV3 {
     }
 
     private static String optionsSentence(String band) {
-        return "Your subjects support a " + band + " range of future study directions.";
+        return switch (ALevelProfileBand.valueOf(band)) {
+            case LOW -> "Your subject combination has a clear academic focus and supports related future study "
+                    + "directions.";
+            case MODERATE -> "Your subjects support a balanced range of future study directions.";
+            case HIGH -> "Your subjects keep a broad range of future study options open.";
+        };
     }
 
     private static String analyticalSentence(String band) {
-        return "They place a " + band + " on maths, analysis and problem-solving.";
+        return switch (ALevelProfileBand.valueOf(band)) {
+            case LOW -> "They place a lighter emphasis on maths, analysis and problem-solving.";
+            case MODERATE -> "They place a moderate emphasis on maths, analysis and problem-solving.";
+            case HIGH -> "They place a strong emphasis on maths, analysis and problem-solving.";
+        };
     }
 
     private static String communicationSentence(String band) {
-        return "They place a " + band + " on writing, interpretation and understanding the wider world.";
+        return switch (ALevelProfileBand.valueOf(band)) {
+            case LOW -> "They place a lighter emphasis on writing, interpretation and understanding the wider world.";
+            case MODERATE -> "They place a moderate emphasis on writing, interpretation and understanding the wider "
+                    + "world.";
+            case HIGH -> "They place a strong emphasis on writing, interpretation and understanding the wider world.";
+        };
     }
 
     private static String aiSentence(String band) {
-        return "AI could offer a " + band + " level of support while you learn these subjects.";
+        return switch (ALevelProfileBand.valueOf(band)) {
+            case LOW -> "There is limited scope to use AI to support your learning in these subjects.";
+            case MODERATE -> "There is some scope to use AI to support your learning in these subjects.";
+            case HIGH -> "There is plenty of scope to use AI to support your learning in these subjects.";
+        };
     }
 
     private static ALevelSubjectProfile.Measure measure(ALevelProfileDecisionResult profile,

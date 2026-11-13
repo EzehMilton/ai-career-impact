@@ -24,10 +24,14 @@ public final class OpenAiALevelPaidNarrativeGenerator implements ALevelPaidNarra
             action was decided by fixed rules before you were called. You MUST NOT change a band, invent a score,
             create an overall score or rating, say which side or measure is strongest, rank or compare subjects or
             combinations, add a recommendation, a skill, an action or a safeguard, or remove or soften one. Do not
-            state any number, score or percentage. Use only the measures supplied, using their exact customer-facing
-            names. When you mention a band, use the supplied band for that measure. The two capability sides are
-            different kinds of strength; never describe the lighter one as a weakness. Do not recommend universities, courses,
-            products, tools or employers, and do not name any AI product or company.
+            state any number, score or percentage. The supplied customer-facing names are headings and reference data,
+            not phrases to insert mechanically into sentences. In running prose, explain the result naturally and use
+            normal sentence case. Never call anything a "measure" or a "band", and never write "the profile combines".
+            Do not place a result word directly before a heading, such as "broad Future study options", or write
+            constructions such as "potential for How AI can help you learn". Preserve the supplied result exactly even
+            when you paraphrase it. The two capability sides are different kinds of strength; never describe the
+            lighter one as a weakness. Do not recommend universities, courses, products, tools or employers, and do
+            not name any AI product or company.
 
             WHAT YOU MUST NOT SAY
             Do not promise or predict admission, offers, a place on any course or eligibility for any course. Do not
