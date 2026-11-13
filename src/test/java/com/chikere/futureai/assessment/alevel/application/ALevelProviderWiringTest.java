@@ -43,7 +43,7 @@ class ALevelProviderWiringTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
             .withPropertyValues("spring.ai.model.chat=openai", "spring.ai.openai.chat.model=gpt-test",
-                    "app.a-level.report.base-url=http://localhost:8080")
+                    "app.a-level.report.base-url=http://localhost:8080", "app.judgment.provider=jev")
             .withConfiguration(AutoConfigurations.of(ALevelJevAutoConfiguration.class))
             .withUserConfiguration(
                     ALevelAssessmentConfiguration.class,

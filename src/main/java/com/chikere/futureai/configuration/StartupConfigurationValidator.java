@@ -143,9 +143,9 @@ public class StartupConfigurationValidator {
 
     private static List<String> prodSettings(Environment environment) {
         List<String> problems = new ArrayList<>();
-        if (environment.getProperty("TYPESAFE_API_KEY", "").isBlank()) {
+        if (usesJev(environment) && environment.getProperty("TYPESAFE_API_KEY", "").isBlank()) {
             problems.add("Missing required configuration: TYPESAFE_API_KEY "
-                    + "(required by profile 'prod': real Jev / TypeSafe judgments)");
+                    + "(required by profile 'prod' when app.judgment.provider=jev)");
         }
         if (environment.getProperty("OPENAI_API_KEY", "").isBlank()) {
             problems.add("Missing required configuration: OPENAI_API_KEY "
@@ -190,15 +190,19 @@ public class StartupConfigurationValidator {
             problems.add("live-smoke profile requires APP_LIVE_SMOKE_ENABLED=true "
                     + "(real Jev and OpenAI calls are made and payments are bypassed)");
         }
-        if (environment.getProperty("TYPESAFE_API_KEY", "").isBlank()) {
+        if (usesJev(environment) && environment.getProperty("TYPESAFE_API_KEY", "").isBlank()) {
             problems.add("Missing required configuration: TYPESAFE_API_KEY "
-                    + "(required by profile 'live-smoke': real Jev / TypeSafe judgments)");
+                    + "(required by profile 'live-smoke' when app.judgment.provider=jev)");
         }
         if (environment.getProperty("OPENAI_API_KEY", "").isBlank()) {
             problems.add("Missing required configuration: OPENAI_API_KEY "
                     + "(required by profile 'live-smoke': real OpenAI narrative)");
         }
         return problems;
+    }
+
+    private static boolean usesJev(Environment environment) {
+        return "jev".equalsIgnoreCase(environment.getProperty("app.judgment.provider", "openai").strip());
     }
 
     private static List<String> missing(Environment environment, List<String> settings,

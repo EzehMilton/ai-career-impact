@@ -1,5 +1,10 @@
 com.chikere.futureai.judgment.typesafe.professional.ProfessionalJevAutoConfiguration
+com.chikere.futureai.judgment.openai.professional.ProfessionalOpenAiAutoConfiguration
+com.chikere.futureai.judgment.openai.university.UniversityOpenAiAutoConfiguration
+com.chikere.futureai.judgment.openai.alevel.ALevelOpenAiAutoConfiguration
 com.chikere.futureai.judgment.typesafe.university.UniversityJevAutoConfiguration
 com.chikere.futureai.judgment.typesafe.alevel.ALevelJevAutoConfiguration
 com.chikere.futureai.responsibility.professional.typesafe.ProfessionalResponsibilityJevAutoConfiguration
+com.chikere.futureai.responsibility.professional.openai.ProfessionalResponsibilityOpenAiAutoConfiguration
 com.chikere.futureai.coursemodule.university.typesafe.UniversityModuleJevAutoConfiguration
+com.chikere.futureai.coursemodule.university.openai.UniversityModuleOpenAiAutoConfiguration

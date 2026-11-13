@@ -58,7 +58,7 @@ class StartupConfigurationValidatorTest {
     }
 
     @Test
-    void liveSmokeWithTheSwitchAndBothProviderKeysStartsWithoutStripeOrEvidenceSettings() {
+    void liveSmokeWithTheSwitchAndOpenAiKeyStartsWithoutStripeOrEvidenceSettings() {
         MockEnvironment env = environment("live-smoke")
                 .withProperty("app.live-smoke.enabled", "true")
                 .withProperty("TYPESAFE_API_KEY", "test-only-key")
@@ -68,9 +68,13 @@ class StartupConfigurationValidatorTest {
     }
 
     @Test
-    void liveSmokeRequiresBothRealProviderKeys() {
+    void liveSmokeRequiresOpenAiKeyAndOnlyRequiresTypeSafeForExplicitJev() {
         assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment("live-smoke")
                 .withProperty("app.live-smoke.enabled", "true")))
+                .hasMessageNotContaining("TYPESAFE_API_KEY").hasMessageContaining("OPENAI_API_KEY");
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment("live-smoke")
+                .withProperty("app.live-smoke.enabled", "true")
+                .withProperty("app.judgment.provider", "jev")))
                 .hasMessageContaining("TYPESAFE_API_KEY").hasMessageContaining("OPENAI_API_KEY");
     }
 
@@ -131,12 +135,21 @@ class StartupConfigurationValidatorTest {
     // ── prod ────────────────────────────────────────────────────────────────────────────────────
 
     @Test
-    void prodNamesAllMissingAiKeysWithoutRevealingValues() {
+    void prodRequiresOpenAiButNotTheBackupProviderKeyByDefault() {
         assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment("prod")
                 .withProperty("app.public-base-url", "https://example.com")))
                 .isInstanceOf(ConfigurationProblemException.class)
-                .hasMessageContaining("TYPESAFE_API_KEY")
-                .hasMessageContaining("OPENAI_API_KEY");
+                .hasMessageContaining("OPENAI_API_KEY")
+                .hasMessageNotContaining("TYPESAFE_API_KEY");
+    }
+
+    @Test
+    void prodRequiresTypeSafeKeyWhenJevIsExplicitlySelected() {
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment("prod")
+                .withProperty("app.judgment.provider", "jev")
+                .withProperty("app.public-base-url", "https://example.com")))
+                .isInstanceOf(ConfigurationProblemException.class)
+                .hasMessageContaining("TYPESAFE_API_KEY");
     }
 
     @Test
@@ -295,7 +308,7 @@ class StartupConfigurationValidatorTest {
     }
 
     @Test
-    void liveSmokeValidatesTheNarrativeModelsAndStillNeedsBothProviderKeys() {
+    void liveSmokeValidatesNarrativeModelsAndNeedsOnlyTheSelectedProviderKey() {
         assertThatThrownBy(() -> StartupConfigurationValidator.validate(liveSmokeEnvironment()
                 .withProperty("app.narrative.a-level.model", "gpt-7-imaginary")))
                 .isInstanceOf(ConfigurationProblemException.class)
@@ -303,6 +316,10 @@ class StartupConfigurationValidatorTest {
                         + "model.");
         assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment("live-smoke")
                 .withProperty("app.live-smoke.enabled", "true")))
+                .hasMessageNotContaining("TYPESAFE_API_KEY").hasMessageContaining("OPENAI_API_KEY");
+        assertThatThrownBy(() -> StartupConfigurationValidator.validate(environment("live-smoke")
+                .withProperty("app.live-smoke.enabled", "true")
+                .withProperty("app.judgment.provider", "jev")))
                 .hasMessageContaining("TYPESAFE_API_KEY").hasMessageContaining("OPENAI_API_KEY");
     }
 

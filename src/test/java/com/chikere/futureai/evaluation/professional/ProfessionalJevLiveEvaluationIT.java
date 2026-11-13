@@ -1,6 +1,6 @@
 package com.chikere.futureai.evaluation.professional;
 
-import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV1;
+import com.chikere.futureai.decision.professional.ProfessionalDecisionPolicyV2;
 import com.chikere.futureai.decision.professional.ProfessionalDecisionResult;
 import com.chikere.futureai.judgment.domain.AssessmentJudgmentSet;
 import com.chikere.futureai.judgment.typesafe.professional.ProfessionalJevJudgmentService;
@@ -35,7 +35,7 @@ class ProfessionalJevLiveEvaluationIT {
                 typeSafeClient,
                 new ProfessionalJudgmentSchema(),
                 new ProfessionalJevStateMapper());
-        ProfessionalDecisionPolicyV1 decisionPolicy = new ProfessionalDecisionPolicyV1();
+        ProfessionalDecisionPolicyV2 decisionPolicy = new ProfessionalDecisionPolicyV2();
 
         List<ProfessionalEvaluationResult> results = new ArrayList<>();
         for (ProfessionalEvaluationCase evaluationCase : selectedCases) {

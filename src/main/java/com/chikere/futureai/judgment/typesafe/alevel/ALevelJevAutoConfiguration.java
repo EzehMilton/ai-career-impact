@@ -9,11 +9,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 
 @AutoConfiguration(after = TypeSafeAutoConfiguration.class)
 @ConditionalOnClass(TypeSafeClient.class)
+@ConditionalOnProperty(name = "app.judgment.provider", havingValue = "jev")
 @Profile({"prod", "live-smoke"})
 /**
  * Jev for new A-level assessments: the {@code a-level-v2} schema, its subject-only wire state and its adapter. The

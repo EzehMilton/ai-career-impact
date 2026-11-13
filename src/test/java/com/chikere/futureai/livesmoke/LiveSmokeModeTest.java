@@ -63,7 +63,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("live-smoke")
 @AutoConfigureMockMvc
 @SpringBootTest(properties = {"app.live-smoke.enabled=true", "TYPESAFE_API_KEY=test-only-typesafe-secret",
-        "OPENAI_API_KEY=test-only-openai-secret", "app.live-smoke.trace-directory=target/live-smoke-test/traces"})
+        "OPENAI_API_KEY=test-only-openai-secret", "spring.ai.openai.decision.api-key=test-only-openai-secret",
+        "app.live-smoke.trace-directory=target/live-smoke-test/traces"})
 class LiveSmokeModeTest {
 
     private static final String BANNER =
