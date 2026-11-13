@@ -1039,6 +1039,14 @@ otherwise
 
 `ALevelReportAssembler` is pure deterministic composition of saved records (`a-level-report-v1`) for historical v1 assessments. FREE and PAID use the same saved status, confidence, six measures, bands and factors. FREE includes the subjects, all measures with concise definitions, main strengths, development opportunities, a short interpretation and the admissions disclaimer. PAID adds the full narrative, per-measure explanations, practical actions, deterministic guidance, degree and career-area context, saved evidence and fuller methodology.
 
+`a-level-report-v3` is a presentation-only successor for newly generated detailed subject-profile reports. It keeps
+the `a-level-decision-v2` scores, bands and factors and the `a-level-guidance-policy-v1` outputs, while mapping the
+internal measures to plainer customer labels and shorter explanations. Stored v1/v2 reports remain immutable and are
+rendered from their saved JSON. Free subject profiles use the assessment's persisted creation time and the fixed
+`2026-11-13T00:00:00Z` cutover: earlier assessments retain v2 wording and assessments at or after the cutover use v3.
+This presentation choice is independent of OpenAI/Jev provenance. V3 PDFs use `a-level-report-pdf-v3`; their layout
+is intentionally the v2 layout, while the versioned stored report supplies the wording.
+
 Practical guidance uses `KEEP_DEVELOPING`, `WORTH_STRENGTHENING` and `CONSIDER_SUPPLEMENTING`. Every item is something a student can do alongside their existing subjects — building coding or data literacy, strengthening written argument, researching course requirements early — and `ALevelReportAssemblerTest` asserts across all six fixtures that no guidance ever suggests dropping, swapping or retaking a subject. Every combination is told to check real published course requirements rather than trust a guess.
 
 A-level entitlement is entirely separate from professional and university entitlement: separate tables with foreign keys to `a_level_assessment`, a separate `A_LEVEL_REPORT_STRIPE_PRICE_ID`, a separate webhook at `POST /payments/stripe/a-level-webhook`, a separate configurable webhook secret, and `product=a_level_report` Stripe metadata so events for other products are ignored rather than errored. No price is hard-coded. Confirmation is idempotent under a row lock, and the frozen snapshot is authoritative after purchase, so `a-level-report-v2` cannot change an earlier `v1` purchase. Complimentary access and the payment-status poller work as in the other journeys; Stripe is active under `prod` and `dev-no-jev`, the simulated checkout under `dev`.

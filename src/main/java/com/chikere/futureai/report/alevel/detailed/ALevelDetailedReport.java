@@ -8,7 +8,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * The {@code a-level-report-v2} paid report, assembled from frozen artefacts: the stored subject profile, the
+ * A versioned paid report, assembled from frozen artefacts: the stored subject profile, the
  * deterministic {@code a-level-guidance-policy-v1} guidance, the paid narrative (or its deterministic copy) and any
  * configured evidence. Plain values only, so it is stored as one JSON document and rendered identically on the web
  * page and in the PDF. Provenance is kept for audit and never shown.

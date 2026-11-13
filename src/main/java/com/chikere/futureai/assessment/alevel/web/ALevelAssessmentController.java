@@ -7,6 +7,8 @@ import com.chikere.futureai.assessment.domain.ALevelAssessmentState;
 import com.chikere.futureai.payment.alevel.application.ALevelReportPurchaseUseCase;
 import com.chikere.futureai.payment.alevel.web.ALevelPurchaseViewModel;
 import com.chikere.futureai.report.alevel.application.ALevelReportQuery;
+import com.chikere.futureai.report.alevel.application.ALevelReportPresentationVersions;
+import com.chikere.futureai.report.alevel.application.ALevelReportVersions;
 import com.chikere.futureai.report.alevel.application.ALevelReportTier;
 import com.chikere.futureai.report.alevel.web.ALevelReportViewMapper;
 import jakarta.servlet.http.HttpServletResponse;
@@ -141,6 +143,8 @@ public final class ALevelAssessmentController {
         model.addAttribute("assessmentId", assessment.id());
         model.addAttribute("subjects", assessment.state().selectedSubjects());
         model.addAttribute("developmentFixture", assessment.result().source() == AssessmentSource.LOCAL_FIXTURE);
+        model.addAttribute("v3Presentation", ALevelReportVersions.V3.equals(
+                ALevelReportPresentationVersions.forAssessmentCreatedAt(assessment.createdAt())));
         model.addAttribute("profile", reportService.subjectProfile(assessment.id()).orElseThrow());
         return "a-level-assessment/result-v2";
     }

@@ -47,8 +47,9 @@ class JpaALevelDetailedReportStore implements ALevelDetailedReportStore {
 
     @Override
     public ALevelDetailedReportSnapshot saveIfAbsent(ALevelDetailedReportSnapshot snapshot) {
-        if (!ALevelReportVersions.V2.equals(snapshot.reportVersion())) {
-            throw new IllegalArgumentException("only a-level-report-v2 is stored here: " + snapshot.reportVersion());
+        if (!java.util.Set.of(ALevelReportVersions.V2, ALevelReportVersions.V3)
+                .contains(snapshot.reportVersion())) {
+            throw new IllegalArgumentException("unsupported A-level report version: " + snapshot.reportVersion());
         }
         try {
             newTransaction.executeWithoutResult(status -> {

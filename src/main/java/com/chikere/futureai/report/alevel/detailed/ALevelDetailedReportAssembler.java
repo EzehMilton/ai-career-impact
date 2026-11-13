@@ -11,14 +11,17 @@ import com.chikere.futureai.narrative.alevel.paid.ALevelPaidNarrativeStatus;
 import com.chikere.futureai.report.alevel.application.ALevelReportVersions;
 import com.chikere.futureai.report.alevel.application.ALevelSubjectProfile;
 import com.chikere.futureai.report.alevel.application.ALevelSubjectProfileComposer;
+import com.chikere.futureai.report.alevel.application.ALevelSubjectProfileComposerV3;
+import com.chikere.futureai.decision.alevel.ALevelProfileDecisionResult;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
- * Pure composition of the {@code a-level-report-v2} from frozen artefacts. It calls no provider and decides nothing:
+ * Pure versioned composition from frozen artefacts. It calls no provider and decides nothing:
  * the subject profile is the stored decision as the free result words it, the guidance is the deterministic policy's,
  * and the narrative only supplies explanations. Without an AVAILABLE narrative, deterministic copy fills the five
  * explanations. Evidence appears only when a configured provider stored some, and never changes anything else.
@@ -36,7 +39,25 @@ public final class ALevelDetailedReportAssembler {
     static final String DETERMINISTIC_ACTION_PLAN_INTRODUCTION = "The plan below has three stages: things to start "
             + "now, things to build during the rest of sixth form, and things to check when you make applications.";
 
-    private final ALevelSubjectProfileComposer profiles = new ALevelSubjectProfileComposer();
+    private final String reportVersion;
+    private final Function<ALevelProfileDecisionResult, ALevelSubjectProfile> profiles;
+
+    /** Historical v2 composition, retained for compatibility tests and stored-v2 fixtures. */
+    public ALevelDetailedReportAssembler() {
+        this(ALevelReportVersions.V2, new ALevelSubjectProfileComposer()::compose);
+    }
+
+    private ALevelDetailedReportAssembler(String reportVersion,
+            Function<ALevelProfileDecisionResult, ALevelSubjectProfile> profiles) {
+        this.reportVersion = reportVersion;
+        this.profiles = profiles;
+    }
+
+    /** New customer wording over the same stored decision and deterministic guidance. */
+    public static ALevelDetailedReportAssembler v3() {
+        return new ALevelDetailedReportAssembler(ALevelReportVersions.V3,
+                new ALevelSubjectProfileComposerV3()::compose);
+    }
 
     /** The paid-narrative input: decided facts only, no scores, confidence values, grades or free text. */
     public ALevelPaidNarrativeContext narrativeContext(StoredALevelAssessment assessment, ALevelGuidance guidance) {
@@ -63,7 +84,7 @@ public final class ALevelDetailedReportAssembler {
                 ? narrative.narrative() : Optional.empty();
         var options = guidance.options();
         List<ALevelDetailedReport.EvidenceItem> evidenceItems = evidenceItems(evidence);
-        return new ALevelDetailedReport(ALevelReportVersions.V2, assessment.state().selectedSubjects(), profile,
+        return new ALevelDetailedReport(reportVersion, assessment.state().selectedSubjects(), profile,
                 perspectives(profile, guidance, prose), entries(guidance.combinationShape()),
                 entries(guidance.strengths()), entries(guidance.areasToStrengthen()),
                 new ALevelDetailedReport.Options(options.canSay(), options.cannotSay(), entries(options.checks()),
@@ -82,9 +103,9 @@ public final class ALevelDetailedReportAssembler {
 
     private ALevelSubjectProfile profile(StoredALevelAssessment assessment) {
         if (!assessment.result().usesSubjectProfile()) {
-            throw new IllegalArgumentException("a-level-report-v2 is only for a-level-decision-v2 assessments");
+            throw new IllegalArgumentException(reportVersion + " is only for a-level-decision-v2 assessments");
         }
-        return profiles.compose(assessment.result().profile());
+        return profiles.apply(assessment.result().profile());
     }
 
     private static List<ALevelSubjectProfile.Measure> measures(ALevelSubjectProfile profile) {

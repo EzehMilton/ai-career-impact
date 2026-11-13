@@ -3,7 +3,7 @@ package com.chikere.futureai.report.alevel.detailed;
 import java.util.Optional;
 import java.util.UUID;
 
-/** Insert-only storage for {@code a-level-report-v2} snapshots. */
+/** Insert-only storage for versioned A-level detailed-report snapshots. */
 public interface ALevelDetailedReportStore {
 
     Optional<ALevelDetailedReportSnapshot> findByAssessmentId(UUID assessmentId);

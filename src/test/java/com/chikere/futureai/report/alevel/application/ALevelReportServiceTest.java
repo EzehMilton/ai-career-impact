@@ -8,6 +8,7 @@ import com.chikere.futureai.assessment.domain.ALevelAssessmentState;
 import com.chikere.futureai.decision.alevel.ALevelDecisionPolicyV1;
 import com.chikere.futureai.evidence.alevel.application.ALevelEvidenceStore;
 import com.chikere.futureai.judgment.fixture.alevel.LocalFixtureALevelJudgmentProvider;
+import com.chikere.futureai.assessment.alevel.application.ALevelTestAssessments;
 import com.chikere.futureai.narrative.alevel.application.ALevelNarrativeStore;
 import org.junit.jupiter.api.Test;
 
@@ -43,6 +44,40 @@ class ALevelReportServiceTest {
         UUID unknown = UUID.randomUUID();
         when(assessmentStore.findById(unknown)).thenReturn(Optional.empty());
         assertThat(service.assemble(unknown, ALevelReportTier.FREE)).isEmpty();
+    }
+
+    @Test
+    void freeReportPresentationUsesTheStoredCreationTimeCutover() {
+        var assessmentStore = mock(ALevelAssessmentStore.class);
+        var service = new ALevelReportService(assessmentStore, mock(ALevelNarrativeStore.class),
+                mock(ALevelEvidenceStore.class), new ALevelReportAssembler());
+        var base = ALevelTestAssessments.subjectProfile(ID, "maths_economics_geography", AssessmentSource.JEV);
+        var historical = new StoredALevelAssessment(base.id(),
+                ALevelReportPresentationVersions.V3_CUTOVER.minusSeconds(1), base.state(), base.judgments(),
+                base.result(), base.modelIdentifier());
+        when(assessmentStore.findById(ID)).thenReturn(Optional.of(historical));
+
+        assertThat(service.subjectProfile(ID).orElseThrow().optionsKeptOpen().name())
+                .isEqualTo("Options Kept Open");
+
+        var newAssessment = new StoredALevelAssessment(base.id(), ALevelReportPresentationVersions.V3_CUTOVER,
+                base.state(), base.judgments(), base.result(), base.modelIdentifier());
+        when(assessmentStore.findById(ID)).thenReturn(Optional.of(newAssessment));
+
+        assertThat(service.subjectProfile(ID).orElseThrow().optionsKeptOpen().name())
+                .isEqualTo("Future study options");
+    }
+
+    @Test
+    void presentationVersionIsIndependentOfProviderProvenance() {
+        var openAi = ALevelTestAssessments.subjectProfile(ID, "maths_economics_geography", AssessmentSource.OPENAI);
+        var jev = ALevelTestAssessments.subjectProfile(UUID.randomUUID(), "maths_economics_geography",
+                AssessmentSource.JEV);
+
+        assertThat(ALevelReportPresentationVersions.forAssessmentCreatedAt(openAi.createdAt()))
+                .isEqualTo(ALevelReportVersions.V2);
+        assertThat(ALevelReportPresentationVersions.forAssessmentCreatedAt(jev.createdAt()))
+                .isEqualTo(ALevelReportVersions.V2);
     }
 
     private StoredALevelAssessment snapshot() {

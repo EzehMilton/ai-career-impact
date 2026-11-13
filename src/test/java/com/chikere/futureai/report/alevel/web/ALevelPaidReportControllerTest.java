@@ -85,6 +85,21 @@ class ALevelPaidReportControllerTest {
     }
 
     @Test
+    void aStoredV3ReportUsesPlainCustomerLabelsWithoutExposingLegacyHeadings() throws Exception {
+        v2Purchase();
+        when(detailedReports.find(ID)).thenReturn(Optional.of(ALevelDetailedReportFixtures.storedV3(ID)));
+
+        String html = mvc.perform(get("/a-level-assessment/" + ID + "/report"))
+                .andExpect(status().isOk()).andExpect(view().name("a-level-assessment/paid-report-v2"))
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("Future study options", "Skills your subjects develop", "Maths and problem-solving",
+                        "Writing, ideas and the wider world", "How AI can help you learn")
+                .doesNotContain("Options Kept Open", "Capability Profile", "Analytical &amp; Quantitative",
+                        "Communication, Interpretation &amp; Context", "Learning Alongside AI");
+    }
+
+    @Test
     void afterARetryableNarrativeTheDeterministicReportIsShownWithARetryAndNoPdf() throws Exception {
         v2Purchase();
         when(detailedReports.find(ID)).thenReturn(Optional.empty());

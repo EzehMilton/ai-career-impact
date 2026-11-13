@@ -6,7 +6,7 @@
 <div th:replace="~{fragments/layout :: devBanner}"></div>
 <header th:replace="~{fragments/layout :: siteHeader('a-level')}"></header>
 
-<main class="page-shell paid-report paid-report-refined detailed-report alevel-detailed-report" id="main" th:with="r=${report}">
+<main class="page-shell paid-report paid-report-refined detailed-report alevel-detailed-report" id="main" th:with="r=${report}, v3=${report.reportVersion == 'a-level-report-v3'}">
   <meta name="robots" content="noindex,nofollow">
 
   <section class="panel detailed-preparation" th:if="${provisional}" aria-labelledby="ar-retry">
@@ -45,7 +45,7 @@
       </article>
     </div>
     <section class="panel alevel-capability-profile" aria-labelledby="ar-capability">
-      <h3 id="ar-capability">Capability Profile</h3>
+      <h3 id="ar-capability" th:text="${v3} ? 'Skills your subjects develop' : 'Capability Profile'">Capability Profile</h3>
       <p th:text="${r.profile.capabilityProfile.note}">Neither side is better.</p>
       <div class="measure-grid alevel-capability-sides">
         <article class="measure-card alevel-measure-card" th:each="m : ${r.profile.capabilityProfile.sides()}">

@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.Clock;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -35,13 +36,14 @@ public class ALevelDetailedReportConfiguration {
             ALevelAssessmentStore assessments, ALevelEvidenceStore evidence, ALevelPaidNarrativeService narratives,
             ALevelDetailedReportStore store, ObjectProvider<AssessmentTrace> trace) {
         return new ALevelDetailedReportService(purchases, assessments, evidence, new ALevelGuidancePolicyV1(),
-                narratives, new ALevelDetailedReportAssembler(), store, Clock.systemUTC(),
+                narratives, ALevelDetailedReportAssembler.v3(), store, Clock.systemUTC(),
                 trace.getIfAvailable(AssessmentTrace::disabled));
     }
 
     @Bean
     ALevelDetailedReportPdfService aLevelDetailedReportPdfService(ALevelDetailedReportUseCase reports,
-            ALevelDetailedReportPdfRenderer renderer, ObjectProvider<AssessmentTrace> trace) {
-        return new ALevelDetailedReportPdfService(reports, renderer, trace.getIfAvailable(AssessmentTrace::disabled));
+            List<ALevelDetailedReportPdfRenderer> renderers, ObjectProvider<AssessmentTrace> trace) {
+        return new ALevelDetailedReportPdfService(reports, renderers,
+                trace.getIfAvailable(AssessmentTrace::disabled));
     }
 }

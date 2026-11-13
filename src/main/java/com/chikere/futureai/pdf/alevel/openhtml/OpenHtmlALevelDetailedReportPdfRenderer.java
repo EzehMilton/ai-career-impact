@@ -67,7 +67,9 @@ public final class OpenHtmlALevelDetailedReportPdfRenderer implements ALevelDeta
         out.append("<h2>Your A-level subject profile</h2><p>").append(escape(report.perspectives().profile()))
                 .append("</p>");
         measure(out, profile.optionsKeptOpen());
-        out.append("<h3>Capability Profile</h3><p class=\"small\">").append(escape(profile.capabilityProfile().note()))
+        out.append("<h3>").append(ALevelReportVersions.V3.equals(report.reportVersion())
+                        ? "Skills your subjects develop" : "Capability Profile")
+                .append("</h3><p class=\"small\">").append(escape(profile.capabilityProfile().note()))
                 .append("</p>");
         profile.capabilityProfile().sides().forEach(side -> measure(out, side));
         out.append("<p>").append(escape(report.perspectives().capability())).append("</p>");

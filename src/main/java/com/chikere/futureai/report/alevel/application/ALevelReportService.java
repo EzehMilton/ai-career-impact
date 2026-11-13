@@ -18,7 +18,8 @@ public final class ALevelReportService implements ALevelReportQuery {
     private final ALevelEvidenceStore evidenceStore;
     private final ALevelReportAssembler assembler;
     private final AssessmentTrace trace;
-    private final ALevelSubjectProfileComposer profiles = new ALevelSubjectProfileComposer();
+    private final ALevelSubjectProfileComposer v2Profiles = new ALevelSubjectProfileComposer();
+    private final ALevelSubjectProfileComposerV3 v3Profiles = new ALevelSubjectProfileComposerV3();
 
     public ALevelReportService(ALevelAssessmentStore assessmentStore,
             ALevelNarrativeStore narrativeStore, ALevelEvidenceStore evidenceStore,
@@ -55,7 +56,10 @@ public final class ALevelReportService implements ALevelReportQuery {
         return trace.report(JourneyType.A_LEVEL, assessmentId, false,
                 () -> assessmentStore.findById(assessmentId)
                         .filter(assessment -> assessment.result().usesSubjectProfile())
-                        .map(assessment -> profiles.compose(assessment.result().profile())));
+                        .map(assessment -> ALevelReportVersions.V3.equals(
+                                ALevelReportPresentationVersions.forAssessmentCreatedAt(assessment.createdAt()))
+                                ? v3Profiles.compose(assessment.result().profile())
+                                : v2Profiles.compose(assessment.result().profile())));
     }
 
     @Override

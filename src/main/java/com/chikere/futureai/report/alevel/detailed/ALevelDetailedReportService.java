@@ -46,7 +46,7 @@ import java.util.UUID;
  */
 public final class ALevelDetailedReportService implements ALevelDetailedReportUseCase {
 
-    private static final String TRACE_KIND = "A_LEVEL_REPORT_V2";
+    private static final String TRACE_KIND = "A_LEVEL_DETAILED_REPORT";
 
     private final ALevelPurchaseStore purchases;
     private final ALevelAssessmentStore assessments;
@@ -150,8 +150,8 @@ public final class ALevelDetailedReportService implements ALevelDetailedReportUs
         var candidate = new ALevelDetailedReportSnapshot(UUID.randomUUID(), assessmentId, entitlement.entitlementId(),
                 assessment.result().judgmentSchemaVersion(), assessment.result().decisionPolicyVersion(),
                 guidance.policyVersion(), narrative.narrativeVersion(), narrative.status(),
-                evidenceVersion.isEmpty() ? Optional.empty() : Optional.of(evidenceVersion), ALevelReportVersions.V2,
-                ALevelReportVersions.PDF_V2, Instant.now(clock), report);
+                evidenceVersion.isEmpty() ? Optional.empty() : Optional.of(evidenceVersion), report.reportVersion(),
+                pdfVersion(report.reportVersion()), Instant.now(clock), report);
         ALevelDetailedReportSnapshot stored = store.saveIfAbsent(candidate);
         boolean ours = stored.reportId().equals(candidate.reportId());
         trace.event(JourneyType.A_LEVEL, ours ? TraceStage.A_LEVEL_REPORT_V2_GENERATED
@@ -205,5 +205,13 @@ public final class ALevelDetailedReportService implements ALevelDetailedReportUs
         payload.put("evidenceItems", report.evidence().size());
         payload.put("jevCalled", false);
         return payload;
+    }
+
+    private static String pdfVersion(String reportVersion) {
+        return switch (reportVersion) {
+            case ALevelReportVersions.V2 -> ALevelReportVersions.PDF_V2;
+            case ALevelReportVersions.V3 -> ALevelReportVersions.PDF_V3;
+            default -> throw new IllegalArgumentException("unsupported A-level report version: " + reportVersion);
+        };
     }
 }

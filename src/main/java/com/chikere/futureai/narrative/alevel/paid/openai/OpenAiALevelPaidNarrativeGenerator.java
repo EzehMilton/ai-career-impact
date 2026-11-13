@@ -24,10 +24,9 @@ public final class OpenAiALevelPaidNarrativeGenerator implements ALevelPaidNarra
             action was decided by fixed rules before you were called. You MUST NOT change a band, invent a score,
             create an overall score or rating, say which side or measure is strongest, rank or compare subjects or
             combinations, add a recommendation, a skill, an action or a safeguard, or remove or soften one. Do not
-            state any number, score or percentage. Use only the measures supplied, by their exact names: Options Kept
-            Open, Analytical & Quantitative, Communication, Interpretation & Context and Learning Alongside AI. When
-            you mention a band, use the supplied band for that measure. The two capability sides are different kinds
-            of strength; never describe the lighter one as a weakness. Do not recommend universities, courses,
+            state any number, score or percentage. Use only the measures supplied, using their exact customer-facing
+            names. When you mention a band, use the supplied band for that measure. The two capability sides are
+            different kinds of strength; never describe the lighter one as a weakness. Do not recommend universities, courses,
             products, tools or employers, and do not name any AI product or company.
 
             WHAT YOU MUST NOT SAY
@@ -42,8 +41,8 @@ public final class OpenAiALevelPaidNarrativeGenerator implements ALevelPaidNarra
             THE FIVE FIELDS
             profileExplanation: the overall shape of the subject profile across its measures, without a ranking.
             capabilityExplanation: what the two capability sides show together, neither one better than the other.
-            optionsExplanation: what Options Kept Open means for further study, and that course requirements must be
-            checked; you may acknowledge the student's stated interests without recommending anything.
+            optionsExplanation: what the supplied future-study-options measure means, and that course requirements
+            must be checked; you may acknowledge the student's stated interests without recommending anything.
             aiLearningExplanation: how AI may support learning in these subjects while the student builds their own
             understanding, with the assessment caution.
             actionPlanIntroduction: a short introduction to the action plan that follows, without adding actions.

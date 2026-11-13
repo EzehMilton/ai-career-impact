@@ -6,6 +6,7 @@ import com.chikere.futureai.trace.AssessmentTrace;
 import com.chikere.futureai.trace.TraceStage;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -19,30 +20,35 @@ import java.util.UUID;
 public final class ALevelDetailedReportPdfService {
 
     private final ALevelDetailedReportUseCase reports;
-    private final ALevelDetailedReportPdfRenderer renderer;
+    private final Map<String, ALevelDetailedReportPdfRenderer> renderers;
     private final AssessmentTrace trace;
 
     public ALevelDetailedReportPdfService(ALevelDetailedReportUseCase reports,
             ALevelDetailedReportPdfRenderer renderer) {
-        this(reports, renderer, AssessmentTrace.disabled());
+        this(reports, List.of(renderer), AssessmentTrace.disabled());
     }
 
     public ALevelDetailedReportPdfService(ALevelDetailedReportUseCase reports,
             ALevelDetailedReportPdfRenderer renderer, AssessmentTrace trace) {
+        this(reports, List.of(renderer), trace);
+    }
+
+    public ALevelDetailedReportPdfService(ALevelDetailedReportUseCase reports,
+            List<ALevelDetailedReportPdfRenderer> renderers, AssessmentTrace trace) {
         this.reports = Objects.requireNonNull(reports);
-        this.renderer = Objects.requireNonNull(renderer);
+        Objects.requireNonNull(renderers);
+        this.renderers = renderers.stream().collect(java.util.stream.Collectors.toUnmodifiableMap(
+                ALevelDetailedReportPdfRenderer::pdfVersion, renderer -> renderer));
         this.trace = Objects.requireNonNull(trace);
     }
 
     public Pdf render(UUID assessmentId) {
         ALevelDetailedReportSnapshot snapshot = reports.find(Objects.requireNonNull(assessmentId)).orElseThrow(() ->
                 new ALevelReportPdfAccessDeniedException());
-        if (!renderer.pdfVersion().equals(snapshot.pdfVersion())) {
-            throw new IllegalStateException("stored report needs " + snapshot.pdfVersion() + ", renderer is "
-                    + renderer.pdfVersion());
-        }
+        ALevelDetailedReportPdfRenderer renderer = java.util.Optional.ofNullable(renderers.get(snapshot.pdfVersion()))
+                .orElseThrow(() -> new IllegalStateException("no PDF renderer for " + snapshot.pdfVersion()));
         Pdf pdf = new Pdf(filename(String.join(" ", snapshot.report().subjects())), renderer.render(snapshot.report()));
-        trace.scoped(JourneyType.A_LEVEL, assessmentId, "A_LEVEL_REPORT_V2_PDF", () -> {
+        trace.scoped(JourneyType.A_LEVEL, assessmentId, "A_LEVEL_DETAILED_REPORT_PDF", () -> {
             trace.event(JourneyType.A_LEVEL, TraceStage.A_LEVEL_REPORT_V2_PDF_RENDERED, () -> {
                 Map<String, Object> payload = new LinkedHashMap<>();
                 payload.put("reportId", snapshot.reportId());

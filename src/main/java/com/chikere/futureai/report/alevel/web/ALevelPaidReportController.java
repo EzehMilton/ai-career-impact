@@ -109,14 +109,14 @@ public final class ALevelPaidReportController {
         if (stored.isPresent()) {
             model.addAttribute("report", stored.get().report());
             model.addAttribute("provisional", false);
-            return "a-level-assessment/paid-report-v2";
+            return detailedReportView(stored.get().reportVersion());
         }
         if ("provisional".equals(preparationStatus)) {
             var provisional = detailed.provisional(id);
             if (provisional.isPresent()) {
                 model.addAttribute("report", provisional.get());
                 model.addAttribute("provisional", true);
-                return "a-level-assessment/paid-report-v2";
+                return detailedReportView(provisional.get().reportVersion());
             }
         }
         if (detailed.preparation(id).isEmpty()) {
@@ -136,5 +136,13 @@ public final class ALevelPaidReportController {
     private static String redirect(UUID id, String preparationStatus) {
         return "redirect:/a-level-assessment/" + id + "/report"
                 + (preparationStatus == null ? "" : "?preparation=" + preparationStatus);
+    }
+
+    private static String detailedReportView(String reportVersion) {
+        return switch (reportVersion) {
+            // V3 keeps the existing layout; its stored report document owns the new wording.
+            case ALevelReportVersions.V2, ALevelReportVersions.V3 -> "a-level-assessment/paid-report-v2";
+            default -> throw new IllegalArgumentException("unsupported A-level report version: " + reportVersion);
+        };
     }
 }

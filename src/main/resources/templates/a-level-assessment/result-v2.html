@@ -46,7 +46,7 @@
 
     <!--/* Capability Profile: two sides, shown together, never added up or ranked */-->
     <section class="panel alevel-capability-profile" aria-labelledby="capability-heading">
-      <h2 id="capability-heading">Capability Profile</h2>
+      <h2 id="capability-heading" th:text="${v3Presentation} ? 'Skills your subjects develop' : 'Capability Profile'">Capability Profile</h2>
       <p th:text="${profile.capabilityProfile.note}">Neither side is better.</p>
       <div class="measure-grid alevel-capability-sides">
         <article class="measure-card alevel-measure-card" th:each="m : ${profile.capabilityProfile.sides()}">
@@ -92,7 +92,7 @@
       <div class="tier tier-included">
         <h3>Free assessment — included</h3>
         <ul>
-          <li>Your subject profile: Options Kept Open, Capability Profile and Learning Alongside AI</li>
+          <li>Your subject profile: <span th:text="${profile.optionsKeptOpen.name}">Options Kept Open</span>, <span th:text="${v3Presentation} ? 'skills your subjects develop' : 'Capability Profile'">Capability Profile</span> and <span th:text="${profile.learningAlongsideAi.name}">Learning Alongside AI</span></li>
           <li>What each part means and what builds it</li>
           <li>A short summary</li>
         </ul>

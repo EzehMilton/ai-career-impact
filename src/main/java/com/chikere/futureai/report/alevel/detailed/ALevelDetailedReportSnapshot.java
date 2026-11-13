@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * One immutable {@code a-level-report-v2}: every version it was assembled from, and the composed report. Stored once,
+ * One immutable versioned A-level report: every version it was assembled from, and the composed report. Stored once,
  * with an AVAILABLE or final FALLBACK narrative only, and never regenerated: a later model, prompt, guidance or
  * decision-policy change never alters it.
  *

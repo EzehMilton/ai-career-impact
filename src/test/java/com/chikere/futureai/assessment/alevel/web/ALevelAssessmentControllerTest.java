@@ -323,6 +323,28 @@ class ALevelAssessmentControllerTest {
     }
 
     @Test
+    void aNewAssessmentRendersV3CustomerWordingWithoutLegacyMeasureHeadings() throws Exception {
+        var base = com.chikere.futureai.assessment.alevel.application.ALevelTestAssessments.subjectProfile(ID,
+                "english_history_politics", AssessmentSource.OPENAI);
+        var assessment = new StoredALevelAssessment(base.id(),
+                com.chikere.futureai.report.alevel.application.ALevelReportPresentationVersions.V3_CUTOVER,
+                base.state(), base.judgments(), base.result(), base.modelIdentifier());
+        when(reportService.stored(ID)).thenReturn(Optional.of(assessment));
+        when(reportService.subjectProfile(ID)).thenReturn(Optional.of(
+                new com.chikere.futureai.report.alevel.application.ALevelSubjectProfileComposerV3()
+                        .compose(assessment.result().profile())));
+
+        String html = mvc.perform(get("/a-level-assessment/" + ID)).andExpect(status().isOk())
+                .andExpect(view().name("a-level-assessment/result-v2"))
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("Future study options", "Skills your subjects develop", "Maths and problem-solving",
+                        "Writing, ideas and the wider world", "How AI can help you learn")
+                .doesNotContain("Options Kept Open", "Capability Profile", "Analytical &amp; Quantitative",
+                        "Communication, Interpretation &amp; Context", "Learning Alongside AI");
+    }
+
+    @Test
     void aStoredV1AssessmentKeepsTheHistoricalV1ResultPage() throws Exception {
         when(reportService.stored(ID)).thenReturn(Optional.of(snapshot()));
         when(reportService.assemble(ID, ALevelReportTier.FREE))

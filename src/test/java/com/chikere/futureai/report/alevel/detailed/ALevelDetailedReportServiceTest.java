@@ -46,7 +46,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/** The a-level-report-v2 lifecycle on in-memory ports: no Jev, one narrative attempt, one immutable snapshot. */
+/** The v3 lifecycle and historical-v2 reuse on in-memory ports: no Jev, one narrative attempt, one snapshot. */
 class ALevelDetailedReportServiceTest {
 
     private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-10-28T10:00:00Z"), ZoneOffset.UTC);
@@ -94,7 +94,7 @@ class ALevelDetailedReportServiceTest {
                 () -> narrativeConfigured ? Optional.of(narrative) : Optional.empty(),
                 new ALevelPaidNarrativeValidator(), AssessmentTrace.disabled());
         return new ALevelDetailedReportService(purchaseStore, assessmentStore, evidenceStore,
-                new ALevelGuidancePolicyV1(), narratives, new ALevelDetailedReportAssembler(), store, CLOCK,
+                new ALevelGuidancePolicyV1(), narratives, ALevelDetailedReportAssembler.v3(), store, CLOCK,
                 AssessmentTrace.disabled());
     }
 
@@ -132,8 +132,8 @@ class ALevelDetailedReportServiceTest {
         assertThat(outcome.reused()).isFalse();
         assertThat(narrative.calls()).isEqualTo(1);
         var stored = outcome.stored().orElseThrow();
-        assertThat(stored.reportVersion()).isEqualTo("a-level-report-v2");
-        assertThat(stored.pdfVersion()).isEqualTo("a-level-report-pdf-v2");
+        assertThat(stored.reportVersion()).isEqualTo("a-level-report-v3");
+        assertThat(stored.pdfVersion()).isEqualTo("a-level-report-pdf-v3");
         assertThat(stored.judgmentSchemaVersion()).isEqualTo("a-level-v2");
         assertThat(stored.decisionPolicyVersion()).isEqualTo("a-level-decision-v2");
         assertThat(stored.guidancePolicyVersion()).isEqualTo("a-level-guidance-policy-v1");
@@ -144,7 +144,9 @@ class ALevelDetailedReportServiceTest {
         assertThat(stored.report().perspectives().modelWritten()).isTrue();
         // The profile in the report is the stored decision, not a recalculation.
         assertThat(stored.report().profile()).isEqualTo(new com.chikere.futureai.report.alevel.application
-                .ALevelSubjectProfileComposer().compose(assessments.get(id).result().profile()));
+                .ALevelSubjectProfileComposerV3().compose(assessments.get(id).result().profile()));
+        assertThat(stored.report().profile().optionsKeptOpen().id()).isEqualTo("OPTIONS_KEPT_OPEN");
+        assertThat(stored.report().profile().optionsKeptOpen().name()).isEqualTo("Future study options");
     }
 
     @Test
@@ -161,6 +163,29 @@ class ALevelDetailedReportServiceTest {
         assertThat(service().preparation(id)).contains(new ALevelDetailedReportUseCase.Preparation(true));
         assertThat(narrative.calls()).isEqualTo(1);
         assertThat(saves).isEqualTo(1);
+    }
+
+    @Test
+    void anExistingV2SnapshotIsReturnedWithoutV3Recomposition() {
+        UUID id = paidSubjectProfile("maths_economics_geography");
+        var report = new ALevelDetailedReportAssembler().assemble(assessments.get(id),
+                new ALevelGuidancePolicyV1().decide(assessments.get(id).result().profile(), assessments.get(id).state()),
+                new com.chikere.futureai.narrative.alevel.paid.ALevelPaidNarrativeOutcome(
+                        ALevelPaidNarrativeStatus.FALLBACK, Optional.empty(), "a-level-paid-narrative-v1", "openai",
+                        Optional.empty(), Optional.empty(), 2, Optional.of("historical")), Optional.empty());
+        var historical = new ALevelDetailedReportSnapshot(UUID.randomUUID(), id, entitlements.get(id).entitlementId(),
+                "a-level-v2", "a-level-decision-v2", "a-level-guidance-policy-v1", "a-level-paid-narrative-v1",
+                ALevelPaidNarrativeStatus.FALLBACK, Optional.empty(), "a-level-report-v2", "a-level-report-pdf-v2",
+                Instant.parse("2026-10-28T09:59:00Z"), report);
+        reports.put(id, historical);
+
+        var outcome = service().prepare(id);
+
+        assertThat(outcome.reused()).isTrue();
+        assertThat(outcome.stored()).contains(historical);
+        assertThat(outcome.report().profile().optionsKeptOpen().name()).isEqualTo("Options Kept Open");
+        assertThat(narrative.calls()).isZero();
+        assertThat(saves).isZero();
     }
 
     @Test

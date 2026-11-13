@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -49,6 +50,7 @@ class ALevelReportPdfControllerTest {
     @MockitoBean ALevelDetailedReportUseCase detailedReports;
 
     static final byte[] V2_BYTES = "%PDF-1.7 a-level report v2".getBytes(StandardCharsets.US_ASCII);
+    static final byte[] V3_BYTES = "%PDF-1.7 a-level report v3".getBytes(StandardCharsets.US_ASCII);
 
     /** The real v2 PDF service over the mocked report use case, with a renderer that returns fixed bytes. */
     @TestConfiguration
@@ -56,7 +58,7 @@ class ALevelReportPdfControllerTest {
         @Bean
         ALevelDetailedReportPdfService pdf(
                 ALevelDetailedReportUseCase reports) {
-            return new ALevelDetailedReportPdfService(reports,
+            ALevelDetailedReportPdfRenderer v2 =
                     new ALevelDetailedReportPdfRenderer() {
                         @Override
                         public String pdfVersion() {
@@ -67,7 +69,13 @@ class ALevelReportPdfControllerTest {
                         public byte[] render(ALevelDetailedReport report) {
                             return V2_BYTES;
                         }
-                    });
+                    };
+            ALevelDetailedReportPdfRenderer v3 = new ALevelDetailedReportPdfRenderer() {
+                @Override public String pdfVersion() { return "a-level-report-pdf-v3"; }
+                @Override public byte[] render(ALevelDetailedReport report) { return V3_BYTES; }
+            };
+            return new ALevelDetailedReportPdfService(reports, List.of(v2, v3),
+                    com.chikere.futureai.trace.AssessmentTrace.disabled());
         }
     }
 
@@ -88,6 +96,20 @@ class ALevelReportPdfControllerTest {
         assertThat(body).isEqualTo(V2_BYTES);
         verify(pdfService, never()).getOrCreate(any());
         verify(detailedReports, never()).prepare(any());
+    }
+
+    @Test
+    void aStoredV3ReportSelectsTheV3Renderer() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(purchases.activePurchaseVersion(id)).thenReturn(Optional.of("a-level-report-v2"));
+        when(detailedReports.find(id)).thenReturn(Optional.of(ALevelDetailedReportFixtures.storedV3(id)));
+
+        byte[] body = mvc.perform(get("/a-level-assessment/" + id + "/report.pdf"))
+                .andExpect(status().isOk()).andExpect(content().contentType("application/pdf"))
+                .andReturn().getResponse().getContentAsByteArray();
+
+        assertThat(body).isEqualTo(V3_BYTES);
+        verify(pdfService, never()).getOrCreate(any());
     }
 
     @Test

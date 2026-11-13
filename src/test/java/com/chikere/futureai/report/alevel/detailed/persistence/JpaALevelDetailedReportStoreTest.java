@@ -40,7 +40,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * The a-level-report-v2 journey on migrated PostgreSQL through the real beans: one Jev call for the whole assessment,
+ * The v3 journey on migrated PostgreSQL through the real beans: one judgment call for the whole assessment,
  * zero OpenAI calls on the free path and at activation, one paid narrative call at preparation, and none afterwards.
  * Every provider is a mock; nothing real is called.
  */
@@ -120,8 +120,8 @@ class JpaALevelDetailedReportStoreTest {
                 .containsEntry("guidance_policy_version", "a-level-guidance-policy-v1")
                 .containsEntry("paid_narrative_version", "a-level-paid-narrative-v1")
                 .containsEntry("paid_narrative_status", "AVAILABLE")
-                .containsEntry("report_version", "a-level-report-v2")
-                .containsEntry("pdf_version", "a-level-report-pdf-v2");
+                .containsEntry("report_version", "a-level-report-v3")
+                .containsEntry("pdf_version", "a-level-report-pdf-v3");
 
         var rival = new ALevelDetailedReportSnapshot(UUID.randomUUID(), id, stored.entitlementId(),
                 stored.judgmentSchemaVersion(), stored.decisionPolicyVersion(), stored.guidancePolicyVersion(),

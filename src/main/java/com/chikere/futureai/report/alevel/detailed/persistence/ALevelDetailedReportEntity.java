@@ -11,7 +11,7 @@ import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.UUID;
 
-/** JPA storage shape of an immutable a-level-report-v2; inserted once, never updated. */
+/** JPA storage shape of an immutable A-level detailed report; inserted once, never updated. */
 @Entity
 @Table(name = "a_level_detailed_report")
 class ALevelDetailedReportEntity {

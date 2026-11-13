@@ -67,4 +67,14 @@ class OpenHtmlALevelDetailedReportPdfRendererTest {
         assertThat(renderer.html(report)).isEqualTo(renderer.html(report));
         assertThat(renderer.pdfVersion()).isEqualTo("a-level-report-pdf-v2");
     }
+
+    @Test
+    void historicalV2HtmlStillUsesItsStoredWording() {
+        String html = renderer.html(ALevelDetailedReportFixtures.report("maths_economics_geography"));
+
+        assertThat(html).contains("Options Kept Open", "Analytical &amp; Quantitative",
+                        "Communication, Interpretation &amp; Context", "Learning Alongside AI")
+                .doesNotContain("Future study options", "Maths and problem-solving",
+                        "Writing, ideas and the wider world", "How AI can help you learn");
+    }
 }
