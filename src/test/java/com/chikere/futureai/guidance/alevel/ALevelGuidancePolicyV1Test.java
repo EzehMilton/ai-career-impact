@@ -136,13 +136,44 @@ class ALevelGuidancePolicyV1Test {
 
     @Test
     void aiStudyDepthFollowsLearningAlongsideAiWithoutGrantingPermission() {
-        var guidance = policy.decide(profile("mathematics_physics_computer_science"), bare());
+        var state = new ALevelAssessmentState(List.of("Mathematics", "Physics", "Computer Science"), Map.of(),
+                List.of(), List.of(), List.of(), Optional.empty(), Optional.empty());
+        var guidance = policy.decide(profile("mathematics_physics_computer_science"), state);
 
         assertThat(guidance.aiStudy().uses()).extracting(ALevelGuidance.Item::id).contains("AI_EXPLAIN",
-                "AI_CALCULATIONS");
+                "AI_CALCULATIONS", "AI_DEBUG");
+        assertThat(guidance.aiStudy().uses()).filteredOn(item -> item.id().equals("AI_DEBUG")).singleElement()
+                .satisfies(item -> assertThat(item.provenance()).contains("technical_digital_foundation",
+                        "subject_activity_programming"));
         assertThat(guidance.aiStudy().uses()).allSatisfy(use -> assertThat(use.provenance())
                 .contains("LEARNING_ALONGSIDE_AI"));
         assertThat(text(guidance)).doesNotContain("submit AI", "AI is always right");
+    }
+
+    @Test
+    void programmingGuidanceRequiresACanonicalProgrammingSubjectAsWellAsTechnicalCapability() {
+        // This profile deliberately has technical_digital_foundation=4.0, isolating subject applicability from score.
+        var technicalProfile = profile("mathematics_physics_computer_science");
+        for (List<String> subjects : List.of(
+                List.of("Mathematics", "Economics", "Geography"),
+                List.of("Mathematics", "Economics", "Business Studies"),
+                List.of("Mathematics", "Physics", "Chemistry"),
+                List.of("Economics", "Geography", "Politics"))) {
+            var state = new ALevelAssessmentState(subjects, Map.of(), List.of(), List.of(), List.of(), Optional.empty(),
+                    Optional.empty());
+
+            assertThat(policy.decide(technicalProfile, state).aiStudy().uses())
+                    .as(subjects.toString())
+                    .extracting(ALevelGuidance.Item::id)
+                    .doesNotContain("AI_DEBUG");
+        }
+
+        var computing = new ALevelAssessmentState(List.of("Mathematics", "Physics", "Computing"), Map.of(), List.of(),
+                List.of(), List.of(), Optional.empty(), Optional.empty());
+        assertThat(computing.selectedSubjects()).contains("Computer Science");
+        assertThat(policy.decide(technicalProfile, computing).aiStudy().uses())
+                .extracting(ALevelGuidance.Item::id)
+                .contains("AI_DEBUG");
     }
 
     @Test
@@ -155,9 +186,11 @@ class ALevelGuidancePolicyV1Test {
     }
 
     @Test
-    void thePolicyNamesNoSubjectAndCallsNoProvider() throws Exception {
+    void thePolicyUsesCentralCanonicalActivityApplicabilityAndCallsNoProvider() throws Exception {
         String source = Files.readString(Path.of("src", "main", "java", "com", "chikere", "futureai", "guidance",
                 "alevel", "ALevelGuidancePolicyV1.java"));
+
+        assertThat(source).contains("ALevelSubjectActivities").doesNotContain("\"Computer Science\"");
 
         assertThat(source).doesNotContain("\"Mathematics", "\"Physics", "\"Chemistry", "\"Biology", "\"Economics",
                 "\"History", "\"English", "\"Politics", "\"Psychology", "\"Sociology", "\"Geography", "\"Art",

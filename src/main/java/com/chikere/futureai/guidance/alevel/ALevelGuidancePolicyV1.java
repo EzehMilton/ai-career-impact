@@ -1,6 +1,7 @@
 package com.chikere.futureai.guidance.alevel;
 
 import com.chikere.futureai.assessment.domain.ALevelAssessmentState;
+import com.chikere.futureai.assessment.domain.ALevelSubjectActivities;
 import com.chikere.futureai.assessment.domain.AssessmentStatus;
 import com.chikere.futureai.decision.alevel.ALevelDecisionPolicyV2;
 import com.chikere.futureai.decision.alevel.ALevelProfileBand;
@@ -33,9 +34,10 @@ import static com.chikere.futureai.decision.alevel.ALevelDecisionPolicyV2.WRITTE
  *
  * <p>Inputs are the frozen {@code a-level-decision-v2} subject profile (its bands and the stored scores of its
  * dimensions) and the student's guidance-only context. The context only personalises wording and actions; it never
- * changes a score, band or factor, and nothing here can. Pure Java: no Jev, no model, no evidence, no subject names
- * and no subject-specific branch. It never states an entry requirement, a grade, an acceptance, an accreditation rule,
- * an admission likelihood or a career outcome.</p>
+ * changes a score, band or factor, and nothing here can. Pure Java: no Jev, no model and no evidence. Guidance that
+ * assumes a specific study activity also requires canonical subject applicability; this never affects the assessment.
+ * It never states an entry requirement, a grade, an acceptance, an accreditation rule, an admission likelihood or a
+ * career outcome.</p>
  */
 public final class ALevelGuidancePolicyV1 {
 
@@ -76,7 +78,7 @@ public final class ALevelGuidancePolicyV1 {
         Profile p = new Profile(profile);
         List<ALevelGuidance.Item> strengths = strengths(p);
         List<ALevelGuidance.Item> areas = areas(p);
-        return new ALevelGuidance(POLICY_VERSION, shape(p), strengths, areas, options(p, state), aiStudy(p),
+        return new ALevelGuidance(POLICY_VERSION, shape(p), strengths, areas, options(p, state), aiStudy(p, state),
                 skills(p, strengths, areas, state), plan(p, strengths, areas, state), safeguards(p, state));
     }
 
@@ -195,7 +197,7 @@ public final class ALevelGuidancePolicyV1 {
 
     // ---- AI study ----
 
-    private static ALevelGuidance.AiStudy aiStudy(Profile p) {
+    private static ALevelGuidance.AiStudy aiStudy(Profile p, ALevelAssessmentState state) {
         String lai = ALevelProfileMeasure.LEARNING_ALONGSIDE_AI.name();
         List<ALevelGuidance.Item> uses = new ArrayList<>();
         uses.add(item("AI_EXPLAIN", "Explain difficult ideas", "Ask AI to explain a concept in another way, then "
@@ -206,9 +208,12 @@ public final class ALevelGuidancePolicyV1 {
             uses.add(item("AI_CALCULATIONS", "Check practice calculations", "Work a problem yourself first, then use "
                     + "AI to compare methods step by step; never copy a worked answer.", QUANTITATIVE_REASONING));
         }
-        if (p.score(TECHNICAL_DIGITAL_FOUNDATION) >= 2.5) {
+        if (p.score(TECHNICAL_DIGITAL_FOUNDATION) >= 2.5
+                && ALevelSubjectActivities.supports(state.selectedSubjects(),
+                        ALevelSubjectActivities.Activity.PROGRAMMING)) {
             uses.add(item("AI_DEBUG", "Understand errors in practice code", "Ask AI why your practice code fails, "
-                    + "then fix it yourself so the understanding is yours.", TECHNICAL_DIGITAL_FOUNDATION));
+                    + "then fix it yourself so the understanding is yours.", TECHNICAL_DIGITAL_FOUNDATION,
+                    "subject_activity_programming"));
         }
         if (p.score(WRITTEN_VERBAL_COMMUNICATION) >= 2.5) {
             uses.add(item("AI_DRAFTS", "Get feedback on practice drafts", "Ask for comments on the structure of a "

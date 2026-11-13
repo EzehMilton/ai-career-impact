@@ -19,6 +19,8 @@ import java.util.Objects;
  */
 public final class ALevelSubjects {
 
+    public static final String COMPUTER_SCIENCE = "Computer Science";
+
     private static final Map<String, String> ALIASES;
 
     static {
@@ -26,7 +28,7 @@ public final class ALevelSubjects {
         alias(aliases, "Mathematics", "maths", "math", "mathematics", "a level maths", "core maths");
         alias(aliases, "Further Mathematics", "further maths", "further math", "further mathematics",
                 "fm maths");
-        alias(aliases, "Computer Science", "computer science", "comp sci", "compsci", "computing",
+        alias(aliases, COMPUTER_SCIENCE, "computer science", "comp sci", "compsci", "computing",
                 "computer studies");
         alias(aliases, "Physics", "physics", "phys");
         alias(aliases, "Chemistry", "chemistry", "chem");
