@@ -7,6 +7,15 @@ import com.chikere.futureai.assessment.university.application.UniversityJudgment
 import com.chikere.futureai.narrative.alevel.application.ALevelNarrativeGenerator;
 import com.chikere.futureai.narrative.professional.application.ProfessionalNarrativeGenerator;
 import com.chikere.futureai.narrative.university.application.UniversityNarrativeGenerator;
+import com.chikere.futureai.evidence.professional.fixture.LocalFixtureProfessionalEvidenceProvider;
+import com.chikere.futureai.evidence.professional.nomis.NomisProfessionalEvidenceProvider;
+import com.chikere.futureai.occupation.professional.configured.ConfiguredProfessionalOccupationClassifier;
+import com.chikere.futureai.payment.alevel.stripe.StripeALevelPaymentGateway;
+import com.chikere.futureai.payment.alevel.web.ALevelStripeWebhookController;
+import com.chikere.futureai.payment.professional.stripe.StripeProfessionalPaymentGateway;
+import com.chikere.futureai.payment.professional.web.StripeWebhookController;
+import com.chikere.futureai.payment.university.stripe.StripeUniversityPaymentGateway;
+import com.chikere.futureai.payment.university.web.UniversityStripeWebhookController;
 import com.chikere.futureai.product.application.DevelopmentModeStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,21 +48,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ActiveProfiles("prod")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
         "app.public-base-url=https://ai-career-impact.example",
-        "TYPESAFE_API_KEY=test-only-jev-key",
         "OPENAI_API_KEY=test-only-openai-key",
         "spring.ai.openai.decision.api-key=test-only-openai-key",
         "spring.ai.model.chat=none",
-        "app.stripe.secret-key=sk_test_not_called",
-        "app.stripe.webhook-secret=whsec_not_called",
-        "app.stripe.university-webhook-secret=whsec_not_called",
-        "app.stripe.a-level-webhook-secret=whsec_not_called",
-        "app.professional.report.stripe-price-id=price_not_called",
-        "app.university.report.stripe-price-id=price_not_called",
-        "app.a-level.report.stripe-price-id=price_not_called",
+        "app.stripe.enabled=false",
+        "app.professional.evidence.live-enabled=false",
+        "app.complimentary-report.enabled=true",
+        "app.complimentary-report.code=test-only-beta-code",
         "app.a-level.presentation-v3-cutover=2026-11-20T09:30:00Z",
-        "app.professional.evidence.classified-profession=Software Developer",
-        "app.professional.evidence.canonical-occupation=Programmers and software development professionals",
-        "app.professional.evidence.soc2020-code=2134"})
+        "app.assessment-trace.enabled=false"})
 class ProductionShapeTest {
 
     @MockitoBean ProfessionalJudgmentProvider professionalJudgmentProvider;
@@ -84,6 +87,19 @@ class ProductionShapeTest {
                         || name.toLowerCase().contains("localalevelcheckout")
                         || name.toLowerCase().contains("paymentsimulator"))
                 .isEmpty();
+    }
+
+    @Test
+    void betaCapabilitiesRemoveStripeAndProfessionalLiveEvidenceCompletely() {
+        assertThat(context.getBeansOfType(StripeProfessionalPaymentGateway.class)).isEmpty();
+        assertThat(context.getBeansOfType(StripeUniversityPaymentGateway.class)).isEmpty();
+        assertThat(context.getBeansOfType(StripeALevelPaymentGateway.class)).isEmpty();
+        assertThat(context.getBeansOfType(StripeWebhookController.class)).isEmpty();
+        assertThat(context.getBeansOfType(UniversityStripeWebhookController.class)).isEmpty();
+        assertThat(context.getBeansOfType(ALevelStripeWebhookController.class)).isEmpty();
+        assertThat(context.getBeansOfType(ConfiguredProfessionalOccupationClassifier.class)).isEmpty();
+        assertThat(context.getBeansOfType(NomisProfessionalEvidenceProvider.class)).isEmpty();
+        assertThat(context.getBeansOfType(LocalFixtureProfessionalEvidenceProvider.class)).isEmpty();
     }
 
     @Test
@@ -125,6 +141,7 @@ class ProductionShapeTest {
                 .isEqualTo("lax");
         assertThat(environment.getProperty("server.forward-headers-strategy"))
                 .isEqualTo("framework");
+        assertThat(environment.getProperty("spring.docker.compose.enabled", Boolean.class)).isFalse();
     }
 
     @Test

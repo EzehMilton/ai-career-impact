@@ -105,16 +105,16 @@ class StartupConfigurationValidatorTest {
     void devNoJevDoesNotRequireEvidenceVariables() {
         MockEnvironment env = environment("dev-no-jev")
                 .withProperty("OPENAI_API_KEY", "test-only-key");
-        for (String s : STRIPE) env.withProperty(s, "configured");
 
         assertThatCode(() -> StartupConfigurationValidator.validate(env))
                 .doesNotThrowAnyException();
     }
 
     @Test
-    void devNoJevNamesAllMissingStripeSettingsAtOnce() {
+    void devNoJevNamesAllMissingStripeSettingsAtOnceWhenStripeIsEnabled() {
         MockEnvironment env = environment("dev-no-jev")
-                .withProperty("OPENAI_API_KEY", "test-only-key");
+                .withProperty("OPENAI_API_KEY", "test-only-key")
+                .withProperty("app.stripe.enabled", "true");
 
         assertThatThrownBy(() -> StartupConfigurationValidator.validate(env))
                 .isInstanceOf(ConfigurationProblemException.class)
@@ -185,12 +185,21 @@ class StartupConfigurationValidatorTest {
     }
 
     @Test
-    void prodNamesAllMissingStripeSettingsAtOnce() {
-        MockEnvironment env = environment("prod")
-                .withProperty("TYPESAFE_API_KEY", "test-only-jev-key")
+    void prodStartsWithoutStripeOrProfessionalEvidenceSettingsWhenCapabilitiesAreDisabled() {
+        assertThatCode(() -> StartupConfigurationValidator.validate(environment("prod")
                 .withProperty("OPENAI_API_KEY", "test-only-openai-key")
-                .withProperty("app.public-base-url", "https://example.com");
-        for (String s : EVIDENCE) env.withProperty(s, "configured");
+                .withProperty("app.public-base-url", "https://example.com")
+                .withProperty("app.stripe.enabled", "false")
+                .withProperty("app.professional.evidence.live-enabled", "false")))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void prodNamesAllMissingStripeSettingsAtOnceWhenStripeIsEnabled() {
+        MockEnvironment env = environment("prod")
+                .withProperty("OPENAI_API_KEY", "test-only-openai-key")
+                .withProperty("app.public-base-url", "https://example.com")
+                .withProperty("app.stripe.enabled", "true");
 
         assertThatThrownBy(() -> StartupConfigurationValidator.validate(env))
                 .isInstanceOf(ConfigurationProblemException.class)
@@ -202,12 +211,11 @@ class StartupConfigurationValidatorTest {
     }
 
     @Test
-    void prodNamesAllMissingEvidenceSettingsAtOnce() {
+    void prodNamesAllMissingEvidenceSettingsAtOnceWhenLiveEvidenceIsEnabled() {
         MockEnvironment env = environment("prod")
-                .withProperty("TYPESAFE_API_KEY", "test-only-jev-key")
                 .withProperty("OPENAI_API_KEY", "test-only-openai-key")
-                .withProperty("app.public-base-url", "https://example.com");
-        for (String s : STRIPE) env.withProperty(s, "configured");
+                .withProperty("app.public-base-url", "https://example.com")
+                .withProperty("app.professional.evidence.live-enabled", "true");
 
         assertThatThrownBy(() -> StartupConfigurationValidator.validate(env))
                 .isInstanceOf(ConfigurationProblemException.class)
@@ -339,7 +347,8 @@ class StartupConfigurationValidatorTest {
     }
 
     private MockEnvironment devNoJevEnvironment() {
-        MockEnvironment env = environment("dev-no-jev").withProperty("OPENAI_API_KEY", "test-only-key");
+        MockEnvironment env = environment("dev-no-jev").withProperty("OPENAI_API_KEY", "test-only-key")
+                .withProperty("app.stripe.enabled", "true");
         for (String s : STRIPE) env.withProperty(s, "configured");
         return env;
     }
@@ -358,7 +367,9 @@ class StartupConfigurationValidatorTest {
     private MockEnvironment prodEnvironment() {
         MockEnvironment env = environment("prod")
                 .withProperty("TYPESAFE_API_KEY", "test-only-jev-key")
-                .withProperty("OPENAI_API_KEY", "test-only-openai-key");
+                .withProperty("OPENAI_API_KEY", "test-only-openai-key")
+                .withProperty("app.stripe.enabled", "true")
+                .withProperty("app.professional.evidence.live-enabled", "true");
         for (String s : STRIPE) env.withProperty(s, "configured");
         for (String s : EVIDENCE) env.withProperty(s, "configured");
         return env;

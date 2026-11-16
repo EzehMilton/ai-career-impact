@@ -37,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.ai.model.chat=openai",
         "OPENAI_API_KEY=test-only-not-a-real-key",
         "spring.ai.openai.api-key=test-only-not-a-real-key",
+        "app.stripe.enabled=true",
         "app.stripe.secret-key=sk_test_not_called",
         "app.stripe.webhook-secret=whsec_not_called",
         "app.stripe.university-webhook-secret=whsec_not_called",

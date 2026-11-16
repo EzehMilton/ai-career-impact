@@ -70,11 +70,12 @@ abstract class ComplimentaryAccessFlowTestSupport {
             String html = mvc.perform(get(journey.route() + "/" + id)).andExpect(status().isOk())
                     .andReturn().getResponse().getContentAsString();
 
-            assertThat(html).as("%s", journey).contains("Have an access code?", "Unlock full report",
+            assertThat(html).as("%s", journey).contains("Have a beta access code?", "Unlock full report",
                     "name=\"accessCode\"", "action=\"" + journey.route() + "/" + id + "/complimentary-access\"",
-                    "Enter your access code to unlock the full report without payment.",
+                    "Enter it to unlock your detailed report.",
                     "aria-describedby=\"accessCode-hint\"",
-                    "<button type=\"submit\" class=\"button-secondary\">Unlock full report</button>");
+                    "<button type=\"submit\" class=\"button-secondary\">Unlock full report</button>")
+                    .doesNotContain("Paid report checkout is not currently available.");
             assertThat(html).as("%s", journey).doesNotContain(CODE);
         }
     }
@@ -115,7 +116,7 @@ abstract class ComplimentaryAccessFlowTestSupport {
             String html = mvc.perform(get(journey.route() + "/" + id)
                             .flashAttr("complimentaryMessage", INVALID_CODE_MESSAGE))
                     .andReturn().getResponse().getContentAsString();
-            assertThat(html).as("%s", journey).contains(INVALID_CODE_MESSAGE, "Have an access code?")
+            assertThat(html).as("%s", journey).contains(INVALID_CODE_MESSAGE, "Have a beta access code?")
                     .doesNotContain(CODE);
         }
         assertThat(output.getAll()).doesNotContain(CODE, "not-the-code");
@@ -176,7 +177,7 @@ abstract class ComplimentaryAccessFlowTestSupport {
             journey.seedPendingStripeCheckout().accept(id);
 
             String html = mvc.perform(get(journey.route() + "/" + id)).andReturn().getResponse().getContentAsString();
-            assertThat(html).as("%s", journey).doesNotContain("Have an access code?");
+            assertThat(html).as("%s", journey).doesNotContain("Have a beta access code?");
             redeem(journey, id, CODE).andExpect(redirectedUrl(journey.route() + "/" + id))
                     .andExpect(flash().attribute("complimentaryMessage",
                             "An access code cannot be used for this assessment."));

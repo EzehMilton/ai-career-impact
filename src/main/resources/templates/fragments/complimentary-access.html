@@ -12,8 +12,8 @@
 <body>
 <th:block th:fragment="form(actionUrl, available)">
   <form class="complimentary-access" th:if="${available}" method="post" th:action="${actionUrl}">
-    <h3>Have an access code?</h3>
-    <p id="accessCode-hint" class="helper">Enter your access code to unlock the full report without payment.</p>
+    <h3>Have a beta access code?</h3>
+    <p id="accessCode-hint" class="helper">Enter it to unlock your detailed report.</p>
     <div class="field field-short">
       <label for="accessCode">Access code</label>
       <input id="accessCode" name="accessCode" type="text" maxlength="200" required

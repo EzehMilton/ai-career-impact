@@ -147,7 +147,7 @@ Narrow the window to about 375px, or use a device emulator.
 
 ## 12. Production shape
 
-`prod` needs real provider credentials, Stripe settings and the occupation mapping, so it cannot be started offline: `StartupConfigurationValidator` lists every missing setting by name and refuses to start. That is correct behaviour. Development chrome is instead guaranteed by test, and those tests are the thing to trust here:
+`prod` needs its selected real provider credentials, an HTTPS public base URL and PostgreSQL. Stripe settings are required only when `STRIPE_ENABLED=true`, and the fixed Professional occupation mapping is required only when `PROFESSIONAL_LIVE_EVIDENCE_ENABLED=true`. `StartupConfigurationValidator` lists every missing enabled-capability setting by name and refuses to start. Development chrome is instead guaranteed by test, and those tests are the thing to trust here:
 
 - `ProductShellConfigurationTest` — under `dev` the status is active and names the fixtures; under `prod` and `dev-no-jev` it is inactive, and no property can switch it on. (`live-smoke` is wired inactive by the same configuration and shows its own LIVE SMOKE banner instead.)
 - `HomeControllerTest` — with no development bean present, the landing page contains no banner, no development section and no fixture wording.

@@ -1,6 +1,7 @@
 package com.chikere.futureai.evidence.professional.nomis;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.client.RestClient;
@@ -10,6 +11,7 @@ import java.time.Clock;
 
 @Configuration(proxyBeanMethods = false)
 @Profile("prod")
+@ConditionalOnProperty(prefix = "app.professional.evidence", name = "live-enabled", havingValue = "true")
 public class NomisProfessionalEvidenceConfiguration {
     @Bean
     NomisApiClient nomisApiClient(RestClient.Builder builder) {

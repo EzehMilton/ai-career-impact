@@ -58,6 +58,7 @@ class ProfileMatrixTest {
             .withPropertyValues("spring.ai.model.chat=openai", "spring.ai.openai.chat.model=gpt-test",
                     "app.professional.fixture-id=senior_software_architect",
                     "app.professional.report.base-url=http://localhost:8080",
+                    "app.stripe.enabled=true", "app.professional.evidence.live-enabled=true",
                     STRIPE_SECRET, STRIPE_WEBHOOK, STRIPE_PRICE,
                     EVIDENCE_PROFESSION, EVIDENCE_OCCUPATION, EVIDENCE_SOC)
             .withConfiguration(AutoConfigurations.of(ProfessionalJevAutoConfiguration.class))
@@ -175,6 +176,13 @@ class ProfileMatrixTest {
                         .isEmpty());
     }
 
+    @Test
+    void stripeRealIsAbsentFromProdWhenCapabilityIsDisabled() {
+        runner.withPropertyValues("app.stripe.enabled=false")
+                .withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles("prod"))
+                .run(ctx -> assertThat(ctx.getBeansOfType(StripeProfessionalPaymentGateway.class)).isEmpty());
+    }
+
     // ── Evidence ─────────────────────────────────────────────────────────────────────────────────
 
     @Test
@@ -207,6 +215,16 @@ class ProfileMatrixTest {
                     .run(ctx -> assertThat(ctx.getBeansOfType(NomisProfessionalEvidenceProvider.class))
                             .as("profile=%s", profile).isEmpty());
         }
+    }
+
+    @Test
+    void evidenceRealAndConfiguredClassifierAreAbsentFromProdWhenCapabilityIsDisabled() {
+        runner.withPropertyValues("app.professional.evidence.live-enabled=false")
+                .withInitializer(ctx -> ctx.getEnvironment().setActiveProfiles("prod"))
+                .run(ctx -> {
+                    assertThat(ctx.getBeansOfType(NomisProfessionalEvidenceProvider.class)).isEmpty();
+                    assertThat(ctx.getBeansOfType(ConfiguredProfessionalOccupationClassifier.class)).isEmpty();
+                });
     }
 
     // ── TypeSafe client safety ───────────────────────────────────────────────────────────────────

@@ -1,12 +1,14 @@
 package com.chikere.futureai.occupation.professional.configured;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 @Configuration(proxyBeanMethods = false)
 @Profile("prod")
+@ConditionalOnProperty(prefix = "app.professional.evidence", name = "live-enabled", havingValue = "true")
 public class ConfiguredProfessionalOccupationConfiguration {
     @Bean
     ConfiguredProfessionalOccupationClassifier configuredProfessionalOccupationClassifier(

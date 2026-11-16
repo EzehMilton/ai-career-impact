@@ -120,7 +120,7 @@ class UniversityProviderWiringTest {
     void devNoJevAndProdActivateStripeAndFailClearlyWithoutItsConfiguration() {
         // dev-no-jev also requires a fixture-id because it activates the fixture Jev provider
         contextRunner
-                .withPropertyValues("app.university.fixture-id=computer_science")
+                .withPropertyValues("app.university.fixture-id=computer_science", "app.stripe.enabled=true")
                 .withInitializer(context -> context.getEnvironment().setActiveProfiles("dev-no-jev"))
                 .run(context -> assertThat(context.getStartupFailure())
                         .as("dev-no-jev should fail without Stripe key")
@@ -128,6 +128,7 @@ class UniversityProviderWiringTest {
                         .hasStackTraceContaining("Stripe secret key"));
         contextRunner
                 .withPropertyValues("app.university.fixture-id=computer_science",
+                        "app.stripe.enabled=true",
                         "app.stripe.secret-key=sk_test_not_called",
                         "app.stripe.university-webhook-secret=whsec_not_called")
                 .withInitializer(context -> context.getEnvironment().setActiveProfiles("dev-no-jev"))
@@ -137,6 +138,7 @@ class UniversityProviderWiringTest {
                         .hasStackTraceContaining("Stripe university price ID"));
         contextRunner
                 .withPropertyValues("app.university.fixture-id=computer_science",
+                        "app.stripe.enabled=true",
                         "app.stripe.secret-key=sk_test_not_called",
                         "app.stripe.university-webhook-secret=whsec_not_called",
                         "app.university.report.stripe-price-id=price_university_not_called")
@@ -149,19 +151,22 @@ class UniversityProviderWiringTest {
                 });
 
         // prod does not use a fixture-id
-        contextRunner.withInitializer(context -> context.getEnvironment().setActiveProfiles("prod"))
+        contextRunner.withPropertyValues("app.stripe.enabled=true")
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("prod"))
                 .run(context -> assertThat(context.getStartupFailure())
                         .as("prod should fail without Stripe key")
                         .hasRootCauseInstanceOf(IllegalArgumentException.class)
                         .hasStackTraceContaining("Stripe secret key"));
-        contextRunner.withPropertyValues("app.stripe.secret-key=sk_test_not_called",
+        contextRunner.withPropertyValues("app.stripe.enabled=true",
+                        "app.stripe.secret-key=sk_test_not_called",
                         "app.stripe.university-webhook-secret=whsec_not_called")
                 .withInitializer(context -> context.getEnvironment().setActiveProfiles("prod"))
                 .run(context -> assertThat(context.getStartupFailure())
                         .as("prod should fail without price ID")
                         .hasRootCauseInstanceOf(IllegalArgumentException.class)
                         .hasStackTraceContaining("Stripe university price ID"));
-        contextRunner.withPropertyValues("app.stripe.secret-key=sk_test_not_called",
+        contextRunner.withPropertyValues("app.stripe.enabled=true",
+                        "app.stripe.secret-key=sk_test_not_called",
                         "app.stripe.university-webhook-secret=whsec_not_called",
                         "app.university.report.stripe-price-id=price_university_not_called")
                 .withInitializer(context -> context.getEnvironment().setActiveProfiles("prod"))

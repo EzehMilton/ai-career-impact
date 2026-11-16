@@ -28,7 +28,7 @@ import static com.chikere.futureai.configuration.ApplicationProfiles.PROD;
  *       refused at startup rather than silently picking a winner.</li>
  *   <li><strong>Missing configuration for an enabled capability.</strong> Checks are scoped to what
  *       is actually switched on: {@code dev} needs no external-service credentials; {@code prod}
- *       needs all of them and is refused if any are absent. {@code live-smoke} also needs the
+ *       requires credentials only for its enabled capabilities. {@code live-smoke} also needs the
  *       explicit {@code APP_LIVE_SMOKE_ENABLED=true} switch, so the profile alone never bypasses
  *       payment.</li>
  *   <li><strong>A narrative model the journey does not allow.</strong> Wherever real OpenAI narratives run
@@ -151,12 +151,18 @@ public class StartupConfigurationValidator {
             problems.add("Missing required configuration: OPENAI_API_KEY "
                     + "(required by profile 'prod': real OpenAI narrative)");
         }
-        problems.addAll(missing(environment, STRIPE_SETTINGS, PROD));
-        problems.addAll(missing(environment, EVIDENCE_SETTINGS, PROD));
+        if (stripeEnabled(environment)) {
+            problems.addAll(missing(environment, STRIPE_SETTINGS,
+                    "profile 'prod' when app.stripe.enabled=true"));
+        }
+        if (liveProfessionalEvidenceEnabled(environment)) {
+            problems.addAll(missing(environment, EVIDENCE_SETTINGS,
+                    "profile 'prod' when app.professional.evidence.live-enabled=true"));
+        }
         String configured = environment.getProperty("app.public-base-url", "");
         if (configured.isBlank()) {
             problems.add("Missing required configuration: app.public-base-url "
-                    + "(required by profile 'prod': payment return links are built from it)");
+                    + "(required by profile 'prod': public application and report links use it)");
             return problems;
         }
         try {
@@ -164,8 +170,8 @@ public class StartupConfigurationValidator {
             boolean allowInsecure = environment.getProperty(
                     "app.public-base-url-allow-http", Boolean.class, false);
             if (!baseUrl.isSecure() && !allowInsecure) {
-                problems.add("app.public-base-url must use https in production. Payment return "
-                        + "links are built from it. Set app.public-base-url-allow-http=true only "
+                problems.add("app.public-base-url must use https in production. Public application and report "
+                        + "links use it. Set app.public-base-url-allow-http=true only "
                         + "if TLS genuinely terminates elsewhere and that is a deliberate choice.");
             }
         } catch (ConfigurationProblemException invalid) {
@@ -180,7 +186,10 @@ public class StartupConfigurationValidator {
             problems.add("Missing required configuration: OPENAI_API_KEY "
                     + "(required by profile 'dev-no-jev': real OpenAI narrative)");
         }
-        problems.addAll(missing(environment, STRIPE_SETTINGS, DEV_NO_JEV));
+        if (stripeEnabled(environment)) {
+            problems.addAll(missing(environment, STRIPE_SETTINGS,
+                    "profile 'dev-no-jev' when app.stripe.enabled=true"));
+        }
         return problems;
     }
 
@@ -205,12 +214,20 @@ public class StartupConfigurationValidator {
         return "jev".equalsIgnoreCase(environment.getProperty("app.judgment.provider", "openai").strip());
     }
 
+    private static boolean stripeEnabled(Environment environment) {
+        return environment.getProperty("app.stripe.enabled", Boolean.class, false);
+    }
+
+    private static boolean liveProfessionalEvidenceEnabled(Environment environment) {
+        return environment.getProperty("app.professional.evidence.live-enabled", Boolean.class, false);
+    }
+
     private static List<String> missing(Environment environment, List<String> settings,
-            String profile) {
+            String requirement) {
         return settings.stream()
                 .filter(setting -> environment.getProperty(setting, "").isBlank())
                 .map(setting -> "Missing required configuration: " + setting
-                        + " (required by profile '" + profile + "')")
+                        + " (required by " + requirement + ")")
                 .toList();
     }
 }

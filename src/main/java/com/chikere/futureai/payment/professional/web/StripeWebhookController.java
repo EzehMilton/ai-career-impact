@@ -7,12 +7,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import com.chikere.futureai.configuration.FailureDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @Profile({"prod", "dev-no-jev"})
+@ConditionalOnProperty(prefix = "app.stripe", name = "enabled", havingValue = "true")
 public final class StripeWebhookController {
     private static final Logger LOGGER = LoggerFactory.getLogger(StripeWebhookController.class);
     private final ProfessionalReportPurchaseUseCase purchaseService;

@@ -148,18 +148,18 @@ The application understands exactly four profiles. Choose one; combining any two
 | `dev` | Full local development. Fixture Jev judgments, fixture free narratives, fixture evidence and classification, the simulated local checkout, and the development banner. No paid Jev analysis and no paid narrative, so detailed reports cannot be fully prepared. Requires no secret of any kind. |
 | `dev-no-jev` | Hybrid development for a machine that cannot reach Jev. Fixture Jev judgments and fixture evidence, but **real OpenAI narratives and real Stripe** (test-mode keys are expected). No paid Jev analysis. |
 | `live-smoke` | Local live regression testing: real Jev and OpenAI, payment bypassed through complimentary access, tracing on. Requires `APP_LIVE_SMOKE_ENABLED=true`. **Never a deployment profile.** See [LIVE_SMOKE_TESTING.md](LIVE_SMOKE_TESTING.md). |
-| `prod` | Production: every real provider (Jev, OpenAI, Stripe, Professional Nomis evidence and occupation mapping), secure cookies, proxy awareness, constrained Actuator, structured logging, fail-fast configuration. |
+| `prod` | Production: the explicitly selected judgment provider and independently enabled Stripe and Professional evidence capabilities, plus secure cookies, proxy awareness, constrained Actuator, structured logging and fail-fast configuration. |
 
 Adapters are chosen by profile, never by exception handling: there is no fallback from a real provider to a fixture, and no profile serves a fixture result under `prod`.
 
 | Capability | `dev` | `dev-no-jev` | `live-smoke` | `prod` |
 | --- | --- | --- | --- | --- |
-| Jev judgments | fixture | fixture | real | real |
+| Jev judgments | fixture | fixture | real | only when explicitly selected |
 | Paid Jev analysis (Professional responsibilities, University modules) | none | none | real | real |
 | OpenAI narratives (free and paid) | fixture free only | real | real | real |
-| Professional evidence and occupation classification | fixture | fixture | none | real (Nomis, exact mapping) |
+| Professional evidence and occupation classification | fixture | fixture | none | optional (Nomis, exact mapping) |
 | University and A-level evidence | fixture | fixture | none | none |
-| Payment | simulated local checkout | Stripe | complimentary bypass | Stripe |
+| Payment | simulated local checkout | optional Stripe | complimentary bypass | optional Stripe and/or complimentary entitlement |
 | Development banner | yes | no | live-smoke banner | no |
 
 `StartupConfigurationValidator` refuses every pair of these profiles. In particular, `live-smoke` with `prod` is refused because live smoke testing bypasses payment, and `dev` with `prod` because production must never serve a fixture result.
@@ -170,9 +170,9 @@ Adapters are chosen by profile, never by exception handling: there is no fallbac
 
 Startup stops, with every problem listed at once, when a profile is active but not configured. Messages name the setting and never its value, because startup failures get pasted into tickets.
 
-- **`prod`** requires `TYPESAFE_API_KEY`, `OPENAI_API_KEY`, the Stripe secret, all three webhook secrets, all three price ids and the three Professional occupation-mapping settings.
+- **`prod`** requires `OPENAI_API_KEY` when OpenAI is selected, or `TYPESAFE_API_KEY` when Jev is explicitly selected. Stripe settings are required only when `STRIPE_ENABLED=true`; the three Professional occupation-mapping settings are required only when `PROFESSIONAL_LIVE_EVIDENCE_ENABLED=true`.
 - **`prod`** requires `app.public-base-url`, and requires it to be `https` unless `app.public-base-url-allow-http=true` is set deliberately.
-- **`dev-no-jev`** requires `OPENAI_API_KEY` and every Stripe setting.
+- **`dev-no-jev`** requires `OPENAI_API_KEY`; it requires every Stripe setting only when `STRIPE_ENABLED=true`.
 - **`live-smoke`** requires `APP_LIVE_SMOKE_ENABLED=true`, `TYPESAFE_API_KEY` and `OPENAI_API_KEY`.
 - **Wherever real narratives run** (`prod`, `dev-no-jev`, `live-smoke`), each journey's narrative model must be on that journey's allowlist (`OpenAiNarrativeModelPolicy`). The refused model name is the one value a message quotes; it is not a secret.
 - **`dev`** requires none of the above. Keeping local development free of production secrets is a property worth protecting, and a test asserts it.
@@ -305,7 +305,9 @@ Under `prod` the console log is structured JSON in Elastic Common Schema (`loggi
 
 | Setting | Purpose | Required when | Secret | Example shape |
 | --- | --- | --- | --- | --- |
-| `app.public-base-url` / `APP_PUBLIC_BASE_URL` | Authoritative public address; builds payment return links | **Required in `prod`** | no | `https://example.com` |
+| `app.public-base-url` / `APP_PUBLIC_BASE_URL` | Authoritative public address for application, report and payment links | **Required in `prod`** | no | `https://example.com` |
+| `app.stripe.enabled` / `STRIPE_ENABLED` | Creates Stripe gateways and webhook controllers | optional; default `false` | no | `true` |
+| `app.professional.evidence.live-enabled` / `PROFESSIONAL_LIVE_EVIDENCE_ENABLED` | Enables the exact configured Professional occupation mapping and Nomis provider | optional; default `false` | no | `true` |
 | `app.public-base-url-allow-http` | Deliberate escape hatch when TLS terminates elsewhere | optional | no | `true` |
 | `app.<journey>.report.base-url` | Per-journey override of the above | optional | no | `https://example.com` |
 | `app.<journey>.report.display-price` | Price shown on the result page | optional; no price is shown if unset | no | `£12.00` |
@@ -328,7 +330,7 @@ Under `prod` the console log is structured JSON in Elastic Common Schema (`loggi
 
 | Setting | Purpose | Required when | Secret | Example shape |
 | --- | --- | --- | --- | --- |
-| `TYPESAFE_API_KEY` | Structured judgments | `prod`, `live-smoke` | **yes** | — |
+| `TYPESAFE_API_KEY` | Structured judgments | `prod` when `JUDGMENT_PROVIDER=jev`; always for `live-smoke` | **yes** | — |
 | `spring.ai.typesafe.model` | Model name | optional | no | `jev-latest` |
 | `TYPESAFE_TIMEOUT` | Client timeout per request | optional | no | `60s` (default) |
 | `TYPESAFE_MAX_RETRIES` | Client retries; zero so one action bills at most one request | optional | no | `0` (default) |
@@ -361,7 +363,7 @@ profile, including production, until a release timestamp is deliberately supplie
 
 ### Stripe
 
-All required under `prod` and `dev-no-jev`, and checked at startup. Use Stripe test-mode keys under `dev-no-jev`.
+All are required and checked at startup when `STRIPE_ENABLED=true` under `prod` or `dev-no-jev`. No Stripe bean or webhook controller is created when the flag is false. Use Stripe test-mode keys under `dev-no-jev`.
 
 | Setting | Purpose | Secret |
 | --- | --- | --- |
@@ -379,9 +381,9 @@ Webhook paths: `/payments/stripe/webhook`, `/payments/stripe/university-webhook`
 
 | Setting | Purpose | Required when | Secret |
 | --- | --- | --- | --- |
-| `PROFESSIONAL_EVIDENCE_PROFESSION` | Occupation mapping | `prod` | no |
-| `PROFESSIONAL_EVIDENCE_CANONICAL_OCCUPATION` | Occupation mapping | `prod` | no |
-| `PROFESSIONAL_EVIDENCE_SOC2020_CODE` | Occupation mapping | `prod` | no |
+| `PROFESSIONAL_EVIDENCE_PROFESSION` | Occupation mapping | `prod` when `PROFESSIONAL_LIVE_EVIDENCE_ENABLED=true` | no |
+| `PROFESSIONAL_EVIDENCE_CANONICAL_OCCUPATION` | Occupation mapping | `prod` when `PROFESSIONAL_LIVE_EVIDENCE_ENABLED=true` | no |
+| `PROFESSIONAL_EVIDENCE_SOC2020_CODE` | Occupation mapping | `prod` when `PROFESSIONAL_LIVE_EVIDENCE_ENABLED=true` | no |
 | `PROFESSIONAL_EVIDENCE_GEOGRAPHY`, `UNIVERSITY_EVIDENCE_GEOGRAPHY`, `A_LEVEL_EVIDENCE_GEOGRAPHY` | Default geography | optional | no |
 
 ### Development only
@@ -407,7 +409,7 @@ Docker must be running; `spring-boot-docker-compose` starts PostgreSQL from `com
 
 ### Production
 
-`prod` enables every live capability at once, so every setting below is required.
+`prod` enables production security and real providers. Individual Stripe and Professional evidence capabilities are explicit; the public beta example is documented in [RAILWAY_BETA_DEPLOYMENT.md](RAILWAY_BETA_DEPLOYMENT.md). Set the following additional variables only when activating those capabilities.
 
 ```
 export SPRING_PROFILES_ACTIVE=prod
@@ -417,9 +419,10 @@ export SPRING_DATASOURCE_URL=jdbc:postgresql://db.internal:5432/aicareerimpact
 export SPRING_DATASOURCE_USERNAME=appuser
 export SPRING_DATASOURCE_PASSWORD=...        # from your secret store
 
-export TYPESAFE_API_KEY=...                   # from your secret store
 export OPENAI_API_KEY=...                     # from your secret store
+export JUDGMENT_PROVIDER=openai
 
+export STRIPE_ENABLED=true
 export STRIPE_SECRET_KEY=...                  # from your secret store
 export STRIPE_WEBHOOK_SECRET=...
 export UNIVERSITY_STRIPE_WEBHOOK_SECRET=...
@@ -428,6 +431,7 @@ export PROFESSIONAL_REPORT_STRIPE_PRICE_ID=price_...
 export UNIVERSITY_REPORT_STRIPE_PRICE_ID=price_...
 export A_LEVEL_REPORT_STRIPE_PRICE_ID=price_...
 
+export PROFESSIONAL_LIVE_EVIDENCE_ENABLED=true
 export PROFESSIONAL_EVIDENCE_PROFESSION=...
 export PROFESSIONAL_EVIDENCE_CANONICAL_OCCUPATION=...
 export PROFESSIONAL_EVIDENCE_SOC2020_CODE=...

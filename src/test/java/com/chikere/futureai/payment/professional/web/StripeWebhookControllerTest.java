@@ -14,7 +14,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(StripeWebhookController.class)
+@WebMvcTest(value = StripeWebhookController.class, properties = "app.stripe.enabled=true")
 @ActiveProfiles("dev-no-jev")
 @Import(WebSecurityConfiguration.class)
 class StripeWebhookControllerTest {

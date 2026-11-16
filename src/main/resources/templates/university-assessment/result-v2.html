@@ -83,7 +83,7 @@
     <form th:if="${purchase.checkoutAvailable and !profile.moreInformationRequired}" method="post" th:action="@{/university-assessment/{id}/checkout(id=${assessmentId})}">
       <button type="submit">Get my detailed report</button>
     </form>
-    <p class="helper" th:if="${purchase.noEntitlement and !purchase.checkoutAvailable}">Paid report checkout is not currently available.</p>
+    <p class="helper" th:if="${purchase.noEntitlement and !purchase.checkoutAvailable and !purchase.complimentaryAvailable}">Paid report checkout is not currently available.</p>
     <div th:replace="~{fragments/complimentary-access :: form(
         actionUrl=@{/university-assessment/{id}/complimentary-access(id=${assessmentId})},
         available=${purchase.complimentaryAvailable})}"></div>

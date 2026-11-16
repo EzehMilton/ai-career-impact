@@ -130,12 +130,12 @@
     <form th:if="${purchase.checkoutAvailable}" method="post" th:action="@{/professional-assessment/{id}/checkout(id=${assessmentId})}">
       <button type="submit" th:text="|Get my detailed report — ${purchase.displayPrice ?: '£4.99'}|">Get my detailed report — £4.99</button>
     </form>
-    <p class="helper" th:if="${purchase.noEntitlement and !purchase.checkoutAvailable}">Paid report checkout is not currently available.</p>
+    <p class="helper" th:if="${purchase.noEntitlement and !purchase.checkoutAvailable and !purchase.complimentaryAvailable}">Paid report checkout is not currently available.</p>
     <!--/* Secondary: the shared access-code form, collapsed behind a native disclosure (no JavaScript). It opens
          by itself when a refused code left a message to read. The form, its fields and its route are unchanged. */-->
     <details class="access-code-disclosure" th:if="${purchase.complimentaryAvailable}"
              th:open="${complimentaryMessage != null}">
-      <summary>Have an access code?</summary>
+      <summary>Have a beta access code? Enter it to unlock your detailed report.</summary>
       <div th:replace="~{fragments/complimentary-access :: form(
           actionUrl=@{/professional-assessment/{id}/complimentary-access(id=${assessmentId})},
           available=${purchase.complimentaryAvailable})}"></div>

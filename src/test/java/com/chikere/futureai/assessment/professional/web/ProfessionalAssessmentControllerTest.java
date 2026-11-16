@@ -129,9 +129,9 @@ class ProfessionalAssessmentControllerTest {
                 .andReturn().getResponse().getContentAsString();
 
         assertThat(html).contains("<button type=\"submit\">Get my detailed report — £4.99</button>");
-        // Collapsed by default behind "Have an access code?"; the form itself, its field and route are unchanged.
+        // Collapsed by default behind the beta-code prompt; the form itself, its field and route are unchanged.
         assertThat(html).containsSubsequence("<details class=\"access-code-disclosure\">",
-                "<summary>Have an access code?</summary>",
+                "<summary>Have a beta access code? Enter it to unlock your detailed report.</summary>",
                 "action=\"/professional-assessment/" + ID + "/complimentary-access\"", "name=\"_csrf\"",
                 "name=\"accessCode\"", "</details>");
         assertThat(html).doesNotContain("Price:");

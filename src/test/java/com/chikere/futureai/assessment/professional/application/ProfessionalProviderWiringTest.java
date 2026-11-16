@@ -136,6 +136,7 @@ class ProfessionalProviderWiringTest {
     void devNoJevProfileSelectsFixtureJevButRealOpenAiAndStripe() {
         contextRunner.withPropertyValues(
                         "app.professional.fixture-id=senior_software_architect",
+                        "app.stripe.enabled=true",
                         "app.stripe.secret-key=sk_test_not_called",
                         "app.stripe.webhook-secret=whsec_not_called",
                         "app.professional.report.stripe-price-id=price_not_called")
@@ -164,6 +165,8 @@ class ProfessionalProviderWiringTest {
     @Test
     void prodProfileSelectsOpenAiByDefaultAndNoFixtures() {
         contextRunner.withPropertyValues(
+                        "app.stripe.enabled=true",
+                        "app.professional.evidence.live-enabled=true",
                         "app.stripe.secret-key=sk_test_not_called",
                         "app.stripe.webhook-secret=whsec_not_called",
                         "app.professional.report.stripe-price-id=price_not_called",
@@ -221,6 +224,7 @@ class ProfessionalProviderWiringTest {
     void stripeFailsClearlyWithoutConfigurationUnderProd() {
         contextRunner
                 .withPropertyValues(
+                        "app.stripe.enabled=true",
                         "app.professional.evidence.classified-profession=Software Architect",
                         "app.professional.evidence.canonical-occupation=IT architects",
                         "app.professional.evidence.soc2020-code=2133")
@@ -233,7 +237,8 @@ class ProfessionalProviderWiringTest {
     @Test
     void stripeFailsClearlyWithoutConfigurationUnderDevNoJev() {
         contextRunner
-                .withPropertyValues("app.professional.fixture-id=senior_software_architect")
+                .withPropertyValues("app.professional.fixture-id=senior_software_architect",
+                        "app.stripe.enabled=true")
                 .withInitializer(context -> context.getEnvironment().setActiveProfiles("dev-no-jev"))
                 .run(context -> assertThat(context.getStartupFailure())
                         .hasRootCauseInstanceOf(IllegalArgumentException.class)
